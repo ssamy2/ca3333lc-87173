@@ -147,14 +147,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
             </div>
           </div>
 
-          {/* Total Value for this NFT */}
-          <div className="flex items-center justify-between border-t border-border/50 pt-1 mt-2">
-            <span className="text-xs font-medium text-primary">Total:</span>
-            <div className="flex items-center gap-1">
-              <TonIcon className="w-3 h-3 text-primary" />
-              <span className="text-xs font-bold text-primary">{formatTON(nft.avg_price * nft.count)}</span>
-            </div>
-          </div>
         </div>
 
         {/* View in Store Indicator */}
