@@ -6,10 +6,13 @@ export const USE_MOCK_DATA = false; // Always use real API
 const DIRECT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://207.180.203.9:5000';
 const FORCE_PROXY = import.meta.env.VITE_FORCE_PROXY === 'true';
 
-// Detect if we need to use a proxy
-const isHttpsPage = window.location.protocol === 'https:';
-const isLovablePreview = window.location.hostname.endsWith('.lovable.app') || window.location.hostname.endsWith('.lovable.dev');
-const isLocalhost = window.location.hostname === 'localhost';
+// Detect environment safely
+const isBrowser = typeof window !== 'undefined';
+const pageProtocol = isBrowser ? window.location.protocol : 'https:';
+const pageHostname = isBrowser ? window.location.hostname : '';
+const isHttpsPage = pageProtocol === 'https:';
+const isLovablePreview = pageHostname.endsWith('.lovable.app') || pageHostname.endsWith('.lovable.dev');
+const isLocalhost = pageHostname === 'localhost';
 const shouldUseProxy = FORCE_PROXY || 
   (isHttpsPage && DIRECT_API_BASE_URL.startsWith('http://')) || 
   isLovablePreview || 
@@ -28,6 +31,17 @@ const buildApiUrl = (path: string, forJson: boolean = true) => {
   return shouldUseProxy ? (forJson ? withProxyGet(targetUrl) : withProxyRaw(targetUrl)) : targetUrl;
 };
 
+// Robust timeout signal (polyfill for AbortSignal.timeout)
+const getTimeoutSignal = (ms: number): AbortSignal => {
+  const anyAbortSignal = AbortSignal as any;
+  if (typeof anyAbortSignal?.timeout === 'function') {
+    return anyAbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+};
+
 // API Health Check
 export const checkAPIHealth = async (): Promise<boolean> => {
   try {
@@ -35,7 +49,7 @@ export const checkAPIHealth = async (): Promise<boolean> => {
     
     const response = await fetch(apiUrl, { 
       method: 'GET',
-      signal: AbortSignal.timeout(5000) // 5 second timeout
+      signal: getTimeoutSignal(5000) // 5 second timeout
     });
     return response.ok;
   } catch {
@@ -60,7 +74,7 @@ export const fetchNFTGifts = async (username: string) => {
       headers: {
         'Accept': 'application/json',
       },
-      signal: AbortSignal.timeout(15000) // 15 second timeout
+      signal: getTimeoutSignal(15000) // 15 second timeout
     });
     
     if (!response.ok) {
