@@ -528,7 +528,7 @@ const TelegramApp: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-3">
                 {nftData.nfts && Array.isArray(nftData.nfts) && nftData.nfts.map((nft, index) => (
-                  <NFTCard key={index} nft={nft} />
+                  <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} nft={nft} />
                 ))}
               </div>
             </div>
