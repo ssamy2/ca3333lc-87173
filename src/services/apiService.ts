@@ -18,37 +18,65 @@ const shouldUseProxy = FORCE_PROXY ||
   isLovablePreview || 
   isLocalhost;
 
-// Helper functions for proxy URLs with fallback
-const corsProxies = [
-  'https://api.allorigins.win',
-  'https://cors-anywhere.herokuapp.com',
-  'https://thingproxy.freeboard.io/fetch'
+// Proxy configurations with proper URL building
+interface ProxyConfig {
+  name: string;
+  buildUrl: (targetUrl: string, forJson: boolean) => string;
+  parseResponse: (responseData: any) => any;
+}
+
+const proxyConfigs: ProxyConfig[] = [
+  // Custom proxy from environment (highest priority)
+  ...(import.meta.env.VITE_CORS_PROXY ? [{
+    name: 'Custom',
+    buildUrl: (targetUrl: string) => `${import.meta.env.VITE_CORS_PROXY}/${encodeURIComponent(targetUrl)}`,
+    parseResponse: (data: any) => data
+  }] : []),
+  
+  // AllOrigins - most stable
+  {
+    name: 'AllOrigins',
+    buildUrl: (targetUrl: string, forJson: boolean = true) => 
+      forJson 
+        ? `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
+        : `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+    parseResponse: (data: any) => data.contents ? JSON.parse(data.contents) : data
+  },
+  
+  // ThingProxy - simple and reliable
+  {
+    name: 'ThingProxy',
+    buildUrl: (targetUrl: string) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(targetUrl)}`,
+    parseResponse: (data: any) => data
+  },
+  
+  // Isomorphic CORS - alternative
+  {
+    name: 'Isomorphic',
+    buildUrl: (targetUrl: string) => `https://cors.isomorphic-git.org/${targetUrl}`,
+    parseResponse: (data: any) => data
+  },
+  
+  // CORS Anywhere - requires demo activation (last resort)
+  {
+    name: 'CORS-Anywhere',
+    buildUrl: (targetUrl: string) => `https://cors-anywhere.herokuapp.com/${targetUrl}`,
+    parseResponse: (data: any) => data
+  }
 ];
 
-let currentProxyIndex = 0;
-
-const withProxyGet = (targetUrl: string) => {
-  const proxy = corsProxies[currentProxyIndex];
-  if (proxy === 'https://thingproxy.freeboard.io/fetch') {
-    return `${proxy}/${encodeURIComponent(targetUrl)}`;
-  }
-  return `${proxy}/get?url=${encodeURIComponent(targetUrl)}`;
-};
-
-const withProxyRaw = (targetUrl: string) => {
-  const proxy = corsProxies[currentProxyIndex];
-  if (proxy === 'https://thingproxy.freeboard.io/fetch') {
-    return `${proxy}/${encodeURIComponent(targetUrl)}`;
-  }
-  return `${proxy}/raw?url=${encodeURIComponent(targetUrl)}`;
-};
-
 // Build API URL with or without proxy and add cache busting
-const buildApiUrl = (path: string, forJson: boolean = true) => {
+const buildApiUrl = (path: string, forJson: boolean = true, proxyIndex: number = 0) => {
   const timestamp = Date.now();
   const separator = path.includes('?') ? '&' : '?';
   const targetUrl = `${DIRECT_API_BASE_URL}${path}${separator}_t=${timestamp}`;
-  return shouldUseProxy ? (forJson ? withProxyGet(targetUrl) : withProxyRaw(targetUrl)) : targetUrl;
+  
+  if (!shouldUseProxy) {
+    return targetUrl;
+  }
+  
+  const proxy = proxyConfigs[proxyIndex];
+  return proxy.buildUrl(targetUrl, forJson);
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)
@@ -112,12 +140,11 @@ export const fetchNFTGifts = async (username: string) => {
   }
   
   // Try with proxy fallbacks
-  for (let proxyAttempt = 0; proxyAttempt < corsProxies.length; proxyAttempt++) {
-    currentProxyIndex = proxyAttempt;
-    const apiUrl = buildApiUrl(`/api/nft-gifts?username=@${encodeURIComponent(cleanUsername)}`, true);
+  for (let proxyAttempt = 0; proxyAttempt < proxyConfigs.length; proxyAttempt++) {
+    const proxy = proxyConfigs[proxyAttempt];
+    const apiUrl = buildApiUrl(`/api/nft-gifts?username=@${encodeURIComponent(cleanUsername)}`, true, proxyAttempt);
     
-    console.log(`Attempt ${proxyAttempt + 1}: Fetching NFT data from:`, apiUrl);
-    console.log('Using proxy:', corsProxies[currentProxyIndex]);
+    console.log(`Attempt ${proxyAttempt + 1} (${proxy.name}): Fetching NFT data from:`, apiUrl);
     
     try {
       const response = await fetch(apiUrl, {
@@ -126,42 +153,59 @@ export const fetchNFTGifts = async (username: string) => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
-          'Expires': '0'
+          'Expires': '0',
+          'X-Requested-With': 'XMLHttpRequest'
         },
         signal: getTimeoutSignal(15000)
       });
       
       if (!response.ok) {
-        console.error(`Proxy ${proxyAttempt + 1} response not OK:`, response.status, response.statusText);
-        if (response.status === 429) {
-          throw new Error('RATE_LIMIT_EXCEEDED');
-        } else if (response.status === 403) {
-          throw new Error('ACCESS_FORBIDDEN');
-        } else if (response.status >= 500) {
-          throw new Error('SERVER_ERROR');
+        console.error(`${proxy.name} response not OK:`, response.status, response.statusText);
+        
+        // Log but continue to next proxy for these errors
+        if (response.status === 403 || response.status === 429 || response.status >= 500) {
+          lastError = new Error(response.status === 403 ? 'ACCESS_FORBIDDEN' : 
+                               response.status === 429 ? 'RATE_LIMIT_EXCEEDED' : 'SERVER_ERROR');
+          console.log(`${proxy.name} failed with ${response.status}, trying next proxy...`);
+          continue;
         } else if (response.status === 404) {
           throw new Error('USER_NOT_FOUND');
         } else {
-          throw new Error(`HTTP_${response.status}`);
+          lastError = new Error(`HTTP_${response.status}`);
+          continue;
         }
       }
       
-      const responseData = await response.json();
-      console.log(`Proxy ${proxyAttempt + 1} API Response:`, responseData);
+      // Try to parse response
+      let responseData;
+      try {
+        const text = await response.text();
+        responseData = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error(`${proxy.name} parse error:`, parseError);
+        lastError = new Error('PARSE_ERROR');
+        continue;
+      }
       
-      return processAPIResponse(responseData, true);
+      console.log(`${proxy.name} API Response:`, responseData);
+      
+      // Process response with proxy-specific parser
+      const processedData = proxy.parseResponse(responseData);
+      return processAPIResponse(processedData, proxyAttempt > 0);
       
     } catch (error) {
-      console.error(`Proxy ${proxyAttempt + 1} failed:`, error);
+      console.error(`${proxy.name} failed:`, error);
       lastError = error;
       
-      // If it's not a network error, don't try other proxies
+      // For final/definitive errors, don't try other proxies
       if (error instanceof Error && 
-          !error.message.includes('fetch') && 
-          !error.name.includes('NetworkError') &&
-          error.name !== 'TypeError') {
+          (error.message === 'USER_NOT_FOUND' || 
+           error.message === 'CANNOT_RECEIVE_GIFTS')) {
         throw error;
       }
+      
+      // Continue to next proxy for network/temporary errors
+      continue;
     }
   }
   
@@ -173,16 +217,7 @@ export const fetchNFTGifts = async (username: string) => {
 
 // Helper function to process API response
 const processAPIResponse = (responseData: any, isProxy: boolean) => {
-  // Handle CORS proxy response format
   let finalData = responseData;
-  if (isProxy && responseData.contents) {
-    try {
-      finalData = JSON.parse(responseData.contents);
-    } catch (parseError) {
-      console.error('Failed to parse CORS proxy response:', parseError);
-      throw new Error('PARSE_ERROR');
-    }
-  }
   
   // Check for API error responses
   if (finalData && !finalData.success && finalData.error) {

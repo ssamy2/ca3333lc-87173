@@ -132,13 +132,24 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
           title: 'الوصول مرفوض',
-          description: 'تم رفض طلب الوصول من قبل الخادم. قد يكون هناك قيود على الوصول أو مشاكل في الشبكة.',
-          action: canRetry ? (
-            <Button onClick={onRetry} variant="outline" className="mt-4">
-              <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
-            </Button>
-          ) : null
+          description: 'تم رفض طلب الوصول من قبل الخادم. قد تحتاج لتفعيل الوصول المؤقت لبروكسي CORS.',
+          action: (
+            <div className="mt-4 space-y-2">
+              <Button 
+                onClick={() => window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')}
+                variant="default" 
+                className="w-full"
+              >
+                تفعيل الوصول المؤقت للبروكسي
+              </Button>
+              {canRetry && (
+                <Button onClick={onRetry} variant="outline" className="w-full">
+                  <TonIcon className="w-4 h-4 mr-2" />
+                  إعادة المحاولة
+                </Button>
+              )}
+            </div>
+          )
         };
       
       case 'CANNOT_RECEIVE_GIFTS':
