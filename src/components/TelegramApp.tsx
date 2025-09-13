@@ -567,12 +567,6 @@ const TelegramApp: React.FC = () => {
           <EmptyState onSearch={() => handleSearch()} />
         )}
 
-        {/* Telegram WebApp Footer */}
-        <div className="text-center py-6">
-          <p className="text-xs text-muted-foreground">
-            صُنع بـ ❤️ لتيليجرام • مدعوم بـ Nva Analytics
-          </p>
-        </div>
       </div>
     </div>
   );
