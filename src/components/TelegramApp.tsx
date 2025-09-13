@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Calculator, RefreshCw, User } from 'lucide-react';
+import { Search, Calculator, RefreshCw, User, Sun, Moon, Palette } from 'lucide-react';
 import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
@@ -10,6 +10,7 @@ import EmptyState from './EmptyState';
 import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
 import { fetchNFTGifts } from '@/services/apiService';
+import { useTheme } from '@/hooks/useTheme';
 
 interface NFTGift {
   count: number;
@@ -69,6 +70,7 @@ const TelegramApp: React.FC = () => {
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const { toast } = useToast();
+  const { theme, setTheme, isLight, isDark, isBlue } = useTheme();
 
   // Initialize Telegram WebApp
   useEffect(() => {
@@ -289,75 +291,83 @@ const TelegramApp: React.FC = () => {
       )}
 
       <div className="max-w-md mx-auto p-4 space-y-6">
-        {/* Enhanced Header with Channel Info - New Design */}
-        <div className="telegram-card p-6 animate-fade-in relative overflow-hidden bg-gradient-to-br from-background to-primary/5 border border-primary/10 shadow-xl">
-          {/* Background Effects */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-primary to-accent rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-accent to-primary rounded-full blur-2xl"></div>
-          </div>
-          
-          <div className="relative z-10">
-            {/* Top Row - Logo, Title and Channel Button */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                {/* Calculator Icon in Red Frame */}
-                <div className="w-16 h-16 border-4 border-red-500 rounded-2xl bg-white flex items-center justify-center shadow-lg">
-                  <Calculator className="w-8 h-8 text-red-500" />
-                </div>
-                
-                {/* Title Badges */}
-                <div className="space-y-2">
-                  <div className="bg-orange-500 text-white px-4 py-2 rounded-xl font-bold text-lg shadow-md">
-                    Nova Calculator
-                  </div>
-                  <div className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium shadow-md">
-                    Telegram Gifts Prices check
-                  </div>
-                </div>
+        {/* Header - Nova Calculator */}
+        <div className="telegram-card p-6 animate-fade-in bg-gradient-to-br from-card to-card/80 border shadow-lg">
+          <div className="flex flex-col gap-6">
+            {/* Top Row - Logo and Title */}
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
+                <Calculator className="w-7 h-7 text-primary-foreground" />
               </div>
               
-              {/* Channel Button */}
-              <a 
-                href="https://t.me/GT_Rolet" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-white border-4 border-purple-500 text-purple-600 px-6 py-3 rounded-xl font-bold text-lg shadow-lg hover:bg-purple-50 transition-all duration-300 hover:scale-105"
-              >
-                Channel
-              </a>
+              <div className="flex-1">
+                <h1 className="text-xl font-bold text-foreground">Nova Calculator</h1>
+                <p className="text-sm text-muted-foreground">Telegram Gifts Price Checker</p>
+              </div>
             </div>
 
-            {/* Bottom Row - Theme Buttons and Chat Button */}
-            <div className="flex items-center justify-between">
-              <div className="flex gap-4">
-                {/* Theme Buttons */}
-                <button className="bg-white border-4 border-cyan-400 text-gray-800 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-cyan-50 transition-all duration-300 hover:scale-105">
-                  <div className="text-center">
-                    <div>White</div>
-                    <div>Theme</div>
-                  </div>
-                </button>
-                
-                <button className="bg-white border-4 border-cyan-400 text-gray-800 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-cyan-50 transition-all duration-300 hover:scale-105">
-                  <div className="text-center">
-                    <div>Dark</div>
-                    <div>Theme</div>
-                  </div>
-                </button>
-                
-                <button className="bg-white border-4 border-cyan-400 text-gray-800 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-cyan-50 transition-all duration-300 hover:scale-105">
-                  <div className="text-center">
-                    <div>Blue</div>
-                    <div>Theme</div>
-                  </div>
-                </button>
-              </div>
+            {/* Theme Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant={isLight ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTheme('light')}
+                className="flex-1 gap-2"
+              >
+                <Sun className="w-4 h-4" />
+                Light
+              </Button>
               
-              {/* Chat Button */}
-              <button className="bg-white border-4 border-purple-500 text-purple-600 px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:bg-purple-50 transition-all duration-300 hover:scale-105">
-                Chat
-              </button>
+              <Button
+                variant={isDark ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTheme('dark')}
+                className="flex-1 gap-2"
+              >
+                <Moon className="w-4 h-4" />
+                Dark
+              </Button>
+              
+              <Button
+                variant={isBlue ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTheme('blue')}
+                className="flex-1 gap-2"
+              >
+                <Palette className="w-4 h-4" />
+                Blue
+              </Button>
+            </div>
+
+            {/* Channel and Chat Links */}
+            <div className="flex gap-3">
+              <Button
+                asChild
+                variant="outline"
+                className="flex-1"
+              >
+                <a 
+                  href="https://t.me/GT_Rolet" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Channel
+                </a>
+              </Button>
+              
+              <Button
+                asChild
+                variant="outline"
+                className="flex-1"
+              >
+                <a 
+                  href="https://t.me/Gifts_Super" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Chat
+                </a>
+              </Button>
             </div>
           </div>
         </div>
@@ -390,10 +400,10 @@ const TelegramApp: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      المستخدم الحالي
+                      Current User
                     </h3>
                     <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
-                      نشط
+                      Active
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -427,7 +437,7 @@ const TelegramApp: React.FC = () => {
           <div className="flex gap-2 mb-4">
             <Input
               type="text"
-              placeholder="اكتب اسم المستخدم..."
+              placeholder="Enter username..."
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
