@@ -6,8 +6,7 @@ export const USE_MOCK_DATA = false; // Always use real API
 const API_BASE_URL = (() => {
   const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
   const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
-  const fallback = typeof window !== 'undefined' ? window.location.origin : 'http://207.180.203.9:5000';
-  return (lsUrl || envUrl || fallback).replace(/\/+$/, '');
+  return (lsUrl || envUrl || 'http://207.180.203.9:5000').replace(/\/+$/, '');
 })();
 const FORCE_PROXY = import.meta.env.VITE_FORCE_PROXY === 'true';
 
