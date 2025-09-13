@@ -72,30 +72,13 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
           title: 'خطأ في الاتصال',
-          description: 'تعذر الاتصال بالخادم. جرّب تعيين بروكسي مخصص إن استمر الخطأ.',
-          action: (
-            <div className="mt-4 space-y-2">
-              {canRetry && (
-                <Button onClick={onRetry} variant="outline" className="w-full">
-                  <TonIcon className="w-4 h-4 mr-2" />
-                  إعادة المحاولة
-                </Button>
-              )}
-              <Button
-                onClick={() => {
-                  const url = window.prompt('أدخل رابط بروكسي CORS المخصص (مثال: https://your-proxy.workers.dev)');
-                  if (url) {
-                    try { localStorage.setItem('CORS_PROXY_URL', url.trim()); } catch {}
-                    onRetry?.();
-                  }
-                }}
-                variant="default"
-                className="w-full"
-              >
-                تعيين بروكسي مخصص
-              </Button>
-            </div>
-          )
+          description: 'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+          action: canRetry ? (
+            <Button onClick={onRetry} variant="outline" className="mt-4">
+              <TonIcon className="w-4 h-4 mr-2" />
+              إعادة المحاولة
+            </Button>
+          ) : null
         };
 
       case 'TIMEOUT_ERROR':
@@ -149,37 +132,13 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
           title: 'الوصول مرفوض',
-          description: 'تم رفض طلب الوصول من قبل الخادم. قد تحتاج لتفعيل الوصول المؤقت لبروكسي CORS أو استخدام بروكسي خاص.',
-          action: (
-            <div className="mt-4 space-y-2">
-              <Button 
-                onClick={() => window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')}
-                variant="default" 
-                className="w-full"
-              >
-                تفعيل الوصول المؤقت للبروكسي
-              </Button>
-              <Button
-                onClick={() => {
-                  const url = window.prompt('أدخل رابط بروكسي CORS المخصص (مثال: https://your-proxy.workers.dev)');
-                  if (url) {
-                    try { localStorage.setItem('CORS_PROXY_URL', url.trim()); } catch {}
-                    onRetry?.();
-                  }
-                }}
-                variant="secondary"
-                className="w-full"
-              >
-                تعيين بروكسي مخصص
-              </Button>
-              {canRetry && (
-                <Button onClick={onRetry} variant="outline" className="w-full">
-                  <TonIcon className="w-4 h-4 mr-2" />
-                  إعادة المحاولة
-                </Button>
-              )}
-            </div>
-          )
+          description: 'تم رفض طلب الوصول من قبل الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
+          action: canRetry ? (
+            <Button onClick={onRetry} variant="outline" className="mt-4">
+              <TonIcon className="w-4 h-4 mr-2" />
+              إعادة المحاولة
+            </Button>
+          ) : null
         };
       
       case 'CANNOT_RECEIVE_GIFTS':
