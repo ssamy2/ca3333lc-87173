@@ -25,9 +25,11 @@ const withProxyGet = (targetUrl: string) =>
 const withProxyRaw = (targetUrl: string) => 
   `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
-// Build API URL with or without proxy
+// Build API URL with or without proxy and add cache busting
 const buildApiUrl = (path: string, forJson: boolean = true) => {
-  const targetUrl = `${DIRECT_API_BASE_URL}${path}`;
+  const timestamp = Date.now();
+  const separator = path.includes('?') ? '&' : '?';
+  const targetUrl = `${DIRECT_API_BASE_URL}${path}${separator}_t=${timestamp}`;
   return shouldUseProxy ? (forJson ? withProxyGet(targetUrl) : withProxyRaw(targetUrl)) : targetUrl;
 };
 
@@ -73,6 +75,9 @@ export const fetchNFTGifts = async (username: string) => {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
       signal: getTimeoutSignal(15000) // 15 second timeout
     });
