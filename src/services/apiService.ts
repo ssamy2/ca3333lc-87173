@@ -33,14 +33,45 @@ const proxyConfigs: ProxyConfig[] = [
     parseResponse: (data: any) => data
   }] : []),
   
-  // AllOrigins - most stable
+  // Elfsight CORS Proxy - fast and stable
+  {
+    name: 'Elfsight',
+    buildUrl: (targetUrl: string) => `https://cors-proxy.elfsight.com/${targetUrl}`,
+    parseResponse: (data: any) => data
+  },
+  
+  // CORS.SH - reliable alternative
+  {
+    name: 'CORS.SH',
+    buildUrl: (targetUrl: string) => `https://proxy.cors.sh/${targetUrl}`,
+    parseResponse: (data: any) => data
+  },
+  
+  // AllOrigins - handles JSON wrapping
   {
     name: 'AllOrigins',
     buildUrl: (targetUrl: string, forJson: boolean = true) => 
       forJson 
         ? `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
         : `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-    parseResponse: (data: any) => data.contents ? JSON.parse(data.contents) : data
+    parseResponse: (data: any) => {
+      // AllOrigins wraps response in { contents: "..." }
+      if (data && typeof data === 'object' && data.contents) {
+        try {
+          return JSON.parse(data.contents);
+        } catch {
+          return data.contents;
+        }
+      }
+      return data;
+    }
+  },
+  
+  // Corsflare - dedicated CORS service
+  {
+    name: 'Corsflare',
+    buildUrl: (targetUrl: string) => `https://corsflare.com/?${encodeURIComponent(targetUrl)}`,
+    parseResponse: (data: any) => data
   },
   
   // ThingProxy - simple and reliable
@@ -126,7 +157,7 @@ export const fetchNFTGifts = async (username: string) => {
           'Pragma': 'no-cache',
           'Expires': '0'
         },
-        signal: getTimeoutSignal(15000)
+        signal: getTimeoutSignal(20000) // Increased to 20 seconds for slow connections
       });
       
       if (response.ok) {
