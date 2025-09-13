@@ -6,7 +6,8 @@ export const USE_MOCK_DATA = false; // Always use real API
 const API_BASE_URL = (() => {
   const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
   const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
-  return (lsUrl || envUrl || 'http://207.180.203.9:5000').replace(/\/+$/, '');
+  const fallback = typeof window !== 'undefined' ? window.location.origin : 'http://207.180.203.9:5000';
+  return (lsUrl || envUrl || fallback).replace(/\/+$/, '');
 })();
 const FORCE_PROXY = import.meta.env.VITE_FORCE_PROXY === 'true';
 
@@ -57,18 +58,19 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
 // API Health Check
 export const checkAPIHealth = async (): Promise<boolean> => {
   try {
-    // Prevent mixed-content requests from HTTPS -> HTTP
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
-      throw new Error('INSECURE_API_URL');
-    }
     const apiUrl = buildApiUrl('/api/health');
+    console.log('Health check API URL:', apiUrl);
     
     const response = await fetch(apiUrl, { 
       method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
       signal: getTimeoutSignal(5000)
     });
     return response.ok;
-  } catch {
+  } catch (error) {
+    console.error('Health check failed:', error);
     return false;
   }
 };
@@ -77,25 +79,16 @@ export const fetchNFTGifts = async (username: string) => {
   // Clean username by removing @ if present
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  // Prevent mixed-content requests from HTTPS -> HTTP
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
-    throw new Error('INSECURE_API_URL');
-  }
-  
   const apiUrl = buildApiUrl(`/api/nft-gifts?username=@${encodeURIComponent(cleanUsername)}`);
   
   console.log('Fetching NFT data from:', apiUrl);
+  console.log('API Base URL:', API_BASE_URL);
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        ...(window.location.origin && { 'Origin': window.location.origin })
+        'Accept': 'application/json'
       },
       signal: getTimeoutSignal(20000)
     });
@@ -134,6 +127,13 @@ export const fetchNFTGifts = async (username: string) => {
     
   } catch (error) {
     console.error('API request failed:', error);
+    
+    // Handle mixed content errors specifically
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
+        throw new Error('INSECURE_API_URL');
+      }
+    }
     
     // Re-throw specific errors
     if (error instanceof Error && 
