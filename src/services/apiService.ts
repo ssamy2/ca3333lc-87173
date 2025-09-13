@@ -21,6 +21,11 @@ const shouldUseProxy = FORCE_PROXY || isMixedContent;
 
 // Get proxy URL
 const getProxyUrl = () => {
+  // In development, use local proxy
+  if (import.meta.env.DEV) {
+    return window.location.origin + '/api/proxy';
+  }
+  
   const envProxy = import.meta.env.VITE_CORS_PROXY || '';
   const lsProxy = isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '';
   return lsProxy || envProxy || 'https://corsproxy.io';
@@ -37,6 +42,15 @@ const getProxyConfig = (): ProxyConfig | null => {
   if (!shouldUseProxy) return null;
   
   const proxyUrl = getProxyUrl();
+  
+  // Support local development proxy
+  if (proxyUrl.includes('/api/proxy')) {
+    return {
+      name: 'Local Proxy',
+      buildUrl: (targetUrl: string) => `${proxyUrl}?url=${encodeURIComponent(targetUrl)}`,
+      parseResponse: (data: any) => data
+    };
+  }
   
   // Support different proxy formats
   if (proxyUrl.includes('corsproxy.io')) {
