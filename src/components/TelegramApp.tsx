@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Calculator, RefreshCw, User, Sun, Moon, Palette } from 'lucide-react';
+import { Search, Calculator, RefreshCw, User, Sun, Moon, Palette, Lightbulb } from 'lucide-react';
 import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
@@ -307,26 +307,21 @@ const TelegramApp: React.FC = () => {
               </div>
             </div>
 
-            {/* Theme Buttons */}
-            <div className="flex gap-3">
+            {/* Theme Toggle */}
+            <div className="flex justify-center">
               <Button
-                variant={isLight ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => setTheme('light')}
-                className="flex-1 gap-2"
+                onClick={() => setTheme(isLight ? 'dark' : 'light')}
+                className="w-12 h-12 rounded-full border-2 transition-all duration-300 hover:scale-110"
               >
-                <Sun className="w-4 h-4" />
-                Light
-              </Button>
-              
-              <Button
-                variant={isDark ? "default" : "outline"}
-                size="sm"
-                onClick={() => setTheme('dark')}
-                className="flex-1 gap-2"
-              >
-                <Moon className="w-4 h-4" />
-                Dark
+                <Lightbulb 
+                  className={`w-5 h-5 transition-all duration-300 ${
+                    isLight 
+                      ? 'text-yellow-500 fill-yellow-400 drop-shadow-lg' 
+                      : 'text-gray-400'
+                  }`} 
+                />
               </Button>
             </div>
 
