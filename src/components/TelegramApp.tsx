@@ -9,7 +9,7 @@ import ErrorState from './ErrorState';
 import EmptyState from './EmptyState';
 import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
-import LightBulbToggle from './LightBulbToggle';
+import ThemeToggle from './ThemeToggle';
 import { fetchNFTGifts } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -309,10 +309,7 @@ const TelegramApp: React.FC = () => {
             </div>
 
             {/* Theme Toggle */}
-            <LightBulbToggle 
-              isLight={isLight} 
-              onToggle={() => setTheme(isLight ? 'dark' : 'light')} 
-            />
+            <ThemeToggle />
 
             {/* Channel and Chat Links */}
             <div className="flex gap-3">
