@@ -8,7 +8,6 @@ export const useTheme = () => {
     setTheme,
     themes,
     isLight: theme === 'light',
-    isDark: theme === 'dark',
-    isBlue: theme === 'blue'
+    isDark: theme === 'dark'
   }
 }

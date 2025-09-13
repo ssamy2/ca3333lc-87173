@@ -15,7 +15,7 @@ const App = () => (
     <ThemeProvider
       attribute="class"
       defaultTheme="light"
-      themes={["light", "dark", "blue"]}
+      themes={["light", "dark"]}
       enableSystem={false}
       storageKey="nova-theme"
     >

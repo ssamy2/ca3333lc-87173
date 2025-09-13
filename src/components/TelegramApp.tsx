@@ -70,7 +70,7 @@ const TelegramApp: React.FC = () => {
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const { toast } = useToast();
-  const { theme, setTheme, isLight, isDark, isBlue } = useTheme();
+  const { theme, setTheme, isLight, isDark } = useTheme();
 
   // Initialize Telegram WebApp
   useEffect(() => {
@@ -92,7 +92,6 @@ const TelegramApp: React.FC = () => {
       const detectedUsername = telegramUser.username || telegramUser.first_name || 'user';
       setCurrentUser(detectedUsername);
       setUsername(detectedUsername);
-      fetchNFTs(detectedUsername);
     } else {
       // Fallback for testing
       setCurrentUser('demo_user');
@@ -326,16 +325,6 @@ const TelegramApp: React.FC = () => {
               >
                 <Moon className="w-4 h-4" />
                 Dark
-              </Button>
-              
-              <Button
-                variant={isBlue ? "default" : "outline"}
-                size="sm"
-                onClick={() => setTheme('blue')}
-                className="flex-1 gap-2"
-              >
-                <Palette className="w-4 h-4" />
-                Blue
               </Button>
             </div>
 
