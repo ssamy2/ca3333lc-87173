@@ -289,18 +289,66 @@ const TelegramApp: React.FC = () => {
       )}
 
       <div className="max-w-md mx-auto p-4 space-y-6">
-        {/* Header */}
-          <div className="telegram-card p-6 text-center animate-fade-in">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
-              <Calculator className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gradient">Nova Calculator</h1>
-              <p className="text-sm text-muted-foreground">Advanced NFT Analytics</p>
-            </div>
+        {/* Enhanced Header with Channel Info */}
+        <div className="telegram-card p-6 text-center animate-fade-in relative overflow-hidden bg-gradient-to-br from-background to-primary/5 border border-primary/10 shadow-xl">
+          {/* Background Effects */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-primary to-accent rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-accent to-primary rounded-full blur-2xl"></div>
           </div>
-          <p className="text-muted-foreground text-sm">Professional insights for Telegram NFT gifts</p>
+          
+          <div className="relative z-10">
+            {/* Main Logo and Title */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="relative group">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20">
+                  <Calculator className="w-8 h-8 text-white" />
+                </div>
+                {/* Glow Effect */}
+                <div className="absolute -inset-2 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-lg"></div>
+              </div>
+              <div className="text-right">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  Nova Calculator
+                </h1>
+                <p className="text-sm text-muted-foreground font-medium">
+                  تحليلات NFT المتقدمة
+                </p>
+              </div>
+            </div>
+
+            {/* Channel Card */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 rounded-xl border border-primary/20 backdrop-blur-sm">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.05-.19-.03-.27-.02-.11.02-1.9 1.21-5.36 3.55-.51.35-.97.52-1.38.52-.45-.01-1.32-.26-1.97-.47-.8-.26-1.44-.4-1.38-.85.03-.23.36-.47.99-.72 3.88-1.69 6.48-2.81 7.82-3.35 3.73-1.55 4.51-1.82 5.02-1.83.11 0 .36.02.52.14.13.1.17.24.19.33-.01.06-.01.24-.03.43z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">قناتنا الرسمية</h3>
+                  <p className="text-sm text-muted-foreground">للحصول على آخر التحديثات</p>
+                </div>
+              </div>
+              
+              {/* Channel Link Button */}
+              <a 
+                href="https://t.me/GT_Rolet" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group inline-flex items-center justify-center gap-2 w-full p-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="text-lg">@GT_Rolet</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+
+            <p className="text-muted-foreground text-sm mt-4 font-medium">
+              احصل على رؤى احترافية لهدايا NFT في تيليجرام
+            </p>
+          </div>
         </div>
 
         {/* Current User Info */}
