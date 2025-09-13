@@ -8,32 +8,17 @@ const TonIcon: React.FC<TonIconProps> = ({ className = "w-5 h-5" }) => {
   return (
     <svg
       className={className}
-      viewBox="0 0 24 24"
+      viewBox="0 0 56 56"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <linearGradient id="tonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0088CC" />
-          <stop offset="100%" stopColor="#229ED9" />
-        </linearGradient>
-      </defs>
-      {/* TON Crystal Shape */}
-      <path
-        d="M12 2L4 6L4 18L12 22L20 18L20 6L12 2Z"
-        fill="url(#tonGradient)"
-        stroke="#0088CC"
-        strokeWidth="0.5"
+      {/* Official TON Logo Circle */}
+      <circle cx="28" cy="28" r="28" fill="#0098EA"/>
+      {/* Official TON Logo Symbol */}
+      <path 
+        d="M37.7257 15.6277H18.604C15.0882 15.6277 12.8599 19.4202 14.6286 22.4861L26.4298 42.9409C27.1999 44.2765 29.1298 44.2765 29.8999 42.9409L41.7035 22.4861C43.4699 19.4251 41.2415 15.6277 37.7281 15.6277H37.7257ZM26.4202 36.8068L23.8501 31.8327L17.6487 20.7414C17.2396 20.0315 17.7449 19.1218 18.6016 19.1218H26.4178V36.8092L26.4202 36.8068ZM38.6762 20.739L32.4772 31.8351L29.9071 36.8068V19.1194H37.7233C38.58 19.1194 39.0853 20.0291 38.6762 20.739Z" 
+        fill="white"
       />
-      {/* Inner crystal lines */}
-      <path
-        d="M12 2L12 22M4 6L20 18M20 6L4 18"
-        stroke="#ffffff"
-        strokeWidth="1"
-        strokeOpacity="0.3"
-      />
-      {/* Center highlight */}
-      <circle cx="12" cy="12" r="2" fill="#ffffff" fillOpacity="0.4"/>
     </svg>
   );
 };
