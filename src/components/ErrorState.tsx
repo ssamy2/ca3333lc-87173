@@ -9,6 +9,32 @@ interface ErrorStateProps {
 }
 
 const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => {
+  const [countdown, setCountdown] = React.useState<number | null>(null);
+
+  // Handle rate limit countdown
+  React.useEffect(() => {
+    if (error.startsWith('RATE_LIMIT_EXCEEDED:')) {
+      const seconds = parseInt(error.split(':')[1], 10);
+      if (seconds > 0) {
+        setCountdown(seconds);
+        
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev === null || prev <= 1) {
+              clearInterval(timer);
+              // Auto retry when countdown reaches 0
+              setTimeout(() => onRetry(), 1000);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        return () => clearInterval(timer);
+      }
+    }
+  }, [error, onRetry]);
+
   const getErrorContent = () => {
     switch (error) {
       case 'no_gifts':
@@ -95,6 +121,28 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
         };
 
       case 'RATE_LIMIT_EXCEEDED':
+        if (error.startsWith('RATE_LIMIT_EXCEEDED:')) {
+          const seconds = parseInt(error.split(':')[1], 10);
+          return {
+            icon: <TonIcon className="w-12 h-12 text-warning" />,
+            title: 'تم تجاوز حد الطلبات',
+            description: countdown !== null 
+              ? `يرجى الانتظار ${countdown} ثانية قبل المحاولة مجدداً` 
+              : `يرجى الانتظار ${seconds} ثانية قبل المحاولة مجدداً`,
+            action: countdown !== null ? (
+              <div className="mt-4">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="text-2xl font-mono font-bold text-warning">
+                    {countdown}
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  سيتم إعادة المحاولة تلقائياً عند انتهاء العد
+                </div>
+              </div>
+            ) : null
+          };
+        }
         return {
           icon: <TonIcon className="w-12 h-12 text-warning" />,
           title: 'تم تجاوز حد الطلبات',

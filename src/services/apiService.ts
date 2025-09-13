@@ -19,7 +19,7 @@ const isMixedContent = isBrowser && window.location.protocol === 'https:' && API
 // Use proxy if forced or Mixed Content detected
 const shouldUseProxy = FORCE_PROXY || isMixedContent;
 
-// Get proxy URL
+// Get proxy URL with fallback chain
 const getProxyUrl = () => {
   // In development, use local proxy
   if (import.meta.env.DEV) {
@@ -28,7 +28,15 @@ const getProxyUrl = () => {
   
   const envProxy = import.meta.env.VITE_CORS_PROXY || '';
   const lsProxy = isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '';
-  return lsProxy || envProxy || 'https://corsproxy.io';
+  
+  // Reliable proxy options for production
+  const fallbackProxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://cors-anywhere.herokuapp.com/'
+  ];
+  
+  return lsProxy || envProxy || fallbackProxies[0];
 };
 
 interface ProxyConfig {
@@ -53,18 +61,18 @@ const getProxyConfig = (): ProxyConfig | null => {
   }
   
   // Support different proxy formats
-  if (proxyUrl.includes('corsproxy.io')) {
+  if (proxyUrl.includes('allorigins.win')) {
     return {
-      name: 'CORS Proxy',
-      buildUrl: (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+      name: 'AllOrigins',
+      buildUrl: (targetUrl: string) => proxyUrl + encodeURIComponent(targetUrl),
       parseResponse: (data: any) => data
     };
   }
   
-  if (proxyUrl.includes('allorigins.win')) {
+  if (proxyUrl.includes('corsproxy.io')) {
     return {
-      name: 'AllOrigins',
-      buildUrl: (targetUrl: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+      name: 'CORS Proxy',
+      buildUrl: (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
       parseResponse: (data: any) => data
     };
   }
@@ -160,7 +168,11 @@ export const fetchNFTGifts = async (username: string) => {
       if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       } else if (response.status === 429) {
-        throw new Error('RATE_LIMIT_EXCEEDED');
+        // Read Retry-After header for rate limiting
+        const retryAfter = response.headers.get('Retry-After');
+        const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 10;
+        const errorMessage = `RATE_LIMIT_EXCEEDED:${retryAfterSeconds}`;
+        throw new Error(errorMessage);
       } else if (response.status === 403) {
         throw new Error('ACCESS_FORBIDDEN');
       } else if (response.status >= 500) {
@@ -198,8 +210,10 @@ export const fetchNFTGifts = async (username: string) => {
     }
     
     // Re-throw specific errors
-    if (error instanceof Error && 
-        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'RATE_LIMIT_EXCEEDED', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR', 'INSECURE_API_URL'].includes(error.message)) {
+    if (error instanceof Error && (
+        error.message.startsWith('RATE_LIMIT_EXCEEDED') ||
+        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR', 'INSECURE_API_URL'].includes(error.message)
+    )) {
       throw error;
     }
     
