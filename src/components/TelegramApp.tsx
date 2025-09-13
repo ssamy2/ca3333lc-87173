@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Calculator, RefreshCw, User, Sun, Moon, Palette, Lightbulb } from 'lucide-react';
+import { Search, Calculator, RefreshCw, User } from 'lucide-react';
 import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
 import EmptyState from './EmptyState';
 import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
+import LightBulbToggle from './LightBulbToggle';
 import { fetchNFTGifts } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -308,22 +309,10 @@ const TelegramApp: React.FC = () => {
             </div>
 
             {/* Theme Toggle */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTheme(isLight ? 'dark' : 'light')}
-                className="w-12 h-12 rounded-full border-2 transition-all duration-300 hover:scale-110"
-              >
-                <Lightbulb 
-                  className={`w-5 h-5 transition-all duration-300 ${
-                    isLight 
-                      ? 'text-yellow-500 fill-yellow-400 drop-shadow-lg' 
-                      : 'text-gray-400'
-                  }`} 
-                />
-              </Button>
-            </div>
+            <LightBulbToggle 
+              isLight={isLight} 
+              onToggle={() => setTheme(isLight ? 'dark' : 'light')} 
+            />
 
             {/* Channel and Chat Links */}
             <div className="flex gap-3">
