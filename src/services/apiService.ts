@@ -135,6 +135,8 @@ export const fetchNFTGifts = async (username: string) => {
         console.error(`Proxy ${proxyAttempt + 1} response not OK:`, response.status, response.statusText);
         if (response.status === 429) {
           throw new Error('RATE_LIMIT_EXCEEDED');
+        } else if (response.status === 403) {
+          throw new Error('ACCESS_FORBIDDEN');
         } else if (response.status >= 500) {
           throw new Error('SERVER_ERROR');
         } else if (response.status === 404) {

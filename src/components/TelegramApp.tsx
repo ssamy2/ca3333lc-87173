@@ -200,6 +200,8 @@ const TelegramApp: React.FC = () => {
           setCountdown(60);
         } else if (err.message === 'USER_NOT_FOUND') {
           setError('user_not_found');
+        } else if (err.message === 'ACCESS_FORBIDDEN') {
+          setError('ACCESS_FORBIDDEN');
         } else if (err.message === 'PARSE_ERROR') {
           setError('PARSE_ERROR');
         } else {
