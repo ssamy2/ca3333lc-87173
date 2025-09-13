@@ -21,15 +21,19 @@ const shouldUseProxy = FORCE_PROXY ||
 // Proxy configurations with proper URL building
 interface ProxyConfig {
   name: string;
-  buildUrl: (targetUrl: string, forJson: boolean) => string;
+  buildUrl: (targetUrl: string, forJson?: boolean) => string;
   parseResponse: (responseData: any) => any;
+  getHeaders?: () => Record<string, string>;
 }
 
+const customProxy = (import.meta.env.VITE_CORS_PROXY || (isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '')) as string;
+const corsShKey = (import.meta.env.VITE_CORS_SH_KEY || (isBrowser ? localStorage.getItem('CORS_SH_KEY') || '' : '')) as string;
+
 const proxyConfigs: ProxyConfig[] = [
-  // Custom proxy from environment (highest priority)
-  ...(import.meta.env.VITE_CORS_PROXY ? [{
+  // Custom proxy from environment or runtime (highest priority)
+  ...(customProxy ? [{
     name: 'Custom',
-    buildUrl: (targetUrl: string) => `${import.meta.env.VITE_CORS_PROXY}/${encodeURIComponent(targetUrl)}`,
+    buildUrl: (targetUrl: string) => `${customProxy}/${encodeURIComponent(targetUrl)}`,
     parseResponse: (data: any) => data
   }] : []),
   
@@ -44,7 +48,8 @@ const proxyConfigs: ProxyConfig[] = [
   {
     name: 'CORS.SH',
     buildUrl: (targetUrl: string) => `https://proxy.cors.sh/${targetUrl}`,
-    parseResponse: (data: any) => data
+    parseResponse: (data: any) => data,
+    getHeaders: () => (corsShKey ? { 'x-cors-api-key': corsShKey } : {})
   },
   
   // AllOrigins - handles JSON wrapping
@@ -55,13 +60,8 @@ const proxyConfigs: ProxyConfig[] = [
         ? `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
         : `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
     parseResponse: (data: any) => {
-      // AllOrigins wraps response in { contents: "..." }
-      if (data && typeof data === 'object' && data.contents) {
-        try {
-          return JSON.parse(data.contents);
-        } catch {
-          return data.contents;
-        }
+      if (data && typeof data === 'object' && (data as any).contents) {
+        try { return JSON.parse((data as any).contents); } catch { return (data as any).contents; }
       }
       return data;
     }
