@@ -128,6 +128,19 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
           ) : null
         };
       
+      case 'CANNOT_RECEIVE_GIFTS':
+        return {
+          icon: <TonIcon className="w-12 h-12 text-warning" />,
+          title: 'لا يمكن الوصول للهدايا',
+          description: 'هدايا NFT لهذا المستخدم خاصة أو محدودة. ليس لديك إذن لعرض مجموعة الهدايا الخاصة به.',
+          action: canRetry ? (
+            <Button onClick={onRetry} variant="outline" className="mt-4">
+              <TonIcon className="w-4 h-4 mr-2" />
+              جرب مستخدم آخر
+            </Button>
+          ) : null
+        };
+      
       default:
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,

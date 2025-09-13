@@ -95,16 +95,24 @@ export const fetchNFTGifts = async (username: string) => {
     console.log('API Response:', responseData);
     
     // Handle CORS proxy response format
+    let finalData = responseData;
     if (shouldUseProxy && responseData.contents) {
       try {
-        return JSON.parse(responseData.contents);
+        finalData = JSON.parse(responseData.contents);
       } catch (parseError) {
         console.error('Failed to parse CORS proxy response:', parseError);
         throw new Error('PARSE_ERROR');
       }
     }
     
-    return responseData;
+    // Check for API error responses
+    if (finalData && !finalData.success && finalData.error) {
+      if (finalData.error === 'Cannot receive gifts') {
+        throw new Error('CANNOT_RECEIVE_GIFTS');
+      }
+    }
+    
+    return finalData;
   } catch (error) {
     // Detailed error logging
     console.error('=== NFT Fetch Error Details ===');
