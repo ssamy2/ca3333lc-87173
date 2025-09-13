@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 
 interface LightBulbToggleProps {
   isLight: boolean;
@@ -7,116 +6,152 @@ interface LightBulbToggleProps {
 }
 
 const LightBulbToggle: React.FC<LightBulbToggleProps> = ({ isLight, onToggle }) => {
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handleMouseDown = () => {
+    setIsPulling(true);
+  };
+
+  const handleMouseUp = () => {
+    if (isPulling) {
+      onToggle();
+      setIsPulling(false);
+    }
+  };
+
   return (
     <div className="flex justify-end mr-4">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onToggle}
-        className="relative w-16 h-20 p-0 bg-transparent hover:bg-transparent group"
+      <div 
+        className="relative cursor-pointer select-none"
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => setIsPulling(false)}
       >
         <svg
-          width="64"
-          height="80"
-          viewBox="0 0 64 80"
-          className="transition-all duration-300 hover:scale-105"
+          width="80"
+          height="100" 
+          viewBox="0 0 80 100"
+          className={`transition-all duration-200 ${isPulling ? 'scale-105' : 'hover:scale-102'}`}
         >
-          {/* الحبل */}
+          {/* الحبل الطويل */}
           <line
-            x1="32"
-            y1="8"
-            x2="32"
-            y2="22"
-            stroke={isLight ? "#8B5A2B" : "#5A5A5A"}
-            strokeWidth="2"
-            className="transition-colors duration-300"
+            x1="40"
+            y1="5"
+            x2="40"
+            y2={isPulling ? "35" : "28"}
+            stroke="#8B4513"
+            strokeWidth="3"
+            className="transition-all duration-200"
           />
           
-          {/* حلقة الحبل */}
-          <circle
-            cx="32"
-            cy="8"
-            r="3"
-            fill={isLight ? "#8B5A2B" : "#5A5A5A"}
-            className="transition-colors duration-300"
-          />
-          
-          {/* قاعدة اللمبة */}
-          <rect
-            x="26"
-            y="22"
-            width="12"
-            height="8"
-            rx="2"
-            fill={isLight ? "#E5E5E5" : "#404040"}
-            className="transition-colors duration-300"
-          />
-          
-          {/* جسم اللمبة */}
+          {/* حلقة الحبل للسحب */}
           <ellipse
-            cx="32"
-            cy="45"
-            rx="16"
-            ry="20"
-            fill={isLight ? "#FFF9C4" : "#2A2A2A"}
-            stroke={isLight ? "#FFD700" : "#404040"}
+            cx="40"
+            cy="5"
+            rx="4"
+            ry="6"
+            fill="none"
+            stroke="#8B4513"
+            strokeWidth="3"
+            className={`transition-all duration-200 ${isPulling ? 'stroke-red-600' : 'hover:stroke-red-500'}`}
+          />
+          
+          {/* قاعدة اللمبة المعدنية */}
+          <rect
+            x="30"
+            y={isPulling ? "35" : "28"}
+            width="20"
+            height="12"
+            rx="3"
+            fill="#C0C0C0"
+            stroke="#A0A0A0"
+            strokeWidth="1"
+            className="transition-all duration-200"
+          />
+          
+          {/* خطوط قاعدة اللمبة */}
+          <line x1="32" y1={isPulling ? "37" : "30"} x2="48" y2={isPulling ? "37" : "30"} stroke="#A0A0A0" strokeWidth="0.5" />
+          <line x1="32" y1={isPulling ? "40" : "33"} x2="48" y2={isPulling ? "40" : "33"} stroke="#A0A0A0" strokeWidth="0.5" />
+          <line x1="32" y1={isPulling ? "43" : "36"} x2="48" y2={isPulling ? "43" : "36"} stroke="#A0A0A0" strokeWidth="0.5" />
+          
+          {/* جسم اللمبة الزجاجية */}
+          <path
+            d={`M 40 ${isPulling ? "47" : "40"} 
+               C 25 ${isPulling ? "50" : "43"} 25 ${isPulling ? "70" : "63"} 40 ${isPulling ? "85" : "78"}
+               C 55 ${isPulling ? "70" : "63"} 55 ${isPulling ? "50" : "43"} 40 ${isPulling ? "47" : "40"} Z`}
+            fill={isLight ? "#FFF8DC" : "#404040"}
+            stroke={isLight ? "#FFD700" : "#606060"}
             strokeWidth="2"
             className="transition-all duration-300"
           />
           
-          {/* خيوط اللمبة الداخلية */}
+          {/* الفتيل الداخلي */}
+          <path
+            d={`M 30 ${isPulling ? "60" : "53"} Q 40 ${isPulling ? "55" : "48"} 50 ${isPulling ? "60" : "53"}`}
+            stroke={isLight ? "#FF8C00" : "#555"}
+            strokeWidth="2"
+            fill="none"
+            className="transition-all duration-300"
+          />
+          <path
+            d={`M 30 ${isPulling ? "65" : "58"} Q 40 ${isPulling ? "70" : "63"} 50 ${isPulling ? "65" : "58"}`}
+            stroke={isLight ? "#FF8C00" : "#555"}
+            strokeWidth="2"
+            fill="none"
+            className="transition-all duration-300"
+          />
+          
+          {/* نقطة الإضاءة المركزية */}
+          {isLight && (
+            <circle
+              cx="40"
+              cy={isPulling ? "62" : "55"}
+              r="3"
+              fill="#FFFF00"
+              className="animate-pulse transition-all duration-200"
+            />
+          )}
+          
+          {/* توهج اللمبة عند الإضاءة */}
           {isLight && (
             <>
-              <path
-                d="M20 40 Q32 35 44 40"
-                stroke="#FFB800"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
+              <circle
+                cx="40"
+                cy={isPulling ? "66" : "59"}
+                r="25"
+                fill="url(#lightGlow)"
+                opacity="0.3"
+                className="transition-all duration-200"
               />
-              <path
-                d="M20 45 Q32 50 44 45"
-                stroke="#FFB800"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
-              />
-              <path
-                d="M20 50 Q32 45 44 50"
-                stroke="#FFB800"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
+              <circle
+                cx="40" 
+                cy={isPulling ? "66" : "59"}
+                r="35"
+                fill="url(#lightGlow2)"
+                opacity="0.1"
+                className="transition-all duration-200"
               />
             </>
           )}
           
-          {/* توهج اللمبة */}
-          {isLight && (
-            <ellipse
-              cx="32"
-              cy="45"
-              rx="20"
-              ry="24"
-              fill="url(#lightGlow)"
-              className="opacity-50"
-            />
-          )}
-          
           <defs>
             <radialGradient id="lightGlow" cx="0.5" cy="0.5" r="0.5">
-              <stop offset="0%" stopColor="#FFF700" stopOpacity="0.3" />
-              <stop offset="70%" stopColor="#FFD700" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#FFFF00" stopOpacity="0.8" />
+              <stop offset="60%" stopColor="#FFD700" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#FFA500" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="lightGlow2" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%" stopColor="#FFFF88" stopOpacity="0.3" />
               <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
             </radialGradient>
           </defs>
         </svg>
         
-        {/* تأثير الضوء المنتشر */}
-        {isLight && (
-          <div className="absolute inset-0 rounded-full bg-yellow-200 opacity-20 blur-md scale-150 pointer-events-none" />
-        )}
-      </Button>
+        {/* نص إرشادي */}
+        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-muted-foreground opacity-70">
+          اسحب لأسفل
+        </div>
+      </div>
     </div>
   );
 };
