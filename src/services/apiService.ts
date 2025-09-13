@@ -8,14 +8,23 @@ const API_BASE_URL = (() => {
   const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
   return (lsUrl || envUrl || 'http://207.180.203.9:5000').replace(/\/+$/, '');
 })();
-const FORCE_PROXY = import.meta.env.VITE_FORCE_PROXY === 'true';
 
-// Only use proxy if explicitly forced
-const shouldUseProxy = FORCE_PROXY;
-
-// Custom proxy configuration (only if needed)
+// Check if proxy is needed
 const isBrowser = typeof window !== 'undefined';
-const customProxy = shouldUseProxy ? (import.meta.env.VITE_CORS_PROXY || (isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '')) : '';
+const FORCE_PROXY = (import.meta.env.VITE_FORCE_PROXY === 'true') || (isBrowser && localStorage.getItem('FORCE_PROXY') === 'true');
+
+// Detect Mixed Content scenario (HTTPS app trying to access HTTP API)
+const isMixedContent = isBrowser && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:');
+
+// Use proxy if forced or Mixed Content detected
+const shouldUseProxy = FORCE_PROXY || isMixedContent;
+
+// Get proxy URL
+const getProxyUrl = () => {
+  const envProxy = import.meta.env.VITE_CORS_PROXY || '';
+  const lsProxy = isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '';
+  return lsProxy || envProxy || 'https://corsproxy.io';
+};
 
 interface ProxyConfig {
   name: string;
@@ -23,12 +32,44 @@ interface ProxyConfig {
   parseResponse: (responseData: any) => any;
 }
 
-// Only custom proxy if forced
-const proxyConfig: ProxyConfig | null = customProxy ? {
-  name: 'Custom',
-  buildUrl: (targetUrl: string) => `${customProxy}/${encodeURIComponent(targetUrl)}`,
-  parseResponse: (data: any) => data
-} : null;
+// Proxy configuration with multiple format support
+const getProxyConfig = (): ProxyConfig | null => {
+  if (!shouldUseProxy) return null;
+  
+  const proxyUrl = getProxyUrl();
+  
+  // Support different proxy formats
+  if (proxyUrl.includes('corsproxy.io')) {
+    return {
+      name: 'CORS Proxy',
+      buildUrl: (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+      parseResponse: (data: any) => data
+    };
+  }
+  
+  if (proxyUrl.includes('allorigins.win')) {
+    return {
+      name: 'AllOrigins',
+      buildUrl: (targetUrl: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+      parseResponse: (data: any) => data
+    };
+  }
+  
+  if (proxyUrl.includes('cors.isomorphic-git.org')) {
+    return {
+      name: 'Isomorphic Git CORS',
+      buildUrl: (targetUrl: string) => `https://cors.isomorphic-git.org/${targetUrl}`,
+      parseResponse: (data: any) => data
+    };
+  }
+  
+  // Default custom proxy format
+  return {
+    name: 'Custom Proxy',
+    buildUrl: (targetUrl: string) => `${proxyUrl}/${encodeURIComponent(targetUrl)}`,
+    parseResponse: (data: any) => data
+  };
+};
 
 // Build API URL with or without proxy and add cache busting
 const buildApiUrl = (path: string) => {
@@ -36,11 +77,18 @@ const buildApiUrl = (path: string) => {
   const separator = path.includes('?') ? '&' : '?';
   const targetUrl = `${API_BASE_URL}${path}${separator}_t=${timestamp}`;
   
+  const proxyConfig = getProxyConfig();
+  
   if (!shouldUseProxy || !proxyConfig) {
+    console.log('🔗 Direct API call:', targetUrl);
     return targetUrl;
   }
   
-  return proxyConfig.buildUrl(targetUrl);
+  const proxiedUrl = proxyConfig.buildUrl(targetUrl);
+  console.log('🔀 Proxy API call:', proxiedUrl, `(via ${proxyConfig.name})`);
+  console.log('🎯 Target URL:', targetUrl);
+  
+  return proxiedUrl;
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)
@@ -121,6 +169,7 @@ export const fetchNFTGifts = async (username: string) => {
     console.log('API Response:', responseData);
     
     // Process response with proxy parser if using proxy
+    const proxyConfig = getProxyConfig();
     const processedData = shouldUseProxy && proxyConfig ? proxyConfig.parseResponse(responseData) : responseData;
     return processAPIResponse(processedData, shouldUseProxy);
     

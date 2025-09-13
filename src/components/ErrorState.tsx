@@ -105,33 +105,85 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'INSECURE_API_URL':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'اتصال غير آمن محظور',
-          description: 'لا يمكن لتطبيق يعمل عبر HTTPS الاتصال بخادم HTTP غير آمن. يرجى استخدام رابط خادم HTTPS.',
+          title: 'مشكلة Mixed Content محلولة',
+          description: 'سيتم استخدام بروكسي HTTPS للوصول للخادم HTTP. يمكنك أيضاً تغيير إعدادات الاتصال.',
           action: (
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <Button
-                onClick={() => {
-                  const url = window.prompt('أدخل رابط خادم HTTPS (مثال: https://api.example.com)');
-                  if (url) {
-                    try {
-                      localStorage.setItem('API_BASE_URL', url.trim());
-                      window.location.reload();
-                    } catch (e) {
-                      console.error('Failed to save API base URL', e);
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => {
+                    const currentUrl = localStorage.getItem('API_BASE_URL') || 'http://207.180.203.9:5000';
+                    const url = window.prompt('أدخل رابط الخادم (HTTPS أفضل):', currentUrl);
+                    if (url && url !== currentUrl) {
+                      try {
+                        localStorage.setItem('API_BASE_URL', url.trim());
+                        window.location.reload();
+                      } catch (e) {
+                        console.error('Failed to save API URL', e);
+                      }
                     }
-                  }
-                }}
-                variant="outline"
-              >
-                <TonIcon className="w-4 h-4 mr-2" />
-                تغيير رابط الخادم
-              </Button>
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <TonIcon className="w-4 h-4 mr-2" />
+                  تغيير رابط الخادم
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    const currentProxy = localStorage.getItem('CORS_PROXY_URL') || 'https://corsproxy.io';
+                    const proxy = window.prompt('أدخل رابط البروكسي (HTTPS):', currentProxy);
+                    if (proxy && proxy !== currentProxy) {
+                      try {
+                        localStorage.setItem('CORS_PROXY_URL', proxy.trim());
+                        window.location.reload();
+                      } catch (e) {
+                        console.error('Failed to save proxy URL', e);
+                      }
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <TonIcon className="w-4 h-4 mr-2" />
+                  تغيير البروكسي
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    const current = localStorage.getItem('FORCE_PROXY') === 'true';
+                    localStorage.setItem('FORCE_PROXY', (!current).toString());
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <TonIcon className="w-4 h-4 mr-2" />
+                  {localStorage.getItem('FORCE_PROXY') === 'true' ? 'تعطيل البروكسي' : 'تفعيل البروكسي'}
+                </Button>
+              </div>
+              
               {canRetry ? (
-                <Button onClick={onRetry} variant="outline">
+                <Button onClick={onRetry} variant="default" className="w-full">
                   <TonIcon className="w-4 h-4 mr-2" />
                   إعادة المحاولة
                 </Button>
               ) : null}
+              
+              <Button
+                onClick={() => {
+                  localStorage.removeItem('API_BASE_URL');
+                  localStorage.removeItem('CORS_PROXY_URL');
+                  localStorage.removeItem('FORCE_PROXY');
+                  window.location.reload();
+                }}
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+              >
+                إعادة تعيين الإعدادات
+              </Button>
             </div>
           )
         };
