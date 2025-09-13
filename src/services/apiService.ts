@@ -3,7 +3,11 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 export const USE_MOCK_DATA = false; // Always use real API
 
 // Get API base URL from environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://207.180.203.9:5000';
+const API_BASE_URL = (() => {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
+  const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
+  return (lsUrl || envUrl || 'http://207.180.203.9:5000').replace(/\/+$/, '');
+})();
 const FORCE_PROXY = import.meta.env.VITE_FORCE_PROXY === 'true';
 
 // Only use proxy if explicitly forced
@@ -53,6 +57,10 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
 // API Health Check
 export const checkAPIHealth = async (): Promise<boolean> => {
   try {
+    // Prevent mixed-content requests from HTTPS -> HTTP
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
+      throw new Error('INSECURE_API_URL');
+    }
     const apiUrl = buildApiUrl('/api/health');
     
     const response = await fetch(apiUrl, { 
@@ -68,6 +76,11 @@ export const checkAPIHealth = async (): Promise<boolean> => {
 export const fetchNFTGifts = async (username: string) => {
   // Clean username by removing @ if present
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+  
+  // Prevent mixed-content requests from HTTPS -> HTTP
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
+    throw new Error('INSECURE_API_URL');
+  }
   
   const apiUrl = buildApiUrl(`/api/nft-gifts?username=@${encodeURIComponent(cleanUsername)}`);
   
@@ -124,7 +137,7 @@ export const fetchNFTGifts = async (username: string) => {
     
     // Re-throw specific errors
     if (error instanceof Error && 
-        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'RATE_LIMIT_EXCEEDED', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR'].includes(error.message)) {
+        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'RATE_LIMIT_EXCEEDED', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR', 'INSECURE_API_URL'].includes(error.message)) {
       throw error;
     }
     

@@ -102,6 +102,40 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
           action: null
         };
 
+      case 'INSECURE_API_URL':
+        return {
+          icon: <TonIcon className="w-12 h-12 text-destructive" />,
+          title: 'اتصال غير آمن محظور',
+          description: 'لا يمكن لتطبيق يعمل عبر HTTPS الاتصال بخادم HTTP غير آمن. يرجى استخدام رابط خادم HTTPS.',
+          action: (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <Button
+                onClick={() => {
+                  const url = window.prompt('أدخل رابط خادم HTTPS (مثال: https://api.example.com)');
+                  if (url) {
+                    try {
+                      localStorage.setItem('API_BASE_URL', url.trim());
+                      window.location.reload();
+                    } catch (e) {
+                      console.error('Failed to save API base URL', e);
+                    }
+                  }
+                }}
+                variant="outline"
+              >
+                <TonIcon className="w-4 h-4 mr-2" />
+                تغيير رابط الخادم
+              </Button>
+              {canRetry ? (
+                <Button onClick={onRetry} variant="outline">
+                  <TonIcon className="w-4 h-4 mr-2" />
+                  إعادة المحاولة
+                </Button>
+              ) : null}
+            </div>
+          )
+        };
+
       case 'CORS_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
