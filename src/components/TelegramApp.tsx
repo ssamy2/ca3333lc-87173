@@ -305,25 +305,61 @@ const TelegramApp: React.FC = () => {
 
         {/* Current User Info */}
         {currentUser && (
-          <div className="telegram-card p-4 flex items-center justify-between animate-slide-up">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
+          <div className="relative overflow-hidden telegram-card p-6 animate-slide-up bg-gradient-to-br from-background via-background/95 to-primary/5 border border-primary/10 shadow-lg hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-2 right-2 w-32 h-32 bg-gradient-to-br from-primary to-accent rounded-full blur-3xl"></div>
+              <div className="absolute bottom-2 left-2 w-24 h-24 bg-gradient-to-tr from-accent to-primary rounded-full blur-2xl"></div>
+            </div>
+            
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {/* Enhanced User Avatar */}
+                <div className="relative group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20">
+                    <User className="w-7 h-7 text-white" />
+                  </div>
+                  {/* Avatar Ring Effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
+                  {/* Online Status Indicator */}
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+                
+                {/* Enhanced User Info */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      المستخدم الحالي
+                    </h3>
+                    <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
+                      نشط
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">@</span>
+                    <span className="font-mono text-sm font-medium text-foreground/90">{currentUser}</span>
+                    <div className="w-1 h-1 bg-primary rounded-full"></div>
+                    <span className="text-xs text-muted-foreground">Telegram</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-sm">Current User</p>
-                <p className="text-xs text-muted-foreground">@{currentUser}</p>
+              {/* Enhanced Refresh Button */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={handleRefresh}
+                  disabled={loading || countdown > 0}
+                  variant="ghost"
+                  size="sm"
+                  className="relative h-10 w-10 p-0 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 shadow-sm hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group"
+                >
+                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-primary' : 'text-primary/70 group-hover:text-primary'} transition-colors duration-200`} />
+                  {/* Button Glow Effect */}
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10"></div>
+                </Button>
               </div>
             </div>
-            <Button 
-              onClick={handleRefresh}
-              disabled={loading || countdown > 0}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
           </div>
         )}
 
