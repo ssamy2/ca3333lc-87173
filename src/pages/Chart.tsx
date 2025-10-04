@@ -189,12 +189,12 @@ const Chart = () => {
   const getSizeForChange = (change: number) => {
     const absChange = Math.abs(change);
     
-    // Variable sizes based on change magnitude
-    if (absChange >= 8) return 160;      // Huge change
-    if (absChange >= 5) return 140;      // Very large change
-    if (absChange >= 3) return 120;      // Large change
-    if (absChange >= 1.5) return 100;    // Medium change
-    return 80;                           // Small change
+    // Variable sizes based on change magnitude - reduced for better fit
+    if (absChange >= 8) return 140;      // Huge change
+    if (absChange >= 5) return 120;      // Very large change
+    if (absChange >= 3) return 100;      // Large change
+    if (absChange >= 1.5) return 85;     // Medium change
+    return 70;                           // Small change
   };
 
   const filteredData = getFilteredData();
@@ -364,7 +364,7 @@ const Chart = () => {
                   className="p-4 flex flex-col items-center gap-2 bg-card/50 backdrop-blur hover:bg-card/70 transition-all"
                 >
                   <img
-                    src={data.image_url}
+                    src={imageCache.has(data.image_url) ? imageCache.get(data.image_url)!.src : data.image_url}
                     alt={name}
                     className="w-16 h-16 object-contain"
                     onError={(e) => {
@@ -393,9 +393,14 @@ const Chart = () => {
           <div
             id="heatmap-container"
             className="relative bg-[#0a0f1a] overflow-hidden"
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
+            style={{ 
+              transform: `scale(${zoomLevel})`, 
+              transformOrigin: 'top left',
+              width: '1400px',
+              minHeight: '900px'
+            }}
           >
-            <div className="flex flex-wrap" style={{ lineHeight: 0 }}>
+            <div className="flex flex-wrap" style={{ lineHeight: 0, width: '100%' }}>
               {filteredData.map(([name, data], index) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -413,9 +418,9 @@ const Chart = () => {
                       className="inline-flex items-center justify-center text-white/80 font-bold"
                       style={{
                         backgroundColor: '#0a0f1a',
-                        width: '120px',
-                        height: '120px',
-                        fontSize: '12px',
+                        width: '100px',
+                        height: '100px',
+                        fontSize: '11px',
                         padding: '8px',
                         margin: 0,
                         boxSizing: 'border-box',
@@ -433,37 +438,36 @@ const Chart = () => {
                         backgroundColor: color,
                         width: `${size}px`,
                         height: `${size}px`,
-                        padding: '4px',
+                        padding: '6px',
                         margin: 0,
                         boxSizing: 'border-box',
+                        gap: '2px',
                       }}
                   >
                     <img
-                      src={data.image_url}
+                      src={imageCache.has(data.image_url) ? imageCache.get(data.image_url)!.src : data.image_url}
                       alt={name}
                       className="object-contain"
                       style={{
-                        width: size >= 140 ? '40px' : size >= 120 ? '32px' : '24px',
-                        height: size >= 140 ? '40px' : size >= 120 ? '32px' : '24px',
-                        marginBottom: '4px',
+                        width: size >= 120 ? '32px' : size >= 100 ? '28px' : '20px',
+                        height: size >= 120 ? '32px' : size >= 100 ? '28px' : '20px',
+                        flexShrink: 0,
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
-                      className="font-bold text-center line-clamp-1"
+                      className="font-bold text-center"
                       style={{ 
-                        fontSize: size >= 140 ? '12px' : size >= 120 ? '11px' : '9px',
-                        fontWeight: 800,
-                        lineHeight: '1.1',
-                        paddingLeft: '3px',
-                        paddingRight: '3px',
+                        fontSize: size >= 120 ? '10px' : size >= 100 ? '9px' : '8px',
+                        fontWeight: 700,
+                        lineHeight: '1',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         maxWidth: '100%',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                        letterSpacing: '0.3px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {name}
@@ -471,12 +475,11 @@ const Chart = () => {
                     <div 
                       className="font-bold"
                       style={{ 
-                        fontSize: size >= 140 ? '16px' : size >= 120 ? '14px' : '12px',
+                        fontSize: size >= 120 ? '13px' : size >= 100 ? '12px' : '10px',
                         fontWeight: 900,
                         lineHeight: '1',
-                        marginTop: '4px',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                        letterSpacing: '0.3px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {change >= 0 ? '+' : ''}
@@ -485,15 +488,15 @@ const Chart = () => {
                     <div 
                       className="flex items-center"
                       style={{ 
-                        fontSize: size >= 140 ? '11px' : size >= 120 ? '10px' : '8px',
+                        fontSize: size >= 120 ? '9px' : size >= 100 ? '8px' : '7px',
                         fontWeight: 700,
                         lineHeight: '1',
-                        marginTop: '2px',
                         gap: '2px',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <TonIcon className={size >= 120 ? "w-3 h-3" : "w-2.5 h-2.5"} />
+                      <TonIcon className={size >= 100 ? "w-2.5 h-2.5" : "w-2 h-2"} />
                       {price.toFixed(2)}
                     </div>
                   </div>
