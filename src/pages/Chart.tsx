@@ -95,11 +95,11 @@ const Chart = () => {
   const getFilteredData = () => {
     let entries = Object.entries(marketData);
 
-    // Sort by change
+    // Sort by absolute change (biggest changes first regardless of sign)
     entries.sort((a, b) => {
       const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
       const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-      return changeB - changeA;
+      return Math.abs(changeB) - Math.abs(changeA);
     });
 
     // Apply top filter
@@ -124,12 +124,33 @@ const Chart = () => {
     const loadingToast = toast.loading('Generating image...');
 
     try {
+      // Wait a bit for rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(element, {
-        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background') || '#1a1f2e',
+        backgroundColor: '#1a1f2e',
         scale: 2,
         logging: false,
         useCORS: true,
+        allowTaint: true,
+        imageTimeout: 0,
       });
+
+      // Draw watermark on canvas
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 2;
+        
+        const text = '@Nova_calculator_bot';
+        const x = Math.random() * (canvas.width - 250) + 20;
+        const y = Math.random() * (canvas.height - 50) + 30;
+        
+        ctx.strokeText(text, x, y);
+        ctx.fillText(text, x, y);
+      }
 
       const base64Image = canvas.toDataURL('image/png').split(',')[1];
 
@@ -171,25 +192,34 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // More vibrant colors with better contrast
-    if (change > 8) return 'rgb(0, 200, 83)';
-    if (change > 4) return 'rgb(34, 197, 94)';
-    if (change > 0) return 'rgb(74, 222, 128)';
-    if (change > -4) return 'rgb(248, 113, 113)';
-    if (change > -8) return 'rgb(239, 68, 68)';
-    return 'rgb(220, 38, 38)';
+    // Green for positive, red for negative with gradient intensity
+    if (change >= 0) {
+      if (change > 10) return '#00a651'; // Dark green
+      if (change > 5) return '#22c55e';  // Medium green
+      if (change > 2) return '#4ade80';  // Light green
+      return '#86efac';                   // Very light green
+    } else {
+      if (change < -10) return '#dc2626'; // Dark red
+      if (change < -5) return '#ef4444';  // Medium red
+      if (change < -2) return '#f87171';  // Light red
+      return '#fca5a5';                    // Very light red
+    }
   };
 
   const getSizeForChange = (change: number) => {
-    // More balanced sizing algorithm
+    // Consistent sizing based on absolute change
     const absChange = Math.abs(change);
     
-    // Fixed size ranges for consistency
-    if (absChange > 8) return 140;
-    if (absChange > 5) return 120;
-    if (absChange > 3) return 105;
-    if (absChange > 1) return 95;
-    return 85;
+    // More granular size ranges for better distribution
+    if (absChange > 15) return 160;
+    if (absChange > 12) return 145;
+    if (absChange > 10) return 135;
+    if (absChange > 8) return 120;
+    if (absChange > 6) return 110;
+    if (absChange > 4) return 100;
+    if (absChange > 2) return 90;
+    if (absChange > 1) return 85;
+    return 75;
   };
 
   const filteredData = getFilteredData();
@@ -354,10 +384,10 @@ const Chart = () => {
         ) : (
           <div
             id="heatmap-container"
-            className="relative bg-card/30 backdrop-blur rounded-lg p-3 overflow-auto"
+            className="relative bg-card/30 backdrop-blur rounded-lg p-4 overflow-auto"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex flex-wrap gap-1 justify-center items-center">
               {filteredData.map(([name, data]) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -367,32 +397,47 @@ const Chart = () => {
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center justify-center p-2 rounded-lg text-white shadow-md transition-all hover:scale-105"
+                    className="flex flex-col items-center justify-center p-1.5 rounded text-white shadow-lg transition-all hover:scale-105 border border-black/20"
                     style={{
                       backgroundColor: color,
                       width: `${size}px`,
                       height: `${size}px`,
-                      minWidth: '85px',
-                      minHeight: '85px',
+                      minWidth: '75px',
+                      minHeight: '75px',
                     }}
                   >
                     <img
                       src={data.image_url}
                       alt={name}
-                      className="w-10 h-10 object-contain mb-1"
+                      className="object-contain mb-0.5"
+                      style={{
+                        width: `${size * 0.25}px`,
+                        height: `${size * 0.25}px`,
+                        maxWidth: '32px',
+                        maxHeight: '32px',
+                      }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
-                    <div className="text-[10px] font-bold text-center line-clamp-2 px-1">
+                    <div 
+                      className="font-bold text-center line-clamp-1 px-0.5"
+                      style={{ fontSize: `${Math.max(8, size * 0.08)}px` }}
+                    >
                       {name}
                     </div>
-                    <div className="text-xs font-bold mt-1">
+                    <div 
+                      className="font-bold mt-0.5"
+                      style={{ fontSize: `${Math.max(10, size * 0.1)}px` }}
+                    >
                       {change >= 0 ? '+' : ''}
                       {change.toFixed(2)}%
                     </div>
-                    <div className="text-[10px] flex items-center gap-0.5 mt-0.5">
-                      <TonIcon className="w-2.5 h-2.5" />
+                    <div 
+                      className="flex items-center gap-0.5 mt-0.5"
+                      style={{ fontSize: `${Math.max(8, size * 0.075)}px` }}
+                    >
+                      <TonIcon className="w-2 h-2" />
                       {price.toFixed(2)}
                     </div>
                   </div>
