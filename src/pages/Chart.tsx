@@ -384,10 +384,10 @@ const Chart = () => {
         ) : (
           <div
             id="heatmap-container"
-            className="relative bg-card/30 backdrop-blur rounded-lg p-2 overflow-auto"
+            className="relative bg-[#0a0f1a] rounded-lg p-0 overflow-auto"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
-            <div className="flex flex-wrap gap-[2px] justify-start items-start">
+            <div className="flex flex-wrap gap-[1px] justify-start items-start">
               {filteredData.map(([name, data]) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -397,7 +397,7 @@ const Chart = () => {
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center justify-center p-1 rounded-md text-white shadow-sm transition-all hover:scale-[1.02] border border-black/30"
+                    className="flex flex-col items-center justify-center p-1.5 text-white transition-all hover:opacity-90"
                     style={{
                       backgroundColor: color,
                       width: `${size}px`,
@@ -409,35 +409,35 @@ const Chart = () => {
                     <img
                       src={data.image_url}
                       alt={name}
-                      className="object-contain mb-0.5"
+                      className="object-contain mb-1"
                       style={{
-                        width: `${size * 0.28}px`,
-                        height: `${size * 0.28}px`,
-                        maxWidth: '36px',
-                        maxHeight: '36px',
+                        width: `${size * 0.3}px`,
+                        height: `${size * 0.3}px`,
+                        maxWidth: '40px',
+                        maxHeight: '40px',
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
-                      className="font-bold text-center line-clamp-1 px-0.5 leading-tight"
-                      style={{ fontSize: `${Math.max(9, size * 0.085)}px` }}
+                      className="font-bold text-center line-clamp-1 px-1 leading-tight"
+                      style={{ fontSize: `${Math.max(10, size * 0.09)}px` }}
                     >
                       {name}
                     </div>
                     <div 
-                      className="font-bold mt-0.5"
-                      style={{ fontSize: `${Math.max(11, size * 0.11)}px` }}
+                      className="font-bold mt-1"
+                      style={{ fontSize: `${Math.max(12, size * 0.12)}px` }}
                     >
                       {change >= 0 ? '+' : ''}
                       {change.toFixed(2)}%
                     </div>
                     <div 
-                      className="flex items-center gap-0.5"
-                      style={{ fontSize: `${Math.max(8, size * 0.08)}px` }}
+                      className="flex items-center gap-1 mt-0.5"
+                      style={{ fontSize: `${Math.max(9, size * 0.085)}px` }}
                     >
-                      <TonIcon className="w-2.5 h-2.5" />
+                      <TonIcon className="w-3 h-3" />
                       {price.toFixed(2)}
                     </div>
                   </div>
