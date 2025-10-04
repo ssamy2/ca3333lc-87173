@@ -197,8 +197,8 @@ const Chart = () => {
   };
 
   const getSizeForChange = (_change: number) => {
-    // Fixed size for perfect tiling (no gaps)
-    return 96;
+    // Fixed size for perfect tiling - larger for better text spacing
+    return 120;
   };
 
   const filteredData = getFilteredData();
@@ -391,22 +391,24 @@ const Chart = () => {
                       alt={name}
                       className="object-contain"
                       style={{
-                        width: `${size * 0.32}px`,
-                        height: `${size * 0.32}px`,
-                        maxWidth: '38px',
-                        maxHeight: '38px',
-                        marginBottom: '2px',
+                        width: '28px',
+                        height: '28px',
+                        marginBottom: '3px',
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
-                      className="font-bold text-center line-clamp-1 leading-tight"
+                      className="font-bold text-center line-clamp-1"
                       style={{ 
-                        fontSize: `${Math.max(9, size * 0.088)}px`,
-                        paddingLeft: '2px',
-                        paddingRight: '2px',
+                        fontSize: '10px',
+                        lineHeight: '1.1',
+                        paddingLeft: '3px',
+                        paddingRight: '3px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
                       }}
                     >
                       {name}
@@ -414,8 +416,9 @@ const Chart = () => {
                     <div 
                       className="font-bold"
                       style={{ 
-                        fontSize: `${Math.max(11, size * 0.115)}px`,
-                        marginTop: '2px',
+                        fontSize: '12px',
+                        lineHeight: '1',
+                        marginTop: '3px',
                       }}
                     >
                       {change >= 0 ? '+' : ''}
@@ -424,7 +427,9 @@ const Chart = () => {
                     <div 
                       className="flex items-center"
                       style={{ 
-                        fontSize: `${Math.max(8, size * 0.08)}px`,
+                        fontSize: '9px',
+                        lineHeight: '1',
+                        marginTop: '1px',
                         gap: '2px',
                       }}
                     >
