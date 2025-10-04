@@ -192,21 +192,19 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Colors matching the reference image
+    // Solid colors - no gradients
     if (change >= 0) {
-      if (change > 10) return '#00c853';  // Bright green
-      if (change > 7) return '#1de9b6';   // Teal green
-      if (change > 5) return '#22c55e';   // Medium green
-      if (change > 3) return '#4ade80';   // Light green
-      if (change > 1) return '#86efac';   // Very light green
-      return '#bbf7d0';                    // Pale green
+      if (change > 8) return '#10b981';   // Bright green
+      if (change > 5) return '#34d399';   // Medium-bright green
+      if (change > 3) return '#6ee7b7';   // Medium green
+      if (change > 1) return '#a7f3d0';   // Light green
+      return '#d1fae5';                   // Very light green
     } else {
-      if (change < -10) return '#d32f2f'; // Deep red
-      if (change < -7) return '#e53935';  // Bright red
-      if (change < -5) return '#ef4444';  // Medium red
-      if (change < -3) return '#f87171';  // Light red
-      if (change < -1) return '#fca5a5';  // Very light red
-      return '#fecaca';                    // Pale red
+      if (change < -8) return '#dc2626';  // Bright red
+      if (change < -5) return '#ef4444';  // Medium-bright red
+      if (change < -3) return '#f87171';  // Medium red
+      if (change < -1) return '#fca5a5';  // Light red
+      return '#fecaca';                   // Very light red
     }
   };
 
@@ -387,7 +385,7 @@ const Chart = () => {
             className="relative bg-[#0a0f1a] rounded-lg overflow-hidden"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
-            <div className="flex flex-wrap gap-0 justify-start items-start">
+            <div className="flex flex-wrap justify-start items-start">
               {filteredData.map(([name, data]) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -397,7 +395,7 @@ const Chart = () => {
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center justify-center p-1 text-white transition-all hover:opacity-90 border border-black/20"
+                    className="flex flex-col items-center justify-center p-1 text-white transition-all hover:opacity-90"
                     style={{
                       backgroundColor: color,
                       width: `${size}px`,
