@@ -127,34 +127,18 @@ const Chart = () => {
 
     try {
       // Wait a bit for rendering to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(element, {
         backgroundColor: '#1a1f2e',
-        scale: 2,
+        scale: 4,
         logging: false,
         useCORS: true,
         allowTaint: true,
         imageTimeout: 0,
       });
 
-      // Draw watermark on canvas
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 2;
-        
-        const text = '@Nova_calculator_bot';
-        const x = Math.random() * (canvas.width - 250) + 20;
-        const y = Math.random() * (canvas.height - 50) + 30;
-        
-        ctx.strokeText(text, x, y);
-        ctx.fillText(text, x, y);
-      }
-
-      const base64Image = canvas.toDataURL('image/png').split(',')[1];
+      const base64Image = canvas.toDataURL('image/png', 1.0).split(',')[1];
 
       // Get Telegram user ID
       const tg = (window as any).Telegram?.WebApp;
