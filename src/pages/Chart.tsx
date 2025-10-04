@@ -24,7 +24,7 @@ type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 
 // Store loaded images to prevent reloading
-const imageCache = new Map<string, string>();
+const imageCache = new Map<string, HTMLImageElement>();
 let imagesPreloaded = false;
 
 const Chart = () => {
@@ -34,6 +34,7 @@ const Chart = () => {
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const updateIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -73,8 +74,11 @@ const Chart = () => {
         Object.values(data).forEach((nft: any) => {
           if (nft.image_url && !imageCache.has(nft.image_url)) {
             const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              imageCache.set(nft.image_url, img);
+            };
             img.src = nft.image_url;
-            imageCache.set(nft.image_url, nft.image_url);
           }
         });
         imagesPreloaded = true;
@@ -130,7 +134,7 @@ const Chart = () => {
       await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#1a1f2e',
+        backgroundColor: '#0a0f1a',
         scale: 4,
         logging: false,
         useCORS: true,
@@ -165,7 +169,7 @@ const Chart = () => {
       toast.dismiss(loadingToast);
 
       if (response.ok) {
-        toast.success('Image sent successfully!');
+        setShowSuccessScreen(true);
       } else {
         const errorData = await response.json().catch(() => ({}));
         toast.error(errorData.error || 'Failed to send image');
@@ -182,9 +186,15 @@ const Chart = () => {
     return change >= 0 ? '#16a34a' : '#dc2626';
   };
 
-  const getSizeForChange = (_change: number) => {
-    // Fixed size for perfect tiling - larger for better text spacing
-    return 120;
+  const getSizeForChange = (change: number) => {
+    const absChange = Math.abs(change);
+    
+    // Variable sizes based on change magnitude
+    if (absChange >= 8) return 160;      // Huge change
+    if (absChange >= 5) return 140;      // Very large change
+    if (absChange >= 3) return 120;      // Large change
+    if (absChange >= 1.5) return 100;    // Medium change
+    return 80;                           // Small change
   };
 
   const filteredData = getFilteredData();
@@ -193,6 +203,39 @@ const Chart = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Success screen after sending image
+  if (showSuccessScreen) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background p-6">
+        <Card className="w-full max-w-md p-8 text-center space-y-6">
+          {/* Telegram Logo */}
+          <div className="flex justify-center">
+            <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-4xl">
+              ✈️
+            </div>
+          </div>
+          
+          {/* Message */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-foreground">Success!</h2>
+            <p className="text-muted-foreground">
+              Your image will arrive soon via DM
+            </p>
+          </div>
+          
+          {/* OK Button */}
+          <Button
+            onClick={() => setShowSuccessScreen(false)}
+            className="w-full"
+            size="lg"
+          >
+            OK
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -369,14 +412,15 @@ const Chart = () => {
                     <div
                       className="inline-flex items-center justify-center text-white/80 font-bold"
                       style={{
-                        backgroundColor: '#1a1f2e',
+                        backgroundColor: '#0a0f1a',
                         width: '120px',
                         height: '120px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         padding: '8px',
                         margin: 0,
                         boxSizing: 'border-box',
                         textAlign: 'center',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                       }}
                     >
                       @Nova_calculator_bot
@@ -399,9 +443,9 @@ const Chart = () => {
                       alt={name}
                       className="object-contain"
                       style={{
-                        width: '28px',
-                        height: '28px',
-                        marginBottom: '3px',
+                        width: size >= 140 ? '40px' : size >= 120 ? '32px' : '24px',
+                        height: size >= 140 ? '40px' : size >= 120 ? '32px' : '24px',
+                        marginBottom: '4px',
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
@@ -410,13 +454,16 @@ const Chart = () => {
                     <div 
                       className="font-bold text-center line-clamp-1"
                       style={{ 
-                        fontSize: '10px',
+                        fontSize: size >= 140 ? '12px' : size >= 120 ? '11px' : '9px',
+                        fontWeight: 800,
                         lineHeight: '1.1',
                         paddingLeft: '3px',
                         paddingRight: '3px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         maxWidth: '100%',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        letterSpacing: '0.3px',
                       }}
                     >
                       {name}
@@ -424,9 +471,12 @@ const Chart = () => {
                     <div 
                       className="font-bold"
                       style={{ 
-                        fontSize: '12px',
+                        fontSize: size >= 140 ? '16px' : size >= 120 ? '14px' : '12px',
+                        fontWeight: 900,
                         lineHeight: '1',
-                        marginTop: '3px',
+                        marginTop: '4px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        letterSpacing: '0.3px',
                       }}
                     >
                       {change >= 0 ? '+' : ''}
@@ -435,13 +485,15 @@ const Chart = () => {
                     <div 
                       className="flex items-center"
                       style={{ 
-                        fontSize: '9px',
+                        fontSize: size >= 140 ? '11px' : size >= 120 ? '10px' : '8px',
+                        fontWeight: 700,
                         lineHeight: '1',
-                        marginTop: '1px',
+                        marginTop: '2px',
                         gap: '2px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                       }}
                     >
-                      <TonIcon className="w-2.5 h-2.5" />
+                      <TonIcon className={size >= 120 ? "w-3 h-3" : "w-2.5 h-2.5"} />
                       {price.toFixed(2)}
                     </div>
                   </div>
