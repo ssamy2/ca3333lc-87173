@@ -192,32 +192,22 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Solid colors - no gradients
+    // Only 4 solid colors - no gradients at all
     if (change >= 0) {
-      if (change > 8) return '#10b981';   // Bright green
-      if (change > 5) return '#34d399';   // Medium-bright green
-      if (change > 3) return '#6ee7b7';   // Medium green
-      if (change > 1) return '#a7f3d0';   // Light green
-      return '#d1fae5';                   // Very light green
+      return change > 3 ? '#22c55e' : '#86efac'; // Dark green or light green
     } else {
-      if (change < -8) return '#dc2626';  // Bright red
-      if (change < -5) return '#ef4444';  // Medium-bright red
-      if (change < -3) return '#f87171';  // Medium red
-      if (change < -1) return '#fca5a5';  // Light red
-      return '#fecaca';                   // Very light red
+      return change < -3 ? '#ef4444' : '#fca5a5'; // Dark red or light red
     }
   };
 
   const getSizeForChange = (change: number) => {
-    // Tighter size range for better consistency: 80-140px
+    // Much tighter size range: 90-120px only
     const absChange = Math.abs(change);
     
-    if (absChange > 10) return 140;
-    if (absChange > 7) return 125;
+    if (absChange > 8) return 120;
     if (absChange > 5) return 110;
-    if (absChange > 3) return 100;
-    if (absChange > 1) return 90;
-    return 80;
+    if (absChange > 2) return 100;
+    return 90;
   };
 
   const filteredData = getFilteredData();
@@ -382,10 +372,10 @@ const Chart = () => {
         ) : (
           <div
             id="heatmap-container"
-            className="relative bg-[#0a0f1a] rounded-lg overflow-hidden"
+            className="relative bg-[#0a0f1a] overflow-hidden"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
-            <div className="flex flex-wrap justify-start items-start">
+            <div className="flex flex-wrap" style={{ lineHeight: 0 }}>
               {filteredData.map(([name, data]) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -395,45 +385,59 @@ const Chart = () => {
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center justify-center p-1 text-white transition-all hover:opacity-90"
+                    className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
                     style={{
                       backgroundColor: color,
                       width: `${size}px`,
                       height: `${size}px`,
-                      minWidth: '80px',
-                      minHeight: '80px',
+                      minWidth: '90px',
+                      minHeight: '90px',
+                      padding: '4px',
+                      margin: 0,
+                      boxSizing: 'border-box',
                     }}
                   >
                     <img
                       src={data.image_url}
                       alt={name}
-                      className="object-contain mb-0.5"
+                      className="object-contain"
                       style={{
                         width: `${size * 0.32}px`,
                         height: `${size * 0.32}px`,
-                        maxWidth: '42px',
-                        maxHeight: '42px',
+                        maxWidth: '38px',
+                        maxHeight: '38px',
+                        marginBottom: '2px',
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
-                      className="font-bold text-center line-clamp-1 px-0.5 leading-tight"
-                      style={{ fontSize: `${Math.max(9, size * 0.088)}px` }}
+                      className="font-bold text-center line-clamp-1 leading-tight"
+                      style={{ 
+                        fontSize: `${Math.max(9, size * 0.088)}px`,
+                        paddingLeft: '2px',
+                        paddingRight: '2px',
+                      }}
                     >
                       {name}
                     </div>
                     <div 
-                      className="font-bold mt-0.5"
-                      style={{ fontSize: `${Math.max(11, size * 0.115)}px` }}
+                      className="font-bold"
+                      style={{ 
+                        fontSize: `${Math.max(11, size * 0.115)}px`,
+                        marginTop: '2px',
+                      }}
                     >
                       {change >= 0 ? '+' : ''}
                       {change.toFixed(2)}%
                     </div>
                     <div 
-                      className="flex items-center gap-0.5"
-                      style={{ fontSize: `${Math.max(8, size * 0.08)}px` }}
+                      className="flex items-center"
+                      style={{ 
+                        fontSize: `${Math.max(8, size * 0.08)}px`,
+                        gap: '2px',
+                      }}
                     >
                       <TonIcon className="w-2.5 h-2.5" />
                       {price.toFixed(2)}
