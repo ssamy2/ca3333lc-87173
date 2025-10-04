@@ -192,22 +192,13 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Only 4 solid colors - no gradients at all
-    if (change >= 0) {
-      return change > 3 ? '#22c55e' : '#86efac'; // Dark green or light green
-    } else {
-      return change < -3 ? '#ef4444' : '#fca5a5'; // Dark red or light red
-    }
+    // Exactly 2 solid colors (no shades)
+    return change >= 0 ? '#16a34a' : '#dc2626';
   };
 
-  const getSizeForChange = (change: number) => {
-    // Much tighter size range: 90-120px only
-    const absChange = Math.abs(change);
-    
-    if (absChange > 8) return 120;
-    if (absChange > 5) return 110;
-    if (absChange > 2) return 100;
-    return 90;
+  const getSizeForChange = (_change: number) => {
+    // Fixed size for perfect tiling (no gaps)
+    return 96;
   };
 
   const filteredData = getFilteredData();
@@ -386,16 +377,14 @@ const Chart = () => {
                   <div
                     key={name}
                     className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
-                    style={{
-                      backgroundColor: color,
-                      width: `${size}px`,
-                      height: `${size}px`,
-                      minWidth: '90px',
-                      minHeight: '90px',
-                      padding: '4px',
-                      margin: 0,
-                      boxSizing: 'border-box',
-                    }}
+                      style={{
+                        backgroundColor: color,
+                        width: `${size}px`,
+                        height: `${size}px`,
+                        padding: '4px',
+                        margin: 0,
+                        boxSizing: 'border-box',
+                      }}
                   >
                     <img
                       src={data.image_url}
