@@ -189,12 +189,12 @@ const Chart = () => {
   const getSizeForChange = (change: number) => {
     const absChange = Math.abs(change);
     
-    // Variable sizes based on change magnitude - reduced for better fit
-    if (absChange >= 8) return 140;      // Huge change
-    if (absChange >= 5) return 120;      // Very large change
-    if (absChange >= 3) return 100;      // Large change
-    if (absChange >= 1.5) return 85;     // Medium change
-    return 70;                           // Small change
+    // Variable sizes based on change magnitude
+    if (absChange >= 8) return 180;      // Huge change
+    if (absChange >= 5) return 160;      // Very large change
+    if (absChange >= 3) return 140;      // Large change
+    if (absChange >= 1.5) return 120;    // Medium change
+    return 100;                          // Small change
   };
 
   const filteredData = getFilteredData();
@@ -392,15 +392,14 @@ const Chart = () => {
         ) : (
           <div
             id="heatmap-container"
-            className="relative bg-[#0a0f1a] overflow-hidden"
+            className="relative bg-[#0a0f1a] overflow-hidden inline-block"
             style={{ 
               transform: `scale(${zoomLevel})`, 
               transformOrigin: 'top left',
-              width: '1400px',
-              minHeight: '900px'
+              maxWidth: '1600px',
             }}
           >
-            <div className="flex flex-wrap" style={{ lineHeight: 0, width: '100%' }}>
+            <div className="flex flex-wrap" style={{ lineHeight: 0, maxWidth: '1600px' }}>
               {filteredData.map(([name, data], index) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -418,9 +417,9 @@ const Chart = () => {
                       className="inline-flex items-center justify-center text-white/80 font-bold"
                       style={{
                         backgroundColor: '#0a0f1a',
-                        width: '100px',
-                        height: '100px',
-                        fontSize: '11px',
+                        width: '140px',
+                        height: '140px',
+                        fontSize: '13px',
                         padding: '8px',
                         margin: 0,
                         boxSizing: 'border-box',
@@ -449,8 +448,8 @@ const Chart = () => {
                       alt={name}
                       className="object-contain"
                       style={{
-                        width: size >= 120 ? '32px' : size >= 100 ? '28px' : '20px',
-                        height: size >= 120 ? '32px' : size >= 100 ? '28px' : '20px',
+                        width: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
+                        height: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
                         flexShrink: 0,
                       }}
                       onError={(e) => {
@@ -460,9 +459,9 @@ const Chart = () => {
                     <div 
                       className="font-bold text-center"
                       style={{ 
-                        fontSize: size >= 120 ? '10px' : size >= 100 ? '9px' : '8px',
+                        fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 120 ? '11px' : '10px',
                         fontWeight: 700,
-                        lineHeight: '1',
+                        lineHeight: '1.1',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         maxWidth: '100%',
@@ -475,7 +474,7 @@ const Chart = () => {
                     <div 
                       className="font-bold"
                       style={{ 
-                        fontSize: size >= 120 ? '13px' : size >= 100 ? '12px' : '10px',
+                        fontSize: size >= 160 ? '18px' : size >= 140 ? '16px' : size >= 120 ? '14px' : '12px',
                         fontWeight: 900,
                         lineHeight: '1',
                         textShadow: '0 1px 2px rgba(0,0,0,0.5)',
@@ -488,7 +487,7 @@ const Chart = () => {
                     <div 
                       className="flex items-center"
                       style={{ 
-                        fontSize: size >= 120 ? '9px' : size >= 100 ? '8px' : '7px',
+                        fontSize: size >= 160 ? '11px' : size >= 140 ? '10px' : size >= 120 ? '9px' : '8px',
                         fontWeight: 700,
                         lineHeight: '1',
                         gap: '2px',
@@ -496,7 +495,7 @@ const Chart = () => {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      <TonIcon className={size >= 100 ? "w-2.5 h-2.5" : "w-2 h-2"} />
+                      <TonIcon className={size >= 140 ? "w-3 h-3" : "w-2.5 h-2.5"} />
                       {price.toFixed(2)}
                     </div>
                   </div>
