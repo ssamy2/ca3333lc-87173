@@ -25,6 +25,7 @@ type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 
 // Store loaded images to prevent reloading
 const imageCache = new Map<string, string>();
+let imagesPreloaded = false;
 
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
@@ -67,8 +68,8 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/market-data');
       const data = await response.json();
       
-      // Cache images on first load
-      if (isInitialLoad) {
+      // Preload images only once (first time ever)
+      if (!imagesPreloaded) {
         Object.values(data).forEach((nft: any) => {
           if (nft.image_url && !imageCache.has(nft.image_url)) {
             const img = new Image();
@@ -76,6 +77,7 @@ const Chart = () => {
             imageCache.set(nft.image_url, nft.image_url);
           }
         });
+        imagesPreloaded = true;
       }
       
       setMarketData(data);
@@ -367,13 +369,35 @@ const Chart = () => {
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
             <div className="flex flex-wrap" style={{ lineHeight: 0 }}>
-              {filteredData.map(([name, data]) => {
+              {filteredData.map(([name, data], index) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
                 const size = getSizeForChange(change);
                 const color = getColorForChange(change);
+                
+                // Insert watermark at random position (but consistent)
+                const watermarkPosition = Math.floor(filteredData.length * 0.4); // Around 40% position
+                const shouldShowWatermark = index === watermarkPosition;
 
                 return (
+                  <>
+                  {shouldShowWatermark && (
+                    <div
+                      className="inline-flex items-center justify-center text-white/80 font-bold"
+                      style={{
+                        backgroundColor: '#1a1f2e',
+                        width: '120px',
+                        height: '120px',
+                        fontSize: '11px',
+                        padding: '8px',
+                        margin: 0,
+                        boxSizing: 'border-box',
+                        textAlign: 'center',
+                      }}
+                    >
+                      @Nova_calculator_bot
+                    </div>
+                  )}
                   <div
                     key={name}
                     className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
@@ -437,6 +461,7 @@ const Chart = () => {
                       {price.toFixed(2)}
                     </div>
                   </div>
+                  </>
                 );
               })}
             </div>
