@@ -192,34 +192,34 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Green for positive, red for negative with gradient intensity
+    // Colors matching the reference image
     if (change >= 0) {
-      if (change > 10) return '#00a651'; // Dark green
-      if (change > 5) return '#22c55e';  // Medium green
-      if (change > 2) return '#4ade80';  // Light green
-      return '#86efac';                   // Very light green
+      if (change > 10) return '#00c853';  // Bright green
+      if (change > 7) return '#1de9b6';   // Teal green
+      if (change > 5) return '#22c55e';   // Medium green
+      if (change > 3) return '#4ade80';   // Light green
+      if (change > 1) return '#86efac';   // Very light green
+      return '#bbf7d0';                    // Pale green
     } else {
-      if (change < -10) return '#dc2626'; // Dark red
+      if (change < -10) return '#d32f2f'; // Deep red
+      if (change < -7) return '#e53935';  // Bright red
       if (change < -5) return '#ef4444';  // Medium red
-      if (change < -2) return '#f87171';  // Light red
-      return '#fca5a5';                    // Very light red
+      if (change < -3) return '#f87171';  // Light red
+      if (change < -1) return '#fca5a5';  // Very light red
+      return '#fecaca';                    // Pale red
     }
   };
 
   const getSizeForChange = (change: number) => {
-    // Consistent sizing based on absolute change
+    // Tighter size range for better consistency: 80-140px
     const absChange = Math.abs(change);
     
-    // More granular size ranges for better distribution
-    if (absChange > 15) return 160;
-    if (absChange > 12) return 145;
-    if (absChange > 10) return 135;
-    if (absChange > 8) return 120;
-    if (absChange > 6) return 110;
-    if (absChange > 4) return 100;
-    if (absChange > 2) return 90;
-    if (absChange > 1) return 85;
-    return 75;
+    if (absChange > 10) return 140;
+    if (absChange > 7) return 125;
+    if (absChange > 5) return 110;
+    if (absChange > 3) return 100;
+    if (absChange > 1) return 90;
+    return 80;
   };
 
   const filteredData = getFilteredData();
@@ -384,10 +384,10 @@ const Chart = () => {
         ) : (
           <div
             id="heatmap-container"
-            className="relative bg-[#0a0f1a] rounded-lg p-0 overflow-auto"
+            className="relative bg-[#0a0f1a] rounded-lg overflow-hidden"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
           >
-            <div className="flex flex-wrap gap-[1px] justify-start items-start">
+            <div className="flex flex-wrap gap-0 justify-start items-start">
               {filteredData.map(([name, data]) => {
                 const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                 const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -397,47 +397,47 @@ const Chart = () => {
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center justify-center p-1.5 text-white transition-all hover:opacity-90"
+                    className="flex flex-col items-center justify-center p-1 text-white transition-all hover:opacity-90 border border-black/20"
                     style={{
                       backgroundColor: color,
                       width: `${size}px`,
                       height: `${size}px`,
-                      minWidth: '75px',
-                      minHeight: '75px',
+                      minWidth: '80px',
+                      minHeight: '80px',
                     }}
                   >
                     <img
                       src={data.image_url}
                       alt={name}
-                      className="object-contain mb-1"
+                      className="object-contain mb-0.5"
                       style={{
-                        width: `${size * 0.3}px`,
-                        height: `${size * 0.3}px`,
-                        maxWidth: '40px',
-                        maxHeight: '40px',
+                        width: `${size * 0.32}px`,
+                        height: `${size * 0.32}px`,
+                        maxWidth: '42px',
+                        maxHeight: '42px',
                       }}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
-                      className="font-bold text-center line-clamp-1 px-1 leading-tight"
-                      style={{ fontSize: `${Math.max(10, size * 0.09)}px` }}
+                      className="font-bold text-center line-clamp-1 px-0.5 leading-tight"
+                      style={{ fontSize: `${Math.max(9, size * 0.088)}px` }}
                     >
                       {name}
                     </div>
                     <div 
-                      className="font-bold mt-1"
-                      style={{ fontSize: `${Math.max(12, size * 0.12)}px` }}
+                      className="font-bold mt-0.5"
+                      style={{ fontSize: `${Math.max(11, size * 0.115)}px` }}
                     >
                       {change >= 0 ? '+' : ''}
                       {change.toFixed(2)}%
                     </div>
                     <div 
-                      className="flex items-center gap-1 mt-0.5"
-                      style={{ fontSize: `${Math.max(9, size * 0.085)}px` }}
+                      className="flex items-center gap-0.5"
+                      style={{ fontSize: `${Math.max(8, size * 0.08)}px` }}
                     >
-                      <TonIcon className="w-3 h-3" />
+                      <TonIcon className="w-2.5 h-2.5" />
                       {price.toFixed(2)}
                     </div>
                   </div>
