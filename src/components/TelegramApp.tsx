@@ -10,6 +10,8 @@ import EmptyState from './EmptyState';
 import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
+import BottomNav from './BottomNav';
+import Chart from '@/pages/Chart';
 import { fetchNFTGifts } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -70,6 +72,7 @@ const TelegramApp: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
+  const [activeTab, setActiveTab] = useState<'home' | 'chart'>('home');
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
 
@@ -275,8 +278,17 @@ const TelegramApp: React.FC = () => {
     return nftData.nfts.reduce((total, nft) => total + (nft.avg_price * nft.count), 0);
   };
 
+  if (activeTab === 'chart') {
+    return (
+      <>
+        <Chart />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden pb-20">
       {/* Pull-to-refresh indicator */}
       {pullDistance > 0 && (
         <div 
@@ -540,6 +552,8 @@ const TelegramApp: React.FC = () => {
         )}
 
       </div>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
