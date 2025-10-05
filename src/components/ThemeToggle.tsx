@@ -12,17 +12,17 @@ const ThemeToggle: React.FC = () => {
 
   return (
     <div className="flex items-center justify-end mr-4">
-      <div className="relative">
+      <div className="relative p-1 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl border border-primary/20 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
         <Switch
           checked={!isLight}
           onCheckedChange={handleToggle}
-          className="relative h-8 w-16 bg-gradient-to-r from-blue-400 via-purple-500 to-purple-600 data-[state=unchecked]:from-yellow-300 data-[state=unchecked]:via-orange-400 data-[state=unchecked]:to-yellow-500 border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+          className="relative h-9 w-[72px] bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 data-[state=unchecked]:from-yellow-400 data-[state=unchecked]:via-orange-500 data-[state=unchecked]:to-amber-500 border-0 shadow-inner transition-all duration-300"
         />
-        <div className={`absolute top-1 transition-all duration-300 ${isLight ? 'left-1' : 'left-9'} w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center pointer-events-none`}>
+        <div className={`absolute top-2 transition-all duration-300 ${isLight ? 'left-2' : 'left-[42px]'} w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center pointer-events-none ring-2 ring-white/50`}>
           {isLight ? (
-            <Sun className="w-4 h-4 text-yellow-600" />
+            <Sun className="w-4 h-4 text-yellow-600 animate-pulse" />
           ) : (
-            <Moon className="w-4 h-4 text-slate-600" />
+            <Moon className="w-4 h-4 text-indigo-600 animate-pulse" />
           )}
         </div>
       </div>
