@@ -439,6 +439,14 @@ const Chart = () => {
                 gridTemplateColumns: `repeat(${Math.floor((window.innerWidth < 768 ? window.innerWidth : 1200) / (window.innerWidth < 768 ? 10 : 20))}, ${(window.innerWidth < 768 ? 10 : 20)}px)`
               }}
             >
+              {/* Watermark Overlay */}
+              <div 
+                className="absolute bottom-2 right-2 text-white/30 text-xs font-medium pointer-events-none z-10"
+                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+              >
+                @Nova_calculator_bot
+              </div>
+              
               {filteredData.map(([name, data], index) => {
                   const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                   const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -452,32 +460,9 @@ const Chart = () => {
                   // Insert watermark at consistent position
                   const watermarkPosition = Math.floor(filteredData.length * 0.4);
                   const shouldShowWatermark = index === watermarkPosition;
-                  const watermarkSpan = isMobile ? 7 : 10;
 
                   return (
                     <React.Fragment key={`item-${name}-${index}`}>
-                      {shouldShowWatermark && (
-                        <div
-                          className="inline-flex items-center justify-center text-white/80 font-bold"
-                          style={{
-                            backgroundColor: '#0a0f1a',
-                            gridColumn: `span ${watermarkSpan}`,
-                            gridRow: `span ${watermarkSpan}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: isMobile ? '8px' : '13px',
-                            padding: isMobile ? '4px' : '8px',
-                            margin: 0,
-                            border: 0,
-                            boxSizing: 'border-box',
-                            textAlign: 'center',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                          }}
-                        >
-                          @Nova_calculator_bot
-                        </div>
-                      )}
                       <div
                         className="inline-flex flex-col items-center justify-center text-white"
                         style={{
