@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Download, RotateCcw } from 'lucide-react';
@@ -200,8 +200,18 @@ const Chart = () => {
 
   const getSizeForChange = (change: number) => {
     const absChange = Math.abs(change);
+    const isMobile = window.innerWidth < 768;
     
-    // Variable sizes based on change magnitude
+    // Smaller sizes for mobile
+    if (isMobile) {
+      if (absChange >= 8) return 90;      // Huge change
+      if (absChange >= 5) return 80;      // Very large change
+      if (absChange >= 3) return 70;      // Large change
+      if (absChange >= 1.5) return 60;    // Medium change
+      return 50;                          // Small change
+    }
+    
+    // Variable sizes based on change magnitude for desktop
     if (absChange >= 8) return 180;      // Huge change
     if (absChange >= 5) return 160;      // Very large change
     if (absChange >= 3) return 140;      // Large change
@@ -411,133 +421,138 @@ const Chart = () => {
             })}
           </div>
         ) : (
-          <div
-            id="heatmap-container"
-            className="relative bg-[#0a0f1a] overflow-hidden inline-block"
-            style={{ 
-              transform: `scale(${zoomLevel})`, 
-              transformOrigin: 'top left',
-              maxWidth: '1600px',
-            }}
-          >
-            <div className="flex flex-wrap" style={{ lineHeight: 0, maxWidth: '1600px' }}>
-              {filteredData.map(([name, data], index) => {
-                const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-                const price = currency === 'ton' ? data.price_ton : data.price_usd;
-                const size = getSizeForChange(change);
-                const color = getColorForChange(change);
-                
-                // Insert watermark at random position (but consistent)
-                const watermarkPosition = Math.floor(filteredData.length * 0.4); // Around 40% position
-                const shouldShowWatermark = index === watermarkPosition;
+          <div className="w-full overflow-x-auto">
+            <div
+              id="heatmap-container"
+              className="relative bg-[#0a0f1a] inline-block"
+              style={{ 
+                transform: window.innerWidth >= 768 ? `scale(${zoomLevel})` : 'scale(1)', 
+                transformOrigin: 'top left',
+                minWidth: window.innerWidth < 768 ? '100%' : 'auto',
+              }}
+            >
+              <div className="flex flex-wrap" style={{ lineHeight: 0 }}>
+                {filteredData.map(([name, data], index) => {
+                  const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+                  const price = currency === 'ton' ? data.price_ton : data.price_usd;
+                  const size = getSizeForChange(change);
+                  const color = getColorForChange(change);
+                  const isMobile = window.innerWidth < 768;
+                  
+                  // Insert watermark at random position (but consistent)
+                  const watermarkPosition = Math.floor(filteredData.length * 0.4);
+                  const shouldShowWatermark = index === watermarkPosition;
+                  const watermarkSize = isMobile ? 70 : 140;
 
-                return (
-                  <>
-                  {shouldShowWatermark && (
-                    <div
-                      className="inline-flex items-center justify-center text-white/80 font-bold"
-                      style={{
-                        backgroundColor: '#0a0f1a',
-                        width: '140px',
-                        height: '140px',
-                        fontSize: '13px',
-                        padding: '8px',
-                        margin: 0,
-                        boxSizing: 'border-box',
-                        textAlign: 'center',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                      }}
-                    >
-                      @Nova_calculator_bot
-                    </div>
-                  )}
-                  <div
-                    key={name}
-                    className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
-                      style={{
-                        backgroundColor: color,
-                        width: `${size}px`,
-                        height: `${size}px`,
-                        padding: size >= 160 ? '12px' : size >= 140 ? '10px' : size >= 120 ? '8px' : '6px',
-                        margin: 0,
-                        boxSizing: 'border-box',
-                        gap: size >= 160 ? '6px' : size >= 140 ? '5px' : size >= 120 ? '4px' : '3px',
-                        overflow: 'visible',
-                      }}
-                  >
-                    <img
-                      src={imageCache.get(data.image_url) || data.image_url}
-                      alt={name}
-                      className="object-contain"
-                      style={{
-                        width: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 120 ? '30px' : '26px',
-                        height: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 120 ? '30px' : '26px',
-                        flexShrink: 0,
-                        marginBottom: '2px',
-                      }}
-                    />
-                    <div 
-                      className="font-bold text-center"
-                      style={{ 
-                        fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 120 ? '10px' : '9px',
-                        fontWeight: size >= 140 ? 700 : 800,
-                        lineHeight: '1.1',
-                        overflow: 'visible',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '100%',
-                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.5px',
-                        WebkitFontSmoothing: 'antialiased',
-                        textRendering: 'optimizeLegibility',
-                      }}
-                    >
-                      {name}
-                    </div>
-                    <div 
-                      className="font-bold"
-                      style={{ 
-                        fontSize: size >= 160 ? '18px' : size >= 140 ? '16px' : size >= 120 ? '14px' : '12px',
-                        fontWeight: 900,
-                        lineHeight: '1',
-                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.5px',
-                        marginTop: '2px',
-                        WebkitFontSmoothing: 'antialiased',
-                        textRendering: 'optimizeLegibility',
-                      }}
-                    >
-                      {change >= 0 ? '+' : ''}
-                      {change.toFixed(2)}%
-                    </div>
-                    <div 
-                      className="flex items-center"
-                      style={{ 
-                        fontSize: size >= 160 ? '11px' : size >= 140 ? '10px' : size >= 120 ? '9px' : '8px',
-                        fontWeight: size >= 140 ? 700 : 800,
-                        lineHeight: '1',
-                        gap: size >= 160 ? '3px' : '2px',
-                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.5px',
-                        marginTop: '2px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        WebkitFontSmoothing: 'antialiased',
-                        textRendering: 'optimizeLegibility',
-                      }}
-                    >
-                      <TonIcon className={size >= 140 ? "w-3 h-3 flex-shrink-0" : "w-2.5 h-2.5 flex-shrink-0"} />
-                      <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-                        {price.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  </>
-                );
-              })}
+                  return (
+                    <React.Fragment key={`item-${name}-${index}`}>
+                      {shouldShowWatermark && (
+                        <div
+                          className="inline-flex items-center justify-center text-white/80 font-bold"
+                          style={{
+                            backgroundColor: '#0a0f1a',
+                            width: `${watermarkSize}px`,
+                            height: `${watermarkSize}px`,
+                            fontSize: isMobile ? '8px' : '13px',
+                            padding: isMobile ? '4px' : '8px',
+                            margin: 0,
+                            boxSizing: 'border-box',
+                            textAlign: 'center',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                          }}
+                        >
+                          @Nova_calculator_bot
+                        </div>
+                      )}
+                      <div
+                        className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
+                        style={{
+                          backgroundColor: color,
+                          width: `${size}px`,
+                          height: `${size}px`,
+                          padding: size >= 160 ? '12px' : size >= 140 ? '10px' : size >= 80 ? '8px' : size >= 60 ? '4px' : '3px',
+                          margin: 0,
+                          boxSizing: 'border-box',
+                          gap: size >= 160 ? '6px' : size >= 140 ? '5px' : size >= 80 ? '4px' : '2px',
+                          overflow: 'visible',
+                        }}
+                      >
+                        <img
+                          src={imageCache.get(data.image_url) || data.image_url}
+                          alt={name}
+                          className="object-contain"
+                          style={{
+                            width: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 80 ? '30px' : size >= 60 ? '20px' : '16px',
+                            height: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 80 ? '30px' : size >= 60 ? '20px' : '16px',
+                            flexShrink: 0,
+                            marginBottom: isMobile ? '1px' : '2px',
+                          }}
+                        />
+                        <div 
+                          className="font-bold text-center"
+                          style={{ 
+                            fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 80 ? '10px' : size >= 60 ? '7px' : '6px',
+                            fontWeight: size >= 140 ? 700 : 800,
+                            lineHeight: '1.1',
+                            overflow: 'visible',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '100%',
+                            textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: isMobile ? '0.2px' : '0.5px',
+                            WebkitFontSmoothing: 'antialiased',
+                            textRendering: 'optimizeLegibility',
+                          }}
+                        >
+                          {name}
+                        </div>
+                        <div 
+                          className="font-bold"
+                          style={{ 
+                            fontSize: size >= 160 ? '18px' : size >= 140 ? '16px' : size >= 80 ? '14px' : size >= 60 ? '10px' : '8px',
+                            fontWeight: 900,
+                            lineHeight: '1',
+                            textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: isMobile ? '0.2px' : '0.5px',
+                            marginTop: isMobile ? '1px' : '2px',
+                            WebkitFontSmoothing: 'antialiased',
+                            textRendering: 'optimizeLegibility',
+                          }}
+                        >
+                          {change >= 0 ? '+' : ''}
+                          {change.toFixed(2)}%
+                        </div>
+                        {size >= 60 && (
+                          <div 
+                            className="flex items-center"
+                            style={{ 
+                              fontSize: size >= 160 ? '11px' : size >= 140 ? '10px' : size >= 80 ? '9px' : '7px',
+                              fontWeight: size >= 140 ? 700 : 800,
+                              lineHeight: '1',
+                              gap: size >= 160 ? '3px' : '2px',
+                              textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                              whiteSpace: 'nowrap',
+                              letterSpacing: isMobile ? '0.2px' : '0.5px',
+                              marginTop: isMobile ? '1px' : '2px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              WebkitFontSmoothing: 'antialiased',
+                              textRendering: 'optimizeLegibility',
+                            }}
+                          >
+                            <TonIcon className={size >= 140 ? "w-3 h-3 flex-shrink-0" : size >= 60 ? "w-2 h-2 flex-shrink-0" : "w-1.5 h-1.5 flex-shrink-0"} />
+                            <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                              {price.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
