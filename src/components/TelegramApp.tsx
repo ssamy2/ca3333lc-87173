@@ -295,7 +295,7 @@ const TelegramApp: React.FC = () => {
 
   const calculateTotalValue = () => {
     if (!nftData?.nfts || !Array.isArray(nftData.nfts)) return 0;
-    return nftData.nfts.reduce((total, nft) => total + (nft.avg_price * nft.count), 0);
+    return nftData.nfts.reduce((total, nft) => total + (nft.floor_price * nft.count), 0);
   };
 
   if (activeTab === 'chart') {
@@ -553,24 +553,16 @@ const TelegramApp: React.FC = () => {
               </div>
 
               {/* Price Stats */}
-              {nftData.prices && (
-                <div className="grid grid-cols-2 gap-3">
-                  {nftData.prices.floor_price && (
+              {nftData.prices && nftData.prices.floor_price && (
+                <div className="flex justify-center">
+                  <div className="w-full max-w-xs">
                     <StatsCard
                       icon={<TonIcon className="w-4 h-4 text-success" />}
                       label="Floor Price"
                       value={`${formatTON(nftData.prices.floor_price.TON)} TON`}
                       subValue={`$${formatTON(nftData.prices.floor_price.USD)}`}
                     />
-                  )}
-                  {nftData.prices.avg_price && (
-                    <StatsCard
-                      icon={<TonIcon className="w-4 h-4 text-warning" />}
-                      label="Avg Price"
-                      value={`${formatTON(nftData.prices.avg_price.TON)} TON`}
-                      subValue={`$${formatTON(nftData.prices.avg_price.USD)}`}
-                    />
-                  )}
+                  </div>
                 </div>
               )}
             </div>
