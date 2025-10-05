@@ -145,12 +145,9 @@ const Chart = () => {
     const loadingToast = toast.loading('Generating image...');
 
     try {
-      // Wait a bit for rendering to complete
-      await new Promise(resolve => setTimeout(resolve, 300));
-
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 4,
+        scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -449,10 +446,11 @@ const Chart = () => {
                         backgroundColor: color,
                         width: `${size}px`,
                         height: `${size}px`,
-                        padding: '6px',
+                        padding: size >= 160 ? '12px' : size >= 140 ? '10px' : size >= 120 ? '8px' : '6px',
                         margin: 0,
                         boxSizing: 'border-box',
-                        gap: '2px',
+                        gap: size >= 160 ? '6px' : size >= 140 ? '5px' : size >= 120 ? '4px' : '3px',
+                        overflow: 'visible',
                       }}
                   >
                     <img
@@ -460,22 +458,24 @@ const Chart = () => {
                       alt={name}
                       className="object-contain"
                       style={{
-                        width: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
-                        height: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
+                        width: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 120 ? '30px' : '26px',
+                        height: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 120 ? '30px' : '26px',
                         flexShrink: 0,
+                        marginBottom: '2px',
                       }}
                     />
                     <div 
                       className="font-bold text-center"
                       style={{ 
-                        fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 120 ? '11px' : '10px',
+                        fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 120 ? '10px' : '9px',
                         fontWeight: 700,
                         lineHeight: '1.1',
-                        overflow: 'hidden',
+                        overflow: 'visible',
                         textOverflow: 'ellipsis',
                         maxWidth: '100%',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
+                        letterSpacing: '0.5px',
                       }}
                     >
                       {name}
@@ -486,8 +486,10 @@ const Chart = () => {
                         fontSize: size >= 160 ? '18px' : size >= 140 ? '16px' : size >= 120 ? '14px' : '12px',
                         fontWeight: 900,
                         lineHeight: '1',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
+                        letterSpacing: '0.5px',
+                        marginTop: '2px',
                       }}
                     >
                       {change >= 0 ? '+' : ''}
@@ -500,8 +502,10 @@ const Chart = () => {
                         fontWeight: 700,
                         lineHeight: '1',
                         gap: '2px',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
+                        letterSpacing: '0.5px',
+                        marginTop: '2px',
                       }}
                     >
                       <TonIcon className={size >= 140 ? "w-3 h-3" : "w-2.5 h-2.5"} />
