@@ -202,21 +202,27 @@ const Chart = () => {
     const absChange = Math.abs(change);
     const isMobile = window.innerWidth < 768;
     
-    // Smaller sizes for mobile
     if (isMobile) {
-      if (absChange >= 8) return 90;      // Huge change
-      if (absChange >= 5) return 80;      // Very large change
-      if (absChange >= 3) return 70;      // Large change
-      if (absChange >= 1.5) return 60;    // Medium change
-      return 50;                          // Small change
+      // حساب الحجم بشكل متناسب مع نسبة التغيير للموبايل
+      if (absChange >= 10) return 100;
+      if (absChange >= 8) return 90;
+      if (absChange >= 6) return 80;
+      if (absChange >= 4) return 70;
+      if (absChange >= 2) return 60;
+      if (absChange >= 1) return 55;
+      return 50;
     }
     
-    // Variable sizes based on change magnitude for desktop
-    if (absChange >= 8) return 180;      // Huge change
-    if (absChange >= 5) return 160;      // Very large change
-    if (absChange >= 3) return 140;      // Large change
-    if (absChange >= 1.5) return 120;    // Medium change
-    return 100;                          // Small change
+    // حساب الحجم بشكل متناسب مع نسبة التغيير للديسكتوب
+    if (absChange >= 15) return 200;
+    if (absChange >= 12) return 180;
+    if (absChange >= 10) return 160;
+    if (absChange >= 8) return 140;
+    if (absChange >= 6) return 120;
+    if (absChange >= 4) return 100;
+    if (absChange >= 2) return 85;
+    if (absChange >= 1) return 75;
+    return 65;
   };
 
   const filteredData = getFilteredData();
@@ -431,7 +437,7 @@ const Chart = () => {
                 minWidth: window.innerWidth < 768 ? '100%' : 'auto',
               }}
             >
-              <div className="flex flex-wrap" style={{ lineHeight: 0 }}>
+              <div className="flex flex-wrap" style={{ lineHeight: 0, gap: 0 }}>
                 {filteredData.map(([name, data], index) => {
                   const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                   const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -456,6 +462,7 @@ const Chart = () => {
                             fontSize: isMobile ? '8px' : '13px',
                             padding: isMobile ? '4px' : '8px',
                             margin: 0,
+                            border: 0,
                             boxSizing: 'border-box',
                             textAlign: 'center',
                             textShadow: '0 1px 2px rgba(0,0,0,0.3)',
@@ -465,17 +472,21 @@ const Chart = () => {
                         </div>
                       )}
                       <div
-                        className="inline-flex flex-col items-center justify-center text-white transition-all hover:opacity-90"
+                        className="inline-flex flex-col items-center justify-center text-white"
                         style={{
                           backgroundColor: color,
                           width: `${size}px`,
                           height: `${size}px`,
-                          padding: size >= 160 ? '12px' : size >= 140 ? '10px' : size >= 80 ? '8px' : size >= 60 ? '4px' : '3px',
+                          padding: size >= 160 ? '12px' : size >= 120 ? '10px' : size >= 80 ? '6px' : size >= 60 ? '4px' : '3px',
                           margin: 0,
+                          border: 0,
                           boxSizing: 'border-box',
-                          gap: size >= 160 ? '6px' : size >= 140 ? '5px' : size >= 80 ? '4px' : '2px',
-                          overflow: 'visible',
+                          gap: size >= 160 ? '6px' : size >= 120 ? '5px' : size >= 80 ? '4px' : '2px',
+                          overflow: 'hidden',
+                          transition: 'opacity 0.2s',
                         }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                       >
                         <img
                           src={imageCache.get(data.image_url) || data.image_url}
