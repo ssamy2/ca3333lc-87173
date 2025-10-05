@@ -396,66 +396,70 @@ const TelegramApp: React.FC = () => {
               <div className="absolute bottom-2 left-2 w-24 h-24 bg-gradient-to-tr from-accent to-primary rounded-full blur-2xl"></div>
             </div>
             
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {/* Enhanced User Avatar with Photo */}
-                <div className="relative group">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20 overflow-hidden">
-                    {currentUserPhotoUrl ? (
-                      <img 
-                        src={currentUserPhotoUrl}
-                        alt={currentUserFullName || 'User'}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-7 h-7 text-white" />
-                    )}
-                  </div>
-                  {/* Avatar Ring Effect */}
-                  <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
-                  {/* Online Status Indicator */}
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  </div>
+            {/* User Info Section */}
+            <div className="relative flex items-center gap-4 mb-4">
+              {/* Enhanced User Avatar with Photo */}
+              <div className="relative group">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20 overflow-hidden">
+                  {currentUserPhotoUrl ? (
+                    <img 
+                      src={currentUserPhotoUrl}
+                      alt={currentUserFullName || 'User'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-white" />
+                  )}
                 </div>
-                
-                {/* Enhanced User Info */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      {currentUserFullName || 'User'}
-                    </h3>
-                    <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
-                      Active
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">@</span>
-                    <span className="font-mono text-sm font-medium text-foreground/90">{currentUser}</span>
-                    <div className="w-1 h-1 bg-primary rounded-full"></div>
-                    <span className="text-xs text-muted-foreground">Telegram</span>
-                  </div>
+                {/* Avatar Ring Effect */}
+                <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
+                {/* Online Status Indicator */}
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 </div>
               </div>
-              {/* Get Me Button */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={handleRefresh}
-                  disabled={loading || countdown > 0}
-                  variant="ghost"
-                  size="sm"
-                  className="relative h-10 px-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 shadow-sm hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group font-semibold"
-                >
+              
+              {/* Enhanced User Info */}
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    {currentUserFullName || 'User'}
+                  </h3>
+                  <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
+                    Active
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">@</span>
+                  <span className="font-mono text-sm font-medium text-foreground/90">{currentUser}</span>
+                  <div className="w-1 h-1 bg-primary rounded-full"></div>
+                  <span className="text-xs text-muted-foreground">Telegram</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Check My Gifts Button */}
+            <div className="relative">
+              <Button 
+                onClick={handleRefresh}
+                disabled={loading || countdown > 0}
+                className="relative w-full h-12 rounded-xl bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:via-primary hover:to-accent/90 text-white font-bold text-base shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 group border-0"
+              >
+                <div className="flex items-center justify-center gap-2">
                   {loading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-primary mr-2" />
-                  ) : null}
-                  <span className={`${loading ? 'text-primary' : 'text-primary/70 group-hover:text-primary'} transition-colors duration-200`}>
-                    Get Me
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                  )}
+                  <span className="tracking-wide">
+                    {loading ? 'Loading...' : 'Check My Gifts'}
                   </span>
-                  {/* Button Glow Effect */}
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10"></div>
-                </Button>
-              </div>
+                </div>
+                {/* Button Shine Effect */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-full transition-all duration-700 ease-in-out"></div>
+              </Button>
             </div>
           </div>
         )}
