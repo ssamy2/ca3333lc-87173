@@ -448,7 +448,7 @@ const TelegramApp: React.FC = () => {
           <div className="flex gap-2 mb-4">
             <Input
               type="text"
-              placeholder="Enter username..."
+              placeholder={currentUser ? `@${currentUser}` : "Enter username..."}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
