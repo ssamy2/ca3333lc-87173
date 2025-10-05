@@ -71,6 +71,8 @@ interface APIResponse {
 const TelegramApp: React.FC = () => {
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
+  const [currentUserFullName, setCurrentUserFullName] = useState('');
+  const [currentUserPhotoUrl, setCurrentUserPhotoUrl] = useState('');
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [searchedUserProfile, setSearchedUserProfile] = useState<UserProfile | null>(null);
   const [nftData, setNftData] = useState<NFTData | null>(null);
@@ -99,21 +101,30 @@ const TelegramApp: React.FC = () => {
       if (webApp.setBackgroundColor) webApp.setBackgroundColor('#f0f8ff');
     }
 
-    // Detect Telegram user and fetch profile
+    // Detect Telegram user and get data directly from Telegram
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (telegramUser) {
-      const detectedUsername = telegramUser.username || telegramUser.first_name || 'user';
+      // Username للبحث
+      const detectedUsername = telegramUser.username || 'user';
       setCurrentUser(detectedUsername);
       setUsername(detectedUsername);
       
-      // Fetch user profile
-      fetchUserProfile(detectedUsername).then(profile => {
-        setCurrentUserProfile(profile);
-      });
+      // الاسم الكامل للعرض
+      const fullName = [telegramUser.first_name, telegramUser.last_name]
+        .filter(Boolean)
+        .join(' ') || 'User';
+      setCurrentUserFullName(fullName);
+      
+      // الصورة مباشرة من Telegram
+      const photoUrl = (telegramUser as any).photo_url;
+      if (photoUrl) {
+        setCurrentUserPhotoUrl(photoUrl);
+      }
     } else {
       // Fallback for testing
       setCurrentUser('demo_user');
       setUsername('demo_user');
+      setCurrentUserFullName('Demo User');
     }
 
     // Load search history
@@ -390,10 +401,10 @@ const TelegramApp: React.FC = () => {
                 {/* Enhanced User Avatar with Photo */}
                 <div className="relative group">
                   <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20 overflow-hidden">
-                    {currentUserProfile?.photo_base64 ? (
+                    {currentUserPhotoUrl ? (
                       <img 
-                        src={`data:image/jpeg;base64,${currentUserProfile.photo_base64}`}
-                        alt={currentUserProfile.name}
+                        src={currentUserPhotoUrl}
+                        alt={currentUserFullName || 'User'}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -412,7 +423,7 @@ const TelegramApp: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      {currentUserProfile?.name || 'Current User'}
+                      {currentUserFullName || 'User'}
                     </h3>
                     <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
                       Active
