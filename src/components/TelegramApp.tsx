@@ -437,16 +437,21 @@ const TelegramApp: React.FC = () => {
                   </div>
                 </div>
               </div>
-              {/* Enhanced Refresh Button */}
+              {/* Get Me Button */}
               <div className="flex items-center gap-2">
                 <Button 
                   onClick={handleRefresh}
                   disabled={loading || countdown > 0}
                   variant="ghost"
                   size="sm"
-                  className="relative h-10 w-10 p-0 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 shadow-sm hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group"
+                  className="relative h-10 px-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-primary/20 shadow-sm hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group font-semibold"
                 >
-                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-primary' : 'text-primary/70 group-hover:text-primary'} transition-colors duration-200`} />
+                  {loading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin text-primary mr-2" />
+                  ) : null}
+                  <span className={`${loading ? 'text-primary' : 'text-primary/70 group-hover:text-primary'} transition-colors duration-200`}>
+                    Get Me
+                  </span>
                   {/* Button Glow Effect */}
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10"></div>
                 </Button>
