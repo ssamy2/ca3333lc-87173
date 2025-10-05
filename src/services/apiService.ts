@@ -309,7 +309,7 @@ const processAPIResponse = (responseData: any, isProxy: boolean) => {
           model: gift.model || 'Unknown',
           floor_price: gift.price_ton || 0,
           avg_price: gift.price_ton || 0,
-          image: gift.image,
+          image: gift.image || gift.image_url,
           title: gift.title,
           backdrop: gift.backdrop || '',
           model_rarity: gift.model_rarity || '',
