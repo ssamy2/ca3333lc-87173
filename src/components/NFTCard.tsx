@@ -80,7 +80,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
                 src={nft.image}
                 alt={`${nft.name} NFT`}
                 className="w-full h-full object-cover rounded-xl"
-                crossOrigin="anonymous"
                 onError={handleImageError}
                 onLoad={handleImageLoad}
               />
