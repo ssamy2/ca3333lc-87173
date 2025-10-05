@@ -275,13 +275,28 @@ const processAPIResponse = (responseData: any, isProxy: boolean) => {
   
   // Transform new API response format to expected format
   if (responseData && responseData.nft_gifts) {
+    // Calculate minimum floor price from all NFTs
+    const minFloorPrice = responseData.nft_gifts.length > 0 
+      ? Math.min(...responseData.nft_gifts.map((gift: any) => gift.price_ton || 0))
+      : 0;
+    
+    // Calculate minimum floor price in USD (assuming TON price from total_ton/total_usd ratio)
+    const tonToUsdRatio = responseData.total_ton > 0 
+      ? responseData.total_usd / responseData.total_ton 
+      : 2.81; // fallback ratio
+    const minFloorPriceUSD = minFloorPrice * tonToUsdRatio;
+    
     return {
       success: true,
       data: {
         owner: responseData.username || 'user',
         visible_nfts: responseData.total_nfts || 0,
         prices: {
-          floor_price: { TON: 0, USD: 0, STAR: 0 },
+          floor_price: { 
+            TON: minFloorPrice, 
+            USD: minFloorPriceUSD, 
+            STAR: 0 
+          },
           avg_price: { 
             TON: responseData.total_ton || 0, 
             USD: responseData.total_usd || 0, 
