@@ -14,6 +14,7 @@ import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
+import novaLogo from '@/assets/nova-logo.png';
 
 interface UserProfile {
   name: string;
@@ -314,7 +315,7 @@ const TelegramApp: React.FC = () => {
           style={{ height: `${Math.min(pullDistance, 80)}px` }}
         >
           <div className={`flex items-center gap-2 ${pullDistance > 80 ? 'animate-spin' : ''}`}>
-            <TonIcon className="w-6 h-6" />
+            <img src={novaLogo} alt="Nova" className="w-6 h-6 rounded-full" />
             <span className="text-sm font-medium">
               {pullDistance > 80 ? 'Release to refresh' : 'Pull down to refresh'}
             </span>
@@ -328,12 +329,12 @@ const TelegramApp: React.FC = () => {
           <div className="flex flex-col gap-6">
             {/* Top Row - Logo and Title */}
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
-                <Calculator className="w-7 h-7 text-primary-foreground" />
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+                <img src={novaLogo} alt="Nova Logo" className="w-full h-full object-cover" />
               </div>
               
               <div className="flex-1">
-                <h1 className="text-xl font-bold text-foreground">Nova Calculator</h1>
+                <h1 className="text-xl font-bold text-foreground">Nova</h1>
                 <p className="text-sm text-muted-foreground">Telegram Gifts Price Checker</p>
               </div>
             </div>
