@@ -6,7 +6,7 @@ export const USE_MOCK_DATA = false; // Always use real API
 const API_BASE_URL = (() => {
   const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
   const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
-  return (lsUrl || envUrl || 'http://207.180.203.9:5000').replace(/\/+$/, '');
+  return (lsUrl || envUrl || 'https://channelsseller.site').replace(/\/+$/, '');
 })();
 
 // Check if proxy is needed
