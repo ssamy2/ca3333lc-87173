@@ -148,7 +148,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           <div className="flex items-center justify-center pt-2 border-t border-border/30">
             <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary transition-colors">
               <ExternalLink className="w-3 h-3" />
-              <span>عرض في المتجر</span>
+              <span>View in Store</span>
             </div>
           </div>
         )}

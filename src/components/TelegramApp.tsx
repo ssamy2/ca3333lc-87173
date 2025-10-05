@@ -199,8 +199,8 @@ const TelegramApp: React.FC = () => {
         saveToHistory(searchUsername);
         const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
         toast({
-          title: "تم بنجاح!",
-          description: `تم العثور على ${giftCount} هدية NFT لـ ${data.data.owner}`,
+          title: "Success!",
+          description: `Found ${giftCount} NFT gifts for ${data.data.owner}`,
         });
       } else if (data.message) {
         handleAPIMessage(data.message, data.wait_time);
@@ -238,8 +238,8 @@ const TelegramApp: React.FC = () => {
       
       // Show toast notification for better UX
       toast({
-        title: "خطأ في الطلب",
-        description: "حدث خطأ أثناء جلب البيانات. يرجى المحاولة مرة أخرى.",
+        title: "Request Error",
+        description: "An error occurred while fetching data. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -468,7 +468,7 @@ const TelegramApp: React.FC = () => {
           {/* Search History */}
           {searchHistory.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">عمليات البحث الأخيرة</p>
+              <p className="text-xs text-muted-foreground font-medium">Recent Searches</p>
               <div className="flex flex-wrap gap-2">
                 {searchHistory.map((term, index) => (
                   <button
@@ -534,11 +534,11 @@ const TelegramApp: React.FC = () => {
                   <div>
                     <h2 className="text-xl font-bold">{searchedUserProfile?.name || nftData.owner}</h2>
                     <p className="text-sm text-muted-foreground">
-                      @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} هدية NFT مرئية
+                      @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} Visible NFT Gifts
                     </p>
                     {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
                       <p className="text-xs text-primary font-medium mt-1">
-                        إجمالي الهدايا المحفوظة: {nftData.total_saved_gifts}
+                        Total Saved Gifts: {nftData.total_saved_gifts}
                       </p>
                     )}
                   </div>
@@ -553,7 +553,7 @@ const TelegramApp: React.FC = () => {
                   <p className="text-xs text-muted-foreground">
                     ${formatTON(nftData.prices?.avg_price?.USD || 0)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">القيمة الإجمالية</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Value</p>
                 </div>
               </div>
 
@@ -585,7 +585,7 @@ const TelegramApp: React.FC = () => {
             {/* NFT Grid */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold">مجموعة NFT</h3>
+                <h3 className="text-lg font-bold">NFT Collection</h3>
                 <span className="text-sm text-muted-foreground">
                   {nftData.nfts?.length || 0} items
                 </span>

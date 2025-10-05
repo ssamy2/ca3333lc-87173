@@ -84,12 +84,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'SERVER_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'خطأ في الخادم',
-          description: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
+          title: 'Server Error',
+          description: 'A server error occurred. Please try again later.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -97,12 +97,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'NETWORK_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'خطأ في الاتصال',
-          description: 'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+          title: 'Connection Error',
+          description: 'Unable to connect to server. Please check your internet connection and try again.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -110,12 +110,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'TIMEOUT_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-warning" />,
-          title: 'انتهت مهلة الاتصال',
-          description: 'استغرق الطلب وقتاً أطول من المتوقع. يرجى المحاولة مرة أخرى.',
+          title: 'Request Timeout',
+          description: 'The request took longer than expected. Please try again.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -125,10 +125,10 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
           const seconds = parseInt(error.split(':')[1], 10);
           return {
             icon: <TonIcon className="w-12 h-12 text-warning" />,
-            title: 'تم تجاوز حد الطلبات',
+            title: 'Rate Limit Exceeded',
             description: countdown !== null 
-              ? `يرجى الانتظار ${countdown} ثانية قبل المحاولة مجدداً` 
-              : `يرجى الانتظار ${seconds} ثانية قبل المحاولة مجدداً`,
+              ? `Please wait ${countdown} seconds before trying again` 
+              : `Please wait ${seconds} seconds before trying again`,
             action: countdown !== null ? (
               <div className="mt-4">
                 <div className="flex items-center justify-center mb-2">
@@ -137,7 +137,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  سيتم إعادة المحاولة تلقائياً عند انتهاء العد
+                  Will retry automatically when countdown finishes
                 </div>
               </div>
             ) : null
@@ -145,23 +145,23 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
         }
         return {
           icon: <TonIcon className="w-12 h-12 text-warning" />,
-          title: 'تم تجاوز حد الطلبات',
-          description: 'تم إرسال الكثير من الطلبات. يرجى الانتظار قبل المحاولة مرة أخرى.',
+          title: 'Rate Limit Exceeded',
+          description: 'Too many requests sent. Please wait before trying again.',
           action: null
         };
 
       case 'INSECURE_API_URL':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'مشكلة Mixed Content محلولة',
-          description: 'سيتم استخدام بروكسي HTTPS للوصول للخادم HTTP. يمكنك أيضاً تغيير إعدادات الاتصال.',
+          title: 'Mixed Content Issue Resolved',
+          description: 'Using HTTPS proxy to access HTTP server. You can also change connection settings.',
           action: (
             <div className="mt-4 space-y-3">
               <div className="flex flex-col gap-2">
                 <Button
                   onClick={() => {
                     const currentUrl = localStorage.getItem('API_BASE_URL') || 'http://207.180.203.9:5000';
-                    const url = window.prompt('أدخل رابط الخادم (HTTPS أفضل):', currentUrl);
+                    const url = window.prompt('Enter server URL (HTTPS preferred):', currentUrl);
                     if (url && url !== currentUrl) {
                       try {
                         localStorage.setItem('API_BASE_URL', url.trim());
@@ -175,13 +175,13 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
                   size="sm"
                 >
                   <TonIcon className="w-4 h-4 mr-2" />
-                  تغيير رابط الخادم
+                  Change Server URL
                 </Button>
                 
                 <Button
                   onClick={() => {
                     const currentProxy = localStorage.getItem('CORS_PROXY_URL') || 'https://corsproxy.io';
-                    const proxy = window.prompt('أدخل رابط البروكسي (HTTPS):', currentProxy);
+                    const proxy = window.prompt('Enter proxy URL (HTTPS):', currentProxy);
                     if (proxy && proxy !== currentProxy) {
                       try {
                         localStorage.setItem('CORS_PROXY_URL', proxy.trim());
@@ -195,7 +195,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
                   size="sm"
                 >
                   <TonIcon className="w-4 h-4 mr-2" />
-                  تغيير البروكسي
+                  Change Proxy
                 </Button>
 
                 <Button
@@ -208,14 +208,14 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
                   size="sm"
                 >
                   <TonIcon className="w-4 h-4 mr-2" />
-                  {localStorage.getItem('FORCE_PROXY') === 'true' ? 'تعطيل البروكسي' : 'تفعيل البروكسي'}
+                  {localStorage.getItem('FORCE_PROXY') === 'true' ? 'Disable Proxy' : 'Enable Proxy'}
                 </Button>
               </div>
               
               {canRetry ? (
                 <Button onClick={onRetry} variant="default" className="w-full">
                   <TonIcon className="w-4 h-4 mr-2" />
-                  إعادة المحاولة
+                  Try Again
                 </Button>
               ) : null}
               
@@ -230,7 +230,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
                 size="sm"
                 className="w-full text-muted-foreground"
               >
-                إعادة تعيين الإعدادات
+                Reset Settings
               </Button>
             </div>
           )
@@ -239,12 +239,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'CORS_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'خطأ في الأمان',
-          description: 'مشكلة في الأمان أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.',
+          title: 'Security Error',
+          description: 'Security issue while connecting to server. Please try again.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -252,12 +252,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'PARSE_ERROR':
         return {
           icon: <TonIcon className="w-12 h-12 text-warning" />,
-          title: 'خطأ في معالجة البيانات',
-          description: 'حدث خطأ أثناء معالجة استجابة الخادم. يرجى المحاولة مرة أخرى.',
+          title: 'Data Processing Error',
+          description: 'Error occurred while processing server response. Please try again.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -265,12 +265,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'ACCESS_FORBIDDEN':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'الوصول مرفوض',
-          description: 'تم رفض طلب الوصول من قبل الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
+          title: 'Access Forbidden',
+          description: 'Access request was denied by the server. Please try again later.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              إعادة المحاولة
+              Try Again
             </Button>
           ) : null
         };
@@ -278,12 +278,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'CANNOT_RECEIVE_GIFTS':
         return {
           icon: <TonIcon className="w-12 h-12 text-warning" />,
-          title: 'لا يمكن الوصول للهدايا',
-          description: 'هدايا NFT لهذا المستخدم خاصة أو محدودة. ليس لديك إذن لعرض مجموعة الهدايا الخاصة به.',
+          title: 'Cannot Access Gifts',
+          description: 'NFT gifts for this user are private or restricted. You do not have permission to view their gift collection.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              جرب مستخدم آخر
+              Try Another User
             </Button>
           ) : null
         };
