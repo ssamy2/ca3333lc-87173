@@ -147,7 +147,7 @@ const Chart = () => {
     try {
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 2,
+        scale: 3,
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -468,7 +468,7 @@ const Chart = () => {
                       className="font-bold text-center"
                       style={{ 
                         fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 120 ? '10px' : '9px',
-                        fontWeight: 700,
+                        fontWeight: size >= 140 ? 700 : 800,
                         lineHeight: '1.1',
                         overflow: 'visible',
                         textOverflow: 'ellipsis',
@@ -476,6 +476,8 @@ const Chart = () => {
                         textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
                         letterSpacing: '0.5px',
+                        WebkitFontSmoothing: 'antialiased',
+                        textRendering: 'optimizeLegibility',
                       }}
                     >
                       {name}
@@ -490,6 +492,8 @@ const Chart = () => {
                         whiteSpace: 'nowrap',
                         letterSpacing: '0.5px',
                         marginTop: '2px',
+                        WebkitFontSmoothing: 'antialiased',
+                        textRendering: 'optimizeLegibility',
                       }}
                     >
                       {change >= 0 ? '+' : ''}
@@ -499,17 +503,24 @@ const Chart = () => {
                       className="flex items-center"
                       style={{ 
                         fontSize: size >= 160 ? '11px' : size >= 140 ? '10px' : size >= 120 ? '9px' : '8px',
-                        fontWeight: 700,
+                        fontWeight: size >= 140 ? 700 : 800,
                         lineHeight: '1',
-                        gap: '2px',
+                        gap: size >= 160 ? '3px' : '2px',
                         textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
                         letterSpacing: '0.5px',
                         marginTop: '2px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        WebkitFontSmoothing: 'antialiased',
+                        textRendering: 'optimizeLegibility',
                       }}
                     >
-                      <TonIcon className={size >= 140 ? "w-3 h-3" : "w-2.5 h-2.5"} />
-                      {price.toFixed(2)}
+                      <TonIcon className={size >= 140 ? "w-3 h-3 flex-shrink-0" : "w-2.5 h-2.5 flex-shrink-0"} />
+                      <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                        {price.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                   </>
