@@ -390,10 +390,10 @@ const TelegramApp: React.FC = () => {
                 {/* Enhanced User Avatar with Photo */}
                 <div className="relative group">
                   <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20 overflow-hidden">
-                    {currentUserProfile?.photo_base64 ? (
+                    {(searchedUserProfile?.photo_base64 || currentUserProfile?.photo_base64) ? (
                       <img 
-                        src={`data:image/jpeg;base64,${currentUserProfile.photo_base64}`}
-                        alt={currentUserProfile.name}
+                        src={`data:image/jpeg;base64,${searchedUserProfile?.photo_base64 || currentUserProfile?.photo_base64}`}
+                        alt={searchedUserProfile?.name || currentUserProfile?.name || 'User avatar'}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -412,7 +412,7 @@ const TelegramApp: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      {currentUserProfile?.name || 'Current User'}
+                      {searchedUserProfile?.name || currentUserProfile?.name || 'User'}
                     </h3>
                     <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
                       Active
@@ -420,7 +420,7 @@ const TelegramApp: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">@</span>
-                    <span className="font-mono text-sm font-medium text-foreground/90">{currentUser}</span>
+                    <span className="font-mono text-sm font-medium text-foreground/90">{nftData?.owner || currentUser}</span>
                     <div className="w-1 h-1 bg-primary rounded-full"></div>
                     <span className="text-xs text-muted-foreground">Telegram</span>
                   </div>
