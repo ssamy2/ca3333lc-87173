@@ -47,6 +47,7 @@ interface NFTGift {
 interface NFTData {
   owner: string;
   visible_nfts?: number;
+  total_saved_gifts?: number;
   prices: {
     floor_price: { TON: number; USD: number; STAR: number };
     avg_price: { TON: number; USD: number; STAR: number };
@@ -535,6 +536,11 @@ const TelegramApp: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} هدية NFT مرئية
                     </p>
+                    {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
+                      <p className="text-xs text-primary font-medium mt-1">
+                        إجمالي الهدايا المحفوظة: {nftData.total_saved_gifts}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">

@@ -267,10 +267,54 @@ export const fetchUserProfile = async (username: string) => {
 // Helper function to process API response
 const processAPIResponse = (responseData: any, isProxy: boolean) => {
   // Check for API error responses
-  if (responseData && !responseData.success && responseData.error) {
-    if (responseData.error === 'Cannot receive gifts') {
+  if (responseData && responseData.error) {
+    if (responseData.error === 'Cannot receive gifts' || responseData.error === 'Invalid username') {
       throw new Error('CANNOT_RECEIVE_GIFTS');
     }
+  }
+  
+  // Transform new API response format to expected format
+  if (responseData && responseData.nft_gifts) {
+    return {
+      success: true,
+      data: {
+        owner: responseData.username || 'user',
+        visible_nfts: responseData.total_nfts || 0,
+        prices: {
+          floor_price: { TON: 0, USD: 0, STAR: 0 },
+          avg_price: { 
+            TON: responseData.total_ton || 0, 
+            USD: responseData.total_usd || 0, 
+            STAR: 0 
+          }
+        },
+        nfts: responseData.nft_gifts.map((gift: any) => ({
+          count: 1,
+          name: gift.gift_name || gift.title || 'Unknown',
+          model: gift.model || 'Unknown',
+          floor_price: gift.price_ton || 0,
+          avg_price: gift.price_ton || 0,
+          image: gift.image,
+          title: gift.title,
+          backdrop: gift.backdrop || '',
+          model_rarity: gift.model_rarity || '',
+          quantity_issued: gift.quantity_issued || 0,
+          quantity_total: gift.quantity_total || 0,
+          quantity_raw: gift.quantity_raw || '',
+          description: gift.description || '',
+          tg_deeplink: gift.tg_deeplink || '',
+          details: {
+            links: gift.nft_link ? [gift.nft_link] : []
+          }
+        })),
+        total_saved_gifts: responseData.total_saved_gifts
+      },
+      stats: {
+        items: responseData.total_nfts || 0,
+        total_gifts: responseData.total_saved_gifts || 0,
+        enriched: responseData.total_nfts || 0
+      }
+    };
   }
   
   return responseData;
