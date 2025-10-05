@@ -148,7 +148,7 @@ export const fetchNFTGifts = async (username: string) => {
   // Clean username by removing @ if present
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  const apiUrl = buildApiUrl(`/api/nft-gifts?username=@${encodeURIComponent(cleanUsername)}`);
+  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`);
   
   console.log('Fetching NFT data from:', apiUrl);
   console.log('API Base URL:', API_BASE_URL);
@@ -225,7 +225,7 @@ export const fetchNFTGifts = async (username: string) => {
 // Fetch User Profile (photo and name)
 export const fetchUserProfile = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
-  const apiUrl = buildApiUrl(`/api/user-profile?username=${encodeURIComponent(cleanUsername)}`);
+  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
   
   console.log('Fetching user profile from:', apiUrl);
   
