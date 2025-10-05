@@ -369,11 +369,23 @@ const Chart = () => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? data.price_ton : data.price_usd;
               const isPositive = change >= 0;
+              const isNeutral = change === 0;
+
+              // Get background and shadow based on change
+              const getCardStyle = () => {
+                if (isNeutral) {
+                  return 'bg-[#1a2332] hover:shadow-lg hover:shadow-gray-500/20';
+                }
+                if (isPositive) {
+                  return 'bg-gradient-to-br from-green-900/40 to-green-950/60 hover:shadow-lg hover:shadow-green-500/30';
+                }
+                return 'bg-gradient-to-br from-red-900/40 to-red-950/60 hover:shadow-lg hover:shadow-red-500/30';
+              };
 
               return (
                 <Card
                   key={name}
-                  className="p-4 flex flex-col items-center gap-2 bg-card/50 backdrop-blur hover:bg-card/70 transition-all"
+                  className={`p-4 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 ${getCardStyle()}`}
                 >
                   <img
                     src={imageCache.get(data.image_url) || data.image_url}
