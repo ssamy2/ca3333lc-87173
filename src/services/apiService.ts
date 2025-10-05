@@ -197,7 +197,7 @@ export const fetchNFTGifts = async (username: string) => {
     // Process response with proxy parser if using proxy
     const proxyConfig = getProxyConfig();
     const processedData = shouldUseProxy && proxyConfig ? proxyConfig.parseResponse(responseData) : responseData;
-    return processAPIResponse(processedData, shouldUseProxy);
+    return processAPIResponse(processedData, shouldUseProxy, cleanUsername);
     
   } catch (error) {
     console.error('API request failed:', error);
@@ -265,7 +265,7 @@ export const fetchUserProfile = async (username: string) => {
 };
 
 // Helper function to process API response
-const processAPIResponse = (responseData: any, isProxy: boolean) => {
+const processAPIResponse = (responseData: any, isProxy: boolean, username?: string) => {
   // Check for API error responses
   if (responseData && responseData.error) {
     if (responseData.error === 'Cannot receive gifts' || responseData.error === 'Invalid username') {
@@ -289,7 +289,7 @@ const processAPIResponse = (responseData: any, isProxy: boolean) => {
     return {
       success: true,
       data: {
-        owner: responseData.username || 'user',
+        owner: username || responseData.username || 'user',
         visible_nfts: responseData.total_nfts || 0,
         prices: {
           floor_price: { 
