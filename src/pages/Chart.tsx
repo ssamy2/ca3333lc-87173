@@ -23,8 +23,8 @@ type ViewMode = 'grid' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 
-// Store loaded images to prevent reloading
-const imageCache = new Map<string, HTMLImageElement>();
+// Store loaded images as base64 strings to prevent reloading
+const imageCache = new Map<string, string>();
 let imagesPreloaded = false;
 
 const Chart = () => {
@@ -69,14 +69,29 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/market-data');
       const data = await response.json();
       
-      // Preload images only once (first time ever)
+      // Preload images only once (first time ever) and convert to base64
       if (!imagesPreloaded) {
         Object.values(data).forEach((nft: any) => {
           if (nft.image_url && !imageCache.has(nft.image_url)) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => {
-              imageCache.set(nft.image_url, img);
+              // Convert to base64
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                try {
+                  const base64 = canvas.toDataURL('image/png');
+                  imageCache.set(nft.image_url, base64);
+                } catch (e) {
+                  console.error('Failed to convert image to base64:', e);
+                  // Fallback to original URL
+                  imageCache.set(nft.image_url, nft.image_url);
+                }
+              }
             };
             img.src = nft.image_url;
           }
@@ -364,12 +379,9 @@ const Chart = () => {
                   className="p-4 flex flex-col items-center gap-2 bg-card/50 backdrop-blur hover:bg-card/70 transition-all"
                 >
                   <img
-                    src={imageCache.has(data.image_url) ? imageCache.get(data.image_url)!.src : data.image_url}
+                    src={imageCache.get(data.image_url) || data.image_url}
                     alt={name}
                     className="w-16 h-16 object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.svg';
-                    }}
                   />
                   <div className="flex items-center gap-1">
                     <TonIcon className="w-4 h-4" />
@@ -444,16 +456,13 @@ const Chart = () => {
                       }}
                   >
                     <img
-                      src={imageCache.has(data.image_url) ? imageCache.get(data.image_url)!.src : data.image_url}
+                      src={imageCache.get(data.image_url) || data.image_url}
                       alt={name}
                       className="object-contain"
                       style={{
                         width: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
                         height: size >= 160 ? '48px' : size >= 140 ? '40px' : size >= 120 ? '32px' : '28px',
                         flexShrink: 0,
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg';
                       }}
                     />
                     <div 
