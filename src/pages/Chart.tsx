@@ -364,7 +364,7 @@ const Chart = () => {
 
         {/* Content */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -385,22 +385,22 @@ const Chart = () => {
               return (
                 <Card
                   key={name}
-                  className={`p-4 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 ${getCardStyle()}`}
+                  className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 ${getCardStyle()}`}
                 >
                   <img
                     src={imageCache.get(data.image_url) || data.image_url}
                     alt={name}
-                    className="w-16 h-16 object-contain"
+                    className="w-12 h-12 object-contain"
                   />
                   <div className="flex items-center gap-1">
-                    <TonIcon className="w-4 h-4" />
-                    <span className="font-bold text-foreground">
+                    <TonIcon className="w-3 h-3" />
+                    <span className="font-bold text-foreground text-sm">
                       {price.toFixed(2)}
                     </span>
                   </div>
                   <span
-                    className={`text-sm font-medium ${
-                      isPositive ? 'text-green-500' : 'text-red-500'
+                    className={`text-xs font-medium ${
+                      isPositive ? 'text-green-400' : 'text-red-400'
                     }`}
                   >
                     {isPositive ? '+' : ''}
