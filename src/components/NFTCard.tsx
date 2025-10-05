@@ -48,12 +48,14 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     }
   };
 
-  const handleImageError = () => {
+  const handleImageError = (e: any) => {
+    console.error('❌ Image failed to load:', nft.image, 'Error:', e);
     setImageError(true);
     setImageLoading(false);
   };
 
   const handleImageLoad = () => {
+    console.log('✅ Image loaded successfully:', nft.image);
     setImageLoading(false);
   };
 
@@ -78,6 +80,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
                 src={nft.image}
                 alt={`${nft.name} NFT`}
                 className="w-full h-full object-cover rounded-xl"
+                crossOrigin="anonymous"
                 onError={handleImageError}
                 onLoad={handleImageLoad}
               />

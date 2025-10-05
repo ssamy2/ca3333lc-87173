@@ -558,16 +558,26 @@ const TelegramApp: React.FC = () => {
               </div>
 
               {/* Price Stats */}
-              {nftData.prices && nftData.prices.floor_price && (
-                <div className="flex justify-center">
-                  <div className="w-full max-w-xs">
+              {nftData.prices && (
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Floor Price */}
+                  {nftData.prices.floor_price && (
                     <StatsCard
                       icon={<TonIcon className="w-4 h-4 text-success" />}
                       label="Floor Price"
                       value={`${formatTON(nftData.prices.floor_price.TON)} TON`}
                       subValue={`$${formatTON(nftData.prices.floor_price.USD)}`}
                     />
-                  </div>
+                  )}
+                  {/* Total Value */}
+                  {nftData.prices.avg_price && (
+                    <StatsCard
+                      icon={<Calculator className="w-4 h-4 text-primary" />}
+                      label="Total Value"
+                      value={`${formatTON(nftData.prices.avg_price.TON)} TON`}
+                      subValue={`$${formatTON(nftData.prices.avg_price.USD)}`}
+                    />
+                  )}
                 </div>
               )}
             </div>
