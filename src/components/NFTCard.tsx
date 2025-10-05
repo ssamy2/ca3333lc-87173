@@ -8,6 +8,7 @@ interface NFTGift {
   model: string;
   floor_price: number;
   avg_price: number;
+  price_change_percent?: number;
   image?: string;
   title?: string;
   backdrop?: string;
@@ -59,9 +60,25 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     setImageLoading(false);
   };
 
+  // Get background color based on price change
+  const getBackgroundColor = () => {
+    if (!nft.price_change_percent) return 'from-muted/30 to-muted/10';
+    if (nft.price_change_percent > 0) return 'from-green-500/20 to-green-500/5';
+    if (nft.price_change_percent < 0) return 'from-red-500/20 to-red-500/5';
+    return 'from-muted/30 to-muted/10';
+  };
+
+  // Get text color for price change
+  const getChangeColor = () => {
+    if (!nft.price_change_percent) return 'text-muted-foreground';
+    if (nft.price_change_percent > 0) return 'text-green-500';
+    if (nft.price_change_percent < 0) return 'text-red-500';
+    return 'text-muted-foreground';
+  };
+
   return (
     <div 
-      className="telegram-card p-4 cursor-pointer group relative animate-fade-in hover-scale transition-all duration-300"
+      className={`telegram-card p-4 cursor-pointer group relative animate-fade-in hover-scale transition-all duration-300 bg-gradient-to-br ${getBackgroundColor()}`}
       onClick={handleCardClick}
     >
       {/* Quantity Badge */}
@@ -133,13 +150,17 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
         {/* Price Info */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Floor:</span>
-            <div className="flex items-center gap-1">
-              <TonIcon className="w-3 h-3 text-success" />
-              <span className="text-xs font-bold">{formatTON(nft.floor_price)}</span>
-            </div>
+          <div className="flex items-center justify-center gap-1 mb-2">
+            <TonIcon className="w-4 h-4 text-[#0098EA]" />
+            <span className="text-lg font-bold">{formatTON(nft.floor_price)}</span>
           </div>
+          
+          {/* Price Change Percentage */}
+          {nft.price_change_percent !== undefined && (
+            <div className={`text-center text-sm font-semibold ${getChangeColor()}`}>
+              {nft.price_change_percent > 0 ? '+' : ''}{nft.price_change_percent.toFixed(2)}%
+            </div>
+          )}
         </div>
 
         {/* View in Store Indicator */}

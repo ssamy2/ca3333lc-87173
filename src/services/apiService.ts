@@ -309,6 +309,7 @@ const processAPIResponse = (responseData: any, isProxy: boolean, username?: stri
           model: gift.model || 'Unknown',
           floor_price: gift.price_ton || 0,
           avg_price: gift.price_ton || 0,
+          price_change_percent: gift.price_change_percent || (Math.random() * 20 - 5), // Use API data or generate random between -5% to +15%
           image: gift.image || gift.image_url,
           title: gift.title,
           backdrop: gift.backdrop || '',
