@@ -518,66 +518,42 @@ const TelegramApp: React.FC = () => {
           <div className="space-y-6 animate-bounce-in">
             {/* Owner Info with Photo */}
             <div className="telegram-card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center overflow-hidden">
-                    {searchedUserProfile?.photo_base64 ? (
-                      <img 
-                        src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
-                        alt={searchedUserProfile.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-6 h-6 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold">{searchedUserProfile?.name || nftData.owner}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} Visible NFT Gifts
-                    </p>
-                    {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
-                      <p className="text-xs text-primary font-medium mt-1">
-                        Total Saved Gifts: {nftData.total_saved_gifts}
-                      </p>
-                    )}
-                  </div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+                  {searchedUserProfile?.photo_base64 ? (
+                    <img 
+                      src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
+                      alt={searchedUserProfile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-7 h-7 text-white" />
+                  )}
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-primary">
-                    <TonIcon className="w-5 h-5" />
-                    <span className="font-bold text-lg">
-                      {formatTON(nftData.prices?.avg_price?.TON || 0)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    ${formatTON(nftData.prices?.avg_price?.USD || 0)}
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold">{searchedUserProfile?.name || nftData.owner}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} Visible NFT Gifts
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Total Value</p>
+                  {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
+                    <p className="text-xs text-primary font-medium mt-1">
+                      Total Saved Gifts: {nftData.total_saved_gifts}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Price Stats */}
-              {nftData.prices && (
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Floor Price */}
-                  {nftData.prices.floor_price && (
-                    <StatsCard
-                      icon={<TonIcon className="w-4 h-4 text-success" />}
-                      label="Floor Price"
-                      value={`${formatTON(nftData.prices.floor_price.TON)} TON`}
-                      subValue={`$${formatTON(nftData.prices.floor_price.USD)}`}
-                    />
-                  )}
-                  {/* Total Value */}
-                  {nftData.prices.avg_price && (
+              {/* Total Value Card */}
+              {nftData.prices?.avg_price && (
+                <div className="flex justify-center">
+                  <div className="w-full max-w-xs">
                     <StatsCard
                       icon={<Calculator className="w-4 h-4 text-primary" />}
                       label="Total Value"
                       value={`${formatTON(nftData.prices.avg_price.TON)} TON`}
                       subValue={`$${formatTON(nftData.prices.avg_price.USD)}`}
                     />
-                  )}
+                  </div>
                 </div>
               )}
             </div>
