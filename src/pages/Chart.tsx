@@ -430,25 +430,29 @@ const Chart = () => {
           <div className="w-full overflow-x-auto">
             <div
               id="heatmap-container"
-              className="relative bg-[#0a0f1a] inline-block"
+              className="relative bg-[#0a0f1a]"
               style={{ 
-                transform: window.innerWidth >= 768 ? `scale(${zoomLevel})` : 'scale(1)', 
-                transformOrigin: 'top left',
-                minWidth: window.innerWidth < 768 ? '100%' : 'auto',
+                display: 'grid',
+                gridAutoFlow: 'dense',
+                gap: 0,
+                gridAutoRows: `${(window.innerWidth < 768 ? 10 : 20)}px`,
+                gridTemplateColumns: `repeat(${Math.floor((window.innerWidth < 768 ? window.innerWidth : 1200) / (window.innerWidth < 768 ? 10 : 20))}, ${(window.innerWidth < 768 ? 10 : 20)}px)`
               }}
             >
-              <div className="flex flex-wrap" style={{ lineHeight: 0, gap: 0 }}>
-                {filteredData.map(([name, data], index) => {
+              {filteredData.map(([name, data], index) => {
                   const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
                   const price = currency === 'ton' ? data.price_ton : data.price_usd;
                   const size = getSizeForChange(change);
                   const color = getColorForChange(change);
                   const isMobile = window.innerWidth < 768;
+                  const gridBase = isMobile ? 10 : 20;
+                  const span = Math.max(1, Math.round(size / gridBase));
+                  const tilePx = span * gridBase;
                   
-                  // Insert watermark at random position (but consistent)
+                  // Insert watermark at consistent position
                   const watermarkPosition = Math.floor(filteredData.length * 0.4);
                   const shouldShowWatermark = index === watermarkPosition;
-                  const watermarkSize = isMobile ? 70 : 140;
+                  const watermarkSpan = isMobile ? 7 : 10;
 
                   return (
                     <React.Fragment key={`item-${name}-${index}`}>
@@ -457,8 +461,11 @@ const Chart = () => {
                           className="inline-flex items-center justify-center text-white/80 font-bold"
                           style={{
                             backgroundColor: '#0a0f1a',
-                            width: `${watermarkSize}px`,
-                            height: `${watermarkSize}px`,
+                            gridColumn: `span ${watermarkSpan}`,
+                            gridRow: `span ${watermarkSpan}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             fontSize: isMobile ? '8px' : '13px',
                             padding: isMobile ? '4px' : '8px',
                             margin: 0,
@@ -475,13 +482,17 @@ const Chart = () => {
                         className="inline-flex flex-col items-center justify-center text-white"
                         style={{
                           backgroundColor: color,
-                          width: `${size}px`,
-                          height: `${size}px`,
-                          padding: size >= 160 ? '12px' : size >= 120 ? '10px' : size >= 80 ? '6px' : size >= 60 ? '4px' : '3px',
+                          gridColumn: `span ${span}`,
+                          gridRow: `span ${span}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexDirection: 'column',
+                          padding: tilePx >= 160 ? '12px' : tilePx >= 120 ? '10px' : tilePx >= 80 ? '6px' : tilePx >= 60 ? '4px' : '3px',
                           margin: 0,
                           border: 0,
                           boxSizing: 'border-box',
-                          gap: size >= 160 ? '6px' : size >= 120 ? '5px' : size >= 80 ? '4px' : '2px',
+                          gap: tilePx >= 160 ? '6px' : tilePx >= 120 ? '5px' : tilePx >= 80 ? '4px' : '2px',
                           overflow: 'hidden',
                           transition: 'opacity 0.2s',
                         }}
@@ -563,7 +574,6 @@ const Chart = () => {
                     </React.Fragment>
                   );
                 })}
-              </div>
             </div>
           </div>
         )}
