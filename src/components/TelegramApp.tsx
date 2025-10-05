@@ -184,9 +184,24 @@ const TelegramApp: React.FC = () => {
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   const saveToHistory = (searchTerm: string) => {
-    const newHistory = [searchTerm, ...searchHistory.filter(h => h !== searchTerm)].slice(0, 5);
+    const newHistory = [searchTerm, ...searchHistory.filter(h => h !== searchTerm)].slice(0, 8);
     setSearchHistory(newHistory);
     localStorage.setItem('nft_search_history', JSON.stringify(newHistory));
+  };
+
+  const removeFromHistory = (searchTerm: string) => {
+    const newHistory = searchHistory.filter(h => h !== searchTerm);
+    setSearchHistory(newHistory);
+    localStorage.setItem('nft_search_history', JSON.stringify(newHistory));
+  };
+
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('nft_search_history');
+    toast({
+      title: "History Cleared",
+      description: "Search history has been deleted",
+    });
   };
 
   const fetchNFTs = async (searchUsername: string) => {
@@ -488,16 +503,43 @@ const TelegramApp: React.FC = () => {
           {/* Search History */}
           {searchHistory.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Recent Searches</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground font-medium">Recent Searches</p>
+                <button
+                  onClick={clearHistory}
+                  className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Clear All
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {searchHistory.map((term, index) => (
-                  <button
+                  <div
                     key={index}
-                    onClick={() => setUsername(term)}
-                    className="px-3 py-1 bg-secondary/70 text-secondary-foreground rounded-full text-xs hover:bg-secondary transition-colors border border-border/30"
+                    className="relative group"
                   >
-                    @{term}
-                  </button>
+                    <button
+                      onClick={() => setUsername(term)}
+                      className="pl-3 pr-7 py-1.5 bg-secondary/70 text-secondary-foreground rounded-full text-xs hover:bg-secondary transition-colors border border-border/30"
+                    >
+                      @{term}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromHistory(term);
+                      }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm"
+                      aria-label="Remove"
+                    >
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
