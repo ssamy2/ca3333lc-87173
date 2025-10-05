@@ -194,8 +194,11 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Exactly 2 solid colors (no shades)
-    return change >= 0 ? '#16a34a' : '#dc2626';
+    // Use CSS variables that adapt to light/dark mode
+    const style = getComputedStyle(document.documentElement);
+    const success = style.getPropertyValue('--success').trim();
+    const destructive = style.getPropertyValue('--destructive').trim();
+    return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
   };
 
   const getSizeForChange = (change: number) => {
@@ -390,12 +393,12 @@ const Chart = () => {
               // Get background and shadow based on change
               const getCardStyle = () => {
                 if (isNeutral) {
-                  return 'bg-[#1a2332] hover:shadow-lg hover:shadow-gray-500/20';
+                  return 'bg-secondary/80 hover:shadow-lg hover:shadow-muted/20';
                 }
                 if (isPositive) {
-                  return 'bg-gradient-to-br from-green-900/40 to-green-950/60 hover:shadow-lg hover:shadow-green-500/30';
+                  return 'bg-[hsl(var(--success))]/20 hover:shadow-lg hover:shadow-[hsl(var(--success))]/30 border-[hsl(var(--success))]/30';
                 }
-                return 'bg-gradient-to-br from-red-900/40 to-red-950/60 hover:shadow-lg hover:shadow-red-500/30';
+                return 'bg-[hsl(var(--destructive))]/20 hover:shadow-lg hover:shadow-[hsl(var(--destructive))]/30 border-[hsl(var(--destructive))]/30';
               };
 
               return (
@@ -416,7 +419,7 @@ const Chart = () => {
                   </div>
                   <span
                     className={`text-xs font-medium ${
-                      isPositive ? 'text-green-400' : 'text-red-400'
+                      isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                     }`}
                   >
                     {isPositive ? '+' : ''}
@@ -430,7 +433,7 @@ const Chart = () => {
           <div className="w-full overflow-x-auto">
             <div
               id="heatmap-container"
-              className="relative bg-[#0a0f1a]"
+              className="relative bg-card"
               style={{ 
                 display: 'grid',
                 gridAutoFlow: 'dense',
@@ -441,8 +444,8 @@ const Chart = () => {
             >
               {/* Watermark Overlay */}
               <div 
-                className="absolute bottom-2 right-2 text-white/30 text-xs font-medium pointer-events-none z-10"
-                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+                className="absolute bottom-2 right-2 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
+                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
               >
                 @Nova_calculator_bot
               </div>
