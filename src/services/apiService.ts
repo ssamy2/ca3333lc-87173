@@ -222,6 +222,48 @@ export const fetchNFTGifts = async (username: string) => {
   }
 };
 
+// Fetch User Profile (photo and name)
+export const fetchUserProfile = async (username: string) => {
+  const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+  const apiUrl = buildApiUrl(`/api/user-profile?username=${encodeURIComponent(cleanUsername)}`);
+  
+  console.log('Fetching user profile from:', apiUrl);
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+      signal: getTimeoutSignal(10000)
+    });
+    
+    if (!response.ok) {
+      console.error('User profile API response not OK:', response.status);
+      if (response.status === 404) {
+        throw new Error('USER_NOT_FOUND');
+      }
+      throw new Error('NETWORK_ERROR');
+    }
+    
+    const responseData = await response.json();
+    console.log('User profile response:', responseData);
+    
+    return {
+      name: responseData.name || cleanUsername,
+      photo_base64: responseData.photo_base64 || null
+    };
+    
+  } catch (error) {
+    console.error('User profile request failed:', error);
+    // Return fallback data instead of throwing
+    return {
+      name: cleanUsername,
+      photo_base64: null
+    };
+  }
+};
+
 // Helper function to process API response
 const processAPIResponse = (responseData: any, isProxy: boolean) => {
   // Check for API error responses

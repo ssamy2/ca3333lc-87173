@@ -12,8 +12,13 @@ import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
-import { fetchNFTGifts } from '@/services/apiService';
+import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
+
+interface UserProfile {
+  name: string;
+  photo_base64: string | null;
+}
 
 interface NFTGift {
   count: number;
@@ -64,6 +69,8 @@ interface APIResponse {
 const TelegramApp: React.FC = () => {
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [searchedUserProfile, setSearchedUserProfile] = useState<UserProfile | null>(null);
   const [nftData, setNftData] = useState<NFTData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,12 +97,17 @@ const TelegramApp: React.FC = () => {
       if (webApp.setBackgroundColor) webApp.setBackgroundColor('#f0f8ff');
     }
 
-    // Detect Telegram user
+    // Detect Telegram user and fetch profile
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (telegramUser) {
       const detectedUsername = telegramUser.username || telegramUser.first_name || 'user';
       setCurrentUser(detectedUsername);
       setUsername(detectedUsername);
+      
+      // Fetch user profile
+      fetchUserProfile(detectedUsername).then(profile => {
+        setCurrentUserProfile(profile);
+      });
     } else {
       // Fallback for testing
       setCurrentUser('demo_user');
@@ -170,12 +182,18 @@ const TelegramApp: React.FC = () => {
     setLoading(true);
     setError(null);
     setNftData(null);
+    setSearchedUserProfile(null);
 
     try {
-      const data: APIResponse = await fetchNFTGifts(searchUsername);
+      // Fetch both NFT data and user profile in parallel
+      const [data, profile] = await Promise.all([
+        fetchNFTGifts(searchUsername),
+        fetchUserProfile(searchUsername)
+      ]);
 
       if (data.success && data.data) {
         setNftData(data.data);
+        setSearchedUserProfile(profile);
         saveToHistory(searchUsername);
         const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
         toast({
@@ -367,10 +385,18 @@ const TelegramApp: React.FC = () => {
             
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {/* Enhanced User Avatar */}
+                {/* Enhanced User Avatar with Photo */}
                 <div className="relative group">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20">
-                    <User className="w-7 h-7 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 border border-primary/20 overflow-hidden">
+                    {currentUserProfile?.photo_base64 ? (
+                      <img 
+                        src={`data:image/jpeg;base64,${currentUserProfile.photo_base64}`}
+                        alt={currentUserProfile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-7 h-7 text-white" />
+                    )}
                   </div>
                   {/* Avatar Ring Effect */}
                   <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
@@ -384,7 +410,7 @@ const TelegramApp: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      Current User
+                      {currentUserProfile?.name || 'Current User'}
                     </h3>
                     <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
                       Active
@@ -488,14 +514,27 @@ const TelegramApp: React.FC = () => {
 
         {nftData && !loading && !error && (
           <div className="space-y-6 animate-bounce-in">
-            {/* Owner Info */}
+            {/* Owner Info with Photo */}
             <div className="telegram-card p-5">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-bold">{nftData.owner}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {nftData.nfts?.length || nftData.visible_nfts || 0} هدية NFT مرئية
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center overflow-hidden">
+                    {searchedUserProfile?.photo_base64 ? (
+                      <img 
+                        src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
+                        alt={searchedUserProfile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-6 h-6 text-white" />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{searchedUserProfile?.name || nftData.owner}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} هدية NFT مرئية
+                    </p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-primary">
