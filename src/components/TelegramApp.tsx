@@ -324,6 +324,21 @@ const TelegramApp: React.FC = () => {
     return nftData.nfts.reduce((total, nft) => total + (nft.floor_price * nft.count), 0);
   };
 
+  const sortNFTsByPrice = (nfts: NFTGift[]) => {
+    return [...nfts].sort((a, b) => {
+      const priceA = a.floor_price * a.count;
+      const priceB = b.floor_price * b.count;
+      
+      // الهدايا اللي سعرها 0 تروح للآخر
+      if (priceA === 0 && priceB !== 0) return 1;
+      if (priceA !== 0 && priceB === 0) return -1;
+      if (priceA === 0 && priceB === 0) return 0;
+      
+      // الترتيب من الأغلى للأرخص
+      return priceB - priceA;
+    });
+  };
+
   if (activeTab === 'chart') {
     return (
       <>
@@ -630,7 +645,7 @@ const TelegramApp: React.FC = () => {
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                {nftData.nfts && Array.isArray(nftData.nfts) && nftData.nfts.map((nft, index) => (
+                {nftData.nfts && Array.isArray(nftData.nfts) && sortNFTsByPrice(nftData.nfts).map((nft, index) => (
                   <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} nft={nft} />
                 ))}
               </div>
