@@ -169,16 +169,65 @@ const Chart = () => {
       return;
     }
 
-    const loadingToast = toast.loading('Generating image...');
+    const loadingToast = toast.loading('Preparing images...');
 
     try {
+      // Wait for all images to be fully loaded and converted to base64
+      const treemapData = getTreemapData();
+      const imagePromises = treemapData
+        .filter(item => item.imageUrl && !imageCache.has(item.imageUrl))
+        .map(item => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                try {
+                  const base64 = canvas.toDataURL('image/png');
+                  imageCache.set(item.imageUrl, base64);
+                } catch (e) {
+                  console.error('Failed to convert image:', e);
+                  imageCache.set(item.imageUrl, item.imageUrl);
+                }
+              }
+              resolve(null);
+            };
+            img.onerror = () => resolve(null);
+            img.src = item.imageUrl;
+          });
+        });
+
+      await Promise.all(imagePromises);
+
+      // Wait a bit more to ensure SVG is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.dismiss(loadingToast);
+      const generatingToast = toast.loading('Generating image...');
+
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 3,
+        scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 0,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Force all images in cloned document to use base64
+          const images = clonedDoc.querySelectorAll('image');
+          images.forEach((img: any) => {
+            const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+            if (href && imageCache.has(href)) {
+              img.setAttribute('href', imageCache.get(href)!);
+              img.setAttribute('xlink:href', imageCache.get(href)!);
+            }
+          });
+        },
       });
 
       const base64Image = canvas.toDataURL('image/png', 1.0).split(',')[1];
@@ -188,7 +237,7 @@ const Chart = () => {
       const userId = tg?.initDataUnsafe?.user?.id;
 
       if (!userId) {
-        toast.dismiss(loadingToast);
+        toast.dismiss(generatingToast);
         toast.error('Could not get Telegram user ID');
         return;
       }
@@ -205,7 +254,7 @@ const Chart = () => {
         }),
       });
 
-      toast.dismiss(loadingToast);
+      toast.dismiss(generatingToast);
 
       if (response.ok) {
         setShowSuccessScreen(true);
