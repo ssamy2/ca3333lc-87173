@@ -224,12 +224,24 @@ const Chart = () => {
 
   // Custom treemap cell content
   const CustomTreemapContent = (props: any) => {
-    const { x, y, width, height, name, change, price, imageUrl, color } = props;
+    // Recharts passes data in props, need to safely extract
+    const x = props.x || 0;
+    const y = props.y || 0;
+    const width = props.width || 0;
+    const height = props.height || 0;
+    const name = props.name || '';
+    const change = props.change ?? 0;
+    const price = props.price ?? 0;
+    const imageUrl = props.imageUrl || '';
+    const color = props.color || '#888';
+    
+    // Return null if no valid dimensions
+    if (!width || !height) return null;
     
     const area = width * height;
     const fontSize = Math.sqrt(area) / 8;
     const iconSize = Math.sqrt(area) / 5;
-    const showName = area > 2000;
+    const showName = area > 2000 && name;
     const showPrice = area > 5000;
     
     return (
@@ -259,7 +271,7 @@ const Chart = () => {
         )}
         
         {/* Name */}
-        {showName && (
+        {showName && name && (
           <text
             x={x + width / 2}
             y={y + height * 0.45}
