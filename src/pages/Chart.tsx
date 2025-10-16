@@ -201,102 +201,38 @@ const Chart = () => {
     return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
   };
 
-  // Treemap layout algorithm
-  interface TreemapNode {
-    name: string;
-    value: number;
-    change: number;
-    price: number;
-    imageUrl: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }
-
-  const squarify = (
-    data: Array<{ name: string; value: number; change: number; price: number; imageUrl: string }>,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ): TreemapNode[] => {
-    if (data.length === 0) return [];
-
-    // Sort by value (largest first)
-    const sortedData = [...data].sort((a, b) => b.value - a.value);
-    
-    const result: TreemapNode[] = [];
-    let currentX = x;
-    let currentY = y;
-    let remainingWidth = width;
-    let remainingHeight = height;
-    let totalValue = sortedData.reduce((sum, item) => sum + item.value, 0);
-
-    sortedData.forEach((item, index) => {
-      const ratio = item.value / totalValue;
-      
-      // Decide whether to slice horizontally or vertically
-      const useHorizontal = remainingWidth >= remainingHeight;
-      
-      let itemWidth: number;
-      let itemHeight: number;
-
-      if (useHorizontal) {
-        itemWidth = remainingWidth * ratio;
-        itemHeight = remainingHeight;
-        
-        result.push({
-          ...item,
-          x: currentX,
-          y: currentY,
-          width: itemWidth,
-          height: itemHeight,
-        });
-
-        currentX += itemWidth;
-        remainingWidth -= itemWidth;
-      } else {
-        itemWidth = remainingWidth;
-        itemHeight = remainingHeight * ratio;
-        
-        result.push({
-          ...item,
-          x: currentX,
-          y: currentY,
-          width: itemWidth,
-          height: itemHeight,
-        });
-
-        currentY += itemHeight;
-        remainingHeight -= itemHeight;
-      }
-
-      totalValue -= item.value;
-    });
-
-    return result;
-  };
-
-  const calculateTreemap = (): TreemapNode[] => {
+  const getSizeForChange = (change: number) => {
+    const absChange = Math.abs(change);
     const isMobile = window.innerWidth < 768;
-    const containerWidth = isMobile ? window.innerWidth - 32 : 1200;
-    const containerHeight = isMobile ? 800 : 1000;
-
-    // Prepare data with absolute values for area calculation
-    const treeData = filteredData.map(([name, data]) => {
-      const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-      const price = currency === 'ton' ? data.price_ton : data.price_usd;
-      return {
-        name,
-        value: Math.abs(change), // Use absolute value for size
-        change,
-        price,
-        imageUrl: data.image_url,
-      };
-    });
-
-    return squarify(treeData, 0, 0, containerWidth, containerHeight);
+    
+    if (isMobile) {
+      // Mobile sizes - more granular
+      if (absChange >= 15) return 140;
+      if (absChange >= 12) return 120;
+      if (absChange >= 10) return 110;
+      if (absChange >= 8) return 100;
+      if (absChange >= 6) return 90;
+      if (absChange >= 5) return 80;
+      if (absChange >= 4) return 70;
+      if (absChange >= 3) return 65;
+      if (absChange >= 2) return 60;
+      if (absChange >= 1) return 55;
+      return 50;
+    }
+    
+    // Desktop sizes - more granular
+    if (absChange >= 18) return 250;
+    if (absChange >= 15) return 220;
+    if (absChange >= 12) return 190;
+    if (absChange >= 10) return 170;
+    if (absChange >= 8) return 150;
+    if (absChange >= 6) return 130;
+    if (absChange >= 5) return 115;
+    if (absChange >= 4) return 100;
+    if (absChange >= 3) return 90;
+    if (absChange >= 2) return 80;
+    if (absChange >= 1) return 70;
+    return 60;
   };
 
   const filteredData = getFilteredData();
@@ -508,6 +444,12 @@ const Chart = () => {
               style={{ 
                 width: window.innerWidth < 768 ? window.innerWidth - 32 : 1200,
                 height: window.innerWidth < 768 ? 800 : 1000,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignContent: 'flex-start',
+                justifyContent: 'flex-start',
+                gap: 2,
+                padding: 4,
               }}
             >
               {/* Watermark Overlay */}
@@ -518,20 +460,25 @@ const Chart = () => {
                 @Nova_calculator_bot
               </div>
               
-              {calculateTreemap().map((node, index) => {
-                const color = getColorForChange(node.change);
+              {filteredData.map(([name, data], index) => {
+                const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+                const price = currency === 'ton' ? data.price_ton : data.price_usd;
+                const size = getSizeForChange(change);
+                const color = getColorForChange(change);
                 const isMobile = window.innerWidth < 768;
-                const minSize = Math.min(node.width, node.height);
                 
                 // Determine font sizes and padding based on block size
                 const getFontSizes = () => {
-                  if (minSize >= 150) return { name: 14, percentage: 18, price: 11, icon: 40, padding: 12 };
-                  if (minSize >= 120) return { name: 12, percentage: 16, price: 10, icon: 36, padding: 10 };
-                  if (minSize >= 90) return { name: 11, percentage: 14, price: 9, icon: 30, padding: 8 };
-                  if (minSize >= 70) return { name: 10, percentage: 12, price: 8, icon: 24, padding: 6 };
-                  if (minSize >= 50) return { name: 8, percentage: 11, price: 7, icon: 20, padding: 5 };
-                  if (minSize >= 35) return { name: 7, percentage: 9, price: 0, icon: 16, padding: 4 };
-                  return { name: 6, percentage: 8, price: 0, icon: 14, padding: 3 };
+                  if (size >= 200) return { name: 14, percentage: 20, price: 11, icon: 42, padding: 12 };
+                  if (size >= 170) return { name: 13, percentage: 18, price: 10, icon: 38, padding: 11 };
+                  if (size >= 150) return { name: 12, percentage: 16, price: 10, icon: 34, padding: 10 };
+                  if (size >= 130) return { name: 11, percentage: 15, price: 9, icon: 30, padding: 9 };
+                  if (size >= 110) return { name: 10, percentage: 14, price: 8, icon: 26, padding: 8 };
+                  if (size >= 90) return { name: 9, percentage: 12, price: 8, icon: 22, padding: 7 };
+                  if (size >= 75) return { name: 8, percentage: 11, price: 7, icon: 20, padding: 6 };
+                  if (size >= 65) return { name: 7, percentage: 10, price: 0, icon: 18, padding: 5 };
+                  if (size >= 55) return { name: 6, percentage: 9, price: 0, icon: 14, padding: 4 };
+                  return { name: 5, percentage: 8, price: 0, icon: 12, padding: 3 };
                 };
 
                 const sizes = getFontSizes();
@@ -539,52 +486,54 @@ const Chart = () => {
 
                 return (
                   <div
-                    key={`${node.name}-${index}`}
-                    className="absolute flex flex-col items-center justify-center text-white"
+                    key={`${name}-${index}`}
+                    className="flex flex-col items-center justify-center text-white flex-shrink-0"
                     style={{
-                      left: node.x,
-                      top: node.y,
-                      width: node.width,
-                      height: node.height,
+                      width: size,
+                      height: size,
                       backgroundColor: color,
                       padding: sizes.padding,
                       boxSizing: 'border-box',
-                      gap: minSize >= 70 ? 4 : minSize >= 50 ? 3 : 2,
+                      gap: size >= 100 ? 4 : size >= 70 ? 3 : 2,
                       overflow: 'hidden',
                       transition: 'opacity 0.2s',
-                      border: '1px solid rgba(0,0,0,0.1)',
+                      border: '1px solid rgba(0,0,0,0.15)',
+                      borderRadius: 4,
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     {/* Image */}
                     <img
-                      src={imageCache.get(node.imageUrl) || node.imageUrl}
-                      alt={node.name}
+                      src={imageCache.get(data.image_url) || data.image_url}
+                      alt={name}
                       className="object-contain flex-shrink-0"
                       style={{
                         width: sizes.icon,
                         height: sizes.icon,
                         maxWidth: '80%',
-                        maxHeight: '30%',
+                        maxHeight: '35%',
                       }}
                     />
                     
                     {/* Name */}
-                    <div 
-                      className="font-bold text-center leading-tight"
-                      style={{ 
-                        fontSize: sizes.name,
-                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                        whiteSpace: minSize >= 90 ? 'normal' : 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '100%',
-                        WebkitFontSmoothing: 'antialiased',
-                      }}
-                    >
-                      {node.name}
-                    </div>
+                    {size >= 55 && (
+                      <div 
+                        className="font-bold text-center leading-tight"
+                        style={{ 
+                          fontSize: sizes.name,
+                          textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                          whiteSpace: size >= 130 ? 'normal' : 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '100%',
+                          WebkitFontSmoothing: 'antialiased',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {name}
+                      </div>
+                    )}
                     
                     {/* Percentage */}
                     <div 
@@ -595,10 +544,11 @@ const Chart = () => {
                         textShadow: '0 2px 3px rgba(0,0,0,0.6)',
                         whiteSpace: 'nowrap',
                         WebkitFontSmoothing: 'antialiased',
+                        lineHeight: 1,
                       }}
                     >
-                      {node.change >= 0 ? '+' : ''}
-                      {node.change.toFixed(2)}%
+                      {change >= 0 ? '+' : ''}
+                      {change.toFixed(2)}%
                     </div>
                     
                     {/* Price (only for larger blocks) */}
@@ -615,7 +565,7 @@ const Chart = () => {
                         <div style={{ width: sizes.price + 2, height: sizes.price + 2 }}>
                           <TonIcon className="flex-shrink-0 w-full h-full" />
                         </div>
-                        <span>{node.price.toFixed(2)}</span>
+                        <span>{price.toFixed(2)}</span>
                       </div>
                     )}
                   </div>
