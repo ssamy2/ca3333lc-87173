@@ -206,18 +206,18 @@ const Chart = () => {
     const isMobile = window.innerWidth < 768;
     
     if (isMobile) {
-      // Mobile sizes - more granular
-      if (absChange >= 15) return 140;
-      if (absChange >= 12) return 120;
-      if (absChange >= 10) return 110;
-      if (absChange >= 8) return 100;
-      if (absChange >= 6) return 90;
-      if (absChange >= 5) return 80;
-      if (absChange >= 4) return 70;
-      if (absChange >= 3) return 65;
-      if (absChange >= 2) return 60;
-      if (absChange >= 1) return 55;
-      return 50;
+      // Mobile sizes - larger and more granular
+      if (absChange >= 15) return 180;
+      if (absChange >= 12) return 160;
+      if (absChange >= 10) return 145;
+      if (absChange >= 8) return 130;
+      if (absChange >= 6) return 115;
+      if (absChange >= 5) return 100;
+      if (absChange >= 4) return 90;
+      if (absChange >= 3) return 80;
+      if (absChange >= 2) return 70;
+      if (absChange >= 1) return 60;
+      return 55;
     }
     
     // Desktop sizes - more granular
@@ -442,14 +442,14 @@ const Chart = () => {
               id="heatmap-container"
               className="relative bg-card"
               style={{ 
-                width: window.innerWidth < 768 ? window.innerWidth - 32 : 1200,
-                height: window.innerWidth < 768 ? 800 : 1000,
+                width: window.innerWidth < 768 ? window.innerWidth : 1200,
+                height: window.innerWidth < 768 ? 1200 : 1000,
                 display: 'flex',
                 flexWrap: 'wrap',
                 alignContent: 'flex-start',
                 justifyContent: 'flex-start',
-                gap: 2,
-                padding: 4,
+                gap: window.innerWidth < 768 ? 3 : 2,
+                padding: window.innerWidth < 768 ? 0 : 4,
               }}
             >
               {/* Watermark Overlay */}
@@ -469,6 +469,19 @@ const Chart = () => {
                 
                 // Determine font sizes and padding based on block size
                 const getFontSizes = () => {
+                  if (isMobile) {
+                    // Mobile font sizes - more readable
+                    if (size >= 160) return { name: 12, percentage: 18, price: 10, icon: 38, padding: 10 };
+                    if (size >= 140) return { name: 11, percentage: 16, price: 9, icon: 34, padding: 9 };
+                    if (size >= 120) return { name: 10, percentage: 14, price: 9, icon: 30, padding: 8 };
+                    if (size >= 100) return { name: 9, percentage: 13, price: 8, icon: 26, padding: 7 };
+                    if (size >= 85) return { name: 8, percentage: 12, price: 8, icon: 22, padding: 6 };
+                    if (size >= 70) return { name: 7, percentage: 11, price: 0, icon: 18, padding: 5 };
+                    if (size >= 60) return { name: 6, percentage: 10, price: 0, icon: 16, padding: 4 };
+                    return { name: 5, percentage: 9, price: 0, icon: 14, padding: 3 };
+                  }
+                  
+                  // Desktop font sizes
                   if (size >= 200) return { name: 14, percentage: 20, price: 11, icon: 42, padding: 12 };
                   if (size >= 170) return { name: 13, percentage: 18, price: 10, icon: 38, padding: 11 };
                   if (size >= 150) return { name: 12, percentage: 16, price: 10, icon: 34, padding: 10 };
@@ -494,7 +507,7 @@ const Chart = () => {
                       backgroundColor: color,
                       padding: sizes.padding,
                       boxSizing: 'border-box',
-                      gap: size >= 100 ? 4 : size >= 70 ? 3 : 2,
+                      gap: size >= 120 ? 6 : size >= 90 ? 4 : size >= 70 ? 3 : 2,
                       overflow: 'hidden',
                       transition: 'opacity 0.2s',
                       border: '1px solid rgba(0,0,0,0.15)',
@@ -511,8 +524,8 @@ const Chart = () => {
                       style={{
                         width: sizes.icon,
                         height: sizes.icon,
-                        maxWidth: '80%',
-                        maxHeight: '35%',
+                        maxWidth: size >= 100 ? '75%' : '80%',
+                        maxHeight: size >= 100 ? '40%' : '35%',
                       }}
                     />
                     
