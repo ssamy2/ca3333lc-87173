@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import TonIcon from '@/components/TonIcon';
 import { getCachedData, setCachedData } from '@/services/marketCache';
+import { Treemap, ResponsiveContainer } from 'recharts';
 
 interface NFTMarketData {
   price_ton: number;
@@ -137,6 +138,24 @@ const Chart = () => {
     return entries;
   };
 
+  const getTreemapData = () => {
+    const entries = getFilteredData();
+    
+    return entries.map(([name, data]) => {
+      const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+      const price = currency === 'ton' ? data.price_ton : data.price_usd;
+      
+      return {
+        name,
+        size: Math.abs(change), // Use absolute change for area
+        change,
+        price,
+        imageUrl: data.image_url,
+        color: getColorForChange(change),
+      };
+    });
+  };
+
   const downloadAsImage = async () => {
     const element = document.getElementById('heatmap-container');
     if (!element) {
@@ -203,38 +222,86 @@ const Chart = () => {
     return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
   };
 
-  const getSizeForChange = (change: number) => {
-    const absChange = Math.abs(change);
-    const isMobile = window.innerWidth < 768;
+  // Custom treemap cell content
+  const CustomTreemapContent = (props: any) => {
+    const { x, y, width, height, name, change, price, imageUrl, color } = props;
     
-    if (isMobile) {
-      // Mobile sizes - larger and more granular
-      if (absChange >= 15) return 180;
-      if (absChange >= 12) return 160;
-      if (absChange >= 10) return 145;
-      if (absChange >= 8) return 130;
-      if (absChange >= 6) return 115;
-      if (absChange >= 5) return 100;
-      if (absChange >= 4) return 90;
-      if (absChange >= 3) return 80;
-      if (absChange >= 2) return 70;
-      if (absChange >= 1) return 60;
-      return 55;
-    }
+    const area = width * height;
+    const fontSize = Math.sqrt(area) / 8;
+    const iconSize = Math.sqrt(area) / 5;
+    const showName = area > 2000;
+    const showPrice = area > 5000;
     
-    // Desktop sizes - more granular
-    if (absChange >= 18) return 250;
-    if (absChange >= 15) return 220;
-    if (absChange >= 12) return 190;
-    if (absChange >= 10) return 170;
-    if (absChange >= 8) return 150;
-    if (absChange >= 6) return 130;
-    if (absChange >= 5) return 115;
-    if (absChange >= 4) return 100;
-    if (absChange >= 3) return 90;
-    if (absChange >= 2) return 80;
-    if (absChange >= 1) return 70;
-    return 60;
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          style={{
+            fill: color,
+            stroke: 'rgba(0,0,0,0.15)',
+            strokeWidth: 1,
+          }}
+        />
+        
+        {/* Image */}
+        {imageUrl && !imageErrors.has(imageUrl) && area > 1000 && (
+          <image
+            x={x + width / 2 - iconSize / 2}
+            y={y + (showName ? height * 0.15 : height * 0.25)}
+            width={iconSize}
+            height={iconSize}
+            href={imageCache.get(imageUrl) || imageUrl}
+            style={{ opacity: imageLoading.has(imageUrl) ? 0.5 : 1 }}
+          />
+        )}
+        
+        {/* Name */}
+        {showName && (
+          <text
+            x={x + width / 2}
+            y={y + height * 0.45}
+            textAnchor="middle"
+            fill="white"
+            fontSize={Math.min(fontSize * 0.7, width / (name.length * 0.6))}
+            fontWeight="bold"
+            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+          >
+            {name}
+          </text>
+        )}
+        
+        {/* Percentage */}
+        <text
+          x={x + width / 2}
+          y={y + height * (showName ? 0.65 : 0.55)}
+          textAnchor="middle"
+          fill="white"
+          fontSize={Math.min(fontSize * 1.2, width / 3)}
+          fontWeight="900"
+          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+        >
+          {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+        </text>
+        
+        {/* Price */}
+        {showPrice && (
+          <text
+            x={x + width / 2}
+            y={y + height * 0.8}
+            textAnchor="middle"
+            fill="white"
+            fontSize={fontSize * 0.6}
+            fontWeight="700"
+            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+          >
+            {price.toFixed(2)} TON
+          </text>
+        )}
+      </g>
+    );
   };
 
   const handleImageError = (imageUrl: string) => {
@@ -456,178 +523,32 @@ const Chart = () => {
             })}
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <div
-              id="heatmap-container"
-              className="relative bg-card"
-              style={{ 
-                width: window.innerWidth < 768 ? window.innerWidth : 1200,
-                height: window.innerWidth < 768 ? 1200 : 1000,
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignContent: 'flex-start',
-                justifyContent: 'flex-start',
-                gap: window.innerWidth < 768 ? 3 : 2,
-                padding: window.innerWidth < 768 ? 0 : 4,
-              }}
+          <div 
+            id="heatmap-container" 
+            className="relative bg-card"
+            style={{ 
+              width: '100%',
+              height: window.innerWidth < 768 ? '600px' : '800px',
+            }}
+          >
+            {/* Watermark Overlay */}
+            <div 
+              className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
             >
-              {/* Watermark Overlay */}
-              <div 
-                className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
-                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
-              >
-                @Nova_calculator_bot
-              </div>
-              
-              {filteredData.map(([name, data], index) => {
-                const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-                const price = currency === 'ton' ? data.price_ton : data.price_usd;
-                const size = getSizeForChange(change);
-                const color = getColorForChange(change);
-                const isMobile = window.innerWidth < 768;
-                
-                // Determine font sizes and padding based on block size
-                const getFontSizes = () => {
-                  if (isMobile) {
-                    // Mobile font sizes - more readable
-                    if (size >= 160) return { name: 12, percentage: 18, price: 10, icon: 38, padding: 10 };
-                    if (size >= 140) return { name: 11, percentage: 16, price: 9, icon: 34, padding: 9 };
-                    if (size >= 120) return { name: 10, percentage: 14, price: 9, icon: 30, padding: 8 };
-                    if (size >= 100) return { name: 9, percentage: 13, price: 8, icon: 26, padding: 7 };
-                    if (size >= 85) return { name: 8, percentage: 12, price: 8, icon: 22, padding: 6 };
-                    if (size >= 70) return { name: 7, percentage: 11, price: 0, icon: 18, padding: 5 };
-                    if (size >= 60) return { name: 6, percentage: 10, price: 0, icon: 16, padding: 4 };
-                    return { name: 5, percentage: 9, price: 0, icon: 14, padding: 3 };
-                  }
-                  
-                  // Desktop font sizes
-                  if (size >= 200) return { name: 14, percentage: 20, price: 11, icon: 42, padding: 12 };
-                  if (size >= 170) return { name: 13, percentage: 18, price: 10, icon: 38, padding: 11 };
-                  if (size >= 150) return { name: 12, percentage: 16, price: 10, icon: 34, padding: 10 };
-                  if (size >= 130) return { name: 11, percentage: 15, price: 9, icon: 30, padding: 9 };
-                  if (size >= 110) return { name: 10, percentage: 14, price: 8, icon: 26, padding: 8 };
-                  if (size >= 90) return { name: 9, percentage: 12, price: 8, icon: 22, padding: 7 };
-                  if (size >= 75) return { name: 8, percentage: 11, price: 7, icon: 20, padding: 6 };
-                  if (size >= 65) return { name: 7, percentage: 10, price: 0, icon: 18, padding: 5 };
-                  if (size >= 55) return { name: 6, percentage: 9, price: 0, icon: 14, padding: 4 };
-                  return { name: 5, percentage: 8, price: 0, icon: 12, padding: 3 };
-                };
-
-                const sizes = getFontSizes();
-                const showPrice = sizes.price > 0;
-
-                return (
-                  <div
-                    key={`${name}-${index}`}
-                    className="flex flex-col items-center justify-center text-white flex-shrink-0"
-                    style={{
-                      width: size,
-                      height: size,
-                      backgroundColor: color,
-                      padding: sizes.padding,
-                      boxSizing: 'border-box',
-                      gap: size >= 120 ? 6 : size >= 90 ? 4 : size >= 70 ? 3 : 2,
-                      overflow: 'hidden',
-                      transition: 'opacity 0.2s',
-                      border: '1px solid rgba(0,0,0,0.15)',
-                      borderRadius: 4,
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                  >
-                    {/* Image or Placeholder */}
-                    {!data.image_url || imageErrors.has(data.image_url) ? (
-                      <div 
-                        className="flex flex-col items-center justify-center opacity-50"
-                        style={{ 
-                          width: sizes.icon, 
-                          height: sizes.icon,
-                          maxWidth: size >= 100 ? '75%' : '80%',
-                          maxHeight: size >= 100 ? '40%' : '35%',
-                        }}
-                      >
-                        <div style={{ width: sizes.icon * 0.6, height: sizes.icon * 0.6 }}>
-                          <TonIcon className="w-full h-full" />
-                        </div>
-                        {size >= 90 && (
-                          <span style={{ fontSize: sizes.name * 0.7, opacity: 0.7 }}>NFT</span>
-                        )}
-                      </div>
-                    ) : (
-                      <img
-                        src={imageCache.get(data.image_url) || data.image_url}
-                        alt={name}
-                        className="object-contain flex-shrink-0"
-                        style={{
-                          width: sizes.icon,
-                          height: sizes.icon,
-                          maxWidth: size >= 100 ? '75%' : '80%',
-                          maxHeight: size >= 100 ? '40%' : '35%',
-                          opacity: imageLoading.has(data.image_url) ? 0.5 : 1,
-                          transition: 'opacity 0.3s',
-                        }}
-                        onError={() => handleImageError(data.image_url)}
-                        onLoad={() => handleImageLoad(data.image_url)}
-                        loading="lazy"
-                      />
-                    )}
-                    
-                    {/* Name */}
-                    {size >= 55 && (
-                      <div 
-                        className="font-bold text-center leading-tight"
-                        style={{ 
-                          fontSize: sizes.name,
-                          textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                          whiteSpace: size >= 130 ? 'normal' : 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '100%',
-                          WebkitFontSmoothing: 'antialiased',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {name}
-                      </div>
-                    )}
-                    
-                    {/* Percentage */}
-                    <div 
-                      className="font-bold"
-                      style={{ 
-                        fontSize: sizes.percentage,
-                        fontWeight: 900,
-                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                        whiteSpace: 'nowrap',
-                        WebkitFontSmoothing: 'antialiased',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {change >= 0 ? '+' : ''}
-                      {change.toFixed(2)}%
-                    </div>
-                    
-                    {/* Price (only for larger blocks) */}
-                    {showPrice && (
-                      <div 
-                        className="flex items-center gap-1"
-                        style={{ 
-                          fontSize: sizes.price,
-                          fontWeight: 700,
-                          textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <div style={{ width: sizes.price + 2, height: sizes.price + 2 }}>
-                          <TonIcon className="flex-shrink-0 w-full h-full" />
-                        </div>
-                        <span>{price.toFixed(2)}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              @Nova_calculator_bot
             </div>
+            
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap
+                data={getTreemapData()}
+                dataKey="size"
+                aspectRatio={4 / 3}
+                stroke="rgba(0,0,0,0.15)"
+                fill="#8884d8"
+                content={<CustomTreemapContent />}
+              />
+            </ResponsiveContainer>
           </div>
         )}
       </div>
