@@ -201,31 +201,102 @@ const Chart = () => {
     return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
   };
 
-  const getSizeForChange = (change: number) => {
-    const absChange = Math.abs(change);
+  // Treemap layout algorithm
+  interface TreemapNode {
+    name: string;
+    value: number;
+    change: number;
+    price: number;
+    imageUrl: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
+  const squarify = (
+    data: Array<{ name: string; value: number; change: number; price: number; imageUrl: string }>,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): TreemapNode[] => {
+    if (data.length === 0) return [];
+
+    // Sort by value (largest first)
+    const sortedData = [...data].sort((a, b) => b.value - a.value);
+    
+    const result: TreemapNode[] = [];
+    let currentX = x;
+    let currentY = y;
+    let remainingWidth = width;
+    let remainingHeight = height;
+    let totalValue = sortedData.reduce((sum, item) => sum + item.value, 0);
+
+    sortedData.forEach((item, index) => {
+      const ratio = item.value / totalValue;
+      
+      // Decide whether to slice horizontally or vertically
+      const useHorizontal = remainingWidth >= remainingHeight;
+      
+      let itemWidth: number;
+      let itemHeight: number;
+
+      if (useHorizontal) {
+        itemWidth = remainingWidth * ratio;
+        itemHeight = remainingHeight;
+        
+        result.push({
+          ...item,
+          x: currentX,
+          y: currentY,
+          width: itemWidth,
+          height: itemHeight,
+        });
+
+        currentX += itemWidth;
+        remainingWidth -= itemWidth;
+      } else {
+        itemWidth = remainingWidth;
+        itemHeight = remainingHeight * ratio;
+        
+        result.push({
+          ...item,
+          x: currentX,
+          y: currentY,
+          width: itemWidth,
+          height: itemHeight,
+        });
+
+        currentY += itemHeight;
+        remainingHeight -= itemHeight;
+      }
+
+      totalValue -= item.value;
+    });
+
+    return result;
+  };
+
+  const calculateTreemap = (): TreemapNode[] => {
     const isMobile = window.innerWidth < 768;
-    
-    if (isMobile) {
-      // حساب الحجم بشكل متناسب مع نسبة التغيير للموبايل
-      if (absChange >= 10) return 100;
-      if (absChange >= 8) return 90;
-      if (absChange >= 6) return 80;
-      if (absChange >= 4) return 70;
-      if (absChange >= 2) return 60;
-      if (absChange >= 1) return 55;
-      return 50;
-    }
-    
-    // حساب الحجم بشكل متناسب مع نسبة التغيير للديسكتوب
-    if (absChange >= 15) return 200;
-    if (absChange >= 12) return 180;
-    if (absChange >= 10) return 160;
-    if (absChange >= 8) return 140;
-    if (absChange >= 6) return 120;
-    if (absChange >= 4) return 100;
-    if (absChange >= 2) return 85;
-    if (absChange >= 1) return 75;
-    return 65;
+    const containerWidth = isMobile ? window.innerWidth - 32 : 1200;
+    const containerHeight = isMobile ? 800 : 1000;
+
+    // Prepare data with absolute values for area calculation
+    const treeData = filteredData.map(([name, data]) => {
+      const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+      const price = currency === 'ton' ? data.price_ton : data.price_usd;
+      return {
+        name,
+        value: Math.abs(change), // Use absolute value for size
+        change,
+        price,
+        imageUrl: data.image_url,
+      };
+    });
+
+    return squarify(treeData, 0, 0, containerWidth, containerHeight);
   };
 
   const filteredData = getFilteredData();
@@ -435,133 +506,121 @@ const Chart = () => {
               id="heatmap-container"
               className="relative bg-card"
               style={{ 
-                display: 'grid',
-                gridAutoFlow: 'dense',
-                gap: 0,
-                gridAutoRows: `${(window.innerWidth < 768 ? 10 : 20)}px`,
-                gridTemplateColumns: `repeat(${Math.floor((window.innerWidth < 768 ? window.innerWidth : 1200) / (window.innerWidth < 768 ? 10 : 20))}, ${(window.innerWidth < 768 ? 10 : 20)}px)`
+                width: window.innerWidth < 768 ? window.innerWidth - 32 : 1200,
+                height: window.innerWidth < 768 ? 800 : 1000,
               }}
             >
               {/* Watermark Overlay */}
               <div 
-                className="absolute bottom-2 right-2 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
+                className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
                 style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
               >
                 @Nova_calculator_bot
               </div>
               
-              {filteredData.map(([name, data], index) => {
-                  const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-                  const price = currency === 'ton' ? data.price_ton : data.price_usd;
-                  const size = getSizeForChange(change);
-                  const color = getColorForChange(change);
-                  const isMobile = window.innerWidth < 768;
-                  const gridBase = isMobile ? 10 : 20;
-                  const span = Math.max(1, Math.round(size / gridBase));
-                  const tilePx = span * gridBase;
-                  
-                  // Insert watermark at consistent position
-                  const watermarkPosition = Math.floor(filteredData.length * 0.4);
-                  const shouldShowWatermark = index === watermarkPosition;
+              {calculateTreemap().map((node, index) => {
+                const color = getColorForChange(node.change);
+                const isMobile = window.innerWidth < 768;
+                const minSize = Math.min(node.width, node.height);
+                
+                // Determine font sizes and padding based on block size
+                const getFontSizes = () => {
+                  if (minSize >= 150) return { name: 14, percentage: 18, price: 11, icon: 40, padding: 12 };
+                  if (minSize >= 120) return { name: 12, percentage: 16, price: 10, icon: 36, padding: 10 };
+                  if (minSize >= 90) return { name: 11, percentage: 14, price: 9, icon: 30, padding: 8 };
+                  if (minSize >= 70) return { name: 10, percentage: 12, price: 8, icon: 24, padding: 6 };
+                  if (minSize >= 50) return { name: 8, percentage: 11, price: 7, icon: 20, padding: 5 };
+                  if (minSize >= 35) return { name: 7, percentage: 9, price: 0, icon: 16, padding: 4 };
+                  return { name: 6, percentage: 8, price: 0, icon: 14, padding: 3 };
+                };
 
-                  return (
-                    <React.Fragment key={`item-${name}-${index}`}>
-                      <div
-                        className="inline-flex flex-col items-center justify-center text-white"
-                        style={{
-                          backgroundColor: color,
-                          gridColumn: `span ${span}`,
-                          gridRow: `span ${span}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexDirection: 'column',
-                          padding: tilePx >= 160 ? '12px' : tilePx >= 120 ? '10px' : tilePx >= 80 ? '6px' : tilePx >= 60 ? '4px' : '3px',
-                          margin: 0,
-                          border: 0,
-                          boxSizing: 'border-box',
-                          gap: tilePx >= 160 ? '6px' : tilePx >= 120 ? '5px' : tilePx >= 80 ? '4px' : '2px',
-                          overflow: 'hidden',
-                          transition: 'opacity 0.2s',
+                const sizes = getFontSizes();
+                const showPrice = sizes.price > 0;
+
+                return (
+                  <div
+                    key={`${node.name}-${index}`}
+                    className="absolute flex flex-col items-center justify-center text-white"
+                    style={{
+                      left: node.x,
+                      top: node.y,
+                      width: node.width,
+                      height: node.height,
+                      backgroundColor: color,
+                      padding: sizes.padding,
+                      boxSizing: 'border-box',
+                      gap: minSize >= 70 ? 4 : minSize >= 50 ? 3 : 2,
+                      overflow: 'hidden',
+                      transition: 'opacity 0.2s',
+                      border: '1px solid rgba(0,0,0,0.1)',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    {/* Image */}
+                    <img
+                      src={imageCache.get(node.imageUrl) || node.imageUrl}
+                      alt={node.name}
+                      className="object-contain flex-shrink-0"
+                      style={{
+                        width: sizes.icon,
+                        height: sizes.icon,
+                        maxWidth: '80%',
+                        maxHeight: '30%',
+                      }}
+                    />
+                    
+                    {/* Name */}
+                    <div 
+                      className="font-bold text-center leading-tight"
+                      style={{ 
+                        fontSize: sizes.name,
+                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                        whiteSpace: minSize >= 90 ? 'normal' : 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                        WebkitFontSmoothing: 'antialiased',
+                      }}
+                    >
+                      {node.name}
+                    </div>
+                    
+                    {/* Percentage */}
+                    <div 
+                      className="font-bold"
+                      style={{ 
+                        fontSize: sizes.percentage,
+                        fontWeight: 900,
+                        textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                        whiteSpace: 'nowrap',
+                        WebkitFontSmoothing: 'antialiased',
+                      }}
+                    >
+                      {node.change >= 0 ? '+' : ''}
+                      {node.change.toFixed(2)}%
+                    </div>
+                    
+                    {/* Price (only for larger blocks) */}
+                    {showPrice && (
+                      <div 
+                        className="flex items-center gap-1"
+                        style={{ 
+                          fontSize: sizes.price,
+                          fontWeight: 700,
+                          textShadow: '0 2px 3px rgba(0,0,0,0.6)',
+                          whiteSpace: 'nowrap',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                       >
-                        <img
-                          src={imageCache.get(data.image_url) || data.image_url}
-                          alt={name}
-                          className="object-contain"
-                          style={{
-                            width: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 80 ? '30px' : size >= 60 ? '20px' : '16px',
-                            height: size >= 160 ? '42px' : size >= 140 ? '36px' : size >= 80 ? '30px' : size >= 60 ? '20px' : '16px',
-                            flexShrink: 0,
-                            marginBottom: isMobile ? '1px' : '2px',
-                          }}
-                        />
-                        <div 
-                          className="font-bold text-center"
-                          style={{ 
-                            fontSize: size >= 160 ? '13px' : size >= 140 ? '12px' : size >= 80 ? '10px' : size >= 60 ? '7px' : '6px',
-                            fontWeight: size >= 140 ? 700 : 800,
-                            lineHeight: '1.1',
-                            overflow: 'visible',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '100%',
-                            textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                            whiteSpace: 'nowrap',
-                            letterSpacing: isMobile ? '0.2px' : '0.5px',
-                            WebkitFontSmoothing: 'antialiased',
-                            textRendering: 'optimizeLegibility',
-                          }}
-                        >
-                          {name}
+                        <div style={{ width: sizes.price + 2, height: sizes.price + 2 }}>
+                          <TonIcon className="flex-shrink-0 w-full h-full" />
                         </div>
-                        <div 
-                          className="font-bold"
-                          style={{ 
-                            fontSize: size >= 160 ? '18px' : size >= 140 ? '16px' : size >= 80 ? '14px' : size >= 60 ? '10px' : '8px',
-                            fontWeight: 900,
-                            lineHeight: '1',
-                            textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                            whiteSpace: 'nowrap',
-                            letterSpacing: isMobile ? '0.2px' : '0.5px',
-                            marginTop: isMobile ? '1px' : '2px',
-                            WebkitFontSmoothing: 'antialiased',
-                            textRendering: 'optimizeLegibility',
-                          }}
-                        >
-                          {change >= 0 ? '+' : ''}
-                          {change.toFixed(2)}%
-                        </div>
-                        {size >= 60 && (
-                          <div 
-                            className="flex items-center"
-                            style={{ 
-                              fontSize: size >= 160 ? '11px' : size >= 140 ? '10px' : size >= 80 ? '9px' : '7px',
-                              fontWeight: size >= 140 ? 700 : 800,
-                              lineHeight: '1',
-                              gap: size >= 160 ? '3px' : '2px',
-                              textShadow: '0 2px 3px rgba(0,0,0,0.6)',
-                              whiteSpace: 'nowrap',
-                              letterSpacing: isMobile ? '0.2px' : '0.5px',
-                              marginTop: isMobile ? '1px' : '2px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              WebkitFontSmoothing: 'antialiased',
-                              textRendering: 'optimizeLegibility',
-                            }}
-                          >
-                            <TonIcon className={size >= 140 ? "w-3 h-3 flex-shrink-0" : size >= 60 ? "w-2 h-2 flex-shrink-0" : "w-1.5 h-1.5 flex-shrink-0"} />
-                            <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-                              {price.toFixed(2)}
-                            </span>
-                          </div>
-                        )}
+                        <span>{node.price.toFixed(2)}</span>
                       </div>
-                    </React.Fragment>
-                  );
-                })}
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
