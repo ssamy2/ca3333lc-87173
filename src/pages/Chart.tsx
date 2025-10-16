@@ -35,6 +35,8 @@ const Chart = () => {
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
   const updateIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -233,6 +235,23 @@ const Chart = () => {
     if (absChange >= 2) return 80;
     if (absChange >= 1) return 70;
     return 60;
+  };
+
+  const handleImageError = (imageUrl: string) => {
+    setImageErrors(prev => new Set([...prev, imageUrl]));
+    setImageLoading(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageUrl);
+      return newSet;
+    });
+  };
+
+  const handleImageLoad = (imageUrl: string) => {
+    setImageLoading(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageUrl);
+      return newSet;
+    });
   };
 
   const filteredData = getFilteredData();
@@ -516,18 +535,42 @@ const Chart = () => {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    {/* Image */}
-                    <img
-                      src={imageCache.get(data.image_url) || data.image_url}
-                      alt={name}
-                      className="object-contain flex-shrink-0"
-                      style={{
-                        width: sizes.icon,
-                        height: sizes.icon,
-                        maxWidth: size >= 100 ? '75%' : '80%',
-                        maxHeight: size >= 100 ? '40%' : '35%',
-                      }}
-                    />
+                    {/* Image or Placeholder */}
+                    {!data.image_url || imageErrors.has(data.image_url) ? (
+                      <div 
+                        className="flex flex-col items-center justify-center opacity-50"
+                        style={{ 
+                          width: sizes.icon, 
+                          height: sizes.icon,
+                          maxWidth: size >= 100 ? '75%' : '80%',
+                          maxHeight: size >= 100 ? '40%' : '35%',
+                        }}
+                      >
+                        <div style={{ width: sizes.icon * 0.6, height: sizes.icon * 0.6 }}>
+                          <TonIcon className="w-full h-full" />
+                        </div>
+                        {size >= 90 && (
+                          <span style={{ fontSize: sizes.name * 0.7, opacity: 0.7 }}>NFT</span>
+                        )}
+                      </div>
+                    ) : (
+                      <img
+                        src={imageCache.get(data.image_url) || data.image_url}
+                        alt={name}
+                        className="object-contain flex-shrink-0"
+                        style={{
+                          width: sizes.icon,
+                          height: sizes.icon,
+                          maxWidth: size >= 100 ? '75%' : '80%',
+                          maxHeight: size >= 100 ? '40%' : '35%',
+                          opacity: imageLoading.has(data.image_url) ? 0.5 : 1,
+                          transition: 'opacity 0.3s',
+                        }}
+                        onError={() => handleImageError(data.image_url)}
+                        onLoad={() => handleImageLoad(data.image_url)}
+                        loading="lazy"
+                      />
+                    )}
                     
                     {/* Name */}
                     {size >= 55 && (
