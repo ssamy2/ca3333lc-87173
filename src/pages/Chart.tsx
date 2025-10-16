@@ -141,19 +141,25 @@ const Chart = () => {
   const getTreemapData = () => {
     const entries = getFilteredData();
     
-    return entries.map(([name, data]) => {
-      const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-      const price = currency === 'ton' ? data.price_ton : data.price_usd;
-      
-      return {
-        name,
-        size: Math.abs(change), // Use absolute change for area
-        change,
-        price,
-        imageUrl: data.image_url,
-        color: getColorForChange(change),
-      };
-    });
+    return entries
+      .filter(([_, data]) => {
+        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+        // Filter out items with changes smaller than 1%
+        return Math.abs(change) >= 1;
+      })
+      .map(([name, data]) => {
+        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+        const price = currency === 'ton' ? data.price_ton : data.price_usd;
+        
+        return {
+          name,
+          size: Math.abs(change), // Use absolute change for area
+          change,
+          price,
+          imageUrl: data.image_url,
+          color: getColorForChange(change),
+        };
+      });
   };
 
   const downloadAsImage = async () => {
