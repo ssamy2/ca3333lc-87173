@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronUp, Sparkles } from 'lucide-react';
+import ModelsDialog from '@/components/ModelsDialog';
 
 interface ChartData {
   date: string;
@@ -16,6 +17,7 @@ interface YearlyPerformanceProps {
 
 const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [showModels, setShowModels] = useState(false);
 
   const months = [
     { name: 'Jan', index: 0 },
@@ -83,20 +85,34 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-foreground">
-          Yearly <span className="text-primary">Performance</span>
-        </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsVisible(false)}
-          className="gap-1"
-        >
-          Hide <ChevronUp className="w-4 h-4" />
-        </Button>
-      </div>
+    <>
+      <ModelsDialog open={showModels} onOpenChange={setShowModels} />
+      
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground">
+            Yearly <span className="text-primary">Performance</span>
+          </h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowModels(true)}
+              className="gap-1"
+            >
+              <Sparkles className="w-4 h-4" />
+              View Models
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsVisible(false)}
+              className="gap-1"
+            >
+              Hide <ChevronUp className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
       <div className="grid grid-cols-3 gap-2">
         {monthlyPerformance.map((month) => (
@@ -116,7 +132,8 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
           </div>
         ))}
       </div>
-    </Card>
+      </Card>
+    </>
   );
 };
 
