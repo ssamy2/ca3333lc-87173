@@ -358,7 +358,7 @@ const GiftDetail = () => {
 
         {/* Time Range Toggle */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {(['1w', '3d', '1m', '3m', 'all'] as TimeRange[]).map((range) => (
+          {(['all', '3m', '1m', '1w', '3d'] as TimeRange[]).map((range) => (
             <Button
               key={range}
               onClick={() => setTimeRange(range)}
