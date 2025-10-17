@@ -113,7 +113,7 @@ const GiftDetail = () => {
   };
 
   const calculatePriceChange = () => {
-    if (!giftData || !giftData.all_chart.length) return 0;
+    if (!giftData || !giftData.all_chart || !Array.isArray(giftData.all_chart) || giftData.all_chart.length === 0) return 0;
     
     const currentPrice = currency === 'ton' ? giftData.info.priceTon : giftData.info.priceUsd;
     const oldestPrice = currency === 'ton' ? giftData.all_chart[0].priceTon : giftData.all_chart[0].priceUsd;
@@ -123,7 +123,7 @@ const GiftDetail = () => {
   };
 
   const getMonthlyPerformance = () => {
-    if (!giftData?.year_chart) return [];
+    if (!giftData?.year_chart || !Array.isArray(giftData.year_chart)) return [];
     
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
