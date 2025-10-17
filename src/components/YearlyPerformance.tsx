@@ -32,35 +32,51 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
     { name: 'Dec', index: 11 },
   ];
 
+  const parseDateUTC = (value: string) => {
+    // Treat plain YYYY-MM-DD as UTC start of day to avoid timezone shifts
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]);
+      const d = Number(m[3]);
+      return new Date(Date.UTC(y, mo - 1, d));
+    }
+    return new Date(value);
+  };
+
   const calculateMonthlyPerformance = () => {
-    const currentYear = new Date().getFullYear();
-    const monthlyData: { [key: number]: number[] } = {};
+    const currentYear = new Date().getUTCFullYear();
+    type Stat = { firstTs: number; firstPrice: number; lastTs: number; lastPrice: number };
+    const stats: Record<number, Stat | undefined> = {};
 
-    // جمع جميع الأسعار لكل شهر
     data.forEach((item) => {
-      const date = new Date(item.date);
-      if (date.getFullYear() === currentYear) {
-        const month = date.getMonth();
-        const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+      const date = parseDateUTC(item.date);
+      if (date.getUTCFullYear() !== currentYear) return;
 
-        if (!monthlyData[month]) {
-          monthlyData[month] = [];
+      const month = date.getUTCMonth();
+      const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+      const ts = date.getTime();
+
+      const s = stats[month];
+      if (!s) {
+        stats[month] = { firstTs: ts, firstPrice: price, lastTs: ts, lastPrice: price };
+      } else {
+        if (ts < s.firstTs) {
+          s.firstTs = ts;
+          s.firstPrice = price;
         }
-        monthlyData[month].push(price);
+        if (ts > s.lastTs) {
+          s.lastTs = ts;
+          s.lastPrice = price;
+        }
       }
     });
 
     return months.map((month) => {
-      const prices = monthlyData[month.index];
-      if (!prices || prices.length === 0) return { name: month.name, percentage: null };
+      const s = stats[month.index];
+      if (!s || s.firstPrice === 0) return { name: month.name, percentage: null };
 
-      // ترتيب الأسعار حسب التاريخ (أول سعر وآخر سعر)
-      const start = prices[0];
-      const end = prices[prices.length - 1];
-
-      if (start === 0) return { name: month.name, percentage: null };
-
-      const change = ((end - start) / start) * 100;
+      const change = ((s.lastPrice - s.firstPrice) / s.firstPrice) * 100;
       return { name: month.name, percentage: change };
     });
   };
