@@ -85,23 +85,23 @@ const GiftDetail = () => {
     let data: ChartData[] = [];
     switch (timeRange) {
       case '24h':
-        data = giftData.week_chart.slice(-48); // Last 48 data points for 24h
+        data = Array.isArray(giftData.week_chart) ? giftData.week_chart.slice(-48) : [];
         break;
       case '3d':
-        data = giftData.week_chart.slice(-144); // Last 144 data points for 3d
+        data = Array.isArray(giftData.week_chart) ? giftData.week_chart.slice(-144) : [];
         break;
       case '1w':
-        data = giftData.week_chart;
+        data = Array.isArray(giftData.week_chart) ? giftData.week_chart : [];
         break;
       case '1m':
-        data = giftData.month_chart;
+        data = Array.isArray(giftData.month_chart) ? giftData.month_chart : [];
         break;
       case '3m':
-        data = giftData.three_month_chart;
+        data = Array.isArray(giftData.three_month_chart) ? giftData.three_month_chart : [];
         break;
       case 'all':
       default:
-        data = giftData.all_chart;
+        data = Array.isArray(giftData.all_chart) ? giftData.all_chart : [];
         break;
     }
     
@@ -136,6 +136,15 @@ const GiftDetail = () => {
 
   const renderChart = () => {
     const data = getChartData();
+    
+    if (!data || data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          لا توجد بيانات متاحة
+        </div>
+      );
+    }
+    
     const color = calculatePriceChange() >= 0 ? '#10b981' : '#ef4444';
     
     if (chartType === 'line') {
