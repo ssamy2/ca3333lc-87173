@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, CandlestickChart } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, CandlestickChart, ExternalLink, Sparkles } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import YearlyPerformance from '@/components/YearlyPerformance';
+import ModelsDialog from '@/components/ModelsDialog';
 
 interface GiftInfo {
   name: string;
@@ -40,6 +41,7 @@ const GiftDetail = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('1w');
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [currency, setCurrency] = useState<Currency>('ton');
+  const [showModels, setShowModels] = useState(false);
 
   useEffect(() => {
     if (name) {
@@ -375,6 +377,34 @@ const GiftDetail = () => {
           ))}
         </div>
 
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button 
+            className="bg-red-500 hover:bg-red-600 text-white"
+            size="lg"
+          >
+            Sell <ExternalLink className="w-4 h-4 ml-1" />
+          </Button>
+          <Button 
+            className="bg-green-500 hover:bg-green-600 text-white"
+            size="lg"
+          >
+            Buy <ExternalLink className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+
+        {/* View Models Button */}
+        <Button
+          variant="outline"
+          onClick={() => setShowModels(true)}
+          className="w-full gap-2"
+        >
+          <Sparkles className="w-4 h-4" />
+          View Models
+        </Button>
+
+        <ModelsDialog open={showModels} onOpenChange={setShowModels} />
+
         {/* Yearly Performance */}
         {giftData && (
           <YearlyPerformance 
@@ -387,6 +417,7 @@ const GiftDetail = () => {
     </div>
   );
 };
+
 
 
 export default GiftDetail;
