@@ -7,7 +7,7 @@ import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, X
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import YearlyPerformance from '@/components/YearlyPerformance';
-import ModelsDialog from '@/components/ModelsDialog';
+import GiftModelsDialog from '@/components/GiftModelsDialog';
 
 interface GiftInfo {
   name: string;
@@ -16,6 +16,17 @@ interface GiftInfo {
   upgradedSupply: number;
   priceTon: number;
   priceUsd: number;
+}
+
+interface Model {
+  _id: string;
+  image: string;
+  name: string;
+  priceTon: number;
+  priceUsd: number;
+  rarity: number;
+  tonPrice24hAgo: number;
+  usdPrice24hAgo: number;
 }
 
 interface ChartData {
@@ -27,6 +38,7 @@ interface ChartData {
 interface GiftDetailData {
   info: GiftInfo;
   life_chart: ChartData[];
+  models?: Model[];
 }
 
 type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
@@ -398,12 +410,20 @@ const GiftDetail = () => {
           variant="outline"
           onClick={() => setShowModels(true)}
           className="w-full gap-2"
+          disabled={!giftData?.models || giftData.models.length === 0}
         >
           <Sparkles className="w-4 h-4" />
-          View Models
+          View Models {giftData?.models && `(${giftData.models.length})`}
         </Button>
 
-        <ModelsDialog open={showModels} onOpenChange={setShowModels} />
+        {giftData?.models && (
+          <GiftModelsDialog 
+            open={showModels} 
+            onOpenChange={setShowModels}
+            models={giftData.models}
+            giftName={giftData.info.name}
+          />
+        )}
 
         {/* Yearly Performance */}
         {giftData && (
