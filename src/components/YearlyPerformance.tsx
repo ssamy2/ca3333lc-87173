@@ -34,8 +34,9 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
 
   const calculateMonthlyPerformance = () => {
     const currentYear = new Date().getFullYear();
-    const monthlyData: { [key: number]: { start: number; end: number } } = {};
+    const monthlyData: { [key: number]: number[] } = {};
 
+    // جمع جميع الأسعار لكل شهر
     data.forEach((item) => {
       const date = new Date(item.date);
       if (date.getFullYear() === currentYear) {
@@ -43,18 +44,23 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
         const price = currency === 'ton' ? item.priceTon : item.priceUsd;
 
         if (!monthlyData[month]) {
-          monthlyData[month] = { start: price, end: price };
-        } else {
-          monthlyData[month].end = price;
+          monthlyData[month] = [];
         }
+        monthlyData[month].push(price);
       }
     });
 
     return months.map((month) => {
-      const data = monthlyData[month.index];
-      if (!data) return { name: month.name, percentage: null };
+      const prices = monthlyData[month.index];
+      if (!prices || prices.length === 0) return { name: month.name, percentage: null };
 
-      const change = ((data.end - data.start) / data.start) * 100;
+      // ترتيب الأسعار حسب التاريخ (أول سعر وآخر سعر)
+      const start = prices[0];
+      const end = prices[prices.length - 1];
+
+      if (start === 0) return { name: month.name, percentage: null };
+
+      const change = ((end - start) / start) * 100;
       return { name: month.name, percentage: change };
     });
   };
@@ -63,8 +69,8 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
 
   const getColorClass = (percentage: number | null) => {
     if (percentage === null) return 'bg-secondary/50 text-muted-foreground';
-    if (percentage > 0) return 'bg-green-500/20 text-green-400 border border-green-500/30';
-    if (percentage < 0) return 'bg-red-500/20 text-red-400 border border-red-500/30';
+    if (percentage > 0) return 'bg-green-500/30 text-green-100 border border-green-500/50';
+    if (percentage < 0) return 'bg-red-500/30 text-red-100 border border-red-500/50';
     return 'bg-secondary/50 text-muted-foreground';
   };
 
@@ -98,7 +104,7 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
           onClick={() => setIsVisible(false)}
           className="gap-1"
         >
-          Show <ChevronDown className="w-4 h-4" />
+          Hide <ChevronDown className="w-4 h-4 rotate-180" />
         </Button>
       </div>
 
