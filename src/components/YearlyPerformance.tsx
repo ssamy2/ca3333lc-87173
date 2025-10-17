@@ -77,7 +77,7 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
         className="w-full gap-2"
       >
         <Sparkles className="w-4 h-4" />
-        View Models
+        Show Yearly Performance
       </Button>
     );
   }
