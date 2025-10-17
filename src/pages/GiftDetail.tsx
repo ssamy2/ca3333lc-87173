@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, Can
 import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
+import YearlyPerformance from '@/components/YearlyPerformance';
 
 interface GiftInfo {
   name: string;
@@ -374,9 +375,18 @@ const GiftDetail = () => {
           ))}
         </div>
 
+        {/* Yearly Performance */}
+        {giftData && (
+          <YearlyPerformance 
+            data={giftData.life_chart} 
+            currency={currency}
+          />
+        )}
+
       </div>
     </div>
   );
 };
+
 
 export default GiftDetail;
