@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Star } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 
 interface Model {
@@ -29,12 +29,23 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
 }) => {
   const getRarityColor = (rarity: number) => {
     switch (rarity) {
-      case 1: return 'text-gray-400';
-      case 2: return 'text-green-400';
-      case 3: return 'text-blue-400';
-      case 4: return 'text-purple-400';
-      case 5: return 'text-yellow-400';
-      default: return 'text-gray-400';
+      case 1: return 'text-gray-300';
+      case 2: return 'text-green-500';
+      case 3: return 'text-blue-500';
+      case 4: return 'text-purple-500';
+      case 5: return 'text-yellow-500';
+      default: return 'text-gray-300';
+    }
+  };
+
+  const getRarityBgColor = (rarity: number) => {
+    switch (rarity) {
+      case 1: return 'bg-gray-500/20';
+      case 2: return 'bg-green-500/20';
+      case 3: return 'bg-blue-500/20';
+      case 4: return 'bg-purple-500/20';
+      case 5: return 'bg-yellow-500/20';
+      default: return 'bg-gray-500/20';
     }
   };
 
@@ -81,9 +92,10 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
                 {/* Name and Rarity */}
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground">{model.name}</h3>
-                  <p className={`text-xs font-semibold ${getRarityColor(model.rarity)}`}>
+                  <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getRarityColor(model.rarity)} ${getRarityBgColor(model.rarity)}`}>
+                    <Star className="w-3 h-3" fill="currentColor" />
                     {getRarityName(model.rarity)}
-                  </p>
+                  </div>
                 </div>
 
                 {/* Price and Change */}
