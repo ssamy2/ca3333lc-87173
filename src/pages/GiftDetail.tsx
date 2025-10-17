@@ -27,7 +27,7 @@ interface GiftDetailData {
   life_chart: ChartData[];
 }
 
-type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d';
+type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
 type ChartType = 'line' | 'candlestick' | 'bar';
 type Currency = 'usd' | 'ton';
 
@@ -72,6 +72,9 @@ const GiftDetail = () => {
     let data: ChartData[] = [];
     
     switch (timeRange) {
+      case '24h':
+        data = lifeChart.slice(-2);
+        break;
       case '3d':
         data = lifeChart.slice(-3);
         break;
@@ -358,7 +361,7 @@ const GiftDetail = () => {
 
         {/* Time Range Toggle */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {(['all', '3m', '1m', '1w', '3d'] as TimeRange[]).map((range) => (
+          {(['all', '3m', '1m', '1w', '3d', '24h'] as TimeRange[]).map((range) => (
             <Button
               key={range}
               onClick={() => setTimeRange(range)}
