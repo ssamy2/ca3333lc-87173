@@ -6,11 +6,11 @@ import { toast } from 'sonner';
 
 interface GiftModel {
   name: string;
-  image: string;
-  priceTon: number;
-  priceUsd: number;
-  change24h: number;
-  supply: number;
+  image_url: string;
+  price_ton: number;
+  price_usd: number;
+  'change_24h_ton_%': number;
+  'change_24h_usd_%': number;
 }
 
 interface ModelsDialogProps {
@@ -31,24 +31,34 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
   const fetchModels = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://channelsseller.site/api/gifts');
+      const response = await fetch('https://channelsseller.site/api/market-data');
       
       if (!response.ok) {
         throw new Error('Failed to fetch models');
       }
       
       const data = await response.json();
-      setModels(data);
+      
+      // Convert object to array and sort by price
+      const modelsArray = Object.entries(data).map(([name, modelData]: [string, any]) => ({
+        name,
+        image_url: modelData.image_url,
+        price_ton: modelData.price_ton,
+        price_usd: modelData.price_usd,
+        'change_24h_ton_%': modelData['change_24h_ton_%'],
+        'change_24h_usd_%': modelData['change_24h_usd_%'],
+      }));
+      
+      // Sort by price descending
+      modelsArray.sort((a, b) => b.price_ton - a.price_ton);
+      
+      setModels(modelsArray);
     } catch (error) {
       console.error('Error fetching models:', error);
       toast.error('Failed to load models');
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatSupplyPercentage = (supply: number, totalSupply: number = 1000000) => {
-    return ((supply / totalSupply) * 100).toFixed(1);
   };
 
   return (
@@ -65,7 +75,7 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
         ) : (
           <div className="space-y-3">
             {models.map((model) => {
-              const isPositive = model.change24h >= 0;
+              const isPositive = model['change_24h_ton_%'] >= 0;
               
               return (
                 <div
@@ -77,7 +87,7 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
                 >
                   {/* Image */}
                   <img
-                    src={`https://channelsseller.site/api/image/${model.image}`}
+                    src={model.image_url}
                     alt={model.name}
                     className="w-12 h-12 rounded-lg object-cover"
                     onError={(e) => {
@@ -85,32 +95,19 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
                     }}
                   />
 
-                  {/* Name and Supply % */}
+                  {/* Name and Change % */}
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground">{model.name}</h3>
-                    <p className="text-xs text-primary">
-                      {formatSupplyPercentage(model.supply)}%
+                    <p className={`text-xs font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      {isPositive ? '+' : ''}{model['change_24h_ton_%'].toFixed(1)}%
                     </p>
                   </div>
 
-                  {/* Price and Change */}
+                  {/* Price */}
                   <div className="text-right">
                     <div className="flex items-center gap-1 font-semibold text-foreground">
                       <TonIcon className="w-4 h-4" />
-                      {model.priceTon.toFixed(2)}
-                    </div>
-                    <div
-                      className={`text-xs font-semibold flex items-center gap-1 justify-end ${
-                        isPositive ? 'text-green-500' : 'text-red-500'
-                      }`}
-                    >
-                      {isPositive ? (
-                        <TrendingUp className="w-3 h-3" />
-                      ) : (
-                        <TrendingDown className="w-3 h-3" />
-                      )}
-                      {isPositive ? '+' : ''}
-                      {model.change24h.toFixed(2)}%
+                      {model.price_ton.toFixed(2)}
                     </div>
                   </div>
                 </div>
