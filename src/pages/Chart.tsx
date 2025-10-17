@@ -564,7 +564,11 @@ const Chart = () => {
               return (
                 <Card
                   key={name}
-                  className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 ${getCardStyle()}`}
+                  className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                  onClick={() => {
+                    // Navigate to gift detail page
+                    window.location.href = `/gift/${encodeURIComponent(name)}`;
+                  }}
                 >
                   <img
                     src={imageCache.get(data.image_url) || data.image_url}
