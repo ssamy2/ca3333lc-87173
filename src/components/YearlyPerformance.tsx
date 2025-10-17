@@ -46,39 +46,120 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
 
   const calculateMonthlyPerformance = () => {
     const currentYear = new Date().getUTCFullYear();
-    type Stat = { firstTs: number; firstPrice: number; lastTs: number; lastPrice: number };
+    const EPS_USD = 0.01;
+    const EPS_TON = 0.000001;
+    const EPS = currency === 'usd' ? EPS_USD : EPS_TON;
+
+    type Stat = {
+      firstTs: number;
+      firstPrice: number;
+      lastTs: number;
+      lastPrice: number;
+      validCount: number;
+    };
+
     const stats: Record<number, Stat | undefined> = {};
+    const statsTon: Record<number, Stat | undefined> = {};
 
     data.forEach((item) => {
       const date = parseDateUTC(item.date);
       if (date.getUTCFullYear() !== currentYear) return;
 
       const month = date.getUTCMonth();
-      const price = currency === 'ton' ? item.priceTon : item.priceUsd;
       const ts = date.getTime();
 
-      const s = stats[month];
-      if (!s) {
-        stats[month] = { firstTs: ts, firstPrice: price, lastTs: ts, lastPrice: price };
-      } else {
-        if (ts < s.firstTs) {
-          s.firstTs = ts;
-          s.firstPrice = price;
+      // Primary currency tracking with EPS filter
+      const pricePrimary = currency === 'usd' ? item.priceUsd : item.priceTon;
+      if (pricePrimary != null && pricePrimary > EPS) {
+        const s = stats[month];
+        if (!s) {
+          stats[month] = {
+            firstTs: ts,
+            firstPrice: pricePrimary,
+            lastTs: ts,
+            lastPrice: pricePrimary,
+            validCount: 1,
+          };
+        } else {
+          if (ts < s.firstTs) {
+            s.firstTs = ts;
+            s.firstPrice = pricePrimary;
+          }
+          if (ts > s.lastTs) {
+            s.lastTs = ts;
+            s.lastPrice = pricePrimary;
+          }
+          s.validCount += 1;
         }
-        if (ts > s.lastTs) {
-          s.lastTs = ts;
-          s.lastPrice = price;
+      }
+
+      // TON tracking for fallback (esp. when currency === 'usd')
+      const priceTon = item.priceTon;
+      if (priceTon != null && priceTon > EPS_TON) {
+        const st = statsTon[month];
+        if (!st) {
+          statsTon[month] = {
+            firstTs: ts,
+            firstPrice: priceTon,
+            lastTs: ts,
+            lastPrice: priceTon,
+            validCount: 1,
+          };
+        } else {
+          if (ts < st.firstTs) {
+            st.firstTs = ts;
+            st.firstPrice = priceTon;
+          }
+          if (ts > st.lastTs) {
+            st.lastTs = ts;
+            st.lastPrice = priceTon;
+          }
+          st.validCount += 1;
         }
       }
     });
 
-    return months.map((month) => {
+    const results = months.map((month) => {
       const s = stats[month.index];
-      if (!s || s.firstPrice === 0) return { name: month.name, percentage: null };
 
-      const change = ((s.lastPrice - s.firstPrice) / s.firstPrice) * 100;
-      return { name: month.name, percentage: change };
+      const safeCompute = (st: Stat | undefined, eps: number) => {
+        if (!st) return { percentage: null as number | null, reason: 'no_data' };
+        if (st.validCount === 0) return { percentage: null as number | null, reason: 'no_valid' };
+        if (st.validCount === 1) return { percentage: 0 as number, reason: 'single_point' };
+        const spanDays = (st.lastTs - st.firstTs) / 86400000; // ms -> days
+        if (st.firstPrice <= eps) return { percentage: null as number | null, reason: 'first_below_eps' };
+        const change = ((st.lastPrice - st.firstPrice) / st.firstPrice) * 100;
+        const anomalous = Math.abs(change) > 500 && (st.firstPrice < eps * 5 || spanDays < 7);
+        if (anomalous) return { percentage: null as number | null, reason: 'anomalous' };
+        return { percentage: change, reason: 'ok' };
+      };
+
+      let primary = safeCompute(s, EPS);
+      let usedFallback = false;
+
+      if (currency === 'usd' && primary.percentage === null) {
+        const st = statsTon[month.index];
+        const fb = safeCompute(st, EPS_TON);
+        if (fb.percentage !== null) {
+          primary = fb;
+          usedFallback = true;
+        }
+      }
+
+      // Temporary debug log; remove if too noisy
+      console.debug('[YearlyPerformance]', {
+        month: month.name,
+        currency,
+        primaryStat: s,
+        tonStat: statsTon[month.index],
+        result: primary,
+        usedFallback,
+      });
+
+      return { name: month.name, percentage: primary.percentage };
     });
+
+    return results;
   };
 
   const monthlyPerformance = calculateMonthlyPerformance();
