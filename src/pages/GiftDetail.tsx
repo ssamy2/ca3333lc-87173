@@ -18,26 +18,13 @@ interface GiftInfo {
 
 interface ChartData {
   date: string;
-  time: string;
   priceTon: number;
   priceUsd: number;
-  volume: number;
-  amountOnSale: number;
-  salesCount: number;
-}
-
-interface YearData {
-  month: string;
-  change: number;
 }
 
 interface GiftDetailData {
   info: GiftInfo;
-  week_chart: ChartData[];
-  month_chart: ChartData[];
-  three_month_chart: ChartData[];
-  all_chart: ChartData[];
-  year_chart: YearData[];
+  life_chart: ChartData[];
 }
 
 type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
@@ -52,7 +39,6 @@ const GiftDetail = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [currency, setCurrency] = useState<Currency>('ton');
-  const [showYearlyPerformance, setShowYearlyPerformance] = useState(false);
 
   useEffect(() => {
     if (name) {
@@ -80,70 +66,50 @@ const GiftDetail = () => {
   };
 
   const getChartData = () => {
-    if (!giftData) return [];
+    if (!giftData || !Array.isArray(giftData.life_chart)) return [];
     
+    const lifeChart = giftData.life_chart;
     let data: ChartData[] = [];
-    const weekData = Array.isArray(giftData.week_chart) ? giftData.week_chart : [];
     
     switch (timeRange) {
       case '24h':
-        data = weekData.slice(-48);
+        data = lifeChart.slice(-1);
         break;
       case '3d':
-        data = weekData.slice(-144);
+        data = lifeChart.slice(-3);
         break;
       case '1w':
-        data = weekData;
+        data = lifeChart.slice(-7);
         break;
       case '1m':
-        data = Array.isArray(giftData.month_chart) ? giftData.month_chart : weekData;
+        data = lifeChart.slice(-30);
         break;
       case '3m':
-        data = Array.isArray(giftData.three_month_chart) ? giftData.three_month_chart : weekData;
+        data = lifeChart.slice(-90);
         break;
       case 'all':
       default:
-        data = Array.isArray(giftData.all_chart) ? giftData.all_chart : weekData;
+        data = lifeChart;
         break;
     }
     
     return data.map(item => ({
       ...item,
       price: currency === 'ton' ? item.priceTon : item.priceUsd,
-      label: `${item.date} ${item.time}`,
+      label: item.date,
     }));
   };
 
   const calculatePriceChange = () => {
-    if (!giftData) return 0;
-    
-    // Use all_chart if available, otherwise use week_chart as fallback
-    const chartData = Array.isArray(giftData.all_chart) && giftData.all_chart.length > 0 
-      ? giftData.all_chart 
-      : Array.isArray(giftData.week_chart) && giftData.week_chart.length > 0
-      ? giftData.week_chart
-      : [];
-    
-    if (chartData.length === 0) return 0;
+    if (!giftData || !Array.isArray(giftData.life_chart) || giftData.life_chart.length === 0) return 0;
     
     const currentPrice = currency === 'ton' ? giftData.info.priceTon : giftData.info.priceUsd;
-    const oldestPrice = currency === 'ton' ? chartData[0].priceTon : chartData[0].priceUsd;
+    const oldestPrice = currency === 'ton' ? giftData.life_chart[0].priceTon : giftData.life_chart[0].priceUsd;
     
     if (oldestPrice === 0) return 0;
     return ((currentPrice - oldestPrice) / oldestPrice) * 100;
   };
 
-  const getMonthlyPerformance = () => {
-    if (!giftData?.year_chart || !Array.isArray(giftData.year_chart)) return [];
-    
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    return giftData.year_chart.map(item => ({
-      month: item.month,
-      change: item.change,
-      label: monthNames[parseInt(item.month.split('-')[0]) - 1] || item.month
-    }));
-  };
 
   const renderChart = () => {
     const data = getChartData();
@@ -408,41 +374,6 @@ const GiftDetail = () => {
           ))}
         </div>
 
-        {/* Yearly Performance */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-foreground">Yearly Performance</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowYearlyPerformance(!showYearlyPerformance)}
-            >
-              {showYearlyPerformance ? 'Hide' : 'Show'}
-            </Button>
-          </div>
-          
-          {showYearlyPerformance && (
-            <div className="grid grid-cols-3 gap-2">
-              {getMonthlyPerformance().map((item, index) => {
-                const isPositiveChange = item.change >= 0;
-                const bgColor = isPositiveChange ? 'bg-green-500/20' : 'bg-red-500/20';
-                const textColor = isPositiveChange ? 'text-green-500' : 'text-red-500';
-                
-                return (
-                  <div 
-                    key={index}
-                    className={`${bgColor} rounded-lg p-3 text-center`}
-                  >
-                    <div className="text-xs text-muted-foreground mb-1">{item.label}</div>
-                    <div className={`text-sm font-bold ${textColor}`}>
-                      {isPositiveChange ? '+' : ''}{item.change.toFixed(1)}%
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
       </div>
     </div>
   );
