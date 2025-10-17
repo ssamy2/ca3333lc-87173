@@ -83,25 +83,27 @@ const GiftDetail = () => {
     if (!giftData) return [];
     
     let data: ChartData[] = [];
+    const weekData = Array.isArray(giftData.week_chart) ? giftData.week_chart : [];
+    
     switch (timeRange) {
       case '24h':
-        data = Array.isArray(giftData.week_chart) ? giftData.week_chart.slice(-48) : [];
+        data = weekData.slice(-48);
         break;
       case '3d':
-        data = Array.isArray(giftData.week_chart) ? giftData.week_chart.slice(-144) : [];
+        data = weekData.slice(-144);
         break;
       case '1w':
-        data = Array.isArray(giftData.week_chart) ? giftData.week_chart : [];
+        data = weekData;
         break;
       case '1m':
-        data = Array.isArray(giftData.month_chart) ? giftData.month_chart : [];
+        data = Array.isArray(giftData.month_chart) ? giftData.month_chart : weekData;
         break;
       case '3m':
-        data = Array.isArray(giftData.three_month_chart) ? giftData.three_month_chart : [];
+        data = Array.isArray(giftData.three_month_chart) ? giftData.three_month_chart : weekData;
         break;
       case 'all':
       default:
-        data = Array.isArray(giftData.all_chart) ? giftData.all_chart : [];
+        data = Array.isArray(giftData.all_chart) ? giftData.all_chart : weekData;
         break;
     }
     
@@ -113,10 +115,19 @@ const GiftDetail = () => {
   };
 
   const calculatePriceChange = () => {
-    if (!giftData || !giftData.all_chart || !Array.isArray(giftData.all_chart) || giftData.all_chart.length === 0) return 0;
+    if (!giftData) return 0;
+    
+    // Use all_chart if available, otherwise use week_chart as fallback
+    const chartData = Array.isArray(giftData.all_chart) && giftData.all_chart.length > 0 
+      ? giftData.all_chart 
+      : Array.isArray(giftData.week_chart) && giftData.week_chart.length > 0
+      ? giftData.week_chart
+      : [];
+    
+    if (chartData.length === 0) return 0;
     
     const currentPrice = currency === 'ton' ? giftData.info.priceTon : giftData.info.priceUsd;
-    const oldestPrice = currency === 'ton' ? giftData.all_chart[0].priceTon : giftData.all_chart[0].priceUsd;
+    const oldestPrice = currency === 'ton' ? chartData[0].priceTon : chartData[0].priceUsd;
     
     if (oldestPrice === 0) return 0;
     return ((currentPrice - oldestPrice) / oldestPrice) * 100;
