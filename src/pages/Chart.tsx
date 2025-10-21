@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { getCachedData } from '@/services/marketCache';
 
-type TimeFrame = 'all' | '3m' | '2m' | '1m' | '2w';
+type TimeFrame = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
 type ChartType = 'candlestick' | 'bar' | 'line';
 
 interface ChartDataPoint {
@@ -20,7 +20,7 @@ interface ChartDataPoint {
 const Chart = () => {
   const navigate = useNavigate();
   const { name } = useParams();
-  const [timeFrame, setTimeFrame] = useState<TimeFrame>('all');
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>('24h');
   const [chartType, setChartType] = useState<ChartType>('candlestick');
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +28,7 @@ const Chart = () => {
   const generateChartData = (): ChartDataPoint[] => {
     const data: ChartDataPoint[] = [];
     let basePrice = 5000;
-    const dataPoints = timeFrame === 'all' ? 100 : timeFrame === '3m' ? 90 : timeFrame === '2m' ? 60 : timeFrame === '1m' ? 30 : 14;
+    const dataPoints = timeFrame === 'all' ? 100 : timeFrame === '3m' ? 90 : timeFrame === '1m' ? 30 : timeFrame === '1w' ? 7 : timeFrame === '3d' ? 3 : 24;
     
     for (let i = 0; i < dataPoints; i++) {
       const volatility = 200;
@@ -112,9 +112,10 @@ const Chart = () => {
   const timeFrameButtons: { label: string; value: TimeFrame }[] = [
     { label: 'All', value: 'all' },
     { label: '3m', value: '3m' },
-    { label: '2m', value: '2m' },
     { label: '1m', value: '1m' },
-    { label: '2w', value: '2w' },
+    { label: '1w', value: '1w' },
+    { label: '3d', value: '3d' },
+    { label: '24h', value: '24h' },
   ];
 
 
@@ -126,14 +127,11 @@ const Chart = () => {
       <div className="flex items-center justify-between p-4 border-b border-white/5">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-white hover:text-white transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
-          <span className="font-medium">Go Back</span>
+          <span className="font-semibold text-lg">Go Back</span>
         </button>
-        <div className="text-xs text-white/40">
-          02:00 UTC+1
-        </div>
       </div>
 
       {/* NFT Info - Compact */}
@@ -333,7 +331,7 @@ const Chart = () => {
             <button
               key={btn.value}
               onClick={() => setTimeFrame(btn.value)}
-              className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-3 rounded-full text-sm font-medium transition-all ${
                 timeFrame === btn.value
                   ? 'bg-[#0d1421] text-white'
                   : 'text-white/40 hover:text-white/70'
@@ -343,6 +341,19 @@ const Chart = () => {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* View Models Button */}
+      <div className="px-4 mt-4 pb-6">
+        <button className="w-full bg-[#1a2332] hover:bg-[#1f2938] text-white py-4 rounded-2xl font-semibold text-base transition-colors flex items-center justify-center gap-2">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="14" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="14" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="3" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          View Models
+        </button>
       </div>
     </div>
   );
