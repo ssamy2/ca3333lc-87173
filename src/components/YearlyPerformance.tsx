@@ -172,21 +172,7 @@ const YearlyPerformance: React.FC<YearlyPerformanceProps> = ({ data, currency })
   };
 
   if (!isVisible) {
-    return (
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">
-          Yearly Performance
-        </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsVisible(true)}
-          className="gap-1"
-        >
-          Show <ChevronDown className="w-4 h-4" />
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   return (
