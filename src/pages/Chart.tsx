@@ -1,627 +1,301 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Loader2, Download, RotateCcw } from 'lucide-react';
-import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
-import TonIcon from '@/components/TonIcon';
-import { getCachedData, setCachedData } from '@/services/marketCache';
-import { Treemap, ResponsiveContainer } from 'recharts';
+import { ChevronLeft, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { getCachedData } from '@/services/marketCache';
 
-interface NFTMarketData {
-  price_ton: number;
-  price_usd: number;
-  'change_24h_ton_%': number;
-  'change_24h_usd_%': number;
-  image_url: string;
+type TimeFrame = 'all' | '3m' | '2m' | '1m' | '2w';
+type ChartType = 'candlestick' | 'bar' | 'line';
+
+interface ChartDataPoint {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
 }
-
-interface MarketData {
-  [key: string]: NFTMarketData;
-}
-
-type ViewMode = 'grid' | 'heatmap';
-type Currency = 'ton' | 'usd';
-type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
-
-// Store loaded images as base64 strings to prevent reloading
-const imageCache = new Map<string, string>();
-let imagesPreloaded = false;
 
 const Chart = () => {
-  const [marketData, setMarketData] = useState<MarketData>({});
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [currency, setCurrency] = useState<Currency>('ton');
-  const [topFilter, setTopFilter] = useState<TopFilter>('all');
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
-  const updateIntervalRef = useRef<NodeJS.Timeout>();
+  const navigate = useNavigate();
+  const { name } = useParams();
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>('all');
+  const [chartType, setChartType] = useState<ChartType>('candlestick');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMarketData(true);
+  // Mock data for demonstration - replace with real API data
+  const generateChartData = (): ChartDataPoint[] => {
+    const data: ChartDataPoint[] = [];
+    let basePrice = 5000;
+    const dataPoints = timeFrame === 'all' ? 100 : timeFrame === '3m' ? 90 : timeFrame === '2m' ? 60 : timeFrame === '1m' ? 30 : 14;
     
-    // Auto-update every 5 seconds
-    updateIntervalRef.current = setInterval(() => {
-      fetchMarketData(false);
-    }, 5000);
-
-    return () => {
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current);
-      }
-    };
-  }, []);
-
-  const fetchMarketData = async (isInitialLoad: boolean) => {
-    try {
-      if (isInitialLoad) {
-        setLoading(true);
-      }
-
-      // Check cache first
-      const cached = getCachedData('market-data');
-      if (cached && isInitialLoad) {
-        setMarketData(cached);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('https://channelsseller.site/api/market-data');
-      const data = await response.json();
+    for (let i = 0; i < dataPoints; i++) {
+      const volatility = 200;
+      const trend = (Math.random() - 0.48) * 50;
+      basePrice += trend;
       
-      // Preload images only once (first time ever) and convert to base64
-      if (!imagesPreloaded) {
-        Object.values(data).forEach((nft: any) => {
-          if (nft.image_url && !imageCache.has(nft.image_url)) {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              // Convert to base64
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                try {
-                  const base64 = canvas.toDataURL('image/png');
-                  imageCache.set(nft.image_url, base64);
-                } catch (e) {
-                  console.error('Failed to convert image to base64:', e);
-                  // Fallback to original URL
-                  imageCache.set(nft.image_url, nft.image_url);
-                }
-              }
-            };
-            img.src = nft.image_url;
-          }
-        });
-        imagesPreloaded = true;
-      }
+      const open = basePrice + (Math.random() - 0.5) * volatility;
+      const close = basePrice + (Math.random() - 0.5) * volatility;
+      const high = Math.max(open, close) + Math.random() * volatility;
+      const low = Math.min(open, close) - Math.random() * volatility;
       
-      setMarketData(data);
-      setCachedData('market-data', data);
-    } catch (error) {
-      console.error('Error fetching market data:', error);
-      if (isInitialLoad) {
-        toast.error('Failed to fetch market data');
-      }
-    } finally {
-      if (isInitialLoad) {
-        setLoading(false);
-      }
-    }
-  };
-
-  const getFilteredData = () => {
-    let entries = Object.entries(marketData);
-
-    // Sort by absolute change (biggest changes first regardless of sign)
-    entries.sort((a, b) => {
-      const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-      const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-      return Math.abs(changeB) - Math.abs(changeA);
-    });
-
-    // Apply top filter
-    if (topFilter === 'top50') {
-      entries = entries.slice(0, 50);
-    } else if (topFilter === 'top35') {
-      entries = entries.slice(0, 35);
-    } else if (topFilter === 'top25') {
-      entries = entries.slice(0, 25);
-    }
-
-    return entries;
-  };
-
-  const getTreemapData = () => {
-    const entries = getFilteredData();
-    
-    return entries
-      .filter(([_, data]) => {
-        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-        // Filter out items with changes smaller than 1%
-        return Math.abs(change) >= 1;
-      })
-      .map(([name, data]) => {
-        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-        const price = currency === 'ton' ? data.price_ton : data.price_usd;
-        
-        return {
-          name,
-          size: Math.abs(change), // Use absolute change for area
-          change,
-          price,
-          imageUrl: data.image_url,
-          color: getColorForChange(change),
-        };
+      data.push({
+        date: `${i + 1}-06`,
+        open: Math.max(0, open),
+        high: Math.max(0, high),
+        low: Math.max(0, low),
+        close: Math.max(0, close),
+        volume: Math.random() * 1000000
       });
-  };
-
-  const downloadAsImage = async () => {
-    const element = document.getElementById('heatmap-container');
-    if (!element) {
-      toast.error('Heatmap not found');
-      return;
     }
-
-    const loadingToast = toast.loading('Preparing images...');
-
-    try {
-      // Wait for all images to be fully loaded and converted to base64
-      const treemapData = getTreemapData();
-      const imagePromises = treemapData
-        .filter(item => item.imageUrl && !imageCache.has(item.imageUrl))
-        .map(item => {
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                try {
-                  const base64 = canvas.toDataURL('image/png');
-                  imageCache.set(item.imageUrl, base64);
-                } catch (e) {
-                  console.error('Failed to convert image:', e);
-                  imageCache.set(item.imageUrl, item.imageUrl);
-                }
-              }
-              resolve(null);
-            };
-            img.onerror = () => resolve(null);
-            img.src = item.imageUrl;
-          });
-        });
-
-      await Promise.all(imagePromises);
-
-      // Wait a bit more to ensure SVG is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast.dismiss(loadingToast);
-      const generatingToast = toast.loading('Generating image...');
-
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#0a0f1a',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          // Force all images in cloned document to use base64
-          const images = clonedDoc.querySelectorAll('image');
-          images.forEach((img: any) => {
-            const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-            if (href && imageCache.has(href)) {
-              img.setAttribute('href', imageCache.get(href)!);
-              img.setAttribute('xlink:href', imageCache.get(href)!);
-            }
-          });
-        },
-      });
-
-      const base64Image = canvas.toDataURL('image/png', 1.0).split(',')[1];
-
-      // Get Telegram user ID
-      const tg = (window as any).Telegram?.WebApp;
-      const userId = tg?.initDataUnsafe?.user?.id;
-
-      if (!userId) {
-        toast.dismiss(generatingToast);
-        toast.error('Could not get Telegram user ID');
-        return;
-      }
-
-      // Send to API
-      const response = await fetch('https://channelsseller.site/api/send-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: userId.toString(),
-          image: base64Image,
-        }),
-      });
-
-      toast.dismiss(generatingToast);
-
-      if (response.ok) {
-        setShowSuccessScreen(true);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || 'Failed to send image');
-      }
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error('Error generating image:', error);
-      toast.error('Failed to generate image');
-    }
+    
+    return data;
   };
 
-  const getColorForChange = (change: number) => {
-    // Use CSS variables that adapt to light/dark mode
-    const style = getComputedStyle(document.documentElement);
-    const success = style.getPropertyValue('--success').trim();
-    const destructive = style.getPropertyValue('--destructive').trim();
-    return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
-  };
+  const chartData = generateChartData();
+  const currentPrice = chartData[chartData.length - 1]?.close || 5790.99;
+  const firstPrice = chartData[0]?.close || 5000;
+  const priceChange = ((currentPrice - firstPrice) / firstPrice) * 100;
+  const isPositive = priceChange >= 0;
 
-  // Custom treemap cell content
-  const CustomTreemapContent = (props: any) => {
-    // Recharts passes data in props, need to safely extract
-    const x = props.x || 0;
-    const y = props.y || 0;
-    const width = props.width || 0;
-    const height = props.height || 0;
-    const name = props.name || '';
-    const change = props.change ?? 0;
-    const price = props.price ?? 0;
-    const imageUrl = props.imageUrl || '';
-    const color = props.color || '#888';
+  // Custom Candlestick component
+  const CandlestickBar = (props: any) => {
+    const { x, y, width, payload } = props;
+    const isUp = payload.close >= payload.open;
+    const color = isUp ? 'hsl(180, 70%, 60%)' : 'hsl(340, 75%, 60%)';
     
-    // Return null if no valid dimensions
-    if (!width || !height) return null;
-    
-    const area = width * height;
-    const fontSize = Math.sqrt(area) / 8;
-    const iconSize = Math.sqrt(area) / 5;
-    const showName = area > 2000 && name;
-    const showPrice = area > 5000;
+    const bodyHeight = Math.abs((payload.close - payload.open) / payload.high * 100);
+    const bodyY = isUp ? y + (payload.high - payload.close) / payload.high * 100 : y + (payload.high - payload.open) / payload.high * 100;
     
     return (
       <g>
+        {/* Wick */}
+        <line
+          x1={x + width / 2}
+          y1={y}
+          x2={x + width / 2}
+          y2={y + 100}
+          stroke={color}
+          strokeWidth={1}
+        />
+        {/* Body */}
         <rect
           x={x}
-          y={y}
+          y={bodyY}
           width={width}
-          height={height}
-          style={{
-            fill: color,
-            stroke: 'rgba(0,0,0,0.15)',
-            strokeWidth: 1,
-          }}
+          height={Math.max(bodyHeight, 1)}
+          fill={color}
+          stroke={color}
+          strokeWidth={0}
         />
-        
-        {/* Image */}
-        {imageUrl && !imageErrors.has(imageUrl) && area > 1000 && (
-          <image
-            x={x + width / 2 - iconSize / 2}
-            y={y + (showName ? height * 0.15 : height * 0.25)}
-            width={iconSize}
-            height={iconSize}
-            href={imageCache.get(imageUrl) || imageUrl}
-            style={{ opacity: imageLoading.has(imageUrl) ? 0.5 : 1 }}
-          />
-        )}
-        
-        {/* Name */}
-        {showName && name && (
-          <text
-            x={x + width / 2}
-            y={y + height * 0.45}
-            textAnchor="middle"
-            fill="white"
-            fontSize={Math.min(fontSize * 0.7, width / (name.length * 0.6))}
-            fontWeight="bold"
-            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
-          >
-            {name}
-          </text>
-        )}
-        
-        {/* Percentage */}
-        <text
-          x={x + width / 2}
-          y={y + height * (showName ? 0.65 : 0.55)}
-          textAnchor="middle"
-          fill="white"
-          fontSize={Math.min(fontSize * 1.2, width / 3)}
-          fontWeight="900"
-          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
-        >
-          {change >= 0 ? '+' : ''}{change.toFixed(2)}%
-        </text>
-        
-        {/* Price */}
-        {showPrice && (
-          <text
-            x={x + width / 2}
-            y={y + height * 0.8}
-            textAnchor="middle"
-            fill="white"
-            fontSize={fontSize * 0.6}
-            fontWeight="700"
-            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
-          >
-            {price.toFixed(2)} TON
-          </text>
-        )}
       </g>
     );
   };
 
-  const handleImageError = (imageUrl: string) => {
-    setImageErrors(prev => new Set([...prev, imageUrl]));
-    setImageLoading(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(imageUrl);
-      return newSet;
-    });
-  };
+  const timeFrameButtons: { label: string; value: TimeFrame }[] = [
+    { label: 'All', value: 'all' },
+    { label: '3m', value: '3m' },
+    { label: '2m', value: '2m' },
+    { label: '1m', value: '1m' },
+    { label: '2w', value: '2w' },
+  ];
 
-  const handleImageLoad = (imageUrl: string) => {
-    setImageLoading(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(imageUrl);
-      return newSet;
-    });
-  };
 
-  const filteredData = getFilteredData();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Success screen after sending image
-  if (showSuccessScreen) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-6">
-        <Card className="w-full max-w-md p-8 text-center space-y-6">
-          {/* Telegram Logo */}
-          <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-4xl">
-              ✈️
-            </div>
-          </div>
-          
-          {/* Message */}
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">Success!</h2>
-            <p className="text-muted-foreground">
-              Your image will arrive soon via DM
-            </p>
-          </div>
-          
-          {/* OK Button */}
-          <Button
-            onClick={() => setShowSuccessScreen(false)}
-            className="w-full"
-            size="lg"
-          >
-            OK
-          </Button>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Market Charts</h1>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs text-muted-foreground">Live</span>
+    <div className="min-h-screen bg-[#1a1f2e] text-white pb-20">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <button 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-white hover:text-white/80 transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span className="font-medium">Go Back</span>
+        </button>
+        <div className="text-sm text-white/60">
+          02:00 UTC+1
+        </div>
+      </div>
+
+      {/* NFT Info */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl">
+            🐸
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Plush Pepe</h1>
+            <p className="text-sm text-white/60">2.8K</p>
           </div>
         </div>
-
-        {/* View Toggle */}
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setViewMode('grid')}
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            className="flex-1"
-          >
-            Grid View
-          </Button>
-          <Button
-            onClick={() => setViewMode('heatmap')}
-            variant={viewMode === 'heatmap' ? 'default' : 'outline'}
-            className="flex-1"
-          >
-            Heatmap View
-          </Button>
-        </div>
-
-        {/* Filters */}
-        {viewMode === 'heatmap' && (
-          <div className="space-y-3">
-            {/* Currency */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setCurrency('ton')}
-                variant={currency === 'ton' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1"
-              >
-                TON
-              </Button>
-              <Button
-                onClick={() => setCurrency('usd')}
-                variant={currency === 'usd' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1"
-              >
-                USD
-              </Button>
-            </div>
-
-            {/* Top Filter */}
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                onClick={() => setTopFilter('all')}
-                variant={topFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-              >
-                All
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top50')}
-                variant={topFilter === 'top50' ? 'default' : 'outline'}
-                size="sm"
-              >
-                Top 50
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top35')}
-                variant={topFilter === 'top35' ? 'default' : 'outline'}
-                size="sm"
-              >
-                Top 35
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top25')}
-                variant={topFilter === 'top25' ? 'default' : 'outline'}
-                size="sm"
-              >
-                Top 25
-              </Button>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setZoomLevel(1)}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset Zoom
-              </Button>
-            </div>
-
-            {/* Download Button */}
-            <Button
-              onClick={downloadAsImage}
-              variant="default"
-              className="w-full"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Get it as a photo
-            </Button>
+        <div className="text-right">
+          <div className="flex items-center gap-1 text-2xl font-bold">
+            <span className="text-[#0098ea] text-lg">◆</span>
+            <span>{currentPrice.toFixed(2)}</span>
           </div>
-        )}
+          <div className={`text-sm font-medium ${isPositive ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
+            {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+          </div>
+        </div>
+      </div>
 
-        {/* Content */}
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-4 gap-2">
-            {filteredData.map(([name, data]) => {
-              const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-              const price = currency === 'ton' ? data.price_ton : data.price_usd;
-              const isPositive = change >= 0;
-              const isNeutral = change === 0;
+      {/* Currency & Chart Type Controls */}
+      <div className="px-4 flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 bg-[#252b3b] rounded-lg px-3 py-2">
+          <span className="text-sm font-medium">ton</span>
+          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setChartType('line')}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'line' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+          >
+            <TrendingUp className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setChartType('candlestick')}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'candlestick' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+          >
+            <BarChart3 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setChartType('bar')}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'bar' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+          >
+            <Activity className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
-              // Get background and shadow based on change
-              const getCardStyle = () => {
-                if (isNeutral) {
-                  return 'bg-secondary/80 hover:shadow-lg hover:shadow-muted/20';
-                }
-                if (isPositive) {
-                  return 'bg-[hsl(var(--success))]/20 hover:shadow-lg hover:shadow-[hsl(var(--success))]/30 border-[hsl(var(--success))]/30';
-                }
-                return 'bg-[hsl(var(--destructive))]/20 hover:shadow-lg hover:shadow-[hsl(var(--destructive))]/30 border-[hsl(var(--destructive))]/30';
-              };
-
-              return (
-                <Card
-                  key={name}
-                  className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
-                  onClick={() => {
-                    // Navigate to gift detail page
-                    window.location.href = `/gift/${encodeURIComponent(name)}`;
+      {/* Chart */}
+      <div className="px-4 mb-4">
+        <div className="bg-[#0f1419] rounded-2xl p-4" style={{ height: '400px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            {chartType === 'candlestick' ? (
+              <ComposedChart data={chartData}>
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                />
+                <YAxis 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                  domain={['dataMin - 500', 'dataMax + 500']}
+                  tickFormatter={(value) => value.toFixed(0)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1a1f2e',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: '#fff'
                   }}
-                >
-                  <img
-                    src={imageCache.get(data.image_url) || data.image_url}
-                    alt={name}
-                    className="w-12 h-12 object-contain"
-                  />
-                  <div className="flex items-center gap-1">
-                    <TonIcon className="w-3 h-3" />
-                    <span className="font-bold text-foreground text-sm">
-                      {price.toFixed(2)}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                    }`}
-                  >
-                    {isPositive ? '+' : ''}
-                    {change.toFixed(2)}%
-                  </span>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div 
-            id="heatmap-container" 
-            className="relative bg-card"
-            style={{ 
-              width: '100%',
-              height: window.innerWidth < 768 ? '600px' : '800px',
-            }}
-          >
-            {/* Watermark Overlay */}
-            <div 
-              className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+                  formatter={(value: any) => value.toFixed(2)}
+                />
+                <Bar
+                  dataKey="high"
+                  fill="transparent"
+                  shape={<CandlestickBar />}
+                />
+              </ComposedChart>
+            ) : chartType === 'line' ? (
+              <ComposedChart data={chartData}>
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                />
+                <YAxis 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                  domain={['dataMin - 500', 'dataMax + 500']}
+                  tickFormatter={(value) => value.toFixed(0)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1a1f2e',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                  formatter={(value: any) => value.toFixed(2)}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="close" 
+                  stroke="hsl(180, 70%, 60%)" 
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </ComposedChart>
+            ) : (
+              <ComposedChart data={chartData}>
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                />
+                <YAxis 
+                  stroke="#ffffff20"
+                  tick={{ fill: '#ffffff40', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#ffffff10' }}
+                  domain={['dataMin - 500', 'dataMax + 500']}
+                  tickFormatter={(value) => value.toFixed(0)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1a1f2e',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                  formatter={(value: any) => value.toFixed(2)}
+                />
+                <Bar 
+                  dataKey="volume" 
+                  fill="hsl(180, 70%, 60%)"
+                  opacity={0.5}
+                />
+              </ComposedChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Time Frame Buttons */}
+      <div className="px-4">
+        <div className="flex items-center gap-2 bg-[#252b3b] rounded-full p-1">
+          {timeFrameButtons.map((btn) => (
+            <button
+              key={btn.value}
+              onClick={() => setTimeFrame(btn.value)}
+              className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
+                timeFrame === btn.value
+                  ? 'bg-[#0f1419] text-white shadow-lg'
+                  : 'text-white/60 hover:text-white'
+              }`}
             >
-              @Nova_calculator_bot
-            </div>
-            
-            <ResponsiveContainer width="100%" height="100%">
-              <Treemap
-                data={getTreemapData()}
-                dataKey="size"
-                aspectRatio={4 / 3}
-                stroke="rgba(0,0,0,0.15)"
-                fill="#8884d8"
-                content={<CustomTreemapContent />}
-              />
-            </ResponsiveContainer>
-          </div>
-        )}
+              {btn.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
