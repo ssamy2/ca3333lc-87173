@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Download, RotateCcw } from 'lucide-react';
@@ -30,7 +29,6 @@ const imageCache = new Map<string, string>();
 let imagesPreloaded = false;
 
 const Chart = () => {
-  const navigate = useNavigate();
   const [marketData, setMarketData] = useState<MarketData>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -564,33 +562,35 @@ const Chart = () => {
               };
 
               return (
-                <Card
+                <a 
                   key={name}
-                  className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
-                  onClick={() => {
-                    navigate(`/gift/${encodeURIComponent(name)}`);
-                  }}
+                  href={`/gift/${encodeURIComponent(name)}`}
+                  className="no-underline"
                 >
-                  <img
-                    src={imageCache.get(data.image_url) || data.image_url}
-                    alt={name}
-                    className="w-12 h-12 object-contain"
-                  />
-                  <div className="flex items-center gap-1">
-                    <TonIcon className="w-3 h-3" />
-                    <span className="font-bold text-foreground text-sm">
-                      {price.toFixed(2)}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                    }`}
+                  <Card
+                    className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
-                    {isPositive ? '+' : ''}
-                    {change.toFixed(2)}%
-                  </span>
-                </Card>
+                    <img
+                      src={imageCache.get(data.image_url) || data.image_url}
+                      alt={name}
+                      className="w-12 h-12 object-contain"
+                    />
+                    <div className="flex items-center gap-1">
+                      <TonIcon className="w-3 h-3" />
+                      <span className="font-bold text-foreground text-sm">
+                        {price.toFixed(2)}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-xs font-medium ${
+                        isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
+                      }`}
+                    >
+                      {isPositive ? '+' : ''}
+                      {change.toFixed(2)}%
+                    </span>
+                  </Card>
+                </a>
               );
             })}
           </div>
