@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Download, RotateCcw } from 'lucide-react';
@@ -29,6 +30,7 @@ const imageCache = new Map<string, string>();
 let imagesPreloaded = false;
 
 const Chart = () => {
+  const navigate = useNavigate();
   const [marketData, setMarketData] = useState<MarketData>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -566,8 +568,7 @@ const Chart = () => {
                   key={name}
                   className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   onClick={() => {
-                    // Navigate to gift detail page
-                    window.location.href = `/gift/${encodeURIComponent(name)}`;
+                    navigate(`/gift/${encodeURIComponent(name)}`);
                   }}
                 >
                   <img
