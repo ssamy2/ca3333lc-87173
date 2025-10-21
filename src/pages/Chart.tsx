@@ -59,35 +59,51 @@ const Chart = () => {
   const priceChange = ((currentPrice - firstPrice) / firstPrice) * 100;
   const isPositive = priceChange >= 0;
 
-  // Custom Candlestick component
-  const CandlestickBar = (props: any) => {
-    const { x, y, width, payload } = props;
-    const isUp = payload.close >= payload.open;
-    const color = isUp ? 'hsl(180, 70%, 60%)' : 'hsl(340, 75%, 60%)';
+  // Custom Candlestick component with proper scaling
+  const CandlestickShape = (props: any) => {
+    const { x, y, width, height, payload } = props;
     
-    const bodyHeight = Math.abs((payload.close - payload.open) / payload.high * 100);
-    const bodyY = isUp ? y + (payload.high - payload.close) / payload.high * 100 : y + (payload.high - payload.open) / payload.high * 100;
+    if (!payload || !height) return null;
+    
+    const { open, high, low, close } = payload;
+    const isUp = close >= open;
+    const color = isUp ? '#26d0ce' : '#ef4565';
+    
+    // Calculate positions (y-axis is inverted in SVG)
+    const range = high - low;
+    if (range === 0) return null;
+    
+    const yHigh = y;
+    const yLow = y + height;
+    const yOpen = y + ((high - open) / range) * height;
+    const yClose = y + ((high - close) / range) * height;
+    
+    const bodyTop = Math.min(yOpen, yClose);
+    const bodyBottom = Math.max(yOpen, yClose);
+    const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
+    
+    const wickX = x + width / 2;
     
     return (
       <g>
-        {/* Wick */}
+        {/* Wick (high-low line) */}
         <line
-          x1={x + width / 2}
-          y1={y}
-          x2={x + width / 2}
-          y2={y + 100}
+          x1={wickX}
+          y1={yHigh}
+          x2={wickX}
+          y2={yLow}
           stroke={color}
           strokeWidth={1}
+          opacity={0.8}
         />
         {/* Body */}
         <rect
-          x={x}
-          y={bodyY}
-          width={width}
-          height={Math.max(bodyHeight, 1)}
+          x={x + 1}
+          y={bodyTop}
+          width={Math.max(width - 2, 2)}
+          height={bodyHeight}
           fill={color}
-          stroke={color}
-          strokeWidth={0}
+          stroke="none"
         />
       </g>
     );
@@ -105,191 +121,222 @@ const Chart = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#1a1f2e] text-white pb-20">
+    <div className="min-h-screen bg-[#0d1421] text-white pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center justify-between p-4 border-b border-white/5">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-white hover:text-white/80 transition-colors"
+          className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="font-medium">Go Back</span>
         </button>
-        <div className="text-sm text-white/60">
+        <div className="text-xs text-white/40">
           02:00 UTC+1
         </div>
       </div>
 
-      {/* NFT Info */}
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl">
+      {/* NFT Info - Compact */}
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl">
             🐸
           </div>
           <div>
-            <h1 className="text-xl font-bold">Plush Pepe</h1>
-            <p className="text-sm text-white/60">2.8K</p>
+            <h1 className="text-base font-bold">Plush Pepe</h1>
+            <p className="text-xs text-white/40">2.8K</p>
           </div>
         </div>
         <div className="text-right">
-          <div className="flex items-center gap-1 text-2xl font-bold">
-            <span className="text-[#0098ea] text-lg">◆</span>
+          <div className="flex items-center gap-1 text-xl font-bold">
+            <span className="text-[#0098ea] text-sm">◆</span>
             <span>{currentPrice.toFixed(2)}</span>
           </div>
-          <div className={`text-sm font-medium ${isPositive ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
+          <div className={`text-xs font-semibold ${isPositive ? 'text-[#26d0ce]' : 'text-[#ef4565]'}`}>
             {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
           </div>
         </div>
       </div>
 
       {/* Currency & Chart Type Controls */}
-      <div className="px-4 flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 bg-[#252b3b] rounded-lg px-3 py-2">
+      <div className="px-4 flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 bg-[#1a2332] rounded-lg px-3 py-1.5">
           <span className="text-sm font-medium">ton</span>
-          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setChartType('line')}
-            className={`p-2 rounded-lg transition-colors ${chartType === 'line' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'line' ? 'bg-[#2e5bff]' : 'bg-[#1a2332]'}`}
           >
-            <TrendingUp className="w-5 h-5" />
+            <TrendingUp className="w-4 h-4" />
           </button>
           <button
             onClick={() => setChartType('candlestick')}
-            className={`p-2 rounded-lg transition-colors ${chartType === 'candlestick' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'candlestick' ? 'bg-[#2e5bff]' : 'bg-[#1a2332]'}`}
           >
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 className="w-4 h-4" />
           </button>
           <button
             onClick={() => setChartType('bar')}
-            className={`p-2 rounded-lg transition-colors ${chartType === 'bar' ? 'bg-[#0098ea]' : 'bg-[#252b3b]'}`}
+            className={`p-2 rounded-lg transition-colors ${chartType === 'bar' ? 'bg-[#2e5bff]' : 'bg-[#1a2332]'}`}
           >
-            <Activity className="w-5 h-5" />
+            <Activity className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="px-4 mb-4">
-        <div className="bg-[#0f1419] rounded-2xl p-4" style={{ height: '400px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            {chartType === 'candlestick' ? (
-              <ComposedChart data={chartData}>
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                />
-                <YAxis 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                  domain={['dataMin - 500', 'dataMax + 500']}
-                  tickFormatter={(value) => value.toFixed(0)}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1a1f2e',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  formatter={(value: any) => value.toFixed(2)}
-                />
-                <Bar
-                  dataKey="high"
-                  fill="transparent"
-                  shape={<CandlestickBar />}
-                />
-              </ComposedChart>
-            ) : chartType === 'line' ? (
-              <ComposedChart data={chartData}>
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                />
-                <YAxis 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                  domain={['dataMin - 500', 'dataMax + 500']}
-                  tickFormatter={(value) => value.toFixed(0)}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1a1f2e',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  formatter={(value: any) => value.toFixed(2)}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="close" 
-                  stroke="hsl(180, 70%, 60%)" 
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </ComposedChart>
-            ) : (
-              <ComposedChart data={chartData}>
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                />
-                <YAxis 
-                  stroke="#ffffff20"
-                  tick={{ fill: '#ffffff40', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#ffffff10' }}
-                  domain={['dataMin - 500', 'dataMax + 500']}
-                  tickFormatter={(value) => value.toFixed(0)}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1a1f2e',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  formatter={(value: any) => value.toFixed(2)}
-                />
-                <Bar 
-                  dataKey="volume" 
-                  fill="hsl(180, 70%, 60%)"
-                  opacity={0.5}
-                />
-              </ComposedChart>
-            )}
-          </ResponsiveContainer>
-        </div>
+      {/* Chart - Full Width */}
+      <div className="w-full" style={{ height: '450px' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          {chartType === 'candlestick' ? (
+            <ComposedChart 
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="gridGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.03" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.01" />
+                </linearGradient>
+              </defs>
+              <XAxis 
+                dataKey="date" 
+                stroke="transparent"
+                tick={{ fill: '#ffffff15', fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+                minTickGap={30}
+              />
+              <YAxis 
+                stroke="transparent"
+                tick={{ fill: '#ffffff25', fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => value.toFixed(1)}
+                orientation="right"
+                width={60}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1a2332',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '12px'
+                }}
+                formatter={(value: any) => [value.toFixed(2), '']}
+                labelStyle={{ color: '#ffffff60' }}
+              />
+              {/* Grid lines */}
+              <defs>
+                <pattern id="grid" width="100%" height="50" patternUnits="userSpaceOnUse">
+                  <line x1="0" y1="0" x2="100%" y2="0" stroke="#ffffff" strokeOpacity="0.03" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <Bar
+                dataKey="high"
+                fill="transparent"
+                shape={<CandlestickShape />}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          ) : chartType === 'line' ? (
+            <ComposedChart 
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            >
+              <XAxis 
+                dataKey="date" 
+                stroke="transparent"
+                tick={{ fill: '#ffffff15', fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis 
+                stroke="transparent"
+                tick={{ fill: '#ffffff25', fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => value.toFixed(1)}
+                orientation="right"
+                width={60}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1a2332',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+                formatter={(value: any) => value.toFixed(2)}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="close" 
+                stroke="#26d0ce" 
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          ) : (
+            <ComposedChart 
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            >
+              <XAxis 
+                dataKey="date" 
+                stroke="transparent"
+                tick={{ fill: '#ffffff15', fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis 
+                stroke="transparent"
+                tick={{ fill: '#ffffff25', fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => value.toFixed(0)}
+                orientation="right"
+                width={60}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1a2332',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+                formatter={(value: any) => value.toFixed(0)}
+              />
+              <Bar 
+                dataKey="volume" 
+                fill="#26d0ce"
+                opacity={0.3}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          )}
+        </ResponsiveContainer>
       </div>
 
       {/* Time Frame Buttons */}
-      <div className="px-4">
-        <div className="flex items-center gap-2 bg-[#252b3b] rounded-full p-1">
+      <div className="px-4 mt-4">
+        <div className="flex items-center gap-0 bg-[#1a2332] rounded-full p-0.5">
           {timeFrameButtons.map((btn) => (
             <button
               key={btn.value}
               onClick={() => setTimeFrame(btn.value)}
-              className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
                 timeFrame === btn.value
-                  ? 'bg-[#0f1419] text-white shadow-lg'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#0d1421] text-white'
+                  : 'text-white/40 hover:text-white/70'
               }`}
             >
               {btn.label}
