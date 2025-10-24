@@ -480,83 +480,90 @@ const Chart = () => {
         </div>
 
         {/* Filters */}
+        <div className="space-y-2">
+          {/* Data Source Filter */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setDataSource('market')}
+              variant={dataSource === 'market' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1 h-8 text-xs"
+            >
+              All
+            </Button>
+            <Button
+              onClick={() => setDataSource('black')}
+              variant={dataSource === 'black' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1 h-8 text-xs bg-black text-white hover:bg-black/80"
+            >
+              Black
+            </Button>
+          </div>
+
+          {viewMode === 'heatmap' && (
+            <>
+              {/* Currency */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setCurrency('ton')}
+                  variant={currency === 'ton' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  TON
+                </Button>
+                <Button
+                  onClick={() => setCurrency('usd')}
+                  variant={currency === 'usd' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  USD
+                </Button>
+              </div>
+
+              {/* Top Filter */}
+              <div className="grid grid-cols-4 gap-2">
+                <Button
+                  onClick={() => setTopFilter('all')}
+                  variant={topFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  All
+                </Button>
+                <Button
+                  onClick={() => setTopFilter('top50')}
+                  variant={topFilter === 'top50' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  Top 50
+                </Button>
+                <Button
+                  onClick={() => setTopFilter('top35')}
+                  variant={topFilter === 'top35' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  Top 35
+                </Button>
+                <Button
+                  onClick={() => setTopFilter('top25')}
+                  variant={topFilter === 'top25' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  Top 25
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
         {viewMode === 'heatmap' && (
           <div className="space-y-2">
-            {/* Currency */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setCurrency('ton')}
-                variant={currency === 'ton' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 h-8 text-xs"
-              >
-                TON
-              </Button>
-              <Button
-                onClick={() => setCurrency('usd')}
-                variant={currency === 'usd' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 h-8 text-xs"
-              >
-                USD
-              </Button>
-            </div>
-
-            {/* Top Filter */}
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                onClick={() => setTopFilter('all')}
-                variant={topFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs"
-              >
-                All
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top50')}
-                variant={topFilter === 'top50' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs"
-              >
-                Top 50
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top35')}
-                variant={topFilter === 'top35' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs"
-              >
-                Top 35
-              </Button>
-              <Button
-                onClick={() => setTopFilter('top25')}
-                variant={topFilter === 'top25' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs"
-              >
-                Top 25
-              </Button>
-            </div>
-
-            {/* Data Source Filter */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setDataSource('market')}
-                variant={dataSource === 'market' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 h-8 text-xs"
-              >
-                All
-              </Button>
-              <Button
-                onClick={() => setDataSource('black')}
-                variant={dataSource === 'black' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 h-8 text-xs bg-black text-white hover:bg-black/80"
-              >
-                Black
-              </Button>
-            </div>
 
             {/* Actions */}
             <div className="flex gap-2">
