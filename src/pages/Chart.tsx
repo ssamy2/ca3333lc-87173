@@ -210,19 +210,21 @@ const Chart = () => {
 
       await Promise.all(imagePromises);
 
-      // Wait a bit more to ensure SVG is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer to ensure SVG is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       toast.dismiss(loadingToast);
       const generatingToast = toast.loading('Generating image...');
 
       const canvas = await html2canvas(element, {
-        backgroundColor: '#0a0f1a',
-        scale: 6, // جودة عالية - 6x للأداء الأفضل
-        logging: false,
+        backgroundColor: '#09090b',
+        scale: 4,
+        logging: true,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 20000,
+        foreignObjectRendering: false,
+        imageTimeout: 30000,
+        removeContainer: false,
         onclone: (clonedDoc) => {
           // Force all images in cloned document to use base64
           const images = clonedDoc.querySelectorAll('image');
@@ -232,6 +234,12 @@ const Chart = () => {
               img.setAttribute('href', imageCache.get(href)!);
               img.setAttribute('xlink:href', imageCache.get(href)!);
             }
+          });
+          
+          // Make sure SVG is visible in cloned document
+          const svgElements = clonedDoc.querySelectorAll('svg');
+          svgElements.forEach((svg: any) => {
+            svg.style.backgroundColor = 'transparent';
           });
         },
       });
