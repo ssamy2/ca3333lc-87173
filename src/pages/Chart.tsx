@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, Download, RotateCcw, LayoutGrid, List } from 'lucide-react';
+import { Loader2, Download, RotateCcw, LayoutGrid, List, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import TonIcon from '@/components/TonIcon';
@@ -22,7 +22,7 @@ interface MarketData {
   [key: string]: NFTMarketData;
 }
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 
@@ -371,10 +371,18 @@ const Chart = () => {
           >
             <LayoutGrid className="w-5 h-5" />
           </Button>
+          <Button
+            onClick={() => setViewMode('heatmap')}
+            variant={viewMode === 'heatmap' ? 'default' : 'outline'}
+            size="icon"
+            className="rounded-full"
+          >
+            <BarChart3 className="w-5 h-5" />
+          </Button>
         </div>
 
-        {/* Filters - Hidden for now */}
-        {false && (
+        {/* Filters */}
+        {viewMode === 'heatmap' && (
           <div className="space-y-3">
             {/* Currency */}
             <div className="flex gap-2">
@@ -560,6 +568,27 @@ const Chart = () => {
                 </Link>
               );
             })}
+          </div>
+        )}
+
+        {viewMode === 'heatmap' && (
+          <div 
+            id="heatmap-container" 
+            className="relative bg-card"
+            style={{ 
+              width: '100%',
+              height: window.innerWidth < 768 ? '600px' : '800px',
+            }}
+          >
+            {/* Watermark Overlay */}
+            <div 
+              className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+            >
+              @Nova_calculator_bot
+            </div>
+            
+            <HeatmapTreemap data={getTreemapData()} />
           </div>
         )}
       </div>
