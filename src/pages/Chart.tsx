@@ -34,9 +34,6 @@ type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 type DataSource = 'market' | 'black';
 
-// Clean up expired images on component mount
-imageCache.clearExpiredCache();
-
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
@@ -55,16 +52,18 @@ const Chart = () => {
     left: Math.random() * 70 + 10 
   });
 
+  // Initial data load - runs once on mount
   useEffect(() => {
+    imageCache.clearExpiredCache();
     fetchMarketData(true);
     fetchBlackFloorData(true);
-    
-    // Auto-update every 30 seconds (reduced from 5 to avoid excessive requests)
+  }, []);
+
+  // Auto-refresh - runs independently
+  useEffect(() => {
     updateIntervalRef.current = window.setInterval(() => {
       fetchMarketData(false);
-      if (dataSource === 'black') {
-        fetchBlackFloorData(false);
-      }
+      fetchBlackFloorData(false);
     }, 30000);
 
     return () => {
@@ -72,7 +71,7 @@ const Chart = () => {
         window.clearInterval(updateIntervalRef.current);
       }
     };
-  }, [dataSource]);
+  }, []);
 
   const fetchMarketData = async (isInitialLoad: boolean) => {
     try {
@@ -568,7 +567,13 @@ const Chart = () => {
                     <img
                       src={imageCache.getImageFromCache(data.image_url) || data.image_url}
                       alt={name}
+                      loading="lazy"
                       className="w-12 h-12 object-contain"
+                      onLoad={() => {
+                        if (!imageCache.getImageFromCache(data.image_url)) {
+                          imageCache.preloadImage(data.image_url);
+                        }
+                      }}
                     />
                     <div className="flex items-center gap-1">
                       <TonIcon className="w-3 h-3" />
@@ -611,7 +616,13 @@ const Chart = () => {
                         <img
                           src={imageCache.getImageFromCache(data.image_url) || data.image_url}
                           alt={name}
+                          loading="lazy"
                           className="w-12 h-12 object-contain rounded-full"
+                          onLoad={() => {
+                            if (!imageCache.getImageFromCache(data.image_url)) {
+                              imageCache.preloadImage(data.image_url);
+                            }
+                          }}
                         />
                       </div>
 

@@ -160,11 +160,14 @@ class ImageCacheService {
   }
 
   /**
-   * Preload images that are not already cached with strict checking
+   * Preload images that are not already cached with strict checking and deduplication
    */
   async preloadUncachedImages(urls: string[]): Promise<void> {
+    // Remove duplicate URLs
+    const uniqueUrls = [...new Set(urls)];
+    
     // Filter out cached and pending images
-    const uncachedUrls = urls.filter(url => {
+    const uncachedUrls = uniqueUrls.filter(url => {
       const cached = this.getImageFromCache(url);
       const pending = this.pendingRequests.has(url);
       return !cached && !pending;
@@ -175,7 +178,7 @@ class ImageCacheService {
       return;
     }
     
-    console.log(`📥 Preloading ${uncachedUrls.length} new images (${urls.length - uncachedUrls.length} already cached/loading)`);
+    console.log(`📥 Preloading ${uncachedUrls.length}/${uniqueUrls.length} images (${uniqueUrls.length - uncachedUrls.length} already cached/loading)`);
     await this.preloadImages(uncachedUrls);
   }
 
