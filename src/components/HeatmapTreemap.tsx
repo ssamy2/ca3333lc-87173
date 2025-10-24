@@ -25,18 +25,27 @@ interface ContentProps {
   color: string;
 }
 
-const TreeMapContent: React.FC<any> = ({
-  x,
-  y,
-  width,
-  height,
-  name,
-  change,
-  price,
-  imageUrl,
-  color
-}) => {
+const TreeMapContent: React.FC<any> = (props) => {
+  const {
+    x,
+    y,
+    width,
+    height,
+    color: colorProp,
+  } = props;
+
   if (!width || !height) return null;
+
+  const payload = (props as any)?.payload ?? {};
+  const name = (props as any).name ?? payload.name ?? '';
+  const change = Number.isFinite((props as any).change)
+    ? (props as any).change
+    : (Number.isFinite(payload.change) ? payload.change : 0);
+  const price = Number.isFinite((props as any).price)
+    ? (props as any).price
+    : (Number.isFinite(payload.price) ? payload.price : 0);
+  const imageUrl = (props as any).imageUrl ?? payload.imageUrl;
+  const color = colorProp ?? payload.color ?? '#888';
 
   const area = width * height;
   const minDimension = Math.min(width, height);
@@ -52,6 +61,9 @@ const TreeMapContent: React.FC<any> = ({
   const imageSize = Math.min(minDimension * 0.22, 35);
   const imageYPosition = y + height * 0.12;
   const textShadow = '0 1px 3px rgba(0,0,0,0.8)';
+
+  const safeChange = Number.isFinite(change) ? change : 0;
+  const safePrice = Number.isFinite(price) ? price : 0;
 
   return (
     <g>
@@ -106,7 +118,7 @@ const TreeMapContent: React.FC<any> = ({
           fontWeight="800"
           style={{ textShadow }}
         >
-          {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+          {safeChange >= 0 ? '+' : ''}{safeChange.toFixed(2)}%
         </text>
       )}
 
@@ -121,7 +133,7 @@ const TreeMapContent: React.FC<any> = ({
           fontWeight="500"
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
         >
-          {price.toFixed(2)} TON
+          {safePrice.toFixed(2)} TON
         </text>
       )}
     </g>
