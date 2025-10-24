@@ -22,7 +22,7 @@ interface MarketData {
   [key: string]: NFTMarketData;
 }
 
-type ViewMode = 'grid' | 'heatmap';
+type ViewMode = 'grid' | 'heatmap' | 'list';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 
@@ -360,14 +360,21 @@ const Chart = () => {
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             className="flex-1"
           >
-            Grid View
+            Grid
+          </Button>
+          <Button
+            onClick={() => setViewMode('list')}
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            className="flex-1"
+          >
+            List
           </Button>
           <Button
             onClick={() => setViewMode('heatmap')}
             variant={viewMode === 'heatmap' ? 'default' : 'outline'}
             className="flex-1"
           >
-            Heatmap View
+            Heatmap
           </Button>
         </div>
 
@@ -459,9 +466,7 @@ const Chart = () => {
               const price = currency === 'ton' ? data.price_ton : data.price_usd;
               const isPositive = change >= 0;
               const isNeutral = change === 0;
-              const slug = (data.image_url?.split('/api/image/')[1]) || name;
 
-              // Get background and shadow based on change
               const getCardStyle = () => {
                 if (isNeutral) {
                   return 'bg-secondary/80 hover:shadow-lg hover:shadow-muted/20';
@@ -500,6 +505,63 @@ const Chart = () => {
                       {isPositive ? '+' : ''}
                       {change.toFixed(2)}%
                     </span>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="space-y-2">
+            {filteredData.map(([name, data]) => {
+              const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
+              const price = currency === 'ton' ? data.price_ton : data.price_usd;
+              const isPositive = change >= 0;
+
+              return (
+                <Link 
+                  key={name}
+                  to={`/gift/${encodeURIComponent(name)}`}
+                  className="no-underline"
+                >
+                  <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      {/* Left: Image */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={imageCache.get(data.image_url) || data.image_url}
+                          alt={name}
+                          className="w-12 h-12 object-contain rounded-full"
+                        />
+                      </div>
+
+                      {/* Middle: Name and Stats */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-foreground text-base truncate">
+                          {name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {price.toFixed(2)} / {(price * 1.3).toFixed(1)}K
+                        </p>
+                      </div>
+
+                      {/* Right: Price and Change */}
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1">
+                          <TonIcon className="w-4 h-4" />
+                          <span className="font-bold text-foreground text-lg">
+                            {price.toFixed(2)}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-sm font-medium ${
+                            isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
+                          }`}
+                        >
+                          {isPositive ? '+' : ''}
+                          {change.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
                   </Card>
                 </Link>
               );
