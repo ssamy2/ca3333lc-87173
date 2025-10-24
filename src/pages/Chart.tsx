@@ -41,6 +41,10 @@ const Chart = () => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
   const updateIntervalRef = useRef<number | null>(null);
+  const [watermarkPosition] = useState({ 
+    top: Math.random() * 70 + 10, 
+    left: Math.random() * 70 + 10 
+  });
 
   useEffect(() => {
     fetchMarketData(true);
@@ -579,16 +583,17 @@ const Chart = () => {
             className="relative bg-card"
             style={{ 
               width: '100%',
-              aspectRatio: '16 / 9',
-              maxHeight: window.innerWidth < 768 ? '600px' : '768px',
+              height: window.innerWidth < 768 ? 'calc(100vh - 380px)' : 'auto',
+              minHeight: window.innerWidth < 768 ? '450px' : '500px',
+              aspectRatio: window.innerWidth < 768 ? '4 / 5' : '16 / 9',
             }}
           >
             {/* Watermark Overlay */}
             <div 
               className="absolute text-white/40 text-xs font-medium pointer-events-none z-10"
               style={{ 
-                top: `${Math.random() * 70 + 10}%`,
-                left: `${Math.random() * 70 + 10}%`,
+                top: `${watermarkPosition.top}%`,
+                left: `${watermarkPosition.left}%`,
                 textShadow: '0 1px 3px rgba(0,0,0,0.5)'
               }}
             >
