@@ -22,9 +22,16 @@ interface MarketData {
   [key: string]: NFTMarketData;
 }
 
+interface BlackFloorItem {
+  gift_name: string;
+  short_name: string;
+  black_price: number;
+}
+
 type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
+type DataSource = 'market' | 'black';
 
 // Store loaded images as base64 strings to prevent reloading
 const imageCache = new Map<string, string>();
@@ -32,10 +39,12 @@ let imagesPreloaded = false;
 
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
+  const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
+  const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
@@ -48,10 +57,14 @@ const Chart = () => {
 
   useEffect(() => {
     fetchMarketData(true);
+    fetchBlackFloorData(true);
     
     // Auto-update every 5 seconds
     updateIntervalRef.current = window.setInterval(() => {
       fetchMarketData(false);
+      if (dataSource === 'black') {
+        fetchBlackFloorData(false);
+      }
     }, 5000);
 
     return () => {
@@ -59,7 +72,7 @@ const Chart = () => {
         window.clearInterval(updateIntervalRef.current);
       }
     };
-  }, []);
+  }, [dataSource]);
 
   const fetchMarketData = async (isInitialLoad: boolean) => {
     try {
@@ -122,7 +135,83 @@ const Chart = () => {
     }
   };
 
+  const fetchBlackFloorData = async (isInitialLoad: boolean) => {
+    try {
+      const cached = getCachedData('black-floor-data');
+      if (cached && isInitialLoad) {
+        setBlackFloorData(cached);
+        return;
+      }
+
+      const response = await fetch('https://channelsseller.site/api/black-floor');
+      const data: BlackFloorItem[] = await response.json();
+      
+      // Preload black floor images
+      data.forEach((item) => {
+        const imageUrl = `https://channelsseller.site/api/image/${item.short_name}`;
+        if (!imageCache.has(imageUrl)) {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              try {
+                const base64 = canvas.toDataURL('image/png');
+                imageCache.set(imageUrl, base64);
+              } catch (e) {
+                console.error('Failed to convert image to base64:', e);
+                imageCache.set(imageUrl, imageUrl);
+              }
+            }
+          };
+          img.src = imageUrl;
+        }
+      });
+      
+      setBlackFloorData(data);
+      setCachedData('black-floor-data', data);
+    } catch (error) {
+      console.error('Error fetching black floor data:', error);
+      if (isInitialLoad) {
+        toast.error('Failed to fetch black floor data');
+      }
+    }
+  };
+
   const getFilteredData = () => {
+    if (dataSource === 'black') {
+      // Convert black floor data to market data format
+      let blackEntries: [string, NFTMarketData][] = blackFloorData.map(item => [
+        item.gift_name,
+        {
+          price_ton: item.black_price,
+          price_usd: item.black_price * 2.16, // Approximate conversion
+          'change_24h_ton_%': 0,
+          'change_24h_usd_%': 0,
+          image_url: `https://channelsseller.site/api/image/${item.short_name}`
+        }
+      ]);
+
+      // Sort by price (highest first)
+      blackEntries.sort((a, b) => b[1].price_ton - a[1].price_ton);
+
+      // Apply top filter
+      if (topFilter === 'top50') {
+        blackEntries = blackEntries.slice(0, 50);
+      } else if (topFilter === 'top35') {
+        blackEntries = blackEntries.slice(0, 35);
+      } else if (topFilter === 'top25') {
+        blackEntries = blackEntries.slice(0, 25);
+      }
+
+      return blackEntries;
+    }
+
+    // Market data
     let entries = Object.entries(marketData);
 
     // Sort by absolute change (biggest changes first regardless of sign)
@@ -446,6 +535,26 @@ const Chart = () => {
                 className="h-8 text-xs"
               >
                 Top 25
+              </Button>
+            </div>
+
+            {/* Data Source Filter */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setDataSource('market')}
+                variant={dataSource === 'market' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 h-8 text-xs"
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => setDataSource('black')}
+                variant={dataSource === 'black' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 h-8 text-xs bg-black text-white hover:bg-black/80"
+              >
+                Black
               </Button>
             </div>
 
