@@ -91,7 +91,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
       <Treemap
         data={data}
         dataKey="size"
-        aspectRatio={4 / 3}
+        aspectRatio={16 / 9}
         stroke="rgba(0,0,0,0.15)"
         fill="#8884d8"
         content={<Content />}

@@ -272,11 +272,8 @@ const Chart = () => {
   };
 
   const getColorForChange = (change: number) => {
-    // Use CSS variables that adapt to light/dark mode
-    const style = getComputedStyle(document.documentElement);
-    const success = style.getPropertyValue('--success').trim();
-    const destructive = style.getPropertyValue('--destructive').trim();
-    return change >= 0 ? `hsl(${success})` : `hsl(${destructive})`;
+    // Use bright, vivid colors for better visibility
+    return change >= 0 ? '#22C55E' : '#EF4444';
   };
 
   // Treemap is rendered via HeatmapTreemap component
@@ -577,7 +574,8 @@ const Chart = () => {
             className="relative bg-card"
             style={{ 
               width: '100%',
-              height: window.innerWidth < 768 ? '600px' : '800px',
+              aspectRatio: '16 / 9',
+              maxHeight: window.innerWidth < 768 ? '600px' : '768px',
             }}
           >
             {/* Watermark Overlay */}
