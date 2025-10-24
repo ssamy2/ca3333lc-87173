@@ -164,7 +164,7 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="w-full h-full bg-zinc-950 rounded-2xl overflow-hidden relative">
+    <div className="w-full h-full bg-zinc-950 rounded-2xl overflow-hidden relative" style={{ imageRendering: 'crisp-edges' }}>
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
           data={processedData}

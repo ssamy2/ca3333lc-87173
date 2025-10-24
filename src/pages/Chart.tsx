@@ -214,11 +214,11 @@ const Chart = () => {
 
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 8, // جودة عالية جداً - 8x
+        scale: 6, // جودة عالية - 6x للأداء الأفضل
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 15000,
+        imageTimeout: 20000,
         onclone: (clonedDoc) => {
           // Force all images in cloned document to use base64
           const images = clonedDoc.querySelectorAll('image');
@@ -585,8 +585,12 @@ const Chart = () => {
           >
             {/* Watermark Overlay */}
             <div 
-              className="absolute bottom-4 right-4 text-white/90 text-sm font-bold pointer-events-none z-10 bg-black/30 px-3 py-1.5 rounded-lg backdrop-blur-sm"
-              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+              className="absolute text-white/20 text-[10px] font-medium pointer-events-none z-10"
+              style={{ 
+                top: `${Math.random() * 70 + 10}%`,
+                left: `${Math.random() * 70 + 10}%`,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              }}
             >
               @Nova_calculator_bot
             </div>
