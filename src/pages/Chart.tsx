@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import TonIcon from '@/components/TonIcon';
 import { getCachedData, setCachedData } from '@/services/marketCache';
+import { imageCache } from '@/services/imageCache';
 import { Link } from 'react-router-dom';
 import HeatmapTreemap from '@/components/HeatmapTreemap';
 
@@ -33,9 +34,8 @@ type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 type DataSource = 'market' | 'black';
 
-// Store loaded images as base64 strings to prevent reloading
-const imageCache = new Map<string, string>();
-let imagesPreloaded = false;
+// Clean up expired images on component mount
+imageCache.clearExpiredCache();
 
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
@@ -91,35 +91,15 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/market-data');
       const data = await response.json();
       
-      // Preload images only once (first time ever) and convert to base64
-      if (!imagesPreloaded) {
-        Object.values(data).forEach((nft: any) => {
-          if (nft.image_url && !imageCache.has(nft.image_url)) {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              // Convert to base64
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                try {
-                  const base64 = canvas.toDataURL('image/png');
-                  imageCache.set(nft.image_url, base64);
-                } catch (e) {
-                  console.error('Failed to convert image to base64:', e);
-                  // Fallback to original URL
-                  imageCache.set(nft.image_url, nft.image_url);
-                }
-              }
-            };
-            img.src = nft.image_url;
-          }
-        });
-        imagesPreloaded = true;
-      }
+      // Preload images in background using the cache service
+      const imageUrls = Object.values(data)
+        .map((nft: any) => nft.image_url)
+        .filter((url): url is string => !!url);
+      
+      // Preload images asynchronously (don't block UI)
+      imageCache.preloadImages(imageUrls).catch(error => {
+        console.error('Failed to preload some images:', error);
+      });
       
       setMarketData(data);
       setCachedData('market-data', data);
@@ -146,30 +126,14 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/black-floor');
       const data: BlackFloorItem[] = await response.json();
       
-      // Preload black floor images
-      data.forEach((item) => {
-        const imageUrl = `https://channelsseller.site/api/image/${item.short_name}`;
-        if (!imageCache.has(imageUrl)) {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0);
-              try {
-                const base64 = canvas.toDataURL('image/png');
-                imageCache.set(imageUrl, base64);
-              } catch (e) {
-                console.error('Failed to convert image to base64:', e);
-                imageCache.set(imageUrl, imageUrl);
-              }
-            }
-          };
-          img.src = imageUrl;
-        }
+      // Preload black floor images in background
+      const imageUrls = data.map(item => 
+        `https://channelsseller.site/api/image/${item.short_name}`
+      );
+      
+      // Preload images asynchronously (don't block UI)
+      imageCache.preloadImages(imageUrls).catch(error => {
+        console.error('Failed to preload some black floor images:', error);
       });
       
       setBlackFloorData(data);
@@ -267,37 +231,14 @@ const Chart = () => {
     const loadingToast = toast.loading('Preparing images...');
 
     try {
-      // Wait for all images to be fully loaded and converted to base64
+      // Preload any missing images using the cache service
       const treemapData = getTreemapData();
-      const imagePromises = treemapData
-        .filter(item => item.imageUrl && !imageCache.has(item.imageUrl))
-        .map(item => {
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                try {
-                  const base64 = canvas.toDataURL('image/png');
-                  imageCache.set(item.imageUrl, base64);
-                } catch (e) {
-                  console.error('Failed to convert image:', e);
-                  imageCache.set(item.imageUrl, item.imageUrl);
-                }
-              }
-              resolve(null);
-            };
-            img.onerror = () => resolve(null);
-            img.src = item.imageUrl;
-          });
-        });
-
-      await Promise.all(imagePromises);
+      const imageUrls = treemapData
+        .map(item => item.imageUrl)
+        .filter((url): url is string => !!url);
+      
+      // Preload all images (will use cache if available)
+      await imageCache.preloadImages(imageUrls);
 
       // Wait longer to ensure SVG is fully rendered
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -315,13 +256,16 @@ const Chart = () => {
         imageTimeout: 30000,
         removeContainer: false,
         onclone: (clonedDoc) => {
-          // Force all images in cloned document to use base64
+          // Force all images in cloned document to use base64 from cache
           const images = clonedDoc.querySelectorAll('image');
           images.forEach((img: any) => {
             const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-            if (href && imageCache.has(href)) {
-              img.setAttribute('href', imageCache.get(href)!);
-              img.setAttribute('xlink:href', imageCache.get(href)!);
+            if (href) {
+              const cachedImage = imageCache.getImageFromCache(href);
+              if (cachedImage) {
+                img.setAttribute('href', cachedImage);
+                img.setAttribute('xlink:href', cachedImage);
+              }
             }
           });
           
@@ -620,7 +564,7 @@ const Chart = () => {
                     className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
                     <img
-                      src={imageCache.get(data.image_url) || data.image_url}
+                      src={imageCache.getImageFromCache(data.image_url) || data.image_url}
                       alt={name}
                       className="w-12 h-12 object-contain"
                     />
@@ -663,7 +607,7 @@ const Chart = () => {
                       {/* Left: Image */}
                       <div className="flex-shrink-0">
                         <img
-                          src={imageCache.get(data.image_url) || data.image_url}
+                          src={imageCache.getImageFromCache(data.image_url) || data.image_url}
                           alt={name}
                           className="w-12 h-12 object-contain rounded-full"
                         />
