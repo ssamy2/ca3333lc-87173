@@ -132,8 +132,8 @@ const TreeMapContent: React.FC<any> = (props) => {
           y={y + height * 0.84}
           textAnchor="middle"
           fill="rgba(255,255,255,0.9)"
-          fontSize={Math.min(fontSizeBase * 0.75, 9)}
-          fontWeight="500"
+          fontSize={Math.min(fontSizeBase * 1.5, 18)}
+          fontWeight="600"
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
         >
           {safePrice.toFixed(2)} {currency === 'usd' ? 'USD' : 'TON'}
