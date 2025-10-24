@@ -114,8 +114,7 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
             pointerEvents: 'none',
           }}
         >
-          {change >= 0 ? '+' : ''}
-          {change.toFixed(2)}%
+          {typeof change === 'number' ? `${change >= 0 ? '+' : ''}${change.toFixed(2)}` : '0.00'}%
         </text>
 
         {showPrice && (
@@ -131,7 +130,7 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
               pointerEvents: 'none',
             }}
           >
-            {price.toFixed(2)} TON
+            {typeof price === 'number' ? price.toFixed(2) : '0.00'} TON
           </text>
         )}
       </motion.g>
@@ -160,7 +159,7 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
           {h.imageUrl && <img src={h.imageUrl} alt={h.name} className="w-10 h-10 rounded-md" />}
           <div>
             <div className="font-semibold text-sm">{h.name}</div>
-            <div className="text-xs opacity-80">{h.price.toFixed(2)} TON</div>
+            <div className="text-xs opacity-80">{typeof h.price === "number" ? h.price.toFixed(2) : "0.00"} TON</div>
           </div>
         </div>
         <div
@@ -168,8 +167,7 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
             h.change > 0 ? 'text-green-400' : 'text-red-400'
           }`}
         >
-          {h.change >= 0 ? '+' : ''}
-          {h.change.toFixed(2)}%
+          {typeof h.change === 'number' ? `${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)}` : '0.00'}%
         </div>
       </motion.div>
     );
