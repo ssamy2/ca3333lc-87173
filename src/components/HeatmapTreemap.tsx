@@ -23,7 +23,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
 
   const Content = (props: any) => {
     const { x, y, width, height, name, change, price, imageUrl } = props;
-    if (!width || !height) return null;
+    if (!width || !height || change === undefined || price === undefined) return null;
     const area = width * height;
     const minDim = Math.min(width, height);
     const color = getColor(change);
