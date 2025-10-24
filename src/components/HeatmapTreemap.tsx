@@ -102,7 +102,7 @@ const TreeMapContent: React.FC<any> = (props) => {
           y={y + height * 0.36}
           textAnchor="middle"
           fill="white"
-          fontSize={Math.min(fontSizeBase * 0.9, 10)}
+          fontSize={Math.min(fontSizeBase * 1.17, 13)}
           fontWeight="600"
           style={{ textShadow }}
         >
@@ -117,7 +117,7 @@ const TreeMapContent: React.FC<any> = (props) => {
           y={y + height * (visibility.name ? 0.55 : 0.48)}
           textAnchor="middle"
           fill="white"
-          fontSize={Math.min(fontSizeBase * 1.7, 14)}
+          fontSize={Math.min(fontSizeBase * 1.445, 12)}
           fontWeight="800"
           style={{ textShadow }}
         >
