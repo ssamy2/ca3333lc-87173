@@ -6,7 +6,6 @@ import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, Can
 import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
-import YearlyPerformance from '@/components/YearlyPerformance';
 import GiftModelsDialog from '@/components/GiftModelsDialog';
 
 interface GiftInfo {
@@ -422,14 +421,6 @@ const GiftDetail = () => {
             onOpenChange={setShowModels}
             models={giftData.models}
             giftName={giftData.info.name}
-          />
-        )}
-
-        {/* Yearly Performance */}
-        {giftData && (
-          <YearlyPerformance 
-            data={giftData.life_chart} 
-            currency={currency}
           />
         )}
 
