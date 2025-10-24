@@ -33,12 +33,13 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
     
     // Better font sizing based on area and dimensions
     const baseFontSize = Math.sqrt(area) / 8;
-    const showImage = area > 1500;
-    const showName = area > 3000 && name;
-    const showPrice = area > 6000;
+    // Adjust visibility thresholds to prevent overlap
+    const showImage = area > 2500;
+    const showName = area > 5000 && name;
+    const showPrice = area > 8000;
     
     // Image sizing - proportional to cell size
-    const imageSize = Math.min(minDimension * 0.25, 50);
+    const imageSize = Math.min(minDimension * 0.22, 45);
     const imageY = showName ? y + height * 0.12 : y + height * 0.15;
 
     return (
@@ -73,10 +74,10 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
         {showName && (
           <text
             x={x + width / 2}
-            y={y + height * 0.4}
+            y={y + height * 0.38}
             textAnchor="middle"
             fill="white"
-            fontSize={Math.min(baseFontSize * 0.7, width / (name.length * 0.55), 14)}
+            fontSize={Math.min(baseFontSize * 0.65, width / (name.length * 0.6), 13)}
             fontWeight="bold"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
@@ -87,10 +88,10 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
         {/* Change Percentage */}
         <text
           x={x + width / 2}
-          y={y + height * (showName ? 0.6 : showImage ? 0.58 : 0.55)}
+          y={y + height * (showName ? 0.58 : showImage ? 0.55 : 0.5)}
           textAnchor="middle"
           fill="white"
-          fontSize={Math.min(baseFontSize * 1.3, width / 4, minDimension * 0.2)}
+          fontSize={Math.min(baseFontSize * 1.2, width / 4.5, minDimension * 0.18, 24)}
           fontWeight="900"
           style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
         >
@@ -104,7 +105,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
             y={y + height * 0.88}
             textAnchor="middle"
             fill="white"
-            fontSize={Math.min(baseFontSize * 0.65, width / 7, 12)}
+            fontSize={Math.min(baseFontSize * 0.6, width / 8, 11)}
             fontWeight="700"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
