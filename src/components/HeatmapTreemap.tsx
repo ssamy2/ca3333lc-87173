@@ -39,7 +39,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
     
     // Image sizing - proportional to cell size
     const imageSize = Math.min(minDimension * 0.25, 50);
-    const imageY = showName ? y + height * 0.2 : y + height * 0.25;
+    const imageY = showName ? y + height * 0.12 : y + height * 0.15;
 
     return (
       <g>
@@ -73,7 +73,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
         {showName && (
           <text
             x={x + width / 2}
-            y={y + height * 0.5}
+            y={y + height * 0.4}
             textAnchor="middle"
             fill="white"
             fontSize={Math.min(baseFontSize * 0.7, width / (name.length * 0.55), 14)}
@@ -87,7 +87,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
         {/* Change Percentage */}
         <text
           x={x + width / 2}
-          y={y + height * (showName ? 0.68 : showImage ? 0.65 : 0.55)}
+          y={y + height * (showName ? 0.6 : showImage ? 0.58 : 0.55)}
           textAnchor="middle"
           fill="white"
           fontSize={Math.min(baseFontSize * 1.3, width / 4, minDimension * 0.2)}
@@ -101,7 +101,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
         {showPrice && (
           <text
             x={x + width / 2}
-            y={y + height * 0.82}
+            y={y + height * 0.88}
             textAnchor="middle"
             fill="white"
             fontSize={Math.min(baseFontSize * 0.65, width / 7, 12)}
