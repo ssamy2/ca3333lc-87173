@@ -91,17 +91,39 @@ const GiftDetail = () => {
   const getChartData = () => {
     if (!giftData) return [];
     
-    // For 24h, use week_chart (half-hour data) if available
-    if (timeRange === '24h' && giftData.week_chart && giftData.week_chart.length > 0) {
-      // Get last 48 entries (24 hours with half-hour intervals)
-      const recentData = giftData.week_chart.slice(-48);
-      return recentData.map(item => ({
-        date: item.date,
-        priceTon: item.priceTon,
-        priceUsd: item.priceUsd,
-        price: currency === 'ton' ? item.priceTon : item.priceUsd,
-        label: item.time,
-      }));
+    // For 24h, 3d, and 1w, use week_chart (half-hour data) if available
+    if (giftData.week_chart && giftData.week_chart.length > 0) {
+      if (timeRange === '24h') {
+        // Last 48 entries (24 hours with half-hour intervals)
+        const recentData = giftData.week_chart.slice(-48);
+        return recentData.map(item => ({
+          date: item.date,
+          priceTon: item.priceTon,
+          priceUsd: item.priceUsd,
+          price: currency === 'ton' ? item.priceTon : item.priceUsd,
+          label: item.time,
+        }));
+      } else if (timeRange === '3d') {
+        // Last 144 entries (3 days × 48 readings per day)
+        const recentData = giftData.week_chart.slice(-144);
+        return recentData.map(item => ({
+          date: item.date,
+          priceTon: item.priceTon,
+          priceUsd: item.priceUsd,
+          price: currency === 'ton' ? item.priceTon : item.priceUsd,
+          label: item.time,
+        }));
+      } else if (timeRange === '1w') {
+        // Last 336 entries (7 days × 48 readings per day)
+        const recentData = giftData.week_chart.slice(-336);
+        return recentData.map(item => ({
+          date: item.date,
+          priceTon: item.priceTon,
+          priceUsd: item.priceUsd,
+          price: currency === 'ton' ? item.priceTon : item.priceUsd,
+          label: item.time,
+        }));
+      }
     }
     
     // For other time ranges, use life_chart (daily data)
@@ -111,12 +133,6 @@ const GiftDetail = () => {
     let data: ChartData[] = [];
     
     switch (timeRange) {
-      case '3d':
-        data = lifeChart.slice(-3);
-        break;
-      case '1w':
-        data = lifeChart.slice(-7);
-        break;
       case '1m':
         data = lifeChart.slice(-30);
         break;
