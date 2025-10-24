@@ -340,12 +340,12 @@ const Chart = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="p-4 space-y-4">
+      <div className="p-2 space-y-2">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Market Charts</h1>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          <h1 className="text-xl font-bold text-foreground">Market Charts</h1>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-xs text-muted-foreground">Live</span>
           </div>
         </div>
@@ -356,38 +356,38 @@ const Chart = () => {
             onClick={() => setViewMode('list')}
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="icon"
-            className="rounded-full"
+            className="rounded-full h-9 w-9"
           >
-            <List className="w-5 h-5" />
+            <List className="w-4 h-4" />
           </Button>
           <Button
             onClick={() => setViewMode('grid')}
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="icon"
-            className="rounded-full"
+            className="rounded-full h-9 w-9"
           >
-            <LayoutGrid className="w-5 h-5" />
+            <LayoutGrid className="w-4 h-4" />
           </Button>
           <Button
             onClick={() => setViewMode('heatmap')}
             variant={viewMode === 'heatmap' ? 'default' : 'outline'}
             size="icon"
-            className="rounded-full"
+            className="rounded-full h-9 w-9"
           >
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 className="w-4 h-4" />
           </Button>
         </div>
 
         {/* Filters */}
         {viewMode === 'heatmap' && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* Currency */}
             <div className="flex gap-2">
               <Button
                 onClick={() => setCurrency('ton')}
                 variant={currency === 'ton' ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs"
               >
                 TON
               </Button>
@@ -395,7 +395,7 @@ const Chart = () => {
                 onClick={() => setCurrency('usd')}
                 variant={currency === 'usd' ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs"
               >
                 USD
               </Button>
@@ -407,6 +407,7 @@ const Chart = () => {
                 onClick={() => setTopFilter('all')}
                 variant={topFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
+                className="h-8 text-xs"
               >
                 All
               </Button>
@@ -414,6 +415,7 @@ const Chart = () => {
                 onClick={() => setTopFilter('top50')}
                 variant={topFilter === 'top50' ? 'default' : 'outline'}
                 size="sm"
+                className="h-8 text-xs"
               >
                 Top 50
               </Button>
@@ -421,6 +423,7 @@ const Chart = () => {
                 onClick={() => setTopFilter('top35')}
                 variant={topFilter === 'top35' ? 'default' : 'outline'}
                 size="sm"
+                className="h-8 text-xs"
               >
                 Top 35
               </Button>
@@ -428,6 +431,7 @@ const Chart = () => {
                 onClick={() => setTopFilter('top25')}
                 variant={topFilter === 'top25' ? 'default' : 'outline'}
                 size="sm"
+                className="h-8 text-xs"
               >
                 Top 25
               </Button>
@@ -439,9 +443,9 @@ const Chart = () => {
                 onClick={() => setZoomLevel(1)}
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
+                <RotateCcw className="w-3 h-3 mr-1.5" />
                 Reset Zoom
               </Button>
             </div>
@@ -450,7 +454,8 @@ const Chart = () => {
             <Button
               onClick={downloadAsImage}
               variant="default"
-              className="w-full"
+              size="sm"
+              className="w-full h-9"
             >
               <Download className="w-4 h-4 mr-2" />
               Get it as a photo
