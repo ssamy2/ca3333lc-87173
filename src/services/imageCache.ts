@@ -8,6 +8,7 @@ const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 class ImageCacheService {
   private memoryCache: Map<string, string> = new Map();
+  private pendingRequests: Map<string, Promise<string>> = new Map();
 
   /**
    * Get image from cache (checks memory first, then localStorage)
@@ -84,7 +85,7 @@ class ImageCacheService {
   }
 
   /**
-   * Preload and cache an image
+   * Preload and cache an image with request deduplication
    */
   async preloadImage(url: string): Promise<string> {
     // Check if already cached
@@ -93,7 +94,14 @@ class ImageCacheService {
       return cached;
     }
 
-    return new Promise((resolve, reject) => {
+    // Check if already being loaded (request deduplication)
+    const pending = this.pendingRequests.get(url);
+    if (pending) {
+      return pending;
+    }
+
+    // Create new loading promise
+    const loadingPromise = new Promise<string>((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       
@@ -113,22 +121,28 @@ class ImageCacheService {
           const base64 = canvas.toDataURL('image/png');
           
           this.saveImageToCache(url, base64);
+          this.pendingRequests.delete(url);
           resolve(base64);
         } catch (error) {
           console.error('Failed to convert image to base64:', error);
           // Fallback to original URL
           this.saveImageToCache(url, url);
+          this.pendingRequests.delete(url);
           resolve(url);
         }
       };
 
       img.onerror = () => {
         console.error('Failed to load image:', url);
+        this.pendingRequests.delete(url);
         reject(new Error(`Failed to load image: ${url}`));
       };
 
       img.src = url;
     });
+
+    this.pendingRequests.set(url, loadingPromise);
+    return loadingPromise;
   }
 
   /**
@@ -146,16 +160,22 @@ class ImageCacheService {
   }
 
   /**
-   * Preload images that are not already cached
+   * Preload images that are not already cached with strict checking
    */
   async preloadUncachedImages(urls: string[]): Promise<void> {
-    const uncachedUrls = urls.filter(url => !this.getImageFromCache(url));
+    // Filter out cached and pending images
+    const uncachedUrls = urls.filter(url => {
+      const cached = this.getImageFromCache(url);
+      const pending = this.pendingRequests.has(url);
+      return !cached && !pending;
+    });
     
     if (uncachedUrls.length === 0) {
-      return; // All images are already cached
+      console.log('✅ All images already cached or loading, skipping preload');
+      return;
     }
     
-    console.log(`Preloading ${uncachedUrls.length} uncached images out of ${urls.length} total`);
+    console.log(`📥 Preloading ${uncachedUrls.length} new images (${urls.length - uncachedUrls.length} already cached/loading)`);
     await this.preloadImages(uncachedUrls);
   }
 

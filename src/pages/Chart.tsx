@@ -59,13 +59,13 @@ const Chart = () => {
     fetchMarketData(true);
     fetchBlackFloorData(true);
     
-    // Auto-update every 5 seconds
+    // Auto-update every 30 seconds (reduced from 5 to avoid excessive requests)
     updateIntervalRef.current = window.setInterval(() => {
       fetchMarketData(false);
       if (dataSource === 'black') {
         fetchBlackFloorData(false);
       }
-    }, 5000);
+    }, 30000);
 
     return () => {
       if (updateIntervalRef.current) {
@@ -73,20 +73,6 @@ const Chart = () => {
       }
     };
   }, [dataSource]);
-
-  // Preload images when switching to black data source
-  useEffect(() => {
-    if (dataSource === 'black' && blackFloorData.length > 0) {
-      const imageUrls = blackFloorData.map(item => 
-        `https://channelsseller.site/api/image/${item.short_name}`
-      );
-      
-      // Only preload images that are not already cached
-      imageCache.preloadUncachedImages(imageUrls).catch(error => {
-        console.error('Failed to preload black floor images:', error);
-      });
-    }
-  }, [dataSource, blackFloorData]);
 
   const fetchMarketData = async (isInitialLoad: boolean) => {
     try {
@@ -105,15 +91,16 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/market-data');
       const data = await response.json();
       
-      // Preload images in background using the cache service
-      const imageUrls = Object.values(data)
-        .map((nft: any) => nft.image_url)
-        .filter((url): url is string => !!url);
-      
-      // Only preload uncached images (don't block UI)
-      imageCache.preloadUncachedImages(imageUrls).catch(error => {
-        console.error('Failed to preload some images:', error);
-      });
+      // Only preload images on initial load to avoid repeated requests
+      if (isInitialLoad) {
+        const imageUrls = Object.values(data)
+          .map((nft: any) => nft.image_url)
+          .filter((url): url is string => !!url);
+        
+        imageCache.preloadUncachedImages(imageUrls).catch(error => {
+          console.error('Failed to preload some images:', error);
+        });
+      }
       
       setMarketData(data);
       setCachedData('market-data', data);
@@ -140,15 +127,16 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/black-floor');
       const data: BlackFloorItem[] = await response.json();
       
-      // Preload black floor images in background
-      const imageUrls = data.map(item => 
-        `https://channelsseller.site/api/image/${item.short_name}`
-      );
-      
-      // Only preload uncached images (don't block UI)
-      imageCache.preloadUncachedImages(imageUrls).catch(error => {
-        console.error('Failed to preload some black floor images:', error);
-      });
+      // Only preload images on initial load to avoid repeated requests
+      if (isInitialLoad) {
+        const imageUrls = data.map(item => 
+          `https://channelsseller.site/api/image/${item.short_name}`
+        );
+        
+        imageCache.preloadUncachedImages(imageUrls).catch(error => {
+          console.error('Failed to preload some black floor images:', error);
+        });
+      }
       
       setBlackFloorData(data);
       setCachedData('black-floor-data', data);
