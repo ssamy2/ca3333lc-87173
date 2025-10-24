@@ -606,14 +606,16 @@ const Chart = () => {
                         {price.toFixed(2)}
                       </span>
                     </div>
-                    <span
-                      className={`text-xs font-medium ${
-                        isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                      }`}
-                    >
-                      {isPositive ? '+' : ''}
-                      {change.toFixed(2)}%
-                    </span>
+                    {dataSource !== 'black' && (
+                      <span
+                        className={`text-xs font-medium ${
+                          isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
+                        }`}
+                      >
+                        {isPositive ? '+' : ''}
+                        {change.toFixed(2)}%
+                      </span>
+                    )}
                   </Card>
                 </Link>
               );
@@ -674,14 +676,16 @@ const Chart = () => {
                             {price.toFixed(2)}
                           </span>
                         </div>
-                        <span
-                          className={`text-sm font-medium ${
-                            isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                          }`}
-                        >
-                          {isPositive ? '+' : ''}
-                          {change.toFixed(2)}%
-                        </span>
+                        {dataSource !== 'black' && (
+                          <span
+                            className={`text-sm font-medium ${
+                              isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
+                            }`}
+                          >
+                            {isPositive ? '+' : ''}
+                            {change.toFixed(2)}%
+                          </span>
+                        )}
                       </div>
                     </div>
                   </Card>
