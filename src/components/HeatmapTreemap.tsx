@@ -7,10 +7,12 @@ interface GiftItem {
   change: number;
   price: number;
   imageUrl?: string;
+  currency?: string;
 }
 
 interface HeatmapProps {
   data: GiftItem[];
+  currency?: string;
 }
 
 interface ContentProps {
@@ -46,6 +48,7 @@ const TreeMapContent: React.FC<any> = (props) => {
     : (Number.isFinite(payload.price) ? payload.price : 0);
   const imageUrl = (props as any).imageUrl ?? payload.imageUrl;
   const color = colorProp ?? payload.color ?? '#888';
+  const currency = (props as any).currency ?? payload.currency ?? 'ton';
 
   const area = width * height;
   const minDimension = Math.min(width, height);
@@ -133,14 +136,14 @@ const TreeMapContent: React.FC<any> = (props) => {
           fontWeight="500"
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
         >
-          {safePrice.toFixed(2)} TON
+          {safePrice.toFixed(2)} {currency === 'usd' ? 'USD' : 'TON'}
         </text>
       )}
     </g>
   );
 };
 
-const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
+const HeatmapTreemap: React.FC<HeatmapProps> = ({ data, currency = 'ton' }) => {
   const processedData = useMemo(() => {
     return data.map((item, index) => {
       const isPositiveChange = item.change > 0;
@@ -158,7 +161,8 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
         ...item,
         size: normalizedSize,
         color,
-        id: `${item.name}-${index}`
+        id: `${item.name}-${index}`,
+        currency
       };
     });
   }, [data]);

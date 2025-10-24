@@ -585,17 +585,17 @@ const Chart = () => {
           >
             {/* Watermark Overlay */}
             <div 
-              className="absolute text-white/20 text-[10px] font-medium pointer-events-none z-10"
+              className="absolute text-white/40 text-xs font-medium pointer-events-none z-10"
               style={{ 
                 top: `${Math.random() * 70 + 10}%`,
                 left: `${Math.random() * 70 + 10}%`,
-                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                textShadow: '0 1px 3px rgba(0,0,0,0.5)'
               }}
             >
               @Nova_calculator_bot
             </div>
             
-            <HeatmapTreemap data={getTreemapData()} />
+            <HeatmapTreemap data={getTreemapData()} currency={currency} />
           </div>
         )}
       </div>
