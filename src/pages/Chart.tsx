@@ -214,7 +214,7 @@ const Chart = () => {
 
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 2,
+        scale: 4, // Higher quality
         logging: false,
         useCORS: true,
         allowTaint: true,

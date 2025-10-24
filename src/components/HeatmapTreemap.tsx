@@ -24,13 +24,22 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
     const change = props.change ?? 0;
     const price = props.price ?? 0;
     const color = props.color || '#888';
+    const imageUrl = props.imageUrl || '';
 
     if (!width || !height) return null;
 
     const area = width * height;
-    const fontSize = Math.sqrt(area) / 8;
-    const showName = area > 2000 && name;
-    const showPrice = area > 5000;
+    const minDimension = Math.min(width, height);
+    
+    // Better font sizing based on area and dimensions
+    const baseFontSize = Math.sqrt(area) / 6;
+    const showImage = area > 1500;
+    const showName = area > 3000 && name;
+    const showPrice = area > 6000;
+    
+    // Image sizing - proportional to cell size
+    const imageSize = Math.min(minDimension * 0.25, 50);
+    const imageY = showName ? y + height * 0.2 : y + height * 0.25;
 
     return (
       <g>
@@ -41,43 +50,63 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
           height={height}
           style={{
             fill: color,
-            stroke: 'rgba(0,0,0,0.15)',
-            strokeWidth: 1,
+            stroke: 'rgba(0,0,0,0.2)',
+            strokeWidth: 2,
           }}
         />
+        
+        {/* Gift Image/Logo */}
+        {showImage && imageUrl && (
+          <image
+            href={imageUrl}
+            x={x + width / 2 - imageSize / 2}
+            y={imageY}
+            width={imageSize}
+            height={imageSize}
+            style={{
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+            }}
+          />
+        )}
+        
+        {/* Gift Name */}
         {showName && (
           <text
             x={x + width / 2}
-            y={y + height * 0.45}
+            y={y + height * 0.5}
             textAnchor="middle"
             fill="white"
-            fontSize={Math.min(fontSize * 0.7, width / (name.length * 0.6))}
+            fontSize={Math.min(baseFontSize * 0.6, width / (name.length * 0.55), 18)}
             fontWeight="bold"
-            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
             {name}
           </text>
         )}
+        
+        {/* Change Percentage */}
         <text
           x={x + width / 2}
-          y={y + height * (showName ? 0.65 : 0.55)}
+          y={y + height * (showName ? 0.68 : showImage ? 0.65 : 0.55)}
           textAnchor="middle"
           fill="white"
-          fontSize={Math.min(fontSize * 1.2, width / 3)}
+          fontSize={Math.min(baseFontSize * 1.1, width / 3.5, minDimension * 0.25)}
           fontWeight="900"
-          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
         >
           {change >= 0 ? '+' : ''}{change.toFixed(2)}%
         </text>
+        
+        {/* Price */}
         {showPrice && (
           <text
             x={x + width / 2}
-            y={y + height * 0.8}
+            y={y + height * 0.82}
             textAnchor="middle"
             fill="white"
-            fontSize={fontSize * 0.6}
+            fontSize={Math.min(baseFontSize * 0.55, width / 6, 14)}
             fontWeight="700"
-            style={{ textShadow: '0 2px 3px rgba(0,0,0,0.6)' }}
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
             {price.toFixed(2)} TON
           </text>
