@@ -149,17 +149,22 @@ const Chart = () => {
 
   const getFilteredData = () => {
     if (dataSource === 'black') {
-      // Convert black floor data to market data format
-      let blackEntries: [string, NFTMarketData][] = blackFloorData.map(item => [
-        item.gift_name,
-        {
-          price_ton: item.black_price,
-          price_usd: item.black_price * 2.16, // Approximate conversion
-          'change_24h_ton_%': 0,
-          'change_24h_usd_%': 0,
-          image_url: `https://channelsseller.site/api/image/${item.short_name}`
-        }
-      ]);
+      // Convert black floor data to market data format, reusing market image URLs when possible
+      let blackEntries: [string, NFTMarketData][] = blackFloorData.map(item => {
+        const marketImage = (marketData as any)[item.gift_name]?.image_url as string | undefined;
+        const fallbackSlug = toCamelFromName(item.gift_name);
+        const imageUrl = marketImage || `https://channelsseller.site/api/image/${fallbackSlug}`;
+        return [
+          item.gift_name,
+          {
+            price_ton: item.black_price,
+            price_usd: item.black_price * 2.16, // Approximate conversion
+            'change_24h_ton_%': 0,
+            'change_24h_usd_%': 0,
+            image_url: imageUrl,
+          }
+        ];
+      });
 
       // Sort by price (highest first)
       blackEntries.sort((a, b) => b[1].price_ton - a[1].price_ton);
@@ -320,6 +325,18 @@ const Chart = () => {
   const getColorForChange = (change: number) => {
     // Use bright, vivid colors for better visibility
     return change >= 0 ? '#22C55E' : '#EF4444';
+  };
+
+  // Helper: convert gift name to API camelCase slug (e.g., "Plush Pepe" -> "plushPepe")
+  const toCamelFromName = (name: string) => {
+    const cleaned = name
+      .replace(/[^A-Za-z0-9\s]/g, ' ') // remove punctuation like apostrophes
+      .replace(/\s+/g, ' ') // collapse spaces
+      .trim();
+    const parts = cleaned.split(' ');
+    return parts
+      .map((p, i) => (i === 0 ? p.toLowerCase() : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()))
+      .join('');
   };
 
   // Treemap is rendered via HeatmapTreemap component
@@ -569,6 +586,14 @@ const Chart = () => {
                       alt={name}
                       loading="lazy"
                       className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        const fallback = `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
+                        if (e.currentTarget.src !== fallback) {
+                          e.currentTarget.src = fallback;
+                        } else {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }
+                      }}
                       onLoad={() => {
                         if (!imageCache.getImageFromCache(data.image_url)) {
                           imageCache.preloadImage(data.image_url);
@@ -618,6 +643,14 @@ const Chart = () => {
                           alt={name}
                           loading="lazy"
                           className="w-12 h-12 object-contain rounded-full"
+                          onError={(e) => {
+                            const fallback = `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
+                            if (e.currentTarget.src !== fallback) {
+                              e.currentTarget.src = fallback;
+                            } else {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }
+                          }}
                           onLoad={() => {
                             if (!imageCache.getImageFromCache(data.image_url)) {
                               imageCache.preloadImage(data.image_url);
