@@ -32,7 +32,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
     const minDimension = Math.min(width, height);
     
     // Better font sizing based on area and dimensions
-    const baseFontSize = Math.sqrt(area) / 6;
+    const baseFontSize = Math.sqrt(area) / 8;
     const showImage = area > 1500;
     const showName = area > 3000 && name;
     const showPrice = area > 6000;
@@ -76,7 +76,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
             y={y + height * 0.5}
             textAnchor="middle"
             fill="white"
-            fontSize={Math.min(baseFontSize * 0.6, width / (name.length * 0.55), 18)}
+            fontSize={Math.min(baseFontSize * 0.7, width / (name.length * 0.55), 14)}
             fontWeight="bold"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
@@ -90,7 +90,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
           y={y + height * (showName ? 0.68 : showImage ? 0.65 : 0.55)}
           textAnchor="middle"
           fill="white"
-          fontSize={Math.min(baseFontSize * 1.1, width / 3.5, minDimension * 0.25)}
+          fontSize={Math.min(baseFontSize * 1.3, width / 4, minDimension * 0.2)}
           fontWeight="900"
           style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
         >
@@ -104,7 +104,7 @@ const HeatmapTreemap: React.FC<HeatmapTreemapProps> = ({ data }) => {
             y={y + height * 0.82}
             textAnchor="middle"
             fill="white"
-            fontSize={Math.min(baseFontSize * 0.55, width / 6, 14)}
+            fontSize={Math.min(baseFontSize * 0.65, width / 7, 12)}
             fontWeight="700"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
           >
