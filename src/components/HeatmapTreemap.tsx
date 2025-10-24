@@ -151,8 +151,8 @@ const HeatmapTreemap: React.FC<HeatmapProps> = ({ data }) => {
         ? `hsl(145, 60%, ${lightness}%)`
         : `hsl(0, 65%, ${lightness}%)`;
 
-      // تقليل الفرق بين المربعات الكبيرة والصغيرة
-      const normalizedSize = Math.pow(item.size, 0.7);
+      // تقليل الفرق بين المربعات الكبيرة والصغيرة بشكل أكبر
+      const normalizedSize = Math.pow(item.size, 0.6);
 
       return {
         ...item,

@@ -214,7 +214,7 @@ const Chart = () => {
 
       const canvas = await html2canvas(element, {
         backgroundColor: '#0a0f1a',
-        scale: 4, // Higher quality
+        scale: 8, // جودة عالية جداً - 8x
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -585,8 +585,8 @@ const Chart = () => {
           >
             {/* Watermark Overlay */}
             <div 
-              className="absolute bottom-4 right-4 text-muted-foreground/40 text-xs font-medium pointer-events-none z-10"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+              className="absolute bottom-4 right-4 text-white/90 text-sm font-bold pointer-events-none z-10 bg-black/30 px-3 py-1.5 rounded-lg backdrop-blur-sm"
+              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
             >
               @Nova_calculator_bot
             </div>
