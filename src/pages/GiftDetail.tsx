@@ -37,6 +37,15 @@ interface ChartData {
 interface GiftDetailData {
   info: GiftInfo;
   life_chart: ChartData[];
+  week_chart?: Array<{
+    date: string;
+    time: string;
+    priceTon: number;
+    priceUsd: number;
+    amountOnSale: number;
+    salesCount: number;
+    volume: number;
+  }>;
   models?: Model[];
 }
 
@@ -80,15 +89,28 @@ const GiftDetail = () => {
   };
 
   const getChartData = () => {
-    if (!giftData || !Array.isArray(giftData.life_chart)) return [];
+    if (!giftData) return [];
+    
+    // For 24h, use week_chart (half-hour data) if available
+    if (timeRange === '24h' && giftData.week_chart && giftData.week_chart.length > 0) {
+      // Get last 48 entries (24 hours with half-hour intervals)
+      const recentData = giftData.week_chart.slice(-48);
+      return recentData.map(item => ({
+        date: item.date,
+        priceTon: item.priceTon,
+        priceUsd: item.priceUsd,
+        price: currency === 'ton' ? item.priceTon : item.priceUsd,
+        label: item.time,
+      }));
+    }
+    
+    // For other time ranges, use life_chart (daily data)
+    if (!Array.isArray(giftData.life_chart)) return [];
     
     const lifeChart = giftData.life_chart;
     let data: ChartData[] = [];
     
     switch (timeRange) {
-      case '24h':
-        data = lifeChart.slice(-2);
-        break;
       case '3d':
         data = lifeChart.slice(-3);
         break;
