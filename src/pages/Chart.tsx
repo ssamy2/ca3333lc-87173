@@ -74,6 +74,20 @@ const Chart = () => {
     };
   }, [dataSource]);
 
+  // Preload images when switching to black data source
+  useEffect(() => {
+    if (dataSource === 'black' && blackFloorData.length > 0) {
+      const imageUrls = blackFloorData.map(item => 
+        `https://channelsseller.site/api/image/${item.short_name}`
+      );
+      
+      // Only preload images that are not already cached
+      imageCache.preloadUncachedImages(imageUrls).catch(error => {
+        console.error('Failed to preload black floor images:', error);
+      });
+    }
+  }, [dataSource, blackFloorData]);
+
   const fetchMarketData = async (isInitialLoad: boolean) => {
     try {
       if (isInitialLoad) {
@@ -96,8 +110,8 @@ const Chart = () => {
         .map((nft: any) => nft.image_url)
         .filter((url): url is string => !!url);
       
-      // Preload images asynchronously (don't block UI)
-      imageCache.preloadImages(imageUrls).catch(error => {
+      // Only preload uncached images (don't block UI)
+      imageCache.preloadUncachedImages(imageUrls).catch(error => {
         console.error('Failed to preload some images:', error);
       });
       
@@ -131,8 +145,8 @@ const Chart = () => {
         `https://channelsseller.site/api/image/${item.short_name}`
       );
       
-      // Preload images asynchronously (don't block UI)
-      imageCache.preloadImages(imageUrls).catch(error => {
+      // Only preload uncached images (don't block UI)
+      imageCache.preloadUncachedImages(imageUrls).catch(error => {
         console.error('Failed to preload some black floor images:', error);
       });
       
@@ -237,8 +251,8 @@ const Chart = () => {
         .map(item => item.imageUrl)
         .filter((url): url is string => !!url);
       
-      // Preload all images (will use cache if available)
-      await imageCache.preloadImages(imageUrls);
+      // Only preload uncached images (most should already be cached)
+      await imageCache.preloadUncachedImages(imageUrls);
 
       // Wait longer to ensure SVG is fully rendered
       await new Promise(resolve => setTimeout(resolve, 2000));

@@ -146,6 +146,20 @@ class ImageCacheService {
   }
 
   /**
+   * Preload images that are not already cached
+   */
+  async preloadUncachedImages(urls: string[]): Promise<void> {
+    const uncachedUrls = urls.filter(url => !this.getImageFromCache(url));
+    
+    if (uncachedUrls.length === 0) {
+      return; // All images are already cached
+    }
+    
+    console.log(`Preloading ${uncachedUrls.length} uncached images out of ${urls.length} total`);
+    await this.preloadImages(uncachedUrls);
+  }
+
+  /**
    * Clear expired cache entries
    */
   clearExpiredCache(): void {
