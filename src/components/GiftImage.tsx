@@ -65,11 +65,9 @@ const GiftImage: React.FC<GiftImageProps> = ({
     return null;
   };
 
-  const [currentSrc, setCurrentSrc] = useState(() => {
-    // Try to find cached version first
-    const cachedUrl = findCachedVersion();
-    return cachedUrl || imageUrl;
-  });
+  // Check cache directly for the provided imageUrl
+  const cachedBase64 = imageCache.getImageFromCache(imageUrl);
+  const [currentSrc, setCurrentSrc] = useState(imageUrl);
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
 
@@ -129,14 +127,6 @@ const GiftImage: React.FC<GiftImageProps> = ({
     }
   };
 
-  const handleImageLoad = () => {
-    // Cache the successfully loaded image
-    if (!imageCache.getImageFromCache(currentSrc)) {
-      imageCache.preloadImage(currentSrc).catch(err => {
-        console.error('Failed to cache image:', err);
-      });
-    }
-  };
 
   // If all fallbacks failed, show a gift icon
   if (imageError) {
@@ -156,10 +146,8 @@ const GiftImage: React.FC<GiftImageProps> = ({
     );
   }
 
-  // Try to use cached version first - search all possible URLs
-  const cachedUrl = findCachedVersion();
-  const cachedSrc = cachedUrl ? imageCache.getImageFromCache(cachedUrl) : null;
-  const displaySrc = cachedSrc || currentSrc;
+  // Use cached base64 if available, otherwise use current URL
+  const displaySrc = cachedBase64 || currentSrc;
 
   return (
     <img
@@ -169,7 +157,6 @@ const GiftImage: React.FC<GiftImageProps> = ({
       className={`${sizeClasses[size]} ${className} object-contain`}
       style={style}
       onError={handleImageError}
-      onLoad={handleImageLoad}
     />
   );
 };

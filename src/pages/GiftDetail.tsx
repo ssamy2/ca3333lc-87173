@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import GiftModelsDialog from '@/components/GiftModelsDialog';
 import GiftImage from '@/components/GiftImage';
+import { getCachedData } from '@/services/marketCache';
 
 interface GiftInfo {
   name: string;
@@ -309,6 +310,28 @@ const GiftDetail = () => {
   const priceChange = calculatePriceChange();
   const isPositive = priceChange >= 0;
 
+  // Get correct image_url from giftData or fallback to market cache
+  const getCorrectImageUrl = () => {
+    // Priority 1: Use image_url from gift data if available
+    if (giftData.info.image_url) {
+      return giftData.info.image_url;
+    }
+    
+    // Priority 2: Try to get from cached market data
+    const cachedMarketData = getCachedData('market-data');
+    if (cachedMarketData && cachedMarketData[giftData.info.name]) {
+      const marketImageUrl = cachedMarketData[giftData.info.name].image_url;
+      if (marketImageUrl) {
+        return marketImageUrl;
+      }
+    }
+    
+    // Priority 3: Fallback to constructed URL
+    return `https://channelsseller.site/api/image/${giftData.info.image}`;
+  };
+
+  const imageUrl = getCorrectImageUrl();
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-4">
@@ -332,7 +355,7 @@ const GiftDetail = () => {
         <Card className="p-4">
           <div className="flex items-center gap-4">
             <GiftImage
-              imageUrl={giftData.info.image_url || `https://channelsseller.site/api/image/${giftData.info.image}`}
+              imageUrl={imageUrl}
               name={giftData.info.name}
               size="lg"
               className="rounded-lg"

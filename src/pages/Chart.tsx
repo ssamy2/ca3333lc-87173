@@ -91,17 +91,6 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/market-data');
       const data = await response.json();
       
-      // Only preload images on initial load to avoid repeated requests
-      if (isInitialLoad) {
-        const imageUrls = Object.values(data)
-          .map((nft: any) => nft.image_url)
-          .filter((url): url is string => !!url);
-        
-        imageCache.preloadUncachedImages(imageUrls).catch(error => {
-          console.error('Failed to preload some images:', error);
-        });
-      }
-      
       setMarketData(data);
       setCachedData('market-data', data);
     } catch (error) {
@@ -138,17 +127,6 @@ const Chart = () => {
       });
       
       const filteredData = Array.from(latestRecords.values());
-      
-      // Only preload images on initial load to avoid repeated requests
-      if (isInitialLoad) {
-        const imageUrls = filteredData.map(item => 
-          `https://channelsseller.site/api/image/${item.short_name}`
-        );
-        
-        imageCache.preloadUncachedImages(imageUrls).catch(error => {
-          console.error('Failed to preload some black floor images:', error);
-        });
-      }
       
       setBlackFloorData(filteredData);
       setCachedData('black-floor-data', filteredData);
