@@ -30,6 +30,15 @@ interface BlackFloorItem {
   recorded_at: string;
 }
 
+interface GiftHistoricalData {
+  week_chart?: Array<{
+    date: string;
+    time: string;
+    priceTon: number;
+    priceUsd: number;
+  }>;
+}
+
 type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
@@ -55,6 +64,7 @@ interface GiftItem {
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
+  const [historicalData, setHistoricalData] = useState<Record<string, GiftHistoricalData>>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
@@ -69,6 +79,7 @@ const Chart = () => {
   useEffect(() => {
     fetchMarketData(true);
     fetchBlackFloorData(true);
+    fetchHistoricalData();
   }, []);
 
   // Auto-refresh - runs independently
@@ -180,6 +191,50 @@ const Chart = () => {
     }
   };
 
+  const fetchHistoricalData = async () => {
+    try {
+      const cached = getCachedData('historical-gift-data');
+      if (cached) {
+        setHistoricalData(cached);
+        return;
+      }
+
+      // Fetch historical data for all gifts
+      const giftNames = Object.keys(marketData);
+      const historicalMap: Record<string, GiftHistoricalData> = {};
+      
+      // Fetch in batches to avoid overwhelming the API
+      const batchSize = 10;
+      for (let i = 0; i < giftNames.length; i += batchSize) {
+        const batch = giftNames.slice(i, i + batchSize);
+        const promises = batch.map(async (name) => {
+          try {
+            const response = await fetch(`https://channelsseller.site/api/gift-data?name=${encodeURIComponent(name)}`);
+            if (response.ok) {
+              const data = await response.json();
+              return { name, data };
+            }
+          } catch (error) {
+            console.error(`Error fetching historical data for ${name}:`, error);
+          }
+          return null;
+        });
+        
+        const results = await Promise.all(promises);
+        results.forEach(result => {
+          if (result) {
+            historicalMap[result.name] = result.data;
+          }
+        });
+      }
+      
+      setHistoricalData(historicalMap);
+      setCachedData('historical-gift-data', historicalMap);
+    } catch (error) {
+      console.error('Error fetching historical data:', error);
+    }
+  };
+
   const getFilteredData = () => {
     if (dataSource === 'black') {
       // Convert black floor data to market data format
@@ -274,13 +329,28 @@ const Chart = () => {
           ? currentPriceUsd / (1 + change24hUsd / 100)
           : currentPriceUsd;
         
-        // Calculate 1 week ago prices (assume -5% for week, adjust based on actual data if available)
-        const tonPriceWeekAgo = currentPriceTon * 0.95;
-        const usdPriceWeekAgo = currentPriceUsd * 0.95;
+        // Get historical data from API if available
+        const historical = historicalData[name];
+        let tonPriceWeekAgo = currentPriceTon;
+        let usdPriceWeekAgo = currentPriceUsd;
+        let tonPriceMonthAgo = currentPriceTon;
+        let usdPriceMonthAgo = currentPriceUsd;
         
-        // Calculate 1 month ago prices (assume -10% for month, adjust based on actual data if available)
-        const tonPriceMonthAgo = currentPriceTon * 0.90;
-        const usdPriceMonthAgo = currentPriceUsd * 0.90;
+        if (historical?.week_chart && historical.week_chart.length > 0) {
+          // Week chart has half-hour intervals
+          // 1 week ago = 7 * 24 * 2 = 336 entries ago
+          // 1 month ago = 30 * 24 * 2 = 1440 entries ago (but we only have 1 week data)
+          const weekAgoIndex = Math.max(0, historical.week_chart.length - 336);
+          
+          if (weekAgoIndex < historical.week_chart.length) {
+            tonPriceWeekAgo = historical.week_chart[weekAgoIndex].priceTon || currentPriceTon;
+            usdPriceWeekAgo = historical.week_chart[weekAgoIndex].priceUsd || currentPriceUsd;
+          }
+          
+          // For month, use the oldest available data point
+          tonPriceMonthAgo = historical.week_chart[0].priceTon || currentPriceTon;
+          usdPriceMonthAgo = historical.week_chart[0].priceUsd || currentPriceUsd;
+        }
         
         // Use the full image URL directly
         const imageUrl = data.image_url || '';
