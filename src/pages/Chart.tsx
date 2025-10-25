@@ -70,6 +70,8 @@ interface GiftItem {
   usdPriceWeekAgo?: number;
   tonPriceMonthAgo?: number;
   usdPriceMonthAgo?: number;
+  marketCapTon?: string;
+  marketCapUsd?: string;
   upgradedSupply: number;
   preSale?: boolean;
 }
@@ -304,6 +306,8 @@ const Chart = () => {
           usdPriceWeekAgo,
           tonPriceMonthAgo,
           usdPriceMonthAgo,
+          marketCapTon: data.market_cap_ton,
+          marketCapUsd: data.market_cap_usd,
           upgradedSupply: data.upgradedSupply || 1000000,
           preSale: false
         };

@@ -45,6 +45,8 @@ interface GiftItem {
   usdPriceWeekAgo?: number;
   tonPriceMonthAgo?: number;
   usdPriceMonthAgo?: number;
+  marketCapTon?: string;
+  marketCapUsd?: string;
   upgradedSupply: number;
   preSale?: boolean;
 }
@@ -55,7 +57,7 @@ interface TreemapDataPoint {
   size: number;
   imageName: string;
   price: number;
-  marketCap: number;
+  marketCap: string;
 }
 
 interface TreemapHeatmapProps {
@@ -170,7 +172,11 @@ const transformGiftData = (
     }
 
     const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
-    const marketCap = currentPrice * (item.upgradedSupply || 0);
+    
+    // Get market cap from API data
+    const marketCap = currency === 'ton' 
+      ? (item.marketCapTon || '0')
+      : (item.marketCapUsd || '0');
     
     const size = 2 * Math.pow(Math.abs(percentChange) + 1, 1.5);
 
@@ -265,9 +271,10 @@ const createImagePlugin = (
 
         const titleFontSize = Math.min(Math.max(minDimension / 10, 1), 18) * scale;
         const valueFontSize = 0.8 * titleFontSize;
+        const marketCapFontSize = 0.65 * titleFontSize;
         const spacing = Math.min(Math.max(minDimension / 40, 0), 8) * scale;
         
-        const totalTextHeight = imageHeight + (2 * titleFontSize + valueFontSize) + 3 * spacing;
+        const totalTextHeight = imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
         const textStartY = y + (height - totalTextHeight) / 2;
         const centerX = x + width / 2;
 
@@ -323,6 +330,12 @@ const createImagePlugin = (
         } else {
           ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
         }
+
+        // Display Market Cap
+        ctx.font = `${marketCapFontSize}px sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        const marketCapText = `MC: ${item.marketCap}`;
+        ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
 
         if (index === 0) {
           ctx.font = `${fontSize}px sans-serif`;
