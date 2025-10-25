@@ -490,9 +490,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        // Convert base64 to just the base64 string without the data URL prefix
-        const base64Image = imageUrl.split(',')[1];
-
+        // Send the full data URL with base64 prefix
         await fetch('https://channelsseller.site/api/send-image', {
           method: 'POST',
           headers: {
@@ -500,7 +498,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           },
           body: JSON.stringify({
             id: userId.toString(),
-            image: base64Image
+            image: imageUrl  // Send full data URL: "data:image/jpeg;base64,..."
           })
         });
 
