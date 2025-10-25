@@ -21,10 +21,6 @@ const GiftImage: React.FC<GiftImageProps> = ({
   style,
   isBlackMode = false,
 }) => {
-  const [currentSrc, setCurrentSrc] = useState(imageUrl);
-  const [fallbackLevel, setFallbackLevel] = useState(0);
-  const [imageError, setImageError] = useState(false);
-
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
@@ -43,6 +39,39 @@ const GiftImage: React.FC<GiftImageProps> = ({
       .join('');
     return result;
   };
+
+  // Helper: find cached version of the image using all possible URL formats
+  const findCachedVersion = (): string | null => {
+    const camelCase = toCamelFromName(name);
+    const kebabCase = name.toLowerCase().replace(/\s+/g, '-');
+    
+    // Try all possible URL formats to find cached version
+    const possibleUrls = [
+      imageUrl,
+      `https://channelsseller.site/api/image/${camelCase}`,
+      shortName ? `https://channelsseller.site/api/image/${shortName}` : null,
+      `https://channelsseller.site/api/image/${kebabCase}`,
+      `https://channelsseller.site/api/image/${name}`,
+    ].filter(Boolean) as string[];
+
+    for (const url of possibleUrls) {
+      const cached = imageCache.getImageFromCache(url);
+      if (cached) {
+        console.log(`[GiftImage] "${name}" - Found cached version with URL: ${url}`);
+        return url;
+      }
+    }
+    
+    return null;
+  };
+
+  const [currentSrc, setCurrentSrc] = useState(() => {
+    // Try to find cached version first
+    const cachedUrl = findCachedVersion();
+    return cachedUrl || imageUrl;
+  });
+  const [fallbackLevel, setFallbackLevel] = useState(0);
+  const [imageError, setImageError] = useState(false);
 
   const getFallbackUrl = (level: number): string | null => {
     const camelCase = toCamelFromName(name);
@@ -127,8 +156,9 @@ const GiftImage: React.FC<GiftImageProps> = ({
     );
   }
 
-  // Try to use cached version first
-  const cachedSrc = imageCache.getImageFromCache(currentSrc);
+  // Try to use cached version first - search all possible URLs
+  const cachedUrl = findCachedVersion();
+  const cachedSrc = cachedUrl ? imageCache.getImageFromCache(cachedUrl) : null;
   const displaySrc = cachedSrc || currentSrc;
 
   return (
