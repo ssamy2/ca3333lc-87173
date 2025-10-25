@@ -227,8 +227,10 @@ const Chart = () => {
           return [
             item.gift_name,
             {
+              priceTon: item.black_price,
+              priceUsd: item.black_price * 2.16,
               price_ton: item.black_price,
-              price_usd: item.black_price * 2.16, // Approximate conversion
+              price_usd: item.black_price * 2.16,
               'change_24h_ton_%': (item as any).change_24h_ton_percent || 0,
               'change_24h_usd_%': (item as any).change_24h_ton_percent || 0,
               image_url: imageUrl,
@@ -239,7 +241,7 @@ const Chart = () => {
         });
 
       // Sort by price (highest first)
-      blackEntries.sort((a, b) => b[1].price_ton - a[1].price_ton);
+      blackEntries.sort((a, b) => (b[1].priceTon || b[1].price_ton) - (a[1].priceTon || a[1].price_ton));
 
       // Apply top filter
       if (topFilter === 'top50') {
@@ -285,8 +287,8 @@ const Chart = () => {
       })
       .map(([name, data]) => {
         // Use historical prices directly from market data API
-        const currentPriceTon = data.price_ton;
-        const currentPriceUsd = data.price_usd;
+        const currentPriceTon = data.priceTon || data.price_ton;
+        const currentPriceUsd = data.priceUsd || data.price_usd;
         
         // Get historical prices from API response
         const tonPrice24hAgo = data.tonPrice24hAgo || currentPriceTon;
@@ -511,7 +513,7 @@ const Chart = () => {
           >
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-              const price = currency === 'ton' ? data.price_ton : data.price_usd;
+              const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
               const isPositive = change >= 0;
               const isNeutral = change === 0;
 
@@ -574,7 +576,7 @@ const Chart = () => {
           <div className="space-y-2">
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-              const price = currency === 'ton' ? data.price_ton : data.price_usd;
+              const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
               const isPositive = change >= 0;
               const isNeutral = change === 0;
 
