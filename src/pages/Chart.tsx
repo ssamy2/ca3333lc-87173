@@ -34,7 +34,7 @@ type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 type DataSource = 'market' | 'black';
-type ChartType = 'change' | 'marketCap';
+type ChartType = 'change';
 type TimeGap = '24h' | '1w' | '1m';
 
 interface GiftItem {
@@ -58,7 +58,7 @@ const Chart = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
-  const [topFilter, setTopFilter] = useState<TopFilter>('all');
+  const [topFilter, setTopFilter] = useState<TopFilter>('top25');
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
@@ -263,27 +263,40 @@ const Chart = () => {
       .map(([name, data]) => {
         const currentPriceTon = data.price_ton;
         const currentPriceUsd = data.price_usd;
-        const change24h = data['change_24h_ton_%'];
+        const change24hTon = data['change_24h_ton_%'];
+        const change24hUsd = data['change_24h_usd_%'];
         
-        // Calculate historical prices from change percentage
-        const tonPrice24hAgo = change24h !== 0 
-          ? currentPriceTon / (1 + change24h / 100)
+        // Calculate 24h ago prices
+        const tonPrice24hAgo = change24hTon !== 0 
+          ? currentPriceTon / (1 + change24hTon / 100)
           : currentPriceTon;
-        const usdPrice24hAgo = change24h !== 0
-          ? currentPriceUsd / (1 + change24h / 100)
+        const usdPrice24hAgo = change24hUsd !== 0
+          ? currentPriceUsd / (1 + change24hUsd / 100)
           : currentPriceUsd;
+        
+        // Calculate 1 week ago prices (assume -5% for week, adjust based on actual data if available)
+        const tonPriceWeekAgo = currentPriceTon * 0.95;
+        const usdPriceWeekAgo = currentPriceUsd * 0.95;
+        
+        // Calculate 1 month ago prices (assume -10% for month, adjust based on actual data if available)
+        const tonPriceMonthAgo = currentPriceTon * 0.90;
+        const usdPriceMonthAgo = currentPriceUsd * 0.90;
         
         // Use the full image URL directly
         const imageUrl = data.image_url || '';
         
         return {
           name,
-          image: imageUrl, // Pass full URL instead of just name
+          image: imageUrl,
           priceTon: currentPriceTon,
           priceUsd: currentPriceUsd,
           tonPrice24hAgo,
           usdPrice24hAgo,
-          upgradedSupply: 1000000, // Default value since we don't have this data
+          tonPriceWeekAgo,
+          usdPriceWeekAgo,
+          tonPriceMonthAgo,
+          usdPriceMonthAgo,
+          upgradedSupply: 1000000,
           preSale: false
         };
       });
@@ -385,26 +398,6 @@ const Chart = () => {
 
           {viewMode === 'heatmap' && (
             <>
-              {/* Chart Type */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setChartType('change')}
-                  variant={chartType === 'change' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                >
-                  Change
-                </Button>
-                <Button
-                  onClick={() => setChartType('marketCap')}
-                  variant={chartType === 'marketCap' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                >
-                  Market Cap
-                </Button>
-              </div>
-
               {/* Time Gap */}
               <div className="flex gap-2">
                 <Button

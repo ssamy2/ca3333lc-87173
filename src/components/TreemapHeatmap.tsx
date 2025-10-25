@@ -60,7 +60,7 @@ interface TreemapDataPoint {
 
 interface TreemapHeatmapProps {
   data: GiftItem[];
-  chartType: 'change' | 'marketCap';
+  chartType: 'change';
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
 }
@@ -141,7 +141,7 @@ const updateInteractivity = (chart: ChartJS) => {
 
 const transformGiftData = (
   data: GiftItem[],
-  chartType: 'change' | 'marketCap',
+  chartType: 'change',
   timeGap: '24h' | '1w' | '1m',
   currency: 'ton' | 'usd'
 ): TreemapDataPoint[] => {
@@ -172,9 +172,7 @@ const transformGiftData = (
     const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
     const marketCap = currentPrice * (item.upgradedSupply || 0);
     
-    const size = chartType === 'change' 
-      ? 2 * Math.pow(Math.abs(percentChange) + 1, 1.5)
-      : Math.max(marketCap / 1000, 1);
+    const size = 2 * Math.pow(Math.abs(percentChange) + 1, 1.5);
 
     return {
       name: item.name,
@@ -201,7 +199,7 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
 };
 
 const createImagePlugin = (
-  chartType: 'change' | 'marketCap',
+  chartType: 'change',
   currency: 'ton' | 'usd',
   fontSize: number = 15,
   scale: number = 1,
@@ -290,53 +288,19 @@ const createImagePlugin = (
 
         ctx.font = `${titleFontSize}px sans-serif`;
         
-        const valueText = chartType === 'change'
-          ? `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`
-          : item.marketCap / 1000 >= 1000
-            ? `${(item.marketCap / 1000000).toFixed(1)}M`
-            : `${(item.marketCap / 1000).toFixed(1)}K`;
+        const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
 
-        const valueTextWidth = ctx.measureText(valueText).width;
-        const coinSize = 1 * titleFontSize;
-        const coinOffsetX = -0.1 * titleFontSize;
-        const textOffsetX = -0.05 * titleFontSize;
-
-        if (chartType === 'marketCap' && currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
-          try {
-            ctx.drawImage(
-              toncoinImage,
-              centerX - valueTextWidth / 2 - coinSize - coinOffsetX,
-              textStartY + imageHeight + 2 * titleFontSize + 2 * spacing - 0.8 * coinSize,
-              coinSize,
-              coinSize
-            );
-            ctx.fillText(valueText, centerX + coinSize / 2 + coinOffsetX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-          } catch (error) {
-            console.error('Error drawing toncoin image for valueText:', error);
-            ctx.fillText(`💎 ${valueText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-          }
-        } else if (chartType === 'marketCap' && currency === 'ton') {
-          ctx.fillText(`💎 ${valueText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-        } else if (currency === 'usd') {
-          const dollarWidth = ctx.measureText('$').width;
-          ctx.fillText('$', centerX - valueTextWidth / 2 - textOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-          ctx.fillText(valueText, centerX + dollarWidth / 2 + textOffsetX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-        } else {
-          ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-        }
+        ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
 
         ctx.font = `${valueFontSize}px sans-serif`;
         
-        const bottomText = chartType === 'change'
-          ? `${item.price.toFixed(2)}`
-          : `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
-
+        const bottomText = `${item.price.toFixed(2)}`;
         const bottomTextWidth = ctx.measureText(bottomText).width;
         const bottomCoinSize = 1 * valueFontSize;
         const bottomCoinOffsetX = -0.1 * valueFontSize;
         const bottomTextOffsetX = -0.05 * valueFontSize;
 
-        if (chartType === 'change' && currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
+        if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
           try {
             ctx.drawImage(
               toncoinImage,
@@ -350,9 +314,9 @@ const createImagePlugin = (
             console.error('Error drawing toncoin image for bottomText:', error);
             ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
           }
-        } else if (chartType === 'change' && currency === 'ton') {
+        } else if (currency === 'ton') {
           ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-        } else if (chartType === 'change' && currency === 'usd') {
+        } else if (currency === 'usd') {
           const dollarWidth = ctx.measureText('$').width;
           ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
           ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
@@ -364,7 +328,7 @@ const createImagePlugin = (
           ctx.font = `${fontSize}px sans-serif`;
           ctx.fillStyle = 'rgba(255,255,255,0.6)';
           ctx.textAlign = 'right';
-          ctx.fillText('@gift_charts', x + width - 5, y + height - 5);
+          ctx.fillText('@Novachartbot', x + width - 5, y + height - 5);
         }
       });
 
@@ -451,15 +415,18 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        const blob = await (await fetch(imageUrl)).blob();
-        const formData = new FormData();
-        formData.append('file', blob, `heatmap-${Date.now()}.jpeg`);
-        formData.append('chatId', userId.toString());
-        formData.append('content', 'Here is a 1920x1080 image of a Heatmap chart!');
+        // Convert base64 to just the base64 string without the data URL prefix
+        const base64Image = imageUrl.split(',')[1];
 
-        await fetch('https://giftcharts-api.onrender.com/telegram/send-image', {
+        await fetch('https://channelsseller.site/api/send-image', {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: userId.toString(),
+            image: base64Image
+          })
         });
 
         tempChart.destroy();
