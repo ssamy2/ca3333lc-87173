@@ -260,12 +260,34 @@ const Chart = () => {
     // Market data
     let entries = Object.entries(marketData);
 
-    // Sort by absolute change (biggest changes first regardless of sign)
-    entries.sort((a, b) => {
-      const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-      const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-      return Math.abs(changeB) - Math.abs(changeA);
-    });
+    // Sort based on chart type
+    if (chartType === 'marketcap') {
+      // Sort by market cap (descending)
+      entries.sort((a, b) => {
+        const parseMarketCap = (str: string): number => {
+          const num = parseFloat(str.replace(/[KM,]/g, ''));
+          if (str.includes('M')) return num * 1000000;
+          if (str.includes('K')) return num * 1000;
+          return num;
+        };
+        
+        const marketCapA = currency === 'ton' 
+          ? parseMarketCap(a[1].market_cap_ton || '0')
+          : parseMarketCap(a[1].market_cap_usd || '0');
+        const marketCapB = currency === 'ton'
+          ? parseMarketCap(b[1].market_cap_ton || '0')
+          : parseMarketCap(b[1].market_cap_usd || '0');
+        
+        return marketCapB - marketCapA;
+      });
+    } else {
+      // Sort by absolute change (biggest changes first regardless of sign)
+      entries.sort((a, b) => {
+        const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
+        const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
+        return Math.abs(changeB) - Math.abs(changeA);
+      });
+    }
 
     // Apply top filter
     if (topFilter === 'top50') {
