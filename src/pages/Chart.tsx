@@ -80,7 +80,7 @@ const Chart = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
-  const [topFilter, setTopFilter] = useState<TopFilter>('top25');
+  const [topFilter, setTopFilter] = useState<TopFilter>('all');
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
@@ -280,12 +280,7 @@ const Chart = () => {
   const getGiftItems = (): GiftItem[] => {
     const entries = getFilteredData();
     
-    return entries
-      .filter(([_, data]) => {
-        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-        return Math.abs(change) >= 1;
-      })
-      .map(([name, data]) => {
+    return entries.map(([name, data]) => {
         // Use historical prices directly from market data API
         const currentPriceTon = data.priceTon || data.price_ton;
         const currentPriceUsd = data.priceUsd || data.price_usd;
