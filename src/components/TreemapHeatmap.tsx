@@ -490,19 +490,17 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        // Send to backend API directly
+        // Send to Supabase Edge Function
         try {
-          // Get Telegram user ID if available
-          const telegramUserId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id || '7957114706';
-          
-          const response = await fetch('https://channelsseller.site/api/send-image', {
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
             },
             body: JSON.stringify({
-              id: telegramUserId.toString(),
-              image: imageUrl  // Full data URL
+              userId: userId.toString(),
+              image: imageUrl
             })
           });
 
