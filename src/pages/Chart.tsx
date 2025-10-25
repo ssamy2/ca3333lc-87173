@@ -11,6 +11,7 @@ import { imageCache } from '@/services/imageCache';
 import { Link } from 'react-router-dom';
 import HeatmapTreemap from '@/components/HeatmapTreemap';
 import GiftImage from '@/components/GiftImage';
+import BottomNav from '@/components/BottomNav';
 
 interface NFTMarketData {
   price_ton: number;
@@ -442,6 +443,11 @@ const Chart = () => {
 
   return (
     <div className={`min-h-screen pb-20 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-background'}`}>
+      <BottomNav activeTab="chart" onTabChange={(tab) => {
+        if (tab === 'home') {
+          window.location.href = '/';
+        }
+      }} />
       <div className={`p-2 space-y-2 ${dataSource === 'black' ? 'font-inter' : ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -673,6 +679,7 @@ const Chart = () => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? data.price_ton : data.price_usd;
               const isPositive = change >= 0;
+              const isNeutral = change === 0;
 
               return (
                 <Link 
