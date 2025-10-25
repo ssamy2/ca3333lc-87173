@@ -3,7 +3,13 @@ import {
   Chart as ChartJS,
   ChartData,
   ChartOptions,
-  Plugin
+  Plugin,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend
 } from 'chart.js';
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
@@ -16,7 +22,17 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-ChartJS.register(TreemapController, TreemapElement, zoomPlugin);
+ChartJS.register(
+  TreemapController, 
+  TreemapElement, 
+  zoomPlugin,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface GiftItem {
   name: string;
