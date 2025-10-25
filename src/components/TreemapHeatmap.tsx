@@ -495,6 +495,9 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           // Remove the Base64 prefix (data:image/jpeg;base64,)
           const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
           
+          // Get Telegram initData for authentication
+          const initData = telegramWebApp.initData || "";
+          
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
             method: 'POST',
             headers: {
@@ -502,8 +505,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
               'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
             },
             body: JSON.stringify({
-              userId: userId.toString(),
-              image: cleanBase64
+              image: cleanBase64,
+              initData: initData
             })
           });
 

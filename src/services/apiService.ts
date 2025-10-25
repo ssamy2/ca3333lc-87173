@@ -106,7 +106,16 @@ const buildApiUrl = (path: string) => {
     return targetUrl;
   }
   
-  const proxiedUrl = proxyConfig.buildUrl(targetUrl);
+  let proxiedUrl = proxyConfig.buildUrl(targetUrl);
+  
+  // Add Telegram initData for authentication with Supabase Edge Function proxy
+  if (proxyConfig.name === 'Supabase Edge Function') {
+    const initData = (window as any).Telegram?.WebApp?.initData || "";
+    const urlObj = new URL(proxiedUrl);
+    urlObj.searchParams.set('initData', initData);
+    proxiedUrl = urlObj.toString();
+  }
+  
   console.log('🔀 Proxy API call:', proxiedUrl, `(via ${proxyConfig.name})`);
   console.log('🎯 Target URL:', targetUrl);
   

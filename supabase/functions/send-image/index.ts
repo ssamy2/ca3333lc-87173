@@ -5,18 +5,80 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Get Telegram WebApp initData
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        initDataUnsafe?: {
-          user?: {
-            id: number;
-          };
-        };
-      };
-    };
+const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
+
+// Verify Telegram WebApp initData
+async function verifyTelegramWebAppData(initData: string): Promise<{ valid: boolean; userId?: string }> {
+  if (!BOT_TOKEN) {
+    console.error("TELEGRAM_BOT_TOKEN is not set");
+    return { valid: false };
+  }
+
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get("hash");
+    urlParams.delete("hash");
+
+    if (!hash) {
+      return { valid: false };
+    }
+
+    // Sort parameters alphabetically
+    const dataCheckString = Array.from(urlParams.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("\n");
+
+    // Create secret key
+    const encoder = new TextEncoder();
+    const secretKey = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode("WebAppData"),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const tokenKey = await crypto.subtle.sign(
+      "HMAC",
+      secretKey,
+      encoder.encode(BOT_TOKEN)
+    );
+
+    // Create data hash
+    const dataKey = await crypto.subtle.importKey(
+      "raw",
+      tokenKey,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const signature = await crypto.subtle.sign(
+      "HMAC",
+      dataKey,
+      encoder.encode(dataCheckString)
+    );
+
+    const calculatedHash = Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    if (calculatedHash !== hash) {
+      return { valid: false };
+    }
+
+    // Extract user ID from initData
+    const userParam = urlParams.get("user");
+    if (userParam) {
+      const userData = JSON.parse(userParam);
+      return { valid: true, userId: userData.id?.toString() };
+    }
+
+    return { valid: false };
+  } catch (error) {
+    console.error("Error verifying Telegram data:", error);
+    return { valid: false };
   }
 }
 
@@ -26,11 +88,21 @@ serve(async (req) => {
   }
 
   try {
-    const { image, userId } = await req.json();
+    const { image, initData } = await req.json();
 
-    if (!image) {
-      return new Response(JSON.stringify({ error: "image is required" }), {
+    if (!image || !initData) {
+      return new Response(JSON.stringify({ error: "image and initData are required" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify Telegram WebApp data
+    const verification = await verifyTelegramWebAppData(initData);
+    if (!verification.valid || !verification.userId) {
+      console.error("Invalid Telegram WebApp data");
+      return new Response(JSON.stringify({ error: "Unauthorized: Invalid Telegram data" }), {
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -38,10 +110,7 @@ serve(async (req) => {
     // إزالة البادئة (مثل data:image/jpeg;base64,)
     const cleanBase64 = image.replace(/^data:image\/\w+;base64,/, "");
 
-    // استخدام userId القادم من التلغرام أو القيمة الافتراضية
-    const targetUserId = userId || "7957114706";
-
-    console.log("Sending image to user:", targetUserId);
+    console.log("Sending image to verified user:", verification.userId);
 
     // إرسال الصورة إلى الباك-إند
     const response = await fetch("https://channelsseller.site/api/send-image", {
@@ -50,7 +119,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        id: targetUserId,
+        id: verification.userId,
         image: cleanBase64, // Base64 صافي بدون البادئة
       }),
     });
