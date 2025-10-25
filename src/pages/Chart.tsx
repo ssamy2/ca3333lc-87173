@@ -56,7 +56,7 @@ type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 type DataSource = 'market' | 'black';
-type ChartType = 'change';
+type ChartType = 'change' | 'marketcap';
 type TimeGap = '24h' | '1w' | '1m';
 
 interface GiftItem {
@@ -410,6 +410,26 @@ const Chart = () => {
 
           {viewMode === 'heatmap' && (
             <>
+              {/* Chart Type */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setChartType('change')}
+                  variant={chartType === 'change' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-10 text-sm rounded-xl"
+                >
+                  Change
+                </Button>
+                <Button
+                  onClick={() => setChartType('marketcap')}
+                  variant={chartType === 'marketcap' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-10 text-sm rounded-xl"
+                >
+                  Market Cap
+                </Button>
+              </div>
+
               {/* Currency */}
               <div className="flex gap-2">
                 <Button
@@ -430,33 +450,34 @@ const Chart = () => {
                 </Button>
               </div>
 
-              {/* Time Gap */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setTimeGap('1m')}
-                  variant={timeGap === '1m' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
-                >
-                  1m
-                </Button>
-                <Button
-                  onClick={() => setTimeGap('1w')}
-                  variant={timeGap === '1w' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
-                >
-                  1w
-                </Button>
-                <Button
-                  onClick={() => setTimeGap('24h')}
-                  variant={timeGap === '24h' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
-                >
-                  24h
-                </Button>
-              </div>
+              {chartType === 'change' && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setTimeGap('1m')}
+                    variant={timeGap === '1m' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 h-10 text-sm rounded-xl"
+                  >
+                    1m
+                  </Button>
+                  <Button
+                    onClick={() => setTimeGap('1w')}
+                    variant={timeGap === '1w' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 h-10 text-sm rounded-xl"
+                  >
+                    1w
+                  </Button>
+                  <Button
+                    onClick={() => setTimeGap('24h')}
+                    variant={timeGap === '24h' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 h-10 text-sm rounded-xl"
+                  >
+                    24h
+                  </Button>
+                </div>
+              )}
 
               {/* Top Filter */}
               <div className="grid grid-cols-4 gap-2">

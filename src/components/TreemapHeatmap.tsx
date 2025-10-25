@@ -62,7 +62,7 @@ interface TreemapDataPoint {
 
 interface TreemapHeatmapProps {
   data: GiftItem[];
-  chartType: 'change';
+  chartType: 'change' | 'marketcap';
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
 }
@@ -142,18 +142,47 @@ const updateInteractivity = (chart: ChartJS) => {
 };
 
 const transformGiftData = (
-  data: GiftItem[],
-  chartType: 'change',
+  data: GiftItem[], 
+  chartType: 'change' | 'marketcap', 
   timeGap: '24h' | '1w' | '1m',
   currency: 'ton' | 'usd'
 ): TreemapDataPoint[] => {
   return data.map(item => {
     const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
-    let previousPrice = 0;
 
+    if (chartType === 'marketcap') {
+      // Market Cap mode - size based on market cap value
+      const marketCapStr = currency === 'ton' 
+        ? (item.marketCapTon || '0')
+        : (item.marketCapUsd || '0');
+      
+      // Parse market cap string (e.g., "203.07K" -> 203070)
+      const parseMarketCap = (str: string): number => {
+        const num = parseFloat(str.replace(/[KM,]/g, ''));
+        if (str.includes('M')) return num * 1000000;
+        if (str.includes('K')) return num * 1000;
+        return num;
+      };
+      
+      const marketCapValue = parseMarketCap(marketCapStr);
+      const size = Math.sqrt(marketCapValue) / 100; // Scale for reasonable sizes
+
+      return {
+        name: item.name,
+        percentChange: 0, // Not used in marketcap mode
+        size,
+        imageName: item.image,
+        price: currentPrice,
+        marketCap: marketCapStr
+      };
+    }
+
+    // Change mode - existing logic
+    let previousPrice = currentPrice;
+    
     switch (timeGap) {
       case '24h':
-        previousPrice = currency === 'ton' 
+        previousPrice = currency === 'ton'
           ? (item.tonPrice24hAgo || currentPrice)
           : (item.usdPrice24hAgo || currentPrice);
         break;
@@ -173,7 +202,6 @@ const transformGiftData = (
 
     const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
     
-    // Get market cap from API data
     const marketCap = currency === 'ton' 
       ? (item.marketCapTon || '0')
       : (item.marketCapUsd || '0');
@@ -205,7 +233,7 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
 };
 
 const createImagePlugin = (
-  chartType: 'change',
+  chartType: 'change' | 'marketcap',
   currency: 'ton' | 'usd',
   fontSize: number = 15,
   scale: number = 1,
@@ -241,7 +269,8 @@ const createImagePlugin = (
 
         if (width <= 0 || height <= 0) return;
 
-        const color = item.percentChange > 0 ? '#018f35' 
+        const color = chartType === 'marketcap' ? '#3b82f6'
+          : item.percentChange > 0 ? '#018f35' 
           : item.percentChange < 0 ? '#dc2626' 
           : '#8F9779';
 
@@ -274,7 +303,9 @@ const createImagePlugin = (
         const marketCapFontSize = 0.65 * titleFontSize;
         const spacing = Math.min(Math.max(minDimension / 40, 0), 8) * scale;
         
-        const totalTextHeight = imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
+        const totalTextHeight = chartType === 'marketcap'
+          ? imageHeight + (titleFontSize + marketCapFontSize) + 3 * spacing
+          : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
         const textStartY = y + (height - totalTextHeight) / 2;
         const centerX = x + width / 2;
 
@@ -293,49 +324,56 @@ const createImagePlugin = (
         ctx.font = `bold ${titleFontSize}px sans-serif`;
         ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
-        ctx.font = `${titleFontSize}px sans-serif`;
-        
-        const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
+        if (chartType === 'change') {
+          // Show percentage change
+          ctx.font = `${titleFontSize}px sans-serif`;
+          const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
+          ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
 
-        ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
+          ctx.font = `${valueFontSize}px sans-serif`;
+          
+          const bottomText = `${item.price.toFixed(2)}`;
+          const bottomTextWidth = ctx.measureText(bottomText).width;
+          const bottomCoinSize = 1 * valueFontSize;
+          const bottomCoinOffsetX = -0.1 * valueFontSize;
+          const bottomTextOffsetX = -0.05 * valueFontSize;
 
-        ctx.font = `${valueFontSize}px sans-serif`;
-        
-        const bottomText = `${item.price.toFixed(2)}`;
-        const bottomTextWidth = ctx.measureText(bottomText).width;
-        const bottomCoinSize = 1 * valueFontSize;
-        const bottomCoinOffsetX = -0.1 * valueFontSize;
-        const bottomTextOffsetX = -0.05 * valueFontSize;
-
-        if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
-          try {
-            ctx.drawImage(
-              toncoinImage,
-              centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
-              textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
-              bottomCoinSize,
-              bottomCoinSize
-            );
-            ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-          } catch (error) {
-            console.error('Error drawing toncoin image for bottomText:', error);
+          if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
+            try {
+              ctx.drawImage(
+                toncoinImage,
+                centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
+                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
+                bottomCoinSize,
+                bottomCoinSize
+              );
+              ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            } catch (error) {
+              console.error('Error drawing toncoin image for bottomText:', error);
+              ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            }
+          } else if (currency === 'ton') {
             ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+          } else if (currency === 'usd') {
+            const dollarWidth = ctx.measureText('$').width;
+            ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+          } else {
+            ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
           }
-        } else if (currency === 'ton') {
-          ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-        } else if (currency === 'usd') {
-          const dollarWidth = ctx.measureText('$').width;
-          ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-          ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-        } else {
-          ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-        }
 
-        // Display Market Cap
-        ctx.font = `${marketCapFontSize}px sans-serif`;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        const marketCapText = `MC: ${item.marketCap}`;
-        ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
+          // Display Market Cap
+          ctx.font = `${marketCapFontSize}px sans-serif`;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          const marketCapText = `MC: ${item.marketCap}`;
+          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
+        } else {
+          // Market Cap mode - show market cap prominently
+          ctx.font = `bold ${titleFontSize}px sans-serif`;
+          ctx.fillStyle = 'white';
+          const marketCapText = `MC: ${item.marketCap}`;
+          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
+        }
 
         if (index === 0) {
           ctx.font = `${fontSize}px sans-serif`;
