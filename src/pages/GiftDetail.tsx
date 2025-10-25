@@ -12,6 +12,7 @@ import GiftImage from '@/components/GiftImage';
 interface GiftInfo {
   name: string;
   image: string;
+  image_url?: string;
   supply: number;
   upgradedSupply: number;
   priceTon: number;
@@ -331,7 +332,7 @@ const GiftDetail = () => {
         <Card className="p-4">
           <div className="flex items-center gap-4">
             <GiftImage
-              imageUrl={`https://channelsseller.site/api/image/${giftData.info.image}`}
+              imageUrl={giftData.info.image_url || `https://channelsseller.site/api/image/${giftData.info.image}`}
               name={giftData.info.name}
               size="lg"
               className="rounded-lg"
