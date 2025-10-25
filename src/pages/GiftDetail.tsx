@@ -20,6 +20,13 @@ interface GiftInfo {
   priceUsd: number;
 }
 
+interface BlackFloorItem {
+  gift_name: string;
+  short_name: string;
+  black_price: number;
+  recorded_at: string;
+}
+
 interface Model {
   _id: string;
   image: string;
@@ -55,12 +62,15 @@ interface GiftDetailData {
 type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
 type ChartType = 'line' | 'candlestick' | 'bar';
 type Currency = 'usd' | 'ton';
+type DataSource = 'market' | 'black';
 
 const GiftDetail = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [giftData, setGiftData] = useState<GiftDetailData | null>(null);
+  const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
+  const [dataSource, setDataSource] = useState<DataSource>('market');
   const [timeRange, setTimeRange] = useState<TimeRange>('1w');
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [currency, setCurrency] = useState<Currency>('ton');
@@ -69,6 +79,7 @@ const GiftDetail = () => {
   useEffect(() => {
     if (name) {
       fetchGiftData(name);
+      fetchBlackFloorData(name);
     }
   }, [name]);
 
@@ -91,7 +102,43 @@ const GiftDetail = () => {
     }
   };
 
+  const fetchBlackFloorData = async (giftName: string) => {
+    try {
+      const response = await fetch('https://channelsseller.site/api/black-floor');
+      const data: BlackFloorItem[] = await response.json();
+      
+      // Filter for this specific gift and get only the latest records
+      const giftRecords = data.filter(item => item.gift_name === giftName);
+      
+      // Sort by recorded_at descending and keep latest records
+      giftRecords.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+      
+      setBlackFloorData(giftRecords);
+    } catch (error) {
+      console.error('Error fetching black floor data:', error);
+    }
+  };
+
   const getChartData = () => {
+    // If Black mode is selected, show black floor data
+    if (dataSource === 'black') {
+      if (blackFloorData.length === 0) return [];
+      
+      // Map black floor data to chart format
+      return blackFloorData.map(item => ({
+        date: new Date(item.recorded_at).toLocaleDateString(),
+        priceTon: item.black_price,
+        priceUsd: item.black_price * 2.16,
+        price: item.black_price, // Black only shows TON
+        label: new Date(item.recorded_at).toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        }),
+      })).reverse(); // Reverse to show chronological order
+    }
+    
+    // Market data (original logic)
     if (!giftData) return [];
     
     // For 24h, 3d, and 1w, use week_chart (half-hour data) if available
@@ -386,26 +433,47 @@ const GiftDetail = () => {
           </div>
         </Card>
 
-        {/* Currency Toggle */}
+        {/* Data Source & Currency Toggle */}
         <div className="flex gap-2">
           <Button
-            onClick={() => setCurrency('ton')}
-            variant={currency === 'ton' ? 'default' : 'outline'}
-            size="sm"
-            className="flex-1 gap-1"
-          >
-            <TonIcon className="w-4 h-4" />
-            ton
-          </Button>
-          <Button
-            onClick={() => setCurrency('usd')}
-            variant={currency === 'usd' ? 'default' : 'outline'}
+            onClick={() => setDataSource('market')}
+            variant={dataSource === 'market' ? 'default' : 'outline'}
             size="sm"
             className="flex-1"
           >
-            usd
+            Market
+          </Button>
+          <Button
+            onClick={() => setDataSource('black')}
+            variant={dataSource === 'black' ? 'default' : 'outline'}
+            size="sm"
+            className={`flex-1 ${dataSource === 'black' ? 'bg-[#0B0B0D] text-white hover:bg-[#0B0B0D]/90' : 'bg-black text-white hover:bg-black/80'}`}
+          >
+            Black
           </Button>
         </div>
+
+        {dataSource === 'market' && (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setCurrency('ton')}
+              variant={currency === 'ton' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1 gap-1"
+            >
+              <TonIcon className="w-4 h-4" />
+              ton
+            </Button>
+            <Button
+              onClick={() => setCurrency('usd')}
+              variant={currency === 'usd' ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1"
+            >
+              usd
+            </Button>
+          </div>
+        )}
 
         {/* Chart Type Toggle */}
         <div className="flex gap-2 justify-center">
@@ -437,20 +505,22 @@ const GiftDetail = () => {
           {renderChart()}
         </Card>
 
-        {/* Time Range Toggle */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {(['all', '3m', '1m', '1w', '3d', '24h'] as TimeRange[]).map((range) => (
-            <Button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              variant={timeRange === range ? 'default' : 'outline'}
-              size="sm"
-              className="whitespace-nowrap"
-            >
-              {range === 'all' ? 'All' : range.toUpperCase()}
-            </Button>
-          ))}
-        </div>
+        {/* Time Range Toggle - Only show for Market data */}
+        {dataSource === 'market' && (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {(['all', '3m', '1m', '1w', '3d', '24h'] as TimeRange[]).map((range) => (
+              <Button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                variant={timeRange === range ? 'default' : 'outline'}
+                size="sm"
+                className="whitespace-nowrap"
+              >
+                {range === 'all' ? 'All' : range.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {/* View Models Button */}
         <Button

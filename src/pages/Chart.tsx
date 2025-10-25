@@ -28,6 +28,7 @@ interface BlackFloorItem {
   gift_name: string;
   short_name: string;
   black_price: number;
+  recorded_at: string;
 }
 
 type ViewMode = 'grid' | 'list' | 'heatmap';
@@ -128,8 +129,39 @@ const Chart = () => {
       
       const filteredData = Array.from(latestRecords.values());
       
-      setBlackFloorData(filteredData);
-      setCachedData('black-floor-data', filteredData);
+      // Calculate daily change for each gift
+      const dataWithChange = filteredData.map(item => {
+        // Find price from 24 hours ago
+        const dayAgo = new Date(new Date(item.recorded_at).getTime() - 24 * 60 * 60 * 1000);
+        const oldRecords = data.filter(d => 
+          d.gift_name === item.gift_name && 
+          new Date(d.recorded_at) <= dayAgo
+        );
+        
+        let change_24h = 0;
+        if (oldRecords.length > 0) {
+          // Get the closest record to 24h ago
+          const oldestRecord = oldRecords.sort((a, b) => 
+            Math.abs(new Date(a.recorded_at).getTime() - dayAgo.getTime()) - 
+            Math.abs(new Date(b.recorded_at).getTime() - dayAgo.getTime())
+          )[0];
+          
+          const oldPrice = oldestRecord.black_price;
+          const currentPrice = item.black_price;
+          
+          if (oldPrice > 0) {
+            change_24h = ((currentPrice - oldPrice) / oldPrice) * 100;
+          }
+        }
+        
+        return {
+          ...item,
+          change_24h_ton_percent: change_24h
+        };
+      });
+      
+      setBlackFloorData(dataWithChange);
+      setCachedData('black-floor-data', dataWithChange);
     } catch (error) {
       console.error('Error fetching black floor data:', error);
       if (isInitialLoad) {
@@ -142,7 +174,7 @@ const Chart = () => {
     if (dataSource === 'black') {
       // Convert black floor data to market data format
       // IMPORTANT: Only show gifts that exist in market data (already released)
-      let blackEntries: [string, NFTMarketData & { short_name?: string }][] = blackFloorData
+      let blackEntries: [string, NFTMarketData & { short_name?: string; change_24h_ton_percent?: number }][] = blackFloorData
         .filter(item => {
           // Only include if gift exists in market data
           const existsInMarket = marketData[item.gift_name];
@@ -164,10 +196,11 @@ const Chart = () => {
             {
               price_ton: item.black_price,
               price_usd: item.black_price * 2.16, // Approximate conversion
-              'change_24h_ton_%': 0,
-              'change_24h_usd_%': 0,
+              'change_24h_ton_%': (item as any).change_24h_ton_percent || 0,
+              'change_24h_usd_%': (item as any).change_24h_ton_percent || 0,
               image_url: imageUrl,
               short_name: item.short_name,
+              change_24h_ton_percent: (item as any).change_24h_ton_percent || 0,
             }
           ];
         });
@@ -617,7 +650,7 @@ const Chart = () => {
                         {price.toFixed(2)}
                       </span>
                     </div>
-                    {dataSource !== 'black' && (
+                    {!isNeutral && (
                       <span
                         className={`text-xs font-medium ${
                           isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
@@ -676,7 +709,7 @@ const Chart = () => {
                             {price.toFixed(2)}
                           </span>
                         </div>
-                        {dataSource !== 'black' && (
+                        {!isNeutral && (
                           <span
                             className={`text-sm font-medium ${
                               isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
