@@ -12,11 +12,24 @@ import GiftImage from '@/components/GiftImage';
 import BottomNav from '@/components/BottomNav';
 
 interface NFTMarketData {
-  price_ton: number;
-  price_usd: number;
+  priceTon: number;
+  priceUsd: number;
+  tonPrice24hAgo?: number;
+  usdPrice24hAgo?: number;
+  tonPriceWeekAgo?: number;
+  usdPriceWeekAgo?: number;
+  tonPriceMonthAgo?: number;
+  usdPriceMonthAgo?: number;
   'change_24h_ton_%': number;
   'change_24h_usd_%': number;
+  market_cap_ton?: string;
+  market_cap_usd?: string;
+  fdv_ton?: string;
+  fdv_usd?: string;
+  price_ton: number;
+  price_usd: number;
   image_url: string;
+  upgradedSupply?: number;
 }
 
 interface MarketData {
@@ -64,7 +77,6 @@ interface GiftItem {
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
-  const [historicalData, setHistoricalData] = useState<Record<string, GiftHistoricalData>>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
@@ -80,13 +92,6 @@ const Chart = () => {
     fetchMarketData(true);
     fetchBlackFloorData(true);
   }, []);
-
-  // Fetch historical data after marketData is loaded
-  useEffect(() => {
-    if (Object.keys(marketData).length > 0 && Object.keys(historicalData).length === 0) {
-      fetchHistoricalData();
-    }
-  }, [marketData]);
 
   // Auto-refresh - runs independently
   useEffect(() => {
@@ -197,60 +202,6 @@ const Chart = () => {
     }
   };
 
-  const fetchHistoricalData = async () => {
-    try {
-      const cached = getCachedData('historical-gift-data');
-      if (cached) {
-        console.log('[Historical] Using cached data for', Object.keys(cached).length, 'gifts');
-        setHistoricalData(cached);
-        return;
-      }
-
-      const giftNames = Object.keys(marketData);
-      console.log('[Historical] Fetching data for', giftNames.length, 'gifts');
-      
-      if (giftNames.length === 0) {
-        console.log('[Historical] No market data available yet');
-        return;
-      }
-
-      const historicalMap: Record<string, GiftHistoricalData> = {};
-      
-      // Fetch in batches to avoid overwhelming the API
-      const batchSize = 5;
-      for (let i = 0; i < giftNames.length; i += batchSize) {
-        const batch = giftNames.slice(i, i + batchSize);
-        console.log(`[Historical] Fetching batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(giftNames.length/batchSize)}`);
-        
-        const promises = batch.map(async (name) => {
-          try {
-            const response = await fetch(`https://channelsseller.site/api/gift-data?name=${encodeURIComponent(name)}`);
-            if (response.ok) {
-              const data = await response.json();
-              console.log(`[Historical] Got data for ${name}:`, data.week_chart?.length || 0, 'entries');
-              return { name, data };
-            }
-          } catch (error) {
-            console.error(`[Historical] Error fetching data for ${name}:`, error);
-          }
-          return null;
-        });
-        
-        const results = await Promise.all(promises);
-        results.forEach(result => {
-          if (result) {
-            historicalMap[result.name] = result.data;
-          }
-        });
-      }
-      
-      console.log('[Historical] Loaded data for', Object.keys(historicalMap).length, 'gifts');
-      setHistoricalData(historicalMap);
-      setCachedData('historical-gift-data', historicalMap);
-    } catch (error) {
-      console.error('[Historical] Error fetching historical data:', error);
-    }
-  };
 
   const getFilteredData = () => {
     if (dataSource === 'black') {
@@ -333,54 +284,21 @@ const Chart = () => {
         return Math.abs(change) >= 1;
       })
       .map(([name, data]) => {
+        // Use historical prices directly from market data API
         const currentPriceTon = data.price_ton;
         const currentPriceUsd = data.price_usd;
-        const change24hTon = data['change_24h_ton_%'];
-        const change24hUsd = data['change_24h_usd_%'];
         
-        // Calculate 24h ago prices
-        const tonPrice24hAgo = change24hTon !== 0 
-          ? currentPriceTon / (1 + change24hTon / 100)
-          : currentPriceTon;
-        const usdPrice24hAgo = change24hUsd !== 0
-          ? currentPriceUsd / (1 + change24hUsd / 100)
-          : currentPriceUsd;
-        
-        // Get historical data from API if available
-        const historical = historicalData[name];
-        let tonPriceWeekAgo = currentPriceTon;
-        let usdPriceWeekAgo = currentPriceUsd;
-        let tonPriceMonthAgo = currentPriceTon;
-        let usdPriceMonthAgo = currentPriceUsd;
-        
-        if (historical?.week_chart && historical.week_chart.length > 0) {
-          const chartLength = historical.week_chart.length;
-          console.log(`[${name}] Chart has ${chartLength} entries`);
-          
-          // Week chart has half-hour intervals (2 per hour)
-          // 1 week ago = 7 days * 24 hours * 2 = 336 entries
-          const weekAgoIndex = Math.max(0, chartLength - 336);
-          
-          if (weekAgoIndex < chartLength) {
-            tonPriceWeekAgo = historical.week_chart[weekAgoIndex].priceTon || currentPriceTon;
-            usdPriceWeekAgo = historical.week_chart[weekAgoIndex].priceUsd || currentPriceUsd;
-            console.log(`[${name}] Week ago price: ${tonPriceWeekAgo} TON (index ${weekAgoIndex})`);
-          }
-          
-          // For month, use the oldest available data point
-          tonPriceMonthAgo = historical.week_chart[0].priceTon || currentPriceTon;
-          usdPriceMonthAgo = historical.week_chart[0].priceUsd || currentPriceUsd;
-          console.log(`[${name}] Month ago price: ${tonPriceMonthAgo} TON (oldest available)`);
-        } else {
-          console.log(`[${name}] No historical data available`);
-        }
-        
-        // Use the full image URL directly
-        const imageUrl = data.image_url || '';
+        // Get historical prices from API response
+        const tonPrice24hAgo = data.tonPrice24hAgo || currentPriceTon;
+        const usdPrice24hAgo = data.usdPrice24hAgo || currentPriceUsd;
+        const tonPriceWeekAgo = data.tonPriceWeekAgo || currentPriceTon;
+        const usdPriceWeekAgo = data.usdPriceWeekAgo || currentPriceUsd;
+        const tonPriceMonthAgo = data.tonPriceMonthAgo || currentPriceTon;
+        const usdPriceMonthAgo = data.usdPriceMonthAgo || currentPriceUsd;
         
         return {
           name,
-          image: imageUrl,
+          image: data.image_url || '',
           priceTon: currentPriceTon,
           priceUsd: currentPriceUsd,
           tonPrice24hAgo,
@@ -389,7 +307,7 @@ const Chart = () => {
           usdPriceWeekAgo,
           tonPriceMonthAgo,
           usdPriceMonthAgo,
-          upgradedSupply: 1000000,
+          upgradedSupply: data.upgradedSupply || 1000000,
           preSale: false
         };
       });
