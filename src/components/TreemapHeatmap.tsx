@@ -167,9 +167,34 @@ const transformGiftData = (
       const marketCapValue = parseMarketCap(marketCapStr);
       const size = Math.sqrt(marketCapValue) / 100; // Scale for reasonable sizes
 
+      // Calculate percentChange for colors even in marketcap mode
+      let previousPrice = currentPrice;
+      
+      switch (timeGap) {
+        case '24h':
+          previousPrice = currency === 'ton'
+            ? (item.tonPrice24hAgo || currentPrice)
+            : (item.usdPrice24hAgo || currentPrice);
+          break;
+        case '1w':
+          previousPrice = currency === 'ton'
+            ? (item.tonPriceWeekAgo || currentPrice)
+            : (item.usdPriceWeekAgo || currentPrice);
+          break;
+        case '1m':
+          previousPrice = currency === 'ton'
+            ? (item.tonPriceMonthAgo || currentPrice)
+            : (item.usdPriceMonthAgo || currentPrice);
+          break;
+        default:
+          previousPrice = currentPrice;
+      }
+
+      const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
+
       return {
         name: item.name,
-        percentChange: 0, // Not used in marketcap mode
+        percentChange: Number(percentChange.toFixed(2)), // Use actual change for colors
         size,
         imageName: item.image,
         price: currentPrice,
@@ -269,8 +294,7 @@ const createImagePlugin = (
 
         if (width <= 0 || height <= 0) return;
 
-        const color = chartType === 'marketcap' ? '#3b82f6'
-          : item.percentChange > 0 ? '#018f35' 
+        const color = item.percentChange > 0 ? '#018f35' 
           : item.percentChange < 0 ? '#dc2626' 
           : '#8F9779';
 
@@ -304,7 +328,7 @@ const createImagePlugin = (
         const spacing = Math.min(Math.max(minDimension / 40, 0), 8) * scale;
         
         const totalTextHeight = chartType === 'marketcap'
-          ? imageHeight + (titleFontSize + marketCapFontSize) + 3 * spacing
+          ? imageHeight + (2 * titleFontSize) + 3 * spacing
           : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
         const textStartY = y + (height - totalTextHeight) / 2;
         const centerX = x + width / 2;
