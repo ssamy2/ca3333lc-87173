@@ -38,27 +38,49 @@ const GiftImage: React.FC<GiftImageProps> = ({
       .replace(/\s+/g, ' ')
       .trim();
     const parts = cleaned.split(' ');
-    return parts
+    const result = parts
       .map((p, i) => (i === 0 ? p.toLowerCase() : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()))
       .join('');
+    return result;
   };
 
   const getFallbackUrl = (level: number): string | null => {
+    const camelCase = toCamelFromName(name);
+    const kebabCase = name.toLowerCase().replace(/\s+/g, '-');
+    
     switch (level) {
       case 0:
+        // Always try original imageUrl first
         return imageUrl;
       case 1:
-        // Try camelCase version
-        return `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
-      case 2:
-        // Try short_name if available (for black gifts)
-        if (shortName) {
+        // For black mode with short_name that's different from imageUrl, try it
+        if (isBlackMode && shortName && !imageUrl.includes(shortName)) {
+          console.log(`[GiftImage] "${name}" - Trying shortName fallback: ${shortName}`);
           return `https://channelsseller.site/api/image/${shortName}`;
+        }
+        // Otherwise try camelCase
+        console.log(`[GiftImage] "${name}" - Trying camelCase fallback: ${camelCase}`);
+        return `https://channelsseller.site/api/image/${camelCase}`;
+      case 2:
+        // Try short_name if not tried yet
+        if (shortName && !imageUrl.includes(shortName)) {
+          console.log(`[GiftImage] "${name}" - Trying shortName fallback (2nd attempt): ${shortName}`);
+          return `https://channelsseller.site/api/image/${shortName}`;
+        }
+        // Try camelCase if not tried yet
+        if (!imageUrl.includes(camelCase)) {
+          console.log(`[GiftImage] "${name}" - Trying camelCase fallback (2nd attempt): ${camelCase}`);
+          return `https://channelsseller.site/api/image/${camelCase}`;
         }
         return null;
       case 3:
-        // Try kebab-case version
-        return `https://channelsseller.site/api/image/${name.toLowerCase().replace(/\s+/g, '-')}`;
+        // Try kebab-case
+        console.log(`[GiftImage] "${name}" - Trying kebab-case fallback: ${kebabCase}`);
+        return `https://channelsseller.site/api/image/${kebabCase}`;
+      case 4:
+        // Try original name without transformation
+        console.log(`[GiftImage] "${name}" - Trying original name fallback: ${name}`);
+        return `https://channelsseller.site/api/image/${name}`;
       default:
         return null;
     }
@@ -69,11 +91,11 @@ const GiftImage: React.FC<GiftImageProps> = ({
     const nextUrl = getFallbackUrl(nextLevel);
 
     if (nextUrl && nextUrl !== currentSrc) {
-      console.log(`Image failed for "${name}", trying fallback level ${nextLevel}: ${nextUrl}`);
+      console.log(`[GiftImage] "${name}" (shortName: ${shortName || 'N/A'}) - Image failed, trying fallback level ${nextLevel}`);
       setCurrentSrc(nextUrl);
       setFallbackLevel(nextLevel);
     } else {
-      console.log(`All image fallbacks failed for "${name}", showing icon`);
+      console.log(`[GiftImage] "${name}" (shortName: ${shortName || 'N/A'}) - All image fallbacks failed, showing icon`);
       setImageError(true);
     }
   };

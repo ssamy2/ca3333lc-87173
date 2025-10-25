@@ -150,11 +150,16 @@ const Chart = () => {
 
   const getFilteredData = () => {
     if (dataSource === 'black') {
-      // Convert black floor data to market data format, reusing market image URLs when possible
+      // Convert black floor data to market data format
+      // Priority: market image → short_name → camelCase fallback
       let blackEntries: [string, NFTMarketData & { short_name?: string }][] = blackFloorData.map(item => {
         const marketImage = (marketData as any)[item.gift_name]?.image_url as string | undefined;
-        const fallbackSlug = toCamelFromName(item.gift_name);
+        
+        // If market image exists, use it; otherwise use short_name as the API endpoint
         const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
+        
+        console.log(`[Chart] Black gift "${item.gift_name}" - Using ${marketImage ? 'market image' : 'short_name'} (${item.short_name})`);
+        
         return [
           item.gift_name,
           {
