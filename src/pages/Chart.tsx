@@ -579,7 +579,7 @@ const Chart = () => {
                   className="no-underline"
                 >
                   <Card
-                    className={`p-3 md:p-4 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                    className={`p-1.5 md:p-4 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
                     <div className="w-full flex-1 flex items-center justify-center min-h-0">
                       <GiftImage
@@ -591,18 +591,18 @@ const Chart = () => {
                         style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
                       />
                     </div>
-                    <div className="w-full flex flex-col items-center gap-1 md:gap-2">
-                      <div className="flex items-center gap-1 md:gap-1.5 justify-center">
-                        <TonIcon className={`w-3 h-3 md:w-4 md:h-4 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
+                    <div className="w-full flex flex-col items-center gap-0.5 md:gap-2">
+                      <div className="flex items-center gap-0.5 md:gap-1.5 justify-center">
+                        <TonIcon className={`w-2.5 h-2.5 md:w-4 md:h-4 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
                         <span 
-                          className={`font-semibold text-sm md:text-lg ${dataSource === 'black' ? 'text-[#B87333] md:text-xl font-[600]' : 'text-foreground'}`}
+                          className={`font-semibold text-[11px] md:text-lg ${dataSource === 'black' ? 'text-[#B87333] md:text-xl font-[600]' : 'text-foreground'}`}
                         >
                           {price.toFixed(2)}
                         </span>
                       </div>
                       {!isNeutral && (
                         <span
-                          className={`text-xs md:text-sm font-medium ${
+                          className={`text-[9px] md:text-sm font-medium ${
                             isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                           }`}
                         >
