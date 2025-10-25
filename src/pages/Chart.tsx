@@ -79,8 +79,14 @@ const Chart = () => {
   useEffect(() => {
     fetchMarketData(true);
     fetchBlackFloorData(true);
-    fetchHistoricalData();
   }, []);
+
+  // Fetch historical data after marketData is loaded
+  useEffect(() => {
+    if (Object.keys(marketData).length > 0 && Object.keys(historicalData).length === 0) {
+      fetchHistoricalData();
+    }
+  }, [marketData]);
 
   // Auto-refresh - runs independently
   useEffect(() => {
@@ -195,27 +201,37 @@ const Chart = () => {
     try {
       const cached = getCachedData('historical-gift-data');
       if (cached) {
+        console.log('[Historical] Using cached data for', Object.keys(cached).length, 'gifts');
         setHistoricalData(cached);
         return;
       }
 
-      // Fetch historical data for all gifts
       const giftNames = Object.keys(marketData);
+      console.log('[Historical] Fetching data for', giftNames.length, 'gifts');
+      
+      if (giftNames.length === 0) {
+        console.log('[Historical] No market data available yet');
+        return;
+      }
+
       const historicalMap: Record<string, GiftHistoricalData> = {};
       
       // Fetch in batches to avoid overwhelming the API
-      const batchSize = 10;
+      const batchSize = 5;
       for (let i = 0; i < giftNames.length; i += batchSize) {
         const batch = giftNames.slice(i, i + batchSize);
+        console.log(`[Historical] Fetching batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(giftNames.length/batchSize)}`);
+        
         const promises = batch.map(async (name) => {
           try {
             const response = await fetch(`https://channelsseller.site/api/gift-data?name=${encodeURIComponent(name)}`);
             if (response.ok) {
               const data = await response.json();
+              console.log(`[Historical] Got data for ${name}:`, data.week_chart?.length || 0, 'entries');
               return { name, data };
             }
           } catch (error) {
-            console.error(`Error fetching historical data for ${name}:`, error);
+            console.error(`[Historical] Error fetching data for ${name}:`, error);
           }
           return null;
         });
@@ -228,10 +244,11 @@ const Chart = () => {
         });
       }
       
+      console.log('[Historical] Loaded data for', Object.keys(historicalMap).length, 'gifts');
       setHistoricalData(historicalMap);
       setCachedData('historical-gift-data', historicalMap);
     } catch (error) {
-      console.error('Error fetching historical data:', error);
+      console.error('[Historical] Error fetching historical data:', error);
     }
   };
 
@@ -337,19 +354,25 @@ const Chart = () => {
         let usdPriceMonthAgo = currentPriceUsd;
         
         if (historical?.week_chart && historical.week_chart.length > 0) {
-          // Week chart has half-hour intervals
-          // 1 week ago = 7 * 24 * 2 = 336 entries ago
-          // 1 month ago = 30 * 24 * 2 = 1440 entries ago (but we only have 1 week data)
-          const weekAgoIndex = Math.max(0, historical.week_chart.length - 336);
+          const chartLength = historical.week_chart.length;
+          console.log(`[${name}] Chart has ${chartLength} entries`);
           
-          if (weekAgoIndex < historical.week_chart.length) {
+          // Week chart has half-hour intervals (2 per hour)
+          // 1 week ago = 7 days * 24 hours * 2 = 336 entries
+          const weekAgoIndex = Math.max(0, chartLength - 336);
+          
+          if (weekAgoIndex < chartLength) {
             tonPriceWeekAgo = historical.week_chart[weekAgoIndex].priceTon || currentPriceTon;
             usdPriceWeekAgo = historical.week_chart[weekAgoIndex].priceUsd || currentPriceUsd;
+            console.log(`[${name}] Week ago price: ${tonPriceWeekAgo} TON (index ${weekAgoIndex})`);
           }
           
           // For month, use the oldest available data point
           tonPriceMonthAgo = historical.week_chart[0].priceTon || currentPriceTon;
           usdPriceMonthAgo = historical.week_chart[0].priceUsd || currentPriceUsd;
+          console.log(`[${name}] Month ago price: ${tonPriceMonthAgo} TON (oldest available)`);
+        } else {
+          console.log(`[${name}] No historical data available`);
         }
         
         // Use the full image URL directly
