@@ -490,17 +490,30 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        // Send the full data URL with base64 prefix
-        await fetch('https://channelsseller.site/api/send-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: userId.toString(),
-            image: imageUrl  // Send full data URL: "data:image/jpeg;base64,..."
-          })
-        });
+        // Send to backend API directly
+        try {
+          // Get Telegram user ID if available
+          const telegramUserId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id || '7957114706';
+          
+          const response = await fetch('https://channelsseller.site/api/send-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: telegramUserId.toString(),
+              image: imageUrl  // Full data URL
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to send image');
+          }
+          
+          console.log('Image sent successfully');
+        } catch (err) {
+          console.error('Error sending image:', err);
+        }
 
         tempChart.destroy();
       } catch (error) {
