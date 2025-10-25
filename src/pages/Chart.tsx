@@ -273,14 +273,12 @@ const Chart = () => {
           ? currentPriceUsd / (1 + change24h / 100)
           : currentPriceUsd;
         
-        // Extract image name from URL
-        const imageName = data.image_url?.split('/').pop()?.replace('.webp', '') || 
-                         (data as any).short_name || 
-                         toCamelFromName(name);
+        // Use the full image URL directly
+        const imageUrl = data.image_url || '';
         
         return {
           name,
-          image: imageName,
+          image: imageUrl, // Pass full URL instead of just name
           priceTon: currentPriceTon,
           priceUsd: currentPriceUsd,
           tonPrice24hAgo,

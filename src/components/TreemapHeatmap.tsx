@@ -114,7 +114,8 @@ const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string,
         const img = new Image();
         img.onload = () => resolve();
         img.onerror = () => resolve();
-        img.src = `/gifts/${item.imageName}.webp`;
+        img.crossOrigin = 'anonymous';
+        img.src = item.imageName; // Use full URL
         imageMap.set(item.imageName, img);
       });
     })
@@ -191,7 +192,8 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
   
   data.forEach(item => {
     const img = new Image();
-    img.src = `/gifts/${item.imageName}.webp`;
+    img.crossOrigin = 'anonymous';
+    img.src = item.imageName; // Use full URL
     imageMap.set(item.imageName, img);
   });
   
@@ -216,7 +218,8 @@ const createImagePlugin = (
       
       const toncoinImage = imageMap.get('toncoin') || new Image();
       if (!imageMap.has('toncoin')) {
-        toncoinImage.src = '/images/toncoin.webp';
+        toncoinImage.crossOrigin = 'anonymous';
+        toncoinImage.src = 'https://channelsseller.site/api/image/toncoin';
         imageMap.set('toncoin', toncoinImage);
       }
 
