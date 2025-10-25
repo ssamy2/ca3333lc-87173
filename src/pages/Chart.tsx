@@ -2,14 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, Download, RotateCcw, LayoutGrid, List, BarChart3 } from 'lucide-react';
+import { Loader2, LayoutGrid, List, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
 import TonIcon from '@/components/TonIcon';
 import { getCachedData, setCachedData } from '@/services/marketCache';
-import { imageCache } from '@/services/imageCache';
 import { Link } from 'react-router-dom';
-import HeatmapTreemap from '@/components/HeatmapTreemap';
+import TreemapHeatmap from '@/components/TreemapHeatmap';
 import GiftImage from '@/components/GiftImage';
 import BottomNav from '@/components/BottomNav';
 
@@ -36,6 +34,23 @@ type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
 type DataSource = 'market' | 'black';
+type ChartType = 'change' | 'marketCap';
+type TimeGap = '24h' | '1w' | '1m';
+
+interface GiftItem {
+  name: string;
+  image: string;
+  priceTon: number;
+  priceUsd: number;
+  tonPrice24hAgo?: number;
+  usdPrice24hAgo?: number;
+  tonPriceWeekAgo?: number;
+  usdPriceWeekAgo?: number;
+  tonPriceMonthAgo?: number;
+  usdPriceMonthAgo?: number;
+  upgradedSupply: number;
+  preSale?: boolean;
+}
 
 const Chart = () => {
   const [marketData, setMarketData] = useState<MarketData>({});
@@ -46,18 +61,12 @@ const Chart = () => {
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
+  const [chartType, setChartType] = useState<ChartType>('change');
+  const [timeGap, setTimeGap] = useState<TimeGap>('24h');
   const updateIntervalRef = useRef<number | null>(null);
-  const [watermarkPosition] = useState({ 
-    top: Math.random() * 70 + 10, 
-    left: Math.random() * 70 + 10 
-  });
 
   // Initial data load - runs once on mount
   useEffect(() => {
-    imageCache.clearExpiredCache();
     fetchMarketData(true);
     fetchBlackFloorData(true);
   }, []);
@@ -243,129 +252,46 @@ const Chart = () => {
     return entries;
   };
 
-  const getTreemapData = () => {
+  const getGiftItems = (): GiftItem[] => {
     const entries = getFilteredData();
     
     return entries
       .filter(([_, data]) => {
         const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-        // Filter out items with changes smaller than 1%
         return Math.abs(change) >= 1;
       })
       .map(([name, data]) => {
-        const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-        const price = currency === 'ton' ? data.price_ton : data.price_usd;
+        const currentPriceTon = data.price_ton;
+        const currentPriceUsd = data.price_usd;
+        const change24h = data['change_24h_ton_%'];
+        
+        // Calculate historical prices from change percentage
+        const tonPrice24hAgo = change24h !== 0 
+          ? currentPriceTon / (1 + change24h / 100)
+          : currentPriceTon;
+        const usdPrice24hAgo = change24h !== 0
+          ? currentPriceUsd / (1 + change24h / 100)
+          : currentPriceUsd;
+        
+        // Extract image name from URL
+        const imageName = data.image_url?.split('/').pop()?.replace('.webp', '') || 
+                         (data as any).short_name || 
+                         toCamelFromName(name);
         
         return {
           name,
-          size: Math.abs(change), // Use absolute change for area
-          change,
-          price,
-          imageUrl: data.image_url,
-          color: getColorForChange(change),
+          image: imageName,
+          priceTon: currentPriceTon,
+          priceUsd: currentPriceUsd,
+          tonPrice24hAgo,
+          usdPrice24hAgo,
+          upgradedSupply: 1000000, // Default value since we don't have this data
+          preSale: false
         };
       });
   };
 
-  const downloadAsImage = async () => {
-    const element = document.getElementById('heatmap-container');
-    if (!element) {
-      toast.error('Heatmap not found');
-      return;
-    }
 
-    const loadingToast = toast.loading('Preparing images...');
-
-    try {
-      // Preload any missing images using the cache service
-      const treemapData = getTreemapData();
-      const imageUrls = treemapData
-        .map(item => item.imageUrl)
-        .filter((url): url is string => !!url);
-      
-      // Only preload uncached images (most should already be cached)
-      await imageCache.preloadUncachedImages(imageUrls);
-
-      // Wait longer to ensure SVG is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      toast.dismiss(loadingToast);
-      const generatingToast = toast.loading('Generating image...');
-
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#09090b',
-        scale: 4,
-        logging: true,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        imageTimeout: 30000,
-        removeContainer: false,
-        onclone: (clonedDoc) => {
-          // Force all images in cloned document to use base64 from cache
-          const images = clonedDoc.querySelectorAll('image');
-          images.forEach((img: any) => {
-            const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-            if (href) {
-              const cachedImage = imageCache.getImageFromCache(href);
-              if (cachedImage) {
-                img.setAttribute('href', cachedImage);
-                img.setAttribute('xlink:href', cachedImage);
-              }
-            }
-          });
-          
-          // Make sure SVG is visible in cloned document
-          const svgElements = clonedDoc.querySelectorAll('svg');
-          svgElements.forEach((svg: any) => {
-            svg.style.backgroundColor = 'transparent';
-          });
-        },
-      });
-
-      const base64Image = canvas.toDataURL('image/png', 1.0).split(',')[1];
-
-      // Get Telegram user ID
-      const tg = (window as any).Telegram?.WebApp;
-      const userId = tg?.initDataUnsafe?.user?.id;
-
-      if (!userId) {
-        toast.dismiss(generatingToast);
-        toast.error('Could not get Telegram user ID');
-        return;
-      }
-
-      // Send to API
-      const response = await fetch('https://channelsseller.site/api/send-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: userId.toString(),
-          image: base64Image,
-        }),
-      });
-
-      toast.dismiss(generatingToast);
-
-      if (response.ok) {
-        setShowSuccessScreen(true);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || 'Failed to send image');
-      }
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error('Error generating image:', error);
-      toast.error('Failed to generate image');
-    }
-  };
-
-  const getColorForChange = (change: number) => {
-    // Use bright, vivid colors for better visibility
-    return change >= 0 ? '#22C55E' : '#EF4444';
-  };
 
   // Helper: convert gift name to API camelCase slug (e.g., "Plush Pepe" -> "plushPepe")
   const toCamelFromName = (name: string) => {
@@ -379,25 +305,6 @@ const Chart = () => {
       .join('');
   };
 
-  // Treemap is rendered via HeatmapTreemap component
-
-  const handleImageError = (imageUrl: string) => {
-    setImageErrors(prev => new Set([...prev, imageUrl]));
-    setImageLoading(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(imageUrl);
-      return newSet;
-    });
-  };
-
-  const handleImageLoad = (imageUrl: string) => {
-    setImageLoading(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(imageUrl);
-      return newSet;
-    });
-  };
-
   const filteredData = getFilteredData();
 
   if (loading) {
@@ -408,38 +315,6 @@ const Chart = () => {
     );
   }
 
-  // Success screen after sending image
-  if (showSuccessScreen) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-6">
-        <Card className="w-full max-w-md p-8 text-center space-y-6">
-          {/* Telegram Logo */}
-          <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-4xl">
-              ✈️
-            </div>
-          </div>
-          
-          {/* Message */}
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">Success!</h2>
-            <p className="text-muted-foreground">
-              Your image will arrive soon via DM
-            </p>
-          </div>
-          
-          {/* OK Button */}
-          <Button
-            onClick={() => setShowSuccessScreen(false)}
-            className="w-full"
-            size="lg"
-          >
-            OK
-          </Button>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen pb-20 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-background'}`}>
@@ -512,6 +387,54 @@ const Chart = () => {
 
           {viewMode === 'heatmap' && (
             <>
+              {/* Chart Type */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setChartType('change')}
+                  variant={chartType === 'change' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  Change
+                </Button>
+                <Button
+                  onClick={() => setChartType('marketCap')}
+                  variant={chartType === 'marketCap' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  Market Cap
+                </Button>
+              </div>
+
+              {/* Time Gap */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setTimeGap('24h')}
+                  variant={timeGap === '24h' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  24h
+                </Button>
+                <Button
+                  onClick={() => setTimeGap('1w')}
+                  variant={timeGap === '1w' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  1w
+                </Button>
+                <Button
+                  onClick={() => setTimeGap('1m')}
+                  variant={timeGap === '1m' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                >
+                  1m
+                </Button>
+              </div>
+
               {/* Currency */}
               <div className="flex gap-2">
                 <Button
@@ -571,34 +494,6 @@ const Chart = () => {
           )}
         </div>
 
-        {viewMode === 'heatmap' && (
-          <div className="space-y-2">
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setZoomLevel(1)}
-                variant="outline"
-                size="sm"
-                className="flex-1 h-8 text-xs"
-              >
-                <RotateCcw className="w-3 h-3 mr-1.5" />
-                Reset Zoom
-              </Button>
-            </div>
-
-            {/* Download Button */}
-            <Button
-              onClick={downloadAsImage}
-              variant="default"
-              size="sm"
-              className="w-full h-9"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Get it as a photo
-            </Button>
-          </div>
-        )}
 
         {/* Content */}
         {viewMode === 'grid' && (
@@ -736,30 +631,12 @@ const Chart = () => {
         )}
 
         {viewMode === 'heatmap' && (
-          <div 
-            id="heatmap-container" 
-            className="relative bg-card"
-            style={{ 
-              width: '100%',
-              height: window.innerWidth < 768 ? 'calc(100vh - 380px)' : 'auto',
-              minHeight: window.innerWidth < 768 ? '450px' : '500px',
-              aspectRatio: window.innerWidth < 768 ? '4 / 5' : '16 / 9',
-            }}
-          >
-            {/* Watermark Overlay */}
-            <div 
-              className="absolute text-white/40 text-xs font-medium pointer-events-none z-10"
-              style={{ 
-                top: `${watermarkPosition.top}%`,
-                left: `${watermarkPosition.left}%`,
-                textShadow: '0 1px 3px rgba(0,0,0,0.5)'
-              }}
-            >
-              @Nova_calculator_bot
-            </div>
-            
-            <HeatmapTreemap data={getTreemapData()} currency={currency} />
-          </div>
+          <TreemapHeatmap 
+            data={getGiftItems()} 
+            chartType={chartType}
+            timeGap={timeGap}
+            currency={currency}
+          />
         )}
       </div>
     </div>
