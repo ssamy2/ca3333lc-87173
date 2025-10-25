@@ -7,6 +7,7 @@ import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, X
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import GiftModelsDialog from '@/components/GiftModelsDialog';
+import GiftImage from '@/components/GiftImage';
 
 interface GiftInfo {
   name: string;
@@ -329,13 +330,11 @@ const GiftDetail = () => {
         {/* Gift Header */}
         <Card className="p-4">
           <div className="flex items-center gap-4">
-            <img 
-              src={`https://channelsseller.site/api/image/${giftData.info.image}`}
-              alt={giftData.info.name}
-              className="w-16 h-16 rounded-lg object-cover"
-              onError={(e) => {
-                e.currentTarget.src = 'https://placehold.co/64x64?text=NFT';
-              }}
+            <GiftImage
+              imageUrl={`https://channelsseller.site/api/image/${giftData.info.image}`}
+              name={giftData.info.name}
+              size="lg"
+              className="rounded-lg"
             />
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">{giftData.info.name}</h1>
