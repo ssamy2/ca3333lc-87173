@@ -141,27 +141,36 @@ const Chart = () => {
   const getFilteredData = () => {
     if (dataSource === 'black') {
       // Convert black floor data to market data format
-      // Priority: market image → short_name → camelCase fallback
-      let blackEntries: [string, NFTMarketData & { short_name?: string }][] = blackFloorData.map(item => {
-        const marketImage = (marketData as any)[item.gift_name]?.image_url as string | undefined;
-        
-        // If market image exists, use it; otherwise use short_name as the API endpoint
-        const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
-        
-        console.log(`[Chart] Black gift "${item.gift_name}" - Using ${marketImage ? 'market image' : 'short_name'} (${item.short_name})`);
-        
-        return [
-          item.gift_name,
-          {
-            price_ton: item.black_price,
-            price_usd: item.black_price * 2.16, // Approximate conversion
-            'change_24h_ton_%': 0,
-            'change_24h_usd_%': 0,
-            image_url: imageUrl,
-            short_name: item.short_name,
+      // IMPORTANT: Only show gifts that exist in market data (already released)
+      let blackEntries: [string, NFTMarketData & { short_name?: string }][] = blackFloorData
+        .filter(item => {
+          // Only include if gift exists in market data
+          const existsInMarket = marketData[item.gift_name];
+          if (!existsInMarket) {
+            console.log(`[Chart] Black gift "${item.gift_name}" not in market data - skipping`);
           }
-        ];
-      });
+          return existsInMarket;
+        })
+        .map(item => {
+          const marketImage = marketData[item.gift_name]?.image_url;
+          
+          // Use market image if available, otherwise use short_name endpoint
+          const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
+          
+          console.log(`[Chart] Black gift "${item.gift_name}" - Using ${marketImage ? 'market image' : 'short_name'} (${item.short_name})`);
+          
+          return [
+            item.gift_name,
+            {
+              price_ton: item.black_price,
+              price_usd: item.black_price * 2.16, // Approximate conversion
+              'change_24h_ton_%': 0,
+              'change_24h_usd_%': 0,
+              image_url: imageUrl,
+              short_name: item.short_name,
+            }
+          ];
+        });
 
       // Sort by price (highest first)
       blackEntries.sort((a, b) => b[1].price_ton - a[1].price_ton);
