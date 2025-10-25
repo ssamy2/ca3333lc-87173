@@ -127,9 +127,21 @@ const Chart = () => {
       const response = await fetch('https://channelsseller.site/api/black-floor');
       const data: BlackFloorItem[] = await response.json();
       
+      // Filter to get only the latest record for each gift (by recorded_at)
+      const latestRecords = new Map<string, BlackFloorItem>();
+      
+      data.forEach(item => {
+        const existing = latestRecords.get(item.gift_name);
+        if (!existing || new Date(item.recorded_at) > new Date(existing.recorded_at)) {
+          latestRecords.set(item.gift_name, item);
+        }
+      });
+      
+      const filteredData = Array.from(latestRecords.values());
+      
       // Only preload images on initial load to avoid repeated requests
       if (isInitialLoad) {
-        const imageUrls = data.map(item => 
+        const imageUrls = filteredData.map(item => 
           `https://channelsseller.site/api/image/${item.short_name}`
         );
         
@@ -138,8 +150,8 @@ const Chart = () => {
         });
       }
       
-      setBlackFloorData(data);
-      setCachedData('black-floor-data', data);
+      setBlackFloorData(filteredData);
+      setCachedData('black-floor-data', filteredData);
     } catch (error) {
       console.error('Error fetching black floor data:', error);
       if (isInitialLoad) {
