@@ -402,14 +402,16 @@ const Chart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-2 space-y-2">
+    <div className={`min-h-screen pb-20 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-background'}`}>
+      <div className={`p-2 space-y-2 ${dataSource === 'black' ? 'font-inter' : ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">Market Charts</h1>
+          <h1 className={`text-xl font-bold ${dataSource === 'black' ? 'text-[#C9A14B] text-[48px]' : 'text-foreground'}`}>
+            {dataSource === 'black' ? 'BLACK GIFTS' : 'Market Charts'}
+          </h1>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs text-muted-foreground">Live</span>
+            <span className={`text-xs ${dataSource === 'black' ? 'text-white/60' : 'text-muted-foreground'}`}>Live</span>
           </div>
         </div>
 
@@ -457,7 +459,7 @@ const Chart = () => {
               onClick={() => setDataSource('black')}
               variant={dataSource === 'black' ? 'default' : 'outline'}
               size="sm"
-              className="flex-1 h-8 text-xs bg-black text-white hover:bg-black/80"
+              className={`flex-1 h-8 text-xs ${dataSource === 'black' ? 'bg-[#0B0B0D] text-white hover:bg-[#0B0B0D]/90' : 'bg-black text-white hover:bg-black/80'}`}
             >
               Black
             </Button>
@@ -555,7 +557,16 @@ const Chart = () => {
 
         {/* Content */}
         {viewMode === 'grid' && (
-          <div className="grid grid-cols-4 gap-2">
+          <div 
+            className="grid grid-cols-4 gap-[24px] mx-[28px]"
+            style={dataSource === 'black' ? {
+              backgroundImage: `
+                radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px)
+              `
+            } : undefined}
+          >
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? data.price_ton : data.price_usd;
@@ -563,6 +574,9 @@ const Chart = () => {
               const isNeutral = change === 0;
 
               const getCardStyle = () => {
+                if (dataSource === 'black') {
+                  return 'bg-[#0B0B0D] border border-white/[0.02] shadow-[0_6px_18px_rgba(91,46,221,0.12),0_4px_12px_rgba(0,0,0,0.45),inset_0_2px_6px_rgba(91,46,221,0.04)]';
+                }
                 if (isNeutral) {
                   return 'bg-secondary/80 hover:shadow-lg hover:shadow-muted/20';
                 }
@@ -586,6 +600,7 @@ const Chart = () => {
                       alt={name}
                       loading="lazy"
                       className="w-12 h-12 object-contain"
+                      style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
                       onError={(e) => {
                         const fallback = `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
                         if (e.currentTarget.src !== fallback) {
@@ -600,9 +615,11 @@ const Chart = () => {
                         }
                       }}
                     />
-                    <div className="flex items-center gap-1">
-                      <TonIcon className="w-3 h-3" />
-                      <span className="font-bold text-foreground text-sm">
+                    <div className="flex items-center gap-1 justify-center">
+                      <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
+                      <span 
+                        className={`font-semibold text-sm ${dataSource === 'black' ? 'text-[#B87333] text-[22px] font-[600]' : 'text-foreground'}`}
+                      >
                         {price.toFixed(2)}
                       </span>
                     </div>

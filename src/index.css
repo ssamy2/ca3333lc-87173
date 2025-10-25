@@ -11,6 +11,13 @@ All colors MUST be HSL.
     /* Light theme - Vibrant Colors */
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
+    
+    /* Black Gifts Theme - Fixed colors that won't change with theme */
+    --black-bg: 218 7% 4%;           /* #0B0B0D */
+    --black-pattern: 217 6% 7%;      /* #111214 */
+    --black-gold: 41 46% 54%;        /* #C9A14B */
+    --black-copper: 25 60% 46%;      /* #B87333 */
+    --black-purple: 257 69% 52%;     /* #5B2EDD */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
