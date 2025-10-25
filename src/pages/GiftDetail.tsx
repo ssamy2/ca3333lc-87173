@@ -156,13 +156,16 @@ const GiftDetail = () => {
   };
 
   const calculatePriceChange = () => {
-    if (!giftData || !Array.isArray(giftData.life_chart) || giftData.life_chart.length === 0) return 0;
+    const chartData = getChartData();
     
-    const currentPrice = currency === 'ton' ? giftData.info.priceTon : giftData.info.priceUsd;
-    const oldestPrice = currency === 'ton' ? giftData.life_chart[0].priceTon : giftData.life_chart[0].priceUsd;
+    if (!chartData || chartData.length === 0) return 0;
     
-    if (oldestPrice === 0) return 0;
-    return ((currentPrice - oldestPrice) / oldestPrice) * 100;
+    // Use first and last prices from the current chart view
+    const firstPrice = chartData[0].price;
+    const lastPrice = chartData[chartData.length - 1].price;
+    
+    if (firstPrice === 0) return 0;
+    return ((lastPrice - firstPrice) / firstPrice) * 100;
   };
 
 
