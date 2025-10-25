@@ -49,7 +49,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         id: targetUserId,
-        image: image, // Send full data URL
+        image: image, // Send clean Base64 without prefix
       }),
     });
 

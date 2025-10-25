@@ -492,6 +492,9 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
 
         // Send to Supabase Edge Function
         try {
+          // Remove the Base64 prefix (data:image/jpeg;base64,)
+          const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+          
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
             method: 'POST',
             headers: {
@@ -500,7 +503,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
             },
             body: JSON.stringify({
               userId: userId.toString(),
-              image: imageUrl
+              image: cleanBase64
             })
           });
 
