@@ -89,10 +89,12 @@ const GiftDetail = () => {
       const response = await fetch(`https://channelsseller.site/api/gift-data?name=${encodeURIComponent(giftName)}`);
       
       if (!response.ok) {
+        console.error('Gift data fetch failed:', response.status);
         throw new Error('Failed to fetch gift data');
       }
       
       const data = await response.json();
+      console.log('Gift data received:', data);
       setGiftData(data);
     } catch (error) {
       console.error('Error fetching gift data:', error);

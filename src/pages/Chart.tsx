@@ -544,7 +544,7 @@ const Chart = () => {
         {/* Content */}
         {viewMode === 'grid' && (
           <div 
-            className="grid grid-cols-4 gap-[24px] mx-[28px]"
+            className="grid grid-cols-4 gap-3 mx-2"
             style={dataSource === 'black' ? {
               backgroundImage: `
                 radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
@@ -579,34 +579,38 @@ const Chart = () => {
                   className="no-underline"
                 >
                   <Card
-                    className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                    className={`p-2 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
-                    <GiftImage
-                      imageUrl={data.image_url}
-                      name={name}
-                      shortName={(data as any).short_name}
-                      size="md"
-                      isBlackMode={dataSource === 'black'}
-                      style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
-                    />
-                    <div className="flex items-center gap-1 justify-center">
-                      <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
-                      <span 
-                        className={`font-semibold text-sm ${dataSource === 'black' ? 'text-[#B87333] text-[22px] font-[600]' : 'text-foreground'}`}
-                      >
-                        {price.toFixed(2)}
-                      </span>
+                    <div className="w-full flex-1 flex items-center justify-center">
+                      <GiftImage
+                        imageUrl={data.image_url}
+                        name={name}
+                        shortName={(data as any).short_name}
+                        size="sm"
+                        isBlackMode={dataSource === 'black'}
+                        style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
+                      />
                     </div>
-                    {!isNeutral && (
-                      <span
-                        className={`text-xs font-medium ${
-                          isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                        }`}
-                      >
-                        {isPositive ? '+' : ''}
-                        {change.toFixed(2)}%
-                      </span>
-                    )}
+                    <div className="w-full flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-1 justify-center">
+                        <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
+                        <span 
+                          className={`font-semibold text-sm ${dataSource === 'black' ? 'text-[#B87333] text-base font-[600]' : 'text-foreground'}`}
+                        >
+                          {price.toFixed(2)}
+                        </span>
+                      </div>
+                      {!isNeutral && (
+                        <span
+                          className={`text-xs font-medium ${
+                            isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
+                          }`}
+                        >
+                          {isPositive ? '+' : ''}
+                          {change.toFixed(2)}%
+                        </span>
+                      )}
+                    </div>
                   </Card>
                 </Link>
               );
