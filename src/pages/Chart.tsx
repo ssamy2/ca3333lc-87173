@@ -10,6 +10,7 @@ import { getCachedData, setCachedData } from '@/services/marketCache';
 import { imageCache } from '@/services/imageCache';
 import { Link } from 'react-router-dom';
 import HeatmapTreemap from '@/components/HeatmapTreemap';
+import GiftImage from '@/components/GiftImage';
 
 interface NFTMarketData {
   price_ton: number;
@@ -150,10 +151,10 @@ const Chart = () => {
   const getFilteredData = () => {
     if (dataSource === 'black') {
       // Convert black floor data to market data format, reusing market image URLs when possible
-      let blackEntries: [string, NFTMarketData][] = blackFloorData.map(item => {
+      let blackEntries: [string, NFTMarketData & { short_name?: string }][] = blackFloorData.map(item => {
         const marketImage = (marketData as any)[item.gift_name]?.image_url as string | undefined;
         const fallbackSlug = toCamelFromName(item.gift_name);
-        const imageUrl = marketImage || `https://channelsseller.site/api/image/${fallbackSlug}`;
+        const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
         return [
           item.gift_name,
           {
@@ -162,6 +163,7 @@ const Chart = () => {
             'change_24h_ton_%': 0,
             'change_24h_usd_%': 0,
             image_url: imageUrl,
+            short_name: item.short_name,
           }
         ];
       });
@@ -595,25 +597,13 @@ const Chart = () => {
                   <Card
                     className={`p-3 flex flex-col items-center gap-2 backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
-                    <img
-                      src={imageCache.getImageFromCache(data.image_url) || data.image_url}
-                      alt={name}
-                      loading="lazy"
-                      className="w-12 h-12 object-contain"
+                    <GiftImage
+                      imageUrl={data.image_url}
+                      name={name}
+                      shortName={(data as any).short_name}
+                      size="md"
+                      isBlackMode={dataSource === 'black'}
                       style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
-                      onError={(e) => {
-                        const fallback = `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
-                        if (e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback;
-                        } else {
-                          e.currentTarget.src = '/placeholder.svg';
-                        }
-                      }}
-                      onLoad={() => {
-                        if (!imageCache.getImageFromCache(data.image_url)) {
-                          imageCache.preloadImage(data.image_url);
-                        }
-                      }}
                     />
                     <div className="flex items-center gap-1 justify-center">
                       <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
@@ -657,24 +647,13 @@ const Chart = () => {
                     <div className="flex items-center gap-4">
                       {/* Left: Image */}
                       <div className="flex-shrink-0">
-                        <img
-                          src={imageCache.getImageFromCache(data.image_url) || data.image_url}
-                          alt={name}
-                          loading="lazy"
-                          className="w-12 h-12 object-contain rounded-full"
-                          onError={(e) => {
-                            const fallback = `https://channelsseller.site/api/image/${toCamelFromName(name)}`;
-                            if (e.currentTarget.src !== fallback) {
-                              e.currentTarget.src = fallback;
-                            } else {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }
-                          }}
-                          onLoad={() => {
-                            if (!imageCache.getImageFromCache(data.image_url)) {
-                              imageCache.preloadImage(data.image_url);
-                            }
-                          }}
+                        <GiftImage
+                          imageUrl={data.image_url}
+                          name={name}
+                          shortName={(data as any).short_name}
+                          size="md"
+                          className="rounded-full"
+                          isBlackMode={dataSource === 'black'}
                         />
                       </div>
 
