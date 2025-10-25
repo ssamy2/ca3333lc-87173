@@ -533,60 +533,52 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
 
   if (isLoading) {
     return (
-      <div className="w-full pt-0 pb-24 flex flex-col items-center overflow-visible">
-        <div className="w-full flex flex-col items-center px-3 gap-y-3 mb-3">
-          <div className="w-full lg:w-5/6 flex flex-row justify-between items-center gap-x-3">
-            <button className="w-fit flex flex-row items-center text-lg font-bold">
-              <ArrowLeft />
-              Go Back
-            </button>
-          </div>
-        </div>
-        <div className="flex justify-center items-center mt-5">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+      <div className="w-full flex justify-center items-center min-h-[600px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="w-full lg:w-5/6 mb-3 px-3 flex gap-2">
+    <div className="w-full flex flex-col items-center gap-3 px-3">
+      {/* Control Buttons */}
+      <div className="w-full flex gap-2">
         <button
-          className="w-full flex flex-row items-center justify-center gap-x-1 text-sm h-8 rounded-xl bg-secondaryTransparent"
+          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
           onClick={handleResetZoom}
         >
-          <RotateCcw size={16} />
+          <RotateCcw size={18} />
           Reset Zoom
         </button>
         
-        <div className="w-full flex flex-row gap-x-2">
-          <button
-            className="w-full flex items-center justify-center h-8 rounded-xl bg-secondaryTransparent"
-            onClick={handleZoomOut}
-          >
-            <ZoomOut size={16} />
-          </button>
-          <button
-            className="w-full flex items-center justify-center h-8 rounded-xl bg-secondaryTransparent"
-            onClick={handleZoomIn}
-          >
-            <ZoomIn size={16} />
-          </button>
-        </div>
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          onClick={handleZoomOut}
+        >
+          <ZoomOut size={20} />
+        </button>
+        
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          onClick={handleZoomIn}
+        >
+          <ZoomIn size={20} />
+        </button>
       </div>
 
+      {/* Download Button */}
       <DownloadHeatmapModal
         trigger={
-          <button className="w-full lg:w-5/6 flex flex-row items-center justify-center gap-x-1 text-sm h-8 rounded-t-lg bg-secondaryTransparent">
-            <Download size={16} />
+          <button className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-medium">
+            <Download size={18} />
             Download Heatmap as Image
           </button>
         }
         onDownload={downloadImage}
       />
 
-      <div className="w-full lg:w-5/6 min-h-[600px]">
+      {/* Chart */}
+      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
         <Chart
           ref={chartRef}
           type="treemap"

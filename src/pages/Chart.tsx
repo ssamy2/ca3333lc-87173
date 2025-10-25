@@ -410,41 +410,13 @@ const Chart = () => {
 
           {viewMode === 'heatmap' && (
             <>
-              {/* Time Gap */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setTimeGap('24h')}
-                  variant={timeGap === '24h' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                >
-                  24h
-                </Button>
-                <Button
-                  onClick={() => setTimeGap('1w')}
-                  variant={timeGap === '1w' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                >
-                  1w
-                </Button>
-                <Button
-                  onClick={() => setTimeGap('1m')}
-                  variant={timeGap === '1m' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                >
-                  1m
-                </Button>
-              </div>
-
               {/* Currency */}
               <div className="flex gap-2">
                 <Button
                   onClick={() => setCurrency('ton')}
                   variant={currency === 'ton' ? 'default' : 'outline'}
                   size="sm"
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-10 text-sm rounded-xl"
                 >
                   TON
                 </Button>
@@ -452,9 +424,37 @@ const Chart = () => {
                   onClick={() => setCurrency('usd')}
                   variant={currency === 'usd' ? 'default' : 'outline'}
                   size="sm"
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-10 text-sm rounded-xl"
                 >
                   USD
+                </Button>
+              </div>
+
+              {/* Time Gap */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setTimeGap('1m')}
+                  variant={timeGap === '1m' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-10 text-sm rounded-xl"
+                >
+                  1m
+                </Button>
+                <Button
+                  onClick={() => setTimeGap('1w')}
+                  variant={timeGap === '1w' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-10 text-sm rounded-xl"
+                >
+                  1w
+                </Button>
+                <Button
+                  onClick={() => setTimeGap('24h')}
+                  variant={timeGap === '24h' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-10 text-sm rounded-xl"
+                >
+                  24h
                 </Button>
               </div>
 
@@ -464,7 +464,7 @@ const Chart = () => {
                   onClick={() => setTopFilter('all')}
                   variant={topFilter === 'all' ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-10 text-sm rounded-xl"
                 >
                   All
                 </Button>
@@ -472,7 +472,7 @@ const Chart = () => {
                   onClick={() => setTopFilter('top50')}
                   variant={topFilter === 'top50' ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-10 text-sm rounded-xl"
                 >
                   Top 50
                 </Button>
@@ -480,7 +480,7 @@ const Chart = () => {
                   onClick={() => setTopFilter('top35')}
                   variant={topFilter === 'top35' ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-10 text-sm rounded-xl"
                 >
                   Top 35
                 </Button>
@@ -488,7 +488,7 @@ const Chart = () => {
                   onClick={() => setTopFilter('top25')}
                   variant={topFilter === 'top25' ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-10 text-sm rounded-xl"
                 >
                   Top 25
                 </Button>
