@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, CandlestickChart, Sparkles } from 'lucide-react';
-import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Rectangle } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import GiftModelsDialog from '@/components/GiftModelsDialog';
@@ -42,6 +42,10 @@ interface ChartData {
   date: string;
   priceTon: number;
   priceUsd: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
 }
 
 interface GiftDetailData {
@@ -126,18 +130,28 @@ const GiftDetail = () => {
     if (dataSource === 'black') {
       if (blackFloorData.length === 0) return [];
       
-      // Map black floor data to chart format
-      return blackFloorData.map(item => ({
-        date: new Date(item.recorded_at).toLocaleDateString(),
-        priceTon: item.black_price,
-        priceUsd: item.black_price * 2.16,
-        price: item.black_price, // Black only shows TON
-        label: new Date(item.recorded_at).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        }),
-      })).reverse(); // Reverse to show chronological order
+      // Map black floor data to chart format with candlestick data
+      return blackFloorData.map((item, index, arr) => {
+        const price = item.black_price;
+        const prevPrice = index > 0 ? arr[index - 1].black_price : price;
+        const nextPrice = index < arr.length - 1 ? arr[index + 1].black_price : price;
+        
+        return {
+          date: new Date(item.recorded_at).toLocaleDateString(),
+          priceTon: price,
+          priceUsd: price * 2.16,
+          price: price,
+          open: prevPrice,
+          high: Math.max(price, prevPrice, nextPrice),
+          low: Math.min(price, prevPrice, nextPrice),
+          close: price,
+          label: new Date(item.recorded_at).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          }),
+        };
+      }).reverse(); // Reverse to show chronological order
     }
     
     // Market data (original logic)
@@ -148,33 +162,63 @@ const GiftDetail = () => {
       if (timeRange === '24h') {
         // Last 48 entries (24 hours with half-hour intervals)
         const recentData = giftData.week_chart.slice(-48);
-        return recentData.map(item => ({
-          date: item.date,
-          priceTon: item.priceTon,
-          priceUsd: item.priceUsd,
-          price: currency === 'ton' ? item.priceTon : item.priceUsd,
-          label: item.time,
-        }));
+        return recentData.map((item, index, arr) => {
+          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          
+          return {
+            date: item.date,
+            priceTon: item.priceTon,
+            priceUsd: item.priceUsd,
+            price: price,
+            open: prevPrice,
+            high: Math.max(price, prevPrice, nextPrice),
+            low: Math.min(price, prevPrice, nextPrice),
+            close: price,
+            label: item.time,
+          };
+        });
       } else if (timeRange === '3d') {
         // Last 144 entries (3 days × 48 readings per day)
         const recentData = giftData.week_chart.slice(-144);
-        return recentData.map(item => ({
-          date: item.date,
-          priceTon: item.priceTon,
-          priceUsd: item.priceUsd,
-          price: currency === 'ton' ? item.priceTon : item.priceUsd,
-          label: item.time,
-        }));
+        return recentData.map((item, index, arr) => {
+          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          
+          return {
+            date: item.date,
+            priceTon: item.priceTon,
+            priceUsd: item.priceUsd,
+            price: price,
+            open: prevPrice,
+            high: Math.max(price, prevPrice, nextPrice),
+            low: Math.min(price, prevPrice, nextPrice),
+            close: price,
+            label: item.time,
+          };
+        });
       } else if (timeRange === '1w') {
         // Last 336 entries (7 days × 48 readings per day)
         const recentData = giftData.week_chart.slice(-336);
-        return recentData.map(item => ({
-          date: item.date,
-          priceTon: item.priceTon,
-          priceUsd: item.priceUsd,
-          price: currency === 'ton' ? item.priceTon : item.priceUsd,
-          label: item.time,
-        }));
+        return recentData.map((item, index, arr) => {
+          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          
+          return {
+            date: item.date,
+            priceTon: item.priceTon,
+            priceUsd: item.priceUsd,
+            price: price,
+            open: prevPrice,
+            high: Math.max(price, prevPrice, nextPrice),
+            low: Math.min(price, prevPrice, nextPrice),
+            close: price,
+            label: item.time,
+          };
+        });
       }
     }
     
@@ -197,11 +241,21 @@ const GiftDetail = () => {
         break;
     }
     
-    return data.map(item => ({
-      ...item,
-      price: currency === 'ton' ? item.priceTon : item.priceUsd,
-      label: item.date,
-    }));
+    return data.map((item, index, arr) => {
+      const price = currency === 'ton' ? item.priceTon : item.priceUsd;
+      const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
+      const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+      
+      return {
+        ...item,
+        price: price,
+        open: prevPrice,
+        high: Math.max(price, prevPrice, nextPrice),
+        low: Math.min(price, prevPrice, nextPrice),
+        close: price,
+        label: item.date,
+      };
+    });
   };
 
   const calculatePriceChange = () => {
@@ -218,6 +272,37 @@ const GiftDetail = () => {
   };
 
 
+  // Custom candlestick component
+  const Candlestick = (props: any) => {
+    const { x, y, width, height, low, high, open, close } = props;
+    const isGreen = close >= open;
+    const color = isGreen ? '#10b981' : '#ef4444';
+    const wickX = x + width / 2;
+    
+    return (
+      <g>
+        {/* Wick (shadow) */}
+        <line
+          x1={wickX}
+          y1={y}
+          x2={wickX}
+          y2={y + height}
+          stroke={color}
+          strokeWidth={1}
+        />
+        {/* Body */}
+        <Rectangle
+          x={x}
+          y={isGreen ? y + height * ((high - close) / (high - low)) : y + height * ((high - open) / (high - low))}
+          width={width}
+          height={Math.abs(height * ((close - open) / (high - low)))}
+          fill={color}
+          radius={[2, 2, 2, 2]}
+        />
+      </g>
+    );
+  };
+
   const renderChart = () => {
     const data = getChartData();
     
@@ -233,7 +318,7 @@ const GiftDetail = () => {
     
     if (chartType === 'line') {
       return (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -241,17 +326,22 @@ const GiftDetail = () => {
                 <stop offset="95%" stopColor={color} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.3)"
               tick={{ fontSize: 10 }}
               interval="preserveStartEnd"
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis 
-              stroke="rgba(255,255,255,0.5)"
-              tick={{ fontSize: 12 }}
+              stroke="rgba(255,255,255,0.3)"
+              tick={{ fontSize: 11 }}
               domain={['auto', 'auto']}
+              axisLine={false}
+              tickLine={false}
+              orientation="right"
             />
             <Tooltip 
               contentStyle={{ 
@@ -275,19 +365,30 @@ const GiftDetail = () => {
     
     if (chartType === 'candlestick') {
       return (
-        <ResponsiveContainer width="100%" height={300}>
-          <RechartsLineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+        <ResponsiveContainer width="100%" height={400}>
+          <ComposedChart data={data}>
+            <defs>
+              <linearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.05)" />
+                <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.3)"
               tick={{ fontSize: 10 }}
               interval="preserveStartEnd"
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis 
-              stroke="rgba(255,255,255,0.5)"
-              tick={{ fontSize: 12 }}
+              stroke="rgba(255,255,255,0.3)"
+              tick={{ fontSize: 11 }}
               domain={['auto', 'auto']}
+              axisLine={false}
+              tickLine={false}
+              orientation="right"
             />
             <Tooltip 
               contentStyle={{ 
@@ -296,34 +397,54 @@ const GiftDetail = () => {
                 borderRadius: '8px',
                 color: '#fff'
               }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-[rgba(10,15,26,0.95)] border border-white/10 rounded-lg p-3 text-white">
+                      <p className="text-xs text-muted-foreground mb-2">{data.label}</p>
+                      <div className="space-y-1 text-sm">
+                        <p>Open: {data.open?.toFixed(2)}</p>
+                        <p>High: {data.high?.toFixed(2)}</p>
+                        <p>Low: {data.low?.toFixed(2)}</p>
+                        <p className="font-bold">Close: {data.close?.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
-            <Line 
-              type="step" 
-              dataKey="price" 
-              stroke={color}
-              strokeWidth={2}
-              dot={false}
+            <Bar 
+              dataKey="high" 
+              shape={<Candlestick />}
+              isAnimationActive={false}
             />
-          </RechartsLineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       );
     }
     
     // Bar chart (default)
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={400}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis 
             dataKey="label" 
-            stroke="rgba(255,255,255,0.5)"
+            stroke="rgba(255,255,255,0.3)"
             tick={{ fontSize: 10 }}
             interval="preserveStartEnd"
+            axisLine={false}
+            tickLine={false}
           />
           <YAxis 
-            stroke="rgba(255,255,255,0.5)"
-            tick={{ fontSize: 12 }}
+            stroke="rgba(255,255,255,0.3)"
+            tick={{ fontSize: 11 }}
             domain={['auto', 'auto']}
+            axisLine={false}
+            tickLine={false}
+            orientation="right"
           />
           <Tooltip 
             contentStyle={{ 
@@ -404,123 +525,118 @@ const GiftDetail = () => {
         </div>
 
         {/* Gift Header */}
-        <Card className="p-4">
-          <div className="flex items-center gap-4">
-            <GiftImage
-              imageUrl={imageUrl}
-              name={giftData.info.name}
-              size="lg"
-              className="rounded-lg"
-            />
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">{giftData.info.name}</h1>
+        <Card className="p-6">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
+              <GiftImage
+                imageUrl={imageUrl}
+                name={giftData.info.name}
+                size="lg"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-foreground mb-1">{giftData.info.name}</h1>
               <p className="text-sm text-muted-foreground">{(giftData.info.supply / 1000).toFixed(1)}K</p>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-xl font-bold text-foreground">
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 text-3xl font-bold text-foreground mb-1">
                 {currency === 'ton' ? (
                   <>
-                    <TonIcon className="w-5 h-5" />
+                    <TonIcon className="w-6 h-6" />
                     {giftData.info.priceTon.toFixed(2)}
                   </>
                 ) : (
                   <>$ {giftData.info.priceUsd.toFixed(2)}</>
                 )}
               </div>
-              <div className={`text-sm font-semibold flex items-center gap-1 justify-end ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <div className={`text-lg font-semibold flex items-center gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Data Source & Currency Toggle */}
-        <div className="flex gap-2">
+        {/* Chart */}
+        <Card className="p-3 bg-card/50 backdrop-blur">
+          {renderChart()}
+        </Card>
+
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          {/* Data Source Toggle */}
+          <div className="flex rounded-lg bg-muted p-1 gap-1">
+            <Button
+              onClick={() => setDataSource('market')}
+              variant="ghost"
+              size="sm"
+              className={`px-4 h-8 ${dataSource === 'market' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+            >
+              Normal
+            </Button>
+            <Button
+              onClick={() => setDataSource('black')}
+              variant="ghost"
+              size="sm"
+              className={`px-4 h-8 ${dataSource === 'black' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+            >
+              Black
+            </Button>
+          </div>
+
+          {/* Chart Type Toggle */}
           <Button
-            onClick={() => setDataSource('market')}
-            variant={dataSource === 'market' ? 'default' : 'outline'}
-            size="sm"
-            className="flex-1"
+            onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
+            variant="ghost"
+            size="icon"
+            className="rounded-lg bg-muted h-10 w-10"
           >
-            Market
-          </Button>
-          <Button
-            onClick={() => setDataSource('black')}
-            variant={dataSource === 'black' ? 'default' : 'outline'}
-            size="sm"
-            className={`flex-1 ${dataSource === 'black' ? 'bg-[#0B0B0D] text-white hover:bg-[#0B0B0D]/90' : 'bg-black text-white hover:bg-black/80'}`}
-          >
-            Black
+            <CandlestickChart className="w-5 h-5" />
           </Button>
         </div>
 
+        {/* Time Range Toggle */}
         {dataSource === 'market' && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {(['24h', '3d', '1w', '1m', '3m', 'all'] as TimeRange[]).map((range) => (
+              <Button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-4 h-9 whitespace-nowrap ${
+                  timeRange === range ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                {range === 'all' ? 'All' : range.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Currency Toggle - Only for Market data */}
+        {dataSource === 'market' && (
+          <div className="flex rounded-lg bg-muted p-1 gap-1 w-fit">
             <Button
               onClick={() => setCurrency('ton')}
-              variant={currency === 'ton' ? 'default' : 'outline'}
+              variant="ghost"
               size="sm"
-              className="flex-1 gap-1"
+              className={`px-4 h-8 gap-1 ${currency === 'ton' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
             >
               <TonIcon className="w-4 h-4" />
               ton
             </Button>
             <Button
               onClick={() => setCurrency('usd')}
-              variant={currency === 'usd' ? 'default' : 'outline'}
+              variant="ghost"
               size="sm"
-              className="flex-1"
+              className={`px-4 h-8 ${currency === 'usd' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
             >
               usd
             </Button>
-          </div>
-        )}
-
-        {/* Chart Type Toggle */}
-        <div className="flex gap-2 justify-center">
-          <Button
-            onClick={() => setChartType('line')}
-            variant={chartType === 'line' ? 'default' : 'ghost'}
-            size="icon"
-          >
-            <LineChart className="w-5 h-5" />
-          </Button>
-          <Button
-            onClick={() => setChartType('candlestick')}
-            variant={chartType === 'candlestick' ? 'default' : 'ghost'}
-            size="icon"
-          >
-            <CandlestickChart className="w-5 h-5" />
-          </Button>
-          <Button
-            onClick={() => setChartType('bar')}
-            variant={chartType === 'bar' ? 'default' : 'ghost'}
-            size="icon"
-          >
-            <BarChart3 className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Chart */}
-        <Card className="p-4">
-          {renderChart()}
-        </Card>
-
-        {/* Time Range Toggle - Only show for Market data */}
-        {dataSource === 'market' && (
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {(['all', '3m', '1m', '1w', '3d', '24h'] as TimeRange[]).map((range) => (
-              <Button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                variant={timeRange === range ? 'default' : 'outline'}
-                size="sm"
-                className="whitespace-nowrap"
-              >
-                {range === 'all' ? 'All' : range.toUpperCase()}
-              </Button>
-            ))}
           </div>
         )}
 
