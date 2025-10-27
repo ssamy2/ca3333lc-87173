@@ -274,30 +274,66 @@ const GiftDetail = () => {
 
   // Custom candlestick component
   const Candlestick = (props: any) => {
-    const { x, y, width, height, low, high, open, close } = props;
+    const { x, y, width, payload } = props;
+    
+    if (!payload || payload.open === undefined || payload.close === undefined) {
+      return null;
+    }
+    
+    const { open, high, low, close } = payload;
     const isGreen = close >= open;
     const color = isGreen ? '#10b981' : '#ef4444';
+    
+    // Calculate Y positions
+    const maxPrice = Math.max(high, open, close, low);
+    const minPrice = Math.min(high, open, close, low);
+    const priceRange = maxPrice - minPrice;
+    
+    if (priceRange === 0) return null;
+    
+    const chartHeight = 400;
+    const yScale = chartHeight / priceRange;
+    
+    // Wick positions
+    const highY = y;
+    const lowY = y + chartHeight;
     const wickX = x + width / 2;
+    
+    // Body positions
+    const bodyTop = isGreen ? close : open;
+    const bodyBottom = isGreen ? open : close;
+    const bodyHeight = Math.abs(close - open) * yScale || 1;
+    const bodyY = y + ((maxPrice - bodyTop) * yScale);
     
     return (
       <g>
-        {/* Wick (shadow) */}
+        {/* Upper wick */}
         <line
           x1={wickX}
-          y1={y}
+          y1={y + ((maxPrice - high) * yScale)}
           x2={wickX}
-          y2={y + height}
+          y2={bodyY}
           stroke={color}
-          strokeWidth={1}
+          strokeWidth={1.5}
+        />
+        {/* Lower wick */}
+        <line
+          x1={wickX}
+          y1={bodyY + bodyHeight}
+          x2={wickX}
+          y2={y + ((maxPrice - low) * yScale)}
+          stroke={color}
+          strokeWidth={1.5}
         />
         {/* Body */}
-        <Rectangle
-          x={x}
-          y={isGreen ? y + height * ((high - close) / (high - low)) : y + height * ((high - open) / (high - low))}
-          width={width}
-          height={Math.abs(height * ((close - open) / (high - low)))}
+        <rect
+          x={x + 1}
+          y={bodyY}
+          width={Math.max(width - 2, 2)}
+          height={Math.max(bodyHeight, 1)}
           fill={color}
-          radius={[2, 2, 2, 2]}
+          stroke={color}
+          strokeWidth={0.5}
         />
       </g>
     );
@@ -364,15 +400,17 @@ const GiftDetail = () => {
     }
     
     if (chartType === 'candlestick') {
+      // Process data for candlestick rendering
+      const processedData = data.map((item, index) => {
+        return {
+          ...item,
+          index: index
+        };
+      });
+      
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <ComposedChart data={data}>
-            <defs>
-              <linearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.05)" />
-                <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
-              </linearGradient>
-            </defs>
+          <ComposedChart data={processedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
@@ -383,31 +421,45 @@ const GiftDetail = () => {
               tickLine={false}
             />
             <YAxis 
+              domain={['dataMin - 0.5', 'dataMax + 0.5']}
               stroke="rgba(255,255,255,0.3)"
               tick={{ fontSize: 11 }}
-              domain={['auto', 'auto']}
               axisLine={false}
               tickLine={false}
               orientation="right"
             />
             <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'rgba(10, 15, 26, 0.95)', 
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: '#fff'
-              }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
+                  const change = data.close - data.open;
+                  const changePercent = ((change / data.open) * 100).toFixed(2);
+                  const isPositive = change >= 0;
+                  
                   return (
-                    <div className="bg-[rgba(10,15,26,0.95)] border border-white/10 rounded-lg p-3 text-white">
+                    <div className="bg-[rgba(10,15,26,0.95)] border border-white/10 rounded-lg p-3 text-white backdrop-blur">
                       <p className="text-xs text-muted-foreground mb-2">{data.label}</p>
                       <div className="space-y-1 text-sm">
-                        <p>Open: {data.open?.toFixed(2)}</p>
-                        <p>High: {data.high?.toFixed(2)}</p>
-                        <p>Low: {data.low?.toFixed(2)}</p>
-                        <p className="font-bold">Close: {data.close?.toFixed(2)}</p>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">O:</span>
+                          <span className="font-mono">{data.open?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">H:</span>
+                          <span className="font-mono text-green-400">{data.high?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">L:</span>
+                          <span className="font-mono text-red-400">{data.low?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">C:</span>
+                          <span className="font-mono font-bold">{data.close?.toFixed(2)}</span>
+                        </div>
+                        <div className={`flex justify-between gap-4 pt-1 border-t border-white/10 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                          <span>Change:</span>
+                          <span className="font-mono">{isPositive ? '+' : ''}{changePercent}%</span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -416,8 +468,8 @@ const GiftDetail = () => {
               }}
             />
             <Bar 
-              dataKey="high" 
-              shape={<Candlestick />}
+              dataKey="high"
+              shape={(props: any) => <Candlestick {...props} />}
               isAnimationActive={false}
             />
           </ComposedChart>
