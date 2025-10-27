@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, BarChart3, LineChart, CandlestickChart, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, CandlestickChart, Sparkles, LineChart } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Rectangle } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
@@ -64,7 +64,7 @@ interface GiftDetailData {
 }
 
 type TimeRange = 'all' | '3m' | '1m' | '1w' | '3d' | '24h';
-type ChartType = 'line' | 'candlestick' | 'bar';
+type ChartType = 'candlestick' | 'line';
 type Currency = 'usd' | 'ton';
 type DataSource = 'market' | 'black';
 
@@ -76,7 +76,7 @@ const GiftDetail = () => {
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [timeRange, setTimeRange] = useState<TimeRange>('1w');
-  const [chartType, setChartType] = useState<ChartType>('bar');
+  const [chartType, setChartType] = useState<ChartType>('candlestick');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [showModels, setShowModels] = useState(false);
 
@@ -480,7 +480,14 @@ const GiftDetail = () => {
     // Bar chart (default)
     return (
       <ResponsiveContainer width="100%" height={400}>
-        <BarChart data={data}>
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.4}/>
+              <stop offset="50%" stopColor={color} stopOpacity={0.2}/>
+              <stop offset="100%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis 
             dataKey="label" 
@@ -506,8 +513,15 @@ const GiftDetail = () => {
               color: '#fff'
             }}
           />
-          <Bar dataKey="price" fill={color} radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area 
+            type="monotone" 
+            dataKey="price" 
+            stroke={color}
+            strokeWidth={2.5}
+            fill="url(#areaGradient)"
+            fillOpacity={1}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     );
   };
@@ -646,7 +660,7 @@ const GiftDetail = () => {
             size="icon"
             className="rounded-lg bg-muted h-10 w-10"
           >
-            <CandlestickChart className="w-5 h-5" />
+            {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
           </Button>
         </div>
 
