@@ -437,8 +437,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
+    canvas.width = 3840;
+    canvas.height = 2160;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -465,7 +465,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           tooltip: { enabled: false }
         }
       },
-      plugins: [createImagePlugin(chartType, currency, 35, 1, 1.2, 1)]
+      plugins: [createImagePlugin(chartType, currency, 70, 2, 2.4, 2)]
     });
 
     setTimeout(async () => {
