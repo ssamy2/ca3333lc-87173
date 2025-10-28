@@ -437,8 +437,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 3840;
-    canvas.height = 2160;
+    canvas.width = 3840;  // Doubled from 1920
+    canvas.height = 2160; // Doubled from 1080
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
