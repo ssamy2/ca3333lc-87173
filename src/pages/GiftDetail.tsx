@@ -391,7 +391,7 @@ const GiftDetail = () => {
               type="monotone" 
               dataKey="price" 
               stroke={color}
-              strokeWidth={2}
+              strokeWidth={3.5}
               fill="url(#colorPrice)"
             />
           </AreaChart>
@@ -517,7 +517,7 @@ const GiftDetail = () => {
             type="monotone" 
             dataKey="price" 
             stroke={color}
-            strokeWidth={2.5}
+            strokeWidth={3.5}
             fill="url(#areaGradient)"
             fillOpacity={1}
           />
@@ -591,35 +591,37 @@ const GiftDetail = () => {
         </div>
 
         {/* Gift Header */}
-        <Card className="p-6">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
-              <GiftImage
-                imageUrl={imageUrl}
-                name={giftData.info.name}
-                size="lg"
-                className="w-full h-full object-cover"
-              />
+        <Card className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left Side: Image, Name, Supply */}
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
+                <GiftImage
+                  imageUrl={imageUrl}
+                  name={giftData.info.name}
+                  size="lg"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground mb-0.5">{giftData.info.name}</h1>
+                <p className="text-sm text-muted-foreground">{(giftData.info.supply / 1000).toFixed(1)}K</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground mb-1">{giftData.info.name}</h1>
-              <p className="text-sm text-muted-foreground">{(giftData.info.supply / 1000).toFixed(1)}K</p>
-            </div>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-1.5 text-3xl font-bold text-foreground mb-1">
+
+            {/* Right Side: Price, Change */}
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-1.5 text-2xl font-bold text-foreground mb-0.5">
                 {currency === 'ton' ? (
                   <>
-                    <TonIcon className="w-6 h-6" />
+                    <TonIcon className="w-5 h-5" />
                     {giftData.info.priceTon.toFixed(2)}
                   </>
                 ) : (
                   <>$ {giftData.info.priceUsd.toFixed(2)}</>
                 )}
               </div>
-              <div className={`text-lg font-semibold flex items-center gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                 {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
               </div>
             </div>
@@ -633,13 +635,17 @@ const GiftDetail = () => {
 
         {/* Controls */}
         <div className="flex items-center gap-2">
-          {/* Data Source Toggle */}
-          <div className="flex rounded-lg bg-muted p-1 gap-1">
+          {/* Data Source Toggle - White/Gray style */}
+          <div className="flex rounded-full bg-muted/80 p-1 gap-1">
             <Button
               onClick={() => setDataSource('market')}
               variant="ghost"
               size="sm"
-              className={`px-4 h-8 ${dataSource === 'market' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-5 h-9 rounded-full font-medium transition-all ${
+                dataSource === 'market' 
+                  ? 'bg-white text-black shadow-sm hover:bg-white' 
+                  : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+              }`}
             >
               Normal
             </Button>
@@ -647,7 +653,11 @@ const GiftDetail = () => {
               onClick={() => setDataSource('black')}
               variant="ghost"
               size="sm"
-              className={`px-4 h-8 ${dataSource === 'black' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-5 h-9 rounded-full font-medium transition-all ${
+                dataSource === 'black' 
+                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                  : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+              }`}
             >
               Black
             </Button>
@@ -658,13 +668,13 @@ const GiftDetail = () => {
             onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
             variant="ghost"
             size="icon"
-            className="rounded-lg bg-muted h-10 w-10"
+            className="rounded-full bg-gray-800 h-10 w-10 hover:bg-gray-700"
           >
             {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
           </Button>
         </div>
 
-        {/* Time Range Toggle */}
+        {/* Time Range Toggle - Blue style */}
         {dataSource === 'market' && (
           <div className="flex gap-2 overflow-x-auto pb-2">
             {(['24h', '3d', '1w', '1m', '3m', 'all'] as TimeRange[]).map((range) => (
@@ -673,8 +683,10 @@ const GiftDetail = () => {
                 onClick={() => setTimeRange(range)}
                 variant="ghost"
                 size="sm"
-                className={`rounded-full px-4 h-9 whitespace-nowrap ${
-                  timeRange === range ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === range 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
                 }`}
               >
                 {range === 'all' ? 'All' : range.toUpperCase()}
@@ -685,12 +697,16 @@ const GiftDetail = () => {
 
         {/* Currency Toggle - Only for Market data */}
         {dataSource === 'market' && (
-          <div className="flex rounded-lg bg-muted p-1 gap-1 w-fit">
+          <div className="flex rounded-full bg-gray-800/50 p-1 gap-1 w-fit">
             <Button
               onClick={() => setCurrency('ton')}
               variant="ghost"
               size="sm"
-              className={`px-4 h-8 gap-1 ${currency === 'ton' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-4 h-9 gap-1.5 rounded-full font-medium transition-all ${
+                currency === 'ton' 
+                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                  : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+              }`}
             >
               <TonIcon className="w-4 h-4" />
               ton
@@ -699,7 +715,11 @@ const GiftDetail = () => {
               onClick={() => setCurrency('usd')}
               variant="ghost"
               size="sm"
-              className={`px-4 h-8 ${currency === 'usd' ? 'bg-background shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-4 h-9 rounded-full font-medium transition-all ${
+                currency === 'usd' 
+                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                  : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+              }`}
             >
               usd
             </Button>
