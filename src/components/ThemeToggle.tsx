@@ -1,32 +1,65 @@
 import React from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Sun, Moon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 const ThemeToggle: React.FC = () => {
-  const { isLight, setTheme } = useTheme();
+  const { theme, setTheme, isLight, isDark } = useTheme();
 
-  const handleToggle = () => {
-    setTheme(isLight ? 'dark' : 'light');
+  const getIcon = () => {
+    if (theme === 'light') return <Sun className="w-4 h-4" />;
+    if (theme === 'dark') return <Moon className="w-4 h-4" />;
+    return <Monitor className="w-4 h-4" />;
+  };
+
+  const getThemeLabel = () => {
+    if (theme === 'light') return 'Light';
+    if (theme === 'dark') return 'Dark';
+    return 'System';
   };
 
   return (
-    <div className="flex items-center justify-end mr-4">
-      <div className="relative p-1 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl border border-primary/20 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
-        <Switch
-          checked={!isLight}
-          onCheckedChange={handleToggle}
-          className="relative h-9 w-[72px] bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 data-[state=unchecked]:from-yellow-400 data-[state=unchecked]:via-orange-500 data-[state=unchecked]:to-amber-500 border-0 shadow-inner transition-all duration-300"
-        />
-        <div className={`absolute top-2 transition-all duration-300 ${isLight ? 'left-2' : 'left-[42px]'} w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center pointer-events-none ring-2 ring-white/50`}>
-          {isLight ? (
-            <Sun className="w-4 h-4 text-yellow-600 animate-pulse" />
-          ) : (
-            <Moon className="w-4 h-4 text-indigo-600 animate-pulse" />
-          )}
-        </div>
-      </div>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-9 gap-2 rounded-xl border-border/50 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all duration-300 shadow-sm"
+        >
+          {getIcon()}
+          <span className="text-xs font-medium">{getThemeLabel()}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-36 rounded-xl border-border/50 shadow-lg">
+        <DropdownMenuItem 
+          onClick={() => setTheme('light')}
+          className={`gap-2 rounded-lg cursor-pointer ${theme === 'light' ? 'bg-primary/10 text-primary font-medium' : ''}`}
+        >
+          <Sun className="w-4 h-4" />
+          <span>Light</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => setTheme('dark')}
+          className={`gap-2 rounded-lg cursor-pointer ${theme === 'dark' ? 'bg-primary/10 text-primary font-medium' : ''}`}
+        >
+          <Moon className="w-4 h-4" />
+          <span>Dark</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => setTheme('system')}
+          className={`gap-2 rounded-lg cursor-pointer ${theme === 'system' ? 'bg-primary/10 text-primary font-medium' : ''}`}
+        >
+          <Monitor className="w-4 h-4" />
+          <span>System</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

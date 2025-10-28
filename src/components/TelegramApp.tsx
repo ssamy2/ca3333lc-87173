@@ -14,8 +14,7 @@ import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
-import novaLogo from '@/assets/nova-logo.png';
-import statsLogo from '@/assets/stats-logo.png';
+import novaLogo from '@/assets/nova-logo-new.png';
 
 interface UserProfile {
   name: string;
@@ -377,20 +376,15 @@ const TelegramApp: React.FC = () => {
           
           <div className="telegram-card p-6 animate-fade-in border border-border/50 shadow-[var(--shadow-card)] backdrop-blur-sm">
             <div className="flex flex-col gap-6">
-              {/* Top Row - Logo, Stats Logo and Title */}
+              {/* Top Row - Logo and Title */}
               <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-                  <img src={novaLogo} alt="Nova Logo" className="w-12 h-12 object-contain" />
+                <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10">
+                  <img src={novaLogo} alt="Nova Logo" className="w-14 h-14 object-contain" />
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-50"></div>
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-2xl font-bold text-gradient">Nova</h1>
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[hsl(var(--black-gold))] to-[hsl(var(--black-copper))] p-2 shadow-md">
-                      <img src={statsLogo} alt="Stats" className="w-full h-full object-contain opacity-90" />
-                    </div>
-                  </div>
+                  <h1 className="text-2xl font-bold text-gradient">Nova</h1>
                   <p className="text-sm text-muted-foreground font-medium">Telegram Gifts Price Checker</p>
                 </div>
                 

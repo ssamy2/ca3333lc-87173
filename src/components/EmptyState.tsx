@@ -1,8 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, Gift, TrendingUp } from 'lucide-react';
-import novaLogo from '@/assets/nova-logo.png';
-import statsLogo from '@/assets/stats-logo.png';
+import novaLogo from '@/assets/nova-logo-new.png';
 
 interface EmptyStateProps {
   onSearch: () => void;
@@ -21,12 +20,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onSearch }) => {
         {/* Logo Section */}
         <div className="mb-6">
           <div className="relative w-24 h-24 mx-auto mb-5">
-            <div className="w-full h-full rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/10 overflow-hidden">
-              <img src={novaLogo} alt="Nova Logo" className="w-16 h-16 object-contain" />
-            </div>
-            {/* Stats Badge */}
-            <div className="absolute -top-2 -right-2 w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--black-gold))] to-[hsl(var(--black-copper))] p-2 shadow-lg border-2 border-background">
-              <img src={statsLogo} alt="Stats" className="w-full h-full object-contain opacity-90" />
+            <div className="w-full h-full rounded-3xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/10 flex items-center justify-center border border-primary/10 shadow-lg shadow-primary/10 overflow-hidden">
+              <img src={novaLogo} alt="Nova Logo" className="w-20 h-20 object-contain" />
             </div>
           </div>
           
