@@ -15,6 +15,7 @@ import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
 import novaLogo from '@/assets/nova-logo.png';
+import statsLogo from '@/assets/stats-logo.png';
 
 interface UserProfile {
   name: string;
@@ -367,52 +368,68 @@ const TelegramApp: React.FC = () => {
 
       <div className="max-w-md mx-auto p-4 space-y-6">
         {/* Header - Nova Calculator */}
-        <div className="telegram-card p-6 animate-fade-in bg-gradient-to-br from-card to-card/80 border shadow-lg">
-          <div className="flex flex-col gap-6">
-            {/* Top Row - Logo and Title */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
-                <img src={novaLogo} alt="Nova Logo" className="w-full h-full object-cover" />
+        <div className="relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent rounded-full blur-3xl"></div>
+          </div>
+          
+          <div className="telegram-card p-6 animate-fade-in border border-border/50 shadow-[var(--shadow-card)] backdrop-blur-sm">
+            <div className="flex flex-col gap-6">
+              {/* Top Row - Logo, Stats Logo and Title */}
+              <div className="flex items-center gap-4">
+                <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+                  <img src={novaLogo} alt="Nova Logo" className="w-12 h-12 object-contain" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-50"></div>
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-2xl font-bold text-gradient">Nova</h1>
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[hsl(var(--black-gold))] to-[hsl(var(--black-copper))] p-2 shadow-md">
+                      <img src={statsLogo} alt="Stats" className="w-full h-full object-contain opacity-90" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium">Telegram Gifts Price Checker</p>
+                </div>
+                
+                {/* Theme Toggle - Top Right */}
+                <div className="self-start">
+                  <ThemeToggle />
+                </div>
               </div>
-              
-              <div className="flex-1">
-                <h1 className="text-xl font-bold text-foreground">Nova</h1>
-                <p className="text-sm text-muted-foreground">Telegram Gifts Price Checker</p>
+
+              {/* Channel and Chat Links */}
+              <div className="flex gap-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex-1 h-11 rounded-xl font-semibold border-border/50 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all duration-300"
+                >
+                  <a 
+                    href="https://t.me/GT_Rolet" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    📢 Channel
+                  </a>
+                </Button>
+                
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex-1 h-11 rounded-xl font-semibold border-border/50 hover:bg-accent/10 hover:border-accent/30 hover:text-accent transition-all duration-300"
+                >
+                  <a 
+                    href="https://t.me/Gifts_Super" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    💬 Chat
+                  </a>
+                </Button>
               </div>
-            </div>
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
-
-            {/* Channel and Chat Links */}
-            <div className="flex gap-3">
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1"
-              >
-                <a 
-                  href="https://t.me/GT_Rolet" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Channel
-                </a>
-              </Button>
-              
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1"
-              >
-                <a 
-                  href="https://t.me/Gifts_Super" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Chat
-                </a>
-              </Button>
             </div>
           </div>
         </div>
@@ -495,7 +512,7 @@ const TelegramApp: React.FC = () => {
         )}
 
         {/* Search Section */}
-        <div className="telegram-card p-4 animate-slide-up">
+        <div className="telegram-card p-5 animate-slide-up border border-border/50 shadow-[var(--shadow-card)]">
           <div className="flex gap-2 mb-4">
             <Input
               type="text"
@@ -503,13 +520,13 @@ const TelegramApp: React.FC = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 h-11"
+              className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
               disabled={loading || countdown > 0}
             />
             <Button 
               onClick={handleSearch}
               disabled={loading || countdown > 0 || !username.trim()}
-              className="telegram-button h-11 px-4"
+              className="h-12 px-5 rounded-xl bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
             >
               <Search className="w-5 h-5" />
             </Button>
@@ -592,30 +609,40 @@ const TelegramApp: React.FC = () => {
         )}
 
         {nftData && !loading && !error && (
-          <div className="space-y-6 animate-bounce-in">
+          <div className="space-y-5 animate-bounce-in">
             {/* Owner Info with Photo */}
-            <div className="telegram-card p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center overflow-hidden shadow-lg">
-                  {searchedUserProfile?.photo_base64 ? (
-                    <img 
-                      src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
-                      alt={searchedUserProfile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-7 h-7 text-white" />
-                  )}
+            <div className="telegram-card p-6 border border-border/50 shadow-[var(--shadow-card)]">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 border border-primary/20">
+                    {searchedUserProfile?.photo_base64 ? (
+                      <img 
+                        src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
+                        alt={searchedUserProfile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-white" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm">
+                    <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5 animate-pulse"></div>
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold">{searchedUserProfile?.name || nftData.owner}</h2>
-                  <p className="text-sm text-muted-foreground">
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    {searchedUserProfile?.name || nftData.owner}
+                  </h2>
+                  <p className="text-sm text-muted-foreground font-medium">
                     @{nftData.owner} • {nftData.nfts?.length || nftData.visible_nfts || 0} Visible NFT Gifts
                   </p>
                   {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
-                    <p className="text-xs text-primary font-medium mt-1">
-                      Total Saved Gifts: {nftData.total_saved_gifts}
-                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                      <p className="text-xs text-primary font-semibold">
+                        Total Saved: {nftData.total_saved_gifts}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -623,25 +650,39 @@ const TelegramApp: React.FC = () => {
               {/* Total Value Card */}
               {nftData.prices?.avg_price && (
                 <div className="flex justify-center">
-                  <div className="w-full max-w-xs">
-                    <StatsCard
-                      icon={<Calculator className="w-4 h-4 text-primary" />}
-                      label="Total Value"
-                      value={`${formatTON(nftData.prices.avg_price.TON)} TON`}
-                      subValue={`$${formatTON(nftData.prices.avg_price.USD)}`}
-                    />
+                  <div className="w-full">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20 p-5 shadow-lg shadow-primary/5">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl"></div>
+                      <div className="relative flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calculator className="w-5 h-5 text-primary" />
+                            <span className="text-sm font-semibold text-muted-foreground">Total Value</span>
+                          </div>
+                          <div className="text-3xl font-bold text-gradient">
+                            {formatTON(nftData.prices.avg_price.TON)} TON
+                          </div>
+                          <div className="text-base text-muted-foreground font-medium mt-0.5">
+                            ${formatTON(nftData.prices.avg_price.USD)}
+                          </div>
+                        </div>
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                          <TonIcon className="w-10 h-10 text-white" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* NFT Grid */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold">NFT Collection</h3>
-                <span className="text-sm text-muted-foreground">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
+                <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
                   {nftData.nfts?.length || 0} items
-                </span>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-3">
