@@ -394,7 +394,20 @@ const GiftDetail = () => {
               stroke={color}
               strokeWidth={3.5}
               fill="url(#colorPrice)"
-            />
+              connectNulls
+              isAnimationActive={false}
+            >
+              {data.map((entry, index) => {
+                if (index === 0) return null;
+                const currentPrice = entry.price;
+                const previousPrice = data[index - 1].price;
+                const segmentColor = currentPrice >= previousPrice ? '#10b981' : '#ef4444';
+                
+                return (
+                  <stop key={index} offset={index / (data.length - 1)} stopColor={segmentColor} />
+                );
+              })}
+            </Area>
           </AreaChart>
         </ResponsiveContainer>
       );
@@ -523,7 +536,20 @@ const GiftDetail = () => {
             strokeWidth={3.5}
             fill="url(#areaGradient)"
             fillOpacity={1}
-          />
+            connectNulls
+            isAnimationActive={false}
+          >
+            {data.map((entry, index) => {
+              if (index === 0) return null;
+              const currentPrice = entry.price;
+              const previousPrice = data[index - 1].price;
+              const segmentColor = currentPrice >= previousPrice ? '#10b981' : '#ef4444';
+              
+              return (
+                <stop key={index} offset={index / (data.length - 1)} stopColor={segmentColor} />
+              );
+            })}
+          </Area>
         </AreaChart>
       </ResponsiveContainer>
     );
