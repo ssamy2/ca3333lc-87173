@@ -354,8 +354,8 @@ const GiftDetail = () => {
     
     if (chartType === 'line') {
       return (
-        <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={data}>
+        <ResponsiveContainer width="100%" height={250}>
+          <AreaChart data={data} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
@@ -378,7 +378,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
-              width={50}
+              width={35}
             />
             <Tooltip 
               contentStyle={{ 
@@ -392,7 +392,7 @@ const GiftDetail = () => {
               type="monotone" 
               dataKey="price" 
               stroke={color}
-              strokeWidth={3.5}
+              strokeWidth={2}
               fill="url(#colorPrice)"
               connectNulls
               isAnimationActive={false}
@@ -423,8 +423,8 @@ const GiftDetail = () => {
       });
       
       return (
-        <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={processedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height={250}>
+          <ComposedChart data={processedData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
@@ -441,7 +441,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
-              width={50}
+              width={35}
             />
             <Tooltip 
               content={({ active, payload }) => {
@@ -494,8 +494,8 @@ const GiftDetail = () => {
     
     // Bar chart (default)
     return (
-      <ResponsiveContainer width="100%" height={320}>
-        <AreaChart data={data}>
+      <ResponsiveContainer width="100%" height={250}>
+        <AreaChart data={data} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.4}/>
