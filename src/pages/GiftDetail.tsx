@@ -695,12 +695,12 @@ const GiftDetail = () => {
           <div className="flex items-center gap-2">
             {/* Chart Type Toggle */}
             <Button
-              onClick={() => setChartType(chartType === 'line' ? 'candlestick' : 'line')}
+              onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
               variant="ghost"
               size="icon"
               className="rounded-full bg-gray-800 h-10 w-10 hover:bg-gray-700"
             >
-              {chartType === 'line' ? <CandlestickChart className="w-5 h-5" /> : <LineChart className="w-5 h-5" />}
+              {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
             </Button>
 
             {/* Currency Toggle - Only for Market data */}
