@@ -354,7 +354,7 @@ const GiftDetail = () => {
     
     if (chartType === 'line') {
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -378,6 +378,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
+              width={50}
             />
             <Tooltip 
               contentStyle={{ 
@@ -409,7 +410,7 @@ const GiftDetail = () => {
       });
       
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={processedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
@@ -427,6 +428,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
+              width={50}
             />
             <Tooltip 
               content={({ active, payload }) => {
@@ -479,7 +481,7 @@ const GiftDetail = () => {
     
     // Bar chart (default)
     return (
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer width="100%" height={320}>
         <AreaChart data={data}>
           <defs>
             <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
@@ -504,6 +506,7 @@ const GiftDetail = () => {
             axisLine={false}
             tickLine={false}
             orientation="right"
+            width={50}
           />
           <Tooltip 
             contentStyle={{ 
@@ -634,7 +637,7 @@ const GiftDetail = () => {
         </Card>
 
         {/* Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           {/* Data Source Toggle - White/Gray style */}
           <div className="flex rounded-full bg-muted/80 p-1 gap-1">
             <Button
@@ -663,15 +666,48 @@ const GiftDetail = () => {
             </Button>
           </div>
 
-          {/* Chart Type Toggle */}
-          <Button
-            onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-gray-800 h-10 w-10 hover:bg-gray-700"
-          >
-            {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Chart Type Toggle */}
+            <Button
+              onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-gray-800 h-10 w-10 hover:bg-gray-700"
+            >
+              {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
+            </Button>
+
+            {/* Currency Toggle - Only for Market data */}
+            {dataSource === 'market' && (
+              <div className="flex rounded-full bg-gray-800/50 p-1 gap-1">
+                <Button
+                  onClick={() => setCurrency('ton')}
+                  variant="ghost"
+                  size="sm"
+                  className={`px-4 h-9 gap-1.5 rounded-full font-medium transition-all ${
+                    currency === 'ton' 
+                      ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                      : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+                  }`}
+                >
+                  <TonIcon className="w-4 h-4" />
+                  ton
+                </Button>
+                <Button
+                  onClick={() => setCurrency('usd')}
+                  variant="ghost"
+                  size="sm"
+                  className={`px-4 h-9 rounded-full font-medium transition-all ${
+                    currency === 'usd' 
+                      ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                      : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+                  }`}
+                >
+                  usd
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Time Range Toggle - Blue style */}
@@ -692,37 +728,6 @@ const GiftDetail = () => {
                 {range === 'all' ? 'All' : range.toUpperCase()}
               </Button>
             ))}
-          </div>
-        )}
-
-        {/* Currency Toggle - Only for Market data */}
-        {dataSource === 'market' && (
-          <div className="flex rounded-full bg-gray-800/50 p-1 gap-1 w-fit">
-            <Button
-              onClick={() => setCurrency('ton')}
-              variant="ghost"
-              size="sm"
-              className={`px-4 h-9 gap-1.5 rounded-full font-medium transition-all ${
-                currency === 'ton' 
-                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                  : 'text-gray-400 hover:bg-transparent hover:text-foreground'
-              }`}
-            >
-              <TonIcon className="w-4 h-4" />
-              ton
-            </Button>
-            <Button
-              onClick={() => setCurrency('usd')}
-              variant="ghost"
-              size="sm"
-              className={`px-4 h-9 rounded-full font-medium transition-all ${
-                currency === 'usd' 
-                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                  : 'text-gray-400 hover:bg-transparent hover:text-foreground'
-              }`}
-            >
-              usd
-            </Button>
           </div>
         )}
 
