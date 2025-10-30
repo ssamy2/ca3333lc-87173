@@ -353,15 +353,24 @@ const GiftDetail = () => {
     const color = calculatePriceChange() >= 0 ? '#10b981' : '#ef4444';
     
     if (chartType === 'line') {
+      // Create segments for color changes
+      const segments: any[] = [];
+      data.forEach((point, index) => {
+        if (index === 0) return;
+        const prevPrice = data[index - 1].price;
+        const currPrice = point.price;
+        const color = currPrice >= prevPrice ? '#10b981' : '#ef4444';
+        
+        segments.push({
+          data: [data[index - 1], point],
+          color: color,
+          key: `segment-${index}`
+        });
+      });
+
       return (
         <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-                <stop offset="95%" stopColor={color} stopOpacity={0}/>
-              </linearGradient>
-            </defs>
+          <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
@@ -378,7 +387,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
-              width={50}
+              width={40}
             />
             <Tooltip 
               contentStyle={{ 
@@ -388,27 +397,20 @@ const GiftDetail = () => {
                 color: '#fff'
               }}
             />
-            <Area 
-              type="monotone" 
-              dataKey="price" 
-              stroke={color}
-              strokeWidth={3.5}
-              fill="url(#colorPrice)"
-              connectNulls
-              isAnimationActive={false}
-            >
-              {data.map((entry, index) => {
-                if (index === 0) return null;
-                const currentPrice = entry.price;
-                const previousPrice = data[index - 1].price;
-                const segmentColor = currentPrice >= previousPrice ? '#10b981' : '#ef4444';
-                
-                return (
-                  <stop key={index} offset={index / (data.length - 1)} stopColor={segmentColor} />
-                );
-              })}
-            </Area>
-          </AreaChart>
+            {segments.map((segment) => (
+              <Line 
+                key={segment.key}
+                type="monotone" 
+                dataKey="price" 
+                data={segment.data}
+                stroke={segment.color}
+                strokeWidth={3.5}
+                dot={false}
+                isAnimationActive={false}
+                connectNulls={false}
+              />
+            ))}
+          </RechartsLineChart>
         </ResponsiveContainer>
       );
     }
@@ -424,7 +426,7 @@ const GiftDetail = () => {
       
       return (
         <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={processedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <ComposedChart data={processedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
@@ -441,7 +443,7 @@ const GiftDetail = () => {
               axisLine={false}
               tickLine={false}
               orientation="right"
-              width={50}
+              width={40}
             />
             <Tooltip 
               content={({ active, payload }) => {
@@ -492,17 +494,24 @@ const GiftDetail = () => {
       );
     }
     
-    // Bar chart (default)
+    // Bar chart (default) - also use line with color segments
+    const segments: any[] = [];
+    data.forEach((point, index) => {
+      if (index === 0) return;
+      const prevPrice = data[index - 1].price;
+      const currPrice = point.price;
+      const color = currPrice >= prevPrice ? '#10b981' : '#ef4444';
+      
+      segments.push({
+        data: [data[index - 1], point],
+        color: color,
+        key: `segment-${index}`
+      });
+    });
+
     return (
       <ResponsiveContainer width="100%" height={320}>
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.4}/>
-              <stop offset="50%" stopColor={color} stopOpacity={0.2}/>
-              <stop offset="100%" stopColor={color} stopOpacity={0}/>
-            </linearGradient>
-          </defs>
+        <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis 
             dataKey="label" 
@@ -519,7 +528,7 @@ const GiftDetail = () => {
             axisLine={false}
             tickLine={false}
             orientation="right"
-            width={50}
+            width={40}
           />
           <Tooltip 
             contentStyle={{ 
@@ -529,28 +538,20 @@ const GiftDetail = () => {
               color: '#fff'
             }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="price" 
-            stroke={color}
-            strokeWidth={3.5}
-            fill="url(#areaGradient)"
-            fillOpacity={1}
-            connectNulls
-            isAnimationActive={false}
-          >
-            {data.map((entry, index) => {
-              if (index === 0) return null;
-              const currentPrice = entry.price;
-              const previousPrice = data[index - 1].price;
-              const segmentColor = currentPrice >= previousPrice ? '#10b981' : '#ef4444';
-              
-              return (
-                <stop key={index} offset={index / (data.length - 1)} stopColor={segmentColor} />
-              );
-            })}
-          </Area>
-        </AreaChart>
+          {segments.map((segment) => (
+            <Line 
+              key={segment.key}
+              type="monotone" 
+              dataKey="price" 
+              data={segment.data}
+              stroke={segment.color}
+              strokeWidth={3.5}
+              dot={false}
+              isAnimationActive={false}
+              connectNulls={false}
+            />
+          ))}
+        </RechartsLineChart>
       </ResponsiveContainer>
     );
   };
@@ -658,7 +659,7 @@ const GiftDetail = () => {
         </Card>
 
         {/* Chart */}
-        <Card className="p-3 bg-card/50 backdrop-blur">
+        <Card className="p-2 bg-card/50 backdrop-blur">
           {renderChart()}
         </Card>
 
