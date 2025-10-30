@@ -244,3 +244,32 @@ class ImageCacheService {
 
 // Export singleton instance
 export const imageCache = new ImageCacheService();
+
+/**
+ * Preload images from market data
+ * This function will be called in the background after data is fetched
+ */
+export const preloadImages = async () => {
+  try {
+    const marketDataCache = localStorage.getItem('market-cache-market-data');
+    if (!marketDataCache) return;
+
+    const { data } = JSON.parse(marketDataCache);
+    if (!data) return;
+
+    // Extract all image URLs from market data
+    const imageUrls = Object.values(data)
+      .map((item: any) => item.image_url)
+      .filter((url: string) => url && url.startsWith('http'));
+
+    console.log(`🖼️ Preloading ${imageUrls.length} images in background...`);
+    
+    // Preload only uncached images
+    await imageCache.preloadUncachedImages(imageUrls);
+    
+    console.log('✅ Image preloading complete');
+  } catch (error) {
+    console.error('Error preloading images:', error);
+  }
+};
+

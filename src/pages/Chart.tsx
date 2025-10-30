@@ -1,15 +1,15 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, LayoutGrid, List, BarChart3 } from 'lucide-react';
-import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
-import { getCachedData, setCachedData } from '@/services/marketCache';
 import { Link } from 'react-router-dom';
 import TreemapHeatmap from '@/components/TreemapHeatmap';
 import GiftImage from '@/components/GiftImage';
 import BottomNav from '@/components/BottomNav';
+import { useMarketData } from '@/hooks/useMarketData';
+import { useBlackFloorData } from '@/hooks/useBlackFloorData';
 
 interface NFTMarketData {
   priceTon: number;
@@ -77,9 +77,12 @@ interface GiftItem {
 }
 
 const Chart = () => {
-  const [marketData, setMarketData] = useState<MarketData>({});
-  const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use React Query hooks for data fetching with caching
+  const { data: marketData = {}, isLoading: marketLoading } = useMarketData();
+  const { data: blackFloorData = [], isLoading: blackLoading } = useBlackFloorData();
+  
+  const loading = marketLoading || blackLoading;
+  
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
@@ -87,122 +90,6 @@ const Chart = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
-  const updateIntervalRef = useRef<number | null>(null);
-
-  // Initial data load - runs once on mount
-  useEffect(() => {
-    fetchMarketData(true);
-    fetchBlackFloorData(true);
-  }, []);
-
-  // Auto-refresh - runs independently
-  useEffect(() => {
-    updateIntervalRef.current = window.setInterval(() => {
-      fetchMarketData(false);
-      fetchBlackFloorData(false);
-    }, 30000);
-
-    return () => {
-      if (updateIntervalRef.current) {
-        window.clearInterval(updateIntervalRef.current);
-      }
-    };
-  }, []);
-
-  const fetchMarketData = async (isInitialLoad: boolean) => {
-    try {
-      if (isInitialLoad) {
-        setLoading(true);
-      }
-
-      // Check cache first
-      const cached = getCachedData('market-data');
-      if (cached && isInitialLoad) {
-        setMarketData(cached);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('https://channelsseller.site/api/market-data');
-      const data = await response.json();
-      
-      setMarketData(data);
-      setCachedData('market-data', data);
-    } catch (error) {
-      console.error('Error fetching market data:', error);
-      if (isInitialLoad) {
-        toast.error('Failed to fetch market data');
-      }
-    } finally {
-      if (isInitialLoad) {
-        setLoading(false);
-      }
-    }
-  };
-
-  const fetchBlackFloorData = async (isInitialLoad: boolean) => {
-    try {
-      const cached = getCachedData('black-floor-data');
-      if (cached && isInitialLoad) {
-        setBlackFloorData(cached);
-        return;
-      }
-
-      const response = await fetch('https://channelsseller.site/api/black-floor');
-      const data: BlackFloorItem[] = await response.json();
-      
-      // Filter to get only the latest record for each gift (by recorded_at)
-      const latestRecords = new Map<string, BlackFloorItem>();
-      
-      data.forEach(item => {
-        const existing = latestRecords.get(item.gift_name);
-        if (!existing || new Date(item.recorded_at) > new Date(existing.recorded_at)) {
-          latestRecords.set(item.gift_name, item);
-        }
-      });
-      
-      const filteredData = Array.from(latestRecords.values());
-      
-      // Calculate daily change for each gift
-      const dataWithChange = filteredData.map(item => {
-        // Find price from 24 hours ago
-        const dayAgo = new Date(new Date(item.recorded_at).getTime() - 24 * 60 * 60 * 1000);
-        const oldRecords = data.filter(d => 
-          d.gift_name === item.gift_name && 
-          new Date(d.recorded_at) <= dayAgo
-        );
-        
-        let change_24h = 0;
-        if (oldRecords.length > 0) {
-          // Get the closest record to 24h ago
-          const oldestRecord = oldRecords.sort((a, b) => 
-            Math.abs(new Date(a.recorded_at).getTime() - dayAgo.getTime()) - 
-            Math.abs(new Date(b.recorded_at).getTime() - dayAgo.getTime())
-          )[0];
-          
-          const oldPrice = oldestRecord.black_price;
-          const currentPrice = item.black_price;
-          
-          if (oldPrice > 0) {
-            change_24h = ((currentPrice - oldPrice) / oldPrice) * 100;
-          }
-        }
-        
-        return {
-          ...item,
-          change_24h_ton_percent: change_24h
-        };
-      });
-      
-      setBlackFloorData(dataWithChange);
-      setCachedData('black-floor-data', dataWithChange);
-    } catch (error) {
-      console.error('Error fetching black floor data:', error);
-      if (isInitialLoad) {
-        toast.error('Failed to fetch black floor data');
-      }
-    }
-  };
 
 
   const getFilteredData = () => {

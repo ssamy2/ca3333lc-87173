@@ -9,8 +9,25 @@ import Chart from "./pages/Chart";
 import GiftDetail from "./pages/GiftDetail";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 
-const queryClient = new QueryClient();
+// Configure React Query for optimal caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000, // Data stays fresh for 30 seconds
+      gcTime: 5 * 60 * 1000, // Cache data for 5 minutes
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      retry: 1,
+    },
+  },
+});
+
+// Data prefetch component
+const DataPrefetcher = ({ children }: { children: React.ReactNode }) => {
+  useDataPrefetch();
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,13 +43,15 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/chart" element={<Chart />} />
-              <Route path="/gift/:name" element={<GiftDetail />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <DataPrefetcher>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/chart" element={<Chart />} />
+                <Route path="/gift/:name" element={<GiftDetail />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </DataPrefetcher>
           </BrowserRouter>
         </ErrorBoundary>
       </TooltipProvider>
