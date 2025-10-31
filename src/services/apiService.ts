@@ -3,123 +3,30 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 export const USE_MOCK_DATA = false; // Always use real API
 
 // Get API base URL from environment
-const API_BASE_URL = (() => {
-  const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
-  const lsUrl = typeof window !== 'undefined' ? localStorage.getItem('API_BASE_URL') || '' : '';
-  return (lsUrl || envUrl || 'https://channelsseller.site').replace(/\/+$/, '');
-})();
+const API_BASE_URL = 'https://channelsseller.site';
 
-// Check if proxy is needed
-const isBrowser = typeof window !== 'undefined';
-const FORCE_PROXY = (import.meta.env.VITE_FORCE_PROXY === 'true') || (isBrowser && localStorage.getItem('FORCE_PROXY') === 'true');
+// ALWAYS use secure proxy for all API calls
+const shouldUseProxy = true;
 
-// Detect Mixed Content scenario (HTTPS app trying to access HTTP API)
-const isMixedContent = isBrowser && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:');
-
-// Use proxy if forced or Mixed Content detected
-const shouldUseProxy = FORCE_PROXY || isMixedContent;
-
-// Get proxy URL with fallback chain
-const getProxyUrl = () => {
-  // In development, use local proxy
-  if (import.meta.env.DEV) {
-    return window.location.origin + '/api/proxy';
-  }
-  
-  const envProxy = import.meta.env.VITE_CORS_PROXY || '';
-  const lsProxy = isBrowser ? localStorage.getItem('CORS_PROXY_URL') || '' : '';
-  
-  // Reliable proxy options for production
-  const fallbackProxies = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?',
-    'https://cors-anywhere.herokuapp.com/'
-  ];
-  
-  return lsProxy || envProxy || fallbackProxies[0];
+// Get the secure proxy URL
+const getProxyUrl = (): string => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  return supabaseUrl 
+    ? `${supabaseUrl}/functions/v1/secure-proxy`
+    : 'https://ymgqsiwwlcpbuxbjkslc.supabase.co/functions/v1/secure-proxy';
 };
 
-interface ProxyConfig {
-  name: string;
-  buildUrl: (targetUrl: string) => string;
-  parseResponse: (responseData: any) => any;
-}
-
-// Proxy configuration with multiple format support
-const getProxyConfig = (): ProxyConfig | null => {
-  if (!shouldUseProxy) return null;
-  
-  const proxyUrl = getProxyUrl();
-  
-  // Support local development proxy
-  if (proxyUrl.includes('/api/proxy')) {
-    return {
-      name: 'Local Proxy',
-      buildUrl: (targetUrl: string) => `${proxyUrl}?url=${encodeURIComponent(targetUrl)}`,
-      parseResponse: (data: any) => data
-    };
-  }
-  
-  // Support different proxy formats
-  if (proxyUrl.includes('allorigins.win')) {
-    return {
-      name: 'AllOrigins',
-      buildUrl: (targetUrl: string) => proxyUrl + encodeURIComponent(targetUrl),
-      parseResponse: (data: any) => data
-    };
-  }
-  
-  if (proxyUrl.includes('corsproxy.io')) {
-    return {
-      name: 'CORS Proxy',
-      buildUrl: (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-      parseResponse: (data: any) => data
-    };
-  }
-  
-  if (proxyUrl.includes('cors.isomorphic-git.org')) {
-    return {
-      name: 'Isomorphic Git CORS',
-      buildUrl: (targetUrl: string) => `https://cors.isomorphic-git.org/${targetUrl}`,
-      parseResponse: (data: any) => data
-    };
-  }
-  
-  // Default custom proxy format
-  return {
-    name: 'Custom Proxy',
-    buildUrl: (targetUrl: string) => `${proxyUrl}/${encodeURIComponent(targetUrl)}`,
-    parseResponse: (data: any) => data
-  };
-};
-
-// Build API URL with or without proxy and add cache busting
-const buildApiUrl = (path: string) => {
+// Build API URL with secure proxy
+const buildApiUrl = (path: string, token: string | null): string => {
   const timestamp = Date.now();
-  const separator = path.includes('?') ? '&' : '?';
-  const targetUrl = `${API_BASE_URL}${path}${separator}_t=${timestamp}`;
   
-  const proxyConfig = getProxyConfig();
-  
-  if (!shouldUseProxy || !proxyConfig) {
-    console.log('🔗 Direct API call:', targetUrl);
-    return targetUrl;
+  if (!token) {
+    throw new Error('TOKEN_REQUIRED');
   }
   
-  let proxiedUrl = proxyConfig.buildUrl(targetUrl);
-  
-  // Add Telegram initData for authentication with Supabase Edge Function proxy
-  if (proxyConfig.name === 'Supabase Edge Function') {
-    const initData = (window as any).Telegram?.WebApp?.initData || "";
-    const urlObj = new URL(proxiedUrl);
-    urlObj.searchParams.set('initData', initData);
-    proxiedUrl = urlObj.toString();
-  }
-  
-  console.log('🔀 Proxy API call:', proxiedUrl, `(via ${proxyConfig.name})`);
-  console.log('🎯 Target URL:', targetUrl);
-  
-  return proxiedUrl;
+  // Always use proxy with authentication token
+  const endpoint = `${path}?_t=${timestamp}`;
+  return `${getProxyUrl()}?endpoint=${encodeURIComponent(endpoint)}`;
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)
@@ -133,51 +40,45 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
   return controller.signal;
 };
 
-// API Health Check
-export const checkAPIHealth = async (): Promise<boolean> => {
-  try {
-    const apiUrl = buildApiUrl('/api/health');
-    console.log('Health check API URL:', apiUrl);
-    
-    const response = await fetch(apiUrl, { 
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-      signal: getTimeoutSignal(5000)
-    });
-    return response.ok;
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return false;
-  }
-};
-
-export const fetchNFTGifts = async (username: string) => {
+// Fetch NFT gifts for a specific username
+export const fetchNFTGifts = async (username: string, token: string | null) => {
   // Clean username by removing @ if present
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`);
+  if (!token) {
+    throw new Error('TOKEN_REQUIRED');
+  }
   
-  console.log('Fetching NFT data from:', apiUrl);
-  console.log('API Base URL:', API_BASE_URL);
+  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`, token);
+  
+  console.log('Fetching NFT data with authentication...');
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Auth-Token': token,
       },
       signal: getTimeoutSignal(20000)
     });
+
+    // Update operations count from response header
+    const operationsRemaining = response.headers.get('X-Operations-Remaining');
+    if (operationsRemaining) {
+      window.dispatchEvent(new CustomEvent('operationsUpdate', {
+        detail: { operationsRemaining: parseInt(operationsRemaining) }
+      }));
+    }
     
     if (!response.ok) {
       console.error('API response not OK:', response.status, response.statusText);
       
-      if (response.status === 404) {
+      if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      } else if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       } else if (response.status === 429) {
-        // Read Retry-After header for rate limiting
         const retryAfter = response.headers.get('Retry-After');
         const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 10;
         const errorMessage = `RATE_LIMIT_EXCEEDED:${retryAfterSeconds}`;
@@ -202,26 +103,17 @@ export const fetchNFTGifts = async (username: string) => {
     }
     
     console.log('API Response:', responseData);
-    
-    // Process response with proxy parser if using proxy
-    const proxyConfig = getProxyConfig();
-    const processedData = shouldUseProxy && proxyConfig ? proxyConfig.parseResponse(responseData) : responseData;
-    return processAPIResponse(processedData, shouldUseProxy, cleanUsername);
+    return processAPIResponse(responseData, true, cleanUsername);
     
   } catch (error) {
     console.error('API request failed:', error);
     
-    // Handle mixed content errors specifically
-    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http:')) {
-        throw new Error('INSECURE_API_URL');
-      }
-    }
-    
     // Re-throw specific errors
     if (error instanceof Error && (
+        error.message === 'TOKEN_EXPIRED' ||
+        error.message === 'TOKEN_REQUIRED' ||
         error.message.startsWith('RATE_LIMIT_EXCEEDED') ||
-        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR', 'INSECURE_API_URL'].includes(error.message)
+        ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR'].includes(error.message)
     )) {
       throw error;
     }
@@ -232,23 +124,40 @@ export const fetchNFTGifts = async (username: string) => {
 };
 
 // Fetch User Profile (photo and name)
-export const fetchUserProfile = async (username: string) => {
+export const fetchUserProfile = async (username: string, token: string | null) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
-  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
   
-  console.log('Fetching user profile from:', apiUrl);
+  if (!token) {
+    throw new Error('TOKEN_REQUIRED');
+  }
+  
+  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`, token);
+  
+  console.log('Fetching user profile with authentication...');
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Auth-Token': token,
       },
       signal: getTimeoutSignal(10000)
     });
+
+    // Update operations count
+    const operationsRemaining = response.headers.get('X-Operations-Remaining');
+    if (operationsRemaining) {
+      window.dispatchEvent(new CustomEvent('operationsUpdate', {
+        detail: { operationsRemaining: parseInt(operationsRemaining) }
+      }));
+    }
     
     if (!response.ok) {
       console.error('User profile API response not OK:', response.status);
+      if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
       if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       }
@@ -265,7 +174,13 @@ export const fetchUserProfile = async (username: string) => {
     
   } catch (error) {
     console.error('User profile request failed:', error);
-    // Return fallback data instead of throwing
+    
+    // Re-throw token errors
+    if (error instanceof Error && (error.message === 'TOKEN_EXPIRED' || error.message === 'TOKEN_REQUIRED')) {
+      throw error;
+    }
+    
+    // Return fallback data for other errors
     return {
       name: cleanUsername,
       photo_base64: null
@@ -277,6 +192,9 @@ export const fetchUserProfile = async (username: string) => {
 const processAPIResponse = (responseData: any, isProxy: boolean, username?: string) => {
   // Check for API error responses
   if (responseData && responseData.error) {
+    if (responseData.error === 'TOKEN_EXPIRED') {
+      throw new Error('TOKEN_EXPIRED');
+    }
     if (responseData.error === 'Cannot receive gifts' || responseData.error === 'Invalid username') {
       throw new Error('CANNOT_RECEIVE_GIFTS');
     }
@@ -318,7 +236,7 @@ const processAPIResponse = (responseData: any, isProxy: boolean, username?: stri
           model: gift.model || 'Unknown',
           floor_price: gift.price_ton || 0,
           avg_price: gift.price_ton || 0,
-          price_change_percent: gift.price_change_percent || (Math.random() * 20 - 5), // Use API data or generate random between -5% to +15%
+          price_change_percent: gift.price_change_percent || (Math.random() * 20 - 5),
           image: gift.image || gift.image_url,
           title: gift.title,
           backdrop: gift.backdrop || '',

@@ -14,6 +14,7 @@ import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/contexts/AuthContext';
 import novaLogo from '@/assets/nova-logo-new.png';
 
 interface UserProfile {
@@ -69,6 +70,7 @@ interface APIResponse {
 }
 
 const TelegramApp: React.FC = () => {
+  const { token, logout } = useAuth();
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
   const [currentUserFullName, setCurrentUserFullName] = useState('');
@@ -215,8 +217,8 @@ const TelegramApp: React.FC = () => {
     try {
       // Fetch both NFT data and user profile in parallel
       const [data, profile] = await Promise.all([
-        fetchNFTGifts(searchUsername),
-        fetchUserProfile(searchUsername)
+        fetchNFTGifts(searchUsername, token),
+        fetchUserProfile(searchUsername, token)
       ]);
 
       if (data.success && data.data) {
@@ -237,6 +239,18 @@ const TelegramApp: React.FC = () => {
       // Handle different error types
       if (err instanceof Error) {
         console.log('Error type:', err.message);
+        
+        // Handle token expiration
+        if (err.message === 'TOKEN_EXPIRED') {
+          toast({
+            title: "Session Expired",
+            description: "Please log out and log in again to continue.",
+            variant: "destructive"
+          });
+          setTimeout(() => logout(), 2000);
+          return;
+        }
+        
         if (err.message === 'NETWORK_ERROR') {
           setError('NETWORK_ERROR');
         } else if (err.message === 'CORS_ERROR') {
