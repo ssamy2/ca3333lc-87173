@@ -10,6 +10,7 @@ import GiftImage from '@/components/GiftImage';
 import BottomNav from '@/components/BottomNav';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useBlackFloorData } from '@/hooks/useBlackFloorData';
+import MarketTable from '@/components/MarketTable';
 
 interface NFTMarketData {
   priceTon: number;
@@ -506,65 +507,10 @@ const Chart = () => {
         )}
 
         {viewMode === 'list' && (
-          <div className="space-y-2">
-            {filteredData.map(([name, data]) => {
-              const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-              const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
-              const isPositive = change >= 0;
-              const isNeutral = change === 0;
-
-              return (
-                <Link 
-                  key={name}
-                  to={`/gift/${encodeURIComponent(name)}`}
-                  className="no-underline"
-                >
-                  <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      {/* Left: Image */}
-                      <div className="flex-shrink-0">
-                        <GiftImage
-                          imageUrl={data.image_url}
-                          name={name}
-                          shortName={(data as any).short_name}
-                          size="md"
-                          className="rounded-full"
-                          isBlackMode={dataSource === 'black'}
-                        />
-                      </div>
-
-                      {/* Middle: Name */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-foreground text-base truncate">
-                          {name}
-                        </h3>
-                      </div>
-
-                      {/* Right: Price and Change */}
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-1">
-                          <TonIcon className="w-4 h-4" />
-                          <span className="font-bold text-foreground text-lg">
-                            {price.toFixed(2)}
-                          </span>
-                        </div>
-                        {!isNeutral && (
-                          <span
-                            className={`text-sm font-medium ${
-                              isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                            }`}
-                          >
-                            {isPositive ? '+' : ''}
-                            {change.toFixed(2)}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+          <MarketTable 
+            data={filteredData} 
+            isBlackMode={dataSource === 'black'} 
+          />
         )}
 
         {viewMode === 'heatmap' && (
