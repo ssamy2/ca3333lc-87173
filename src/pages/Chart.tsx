@@ -363,12 +363,12 @@ const Chart = () => {
               {chartType === 'change' && (
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => setTimeGap('1m')}
-                    variant={timeGap === '1m' ? 'default' : 'outline'}
+                    onClick={() => setTimeGap('24h')}
+                    variant={timeGap === '24h' ? 'default' : 'outline'}
                     size="sm"
                     className="flex-1 h-10 text-sm rounded-xl"
                   >
-                    1m
+                    24H
                   </Button>
                   <Button
                     onClick={() => setTimeGap('1w')}
@@ -379,12 +379,12 @@ const Chart = () => {
                     1w
                   </Button>
                   <Button
-                    onClick={() => setTimeGap('24h')}
-                    variant={timeGap === '24h' ? 'default' : 'outline'}
+                    onClick={() => setTimeGap('1m')}
+                    variant={timeGap === '1m' ? 'default' : 'outline'}
                     size="sm"
                     className="flex-1 h-10 text-sm rounded-xl"
                   >
-                    24h
+                    1m
                   </Button>
                 </div>
               )}

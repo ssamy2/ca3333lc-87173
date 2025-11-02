@@ -78,8 +78,8 @@ const GiftDetail = () => {
   const [giftData, setGiftData] = useState<GiftDetailData | null>(null);
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
   const [dataSource, setDataSource] = useState<DataSource>('market');
-  const [timeRange, setTimeRange] = useState<TimeRange>('1w');
-  const [chartType, setChartType] = useState<ChartType>('candlestick');
+  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
+  const [chartType, setChartType] = useState<ChartType>('line');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [showModels, setShowModels] = useState(false);
 
