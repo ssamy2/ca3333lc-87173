@@ -10,7 +10,6 @@ import GiftDetail from "./pages/GiftDetail";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 // Configure React Query for optimal caching
 const queryClient = new QueryClient({
@@ -32,33 +31,31 @@ const DataPrefetcher = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="light"
-        themes={["light", "dark"]}
-        enableSystem={false}
-        storageKey="nova-theme"
-      >
-        <TooltipProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <DataPrefetcher>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/chart" element={<Chart />} />
-                  <Route path="/gift/:name" element={<GiftDetail />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </DataPrefetcher>
-            </BrowserRouter>
-          </ErrorBoundary>
-        </TooltipProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      themes={["light", "dark"]}
+      enableSystem={false}
+      storageKey="nova-theme"
+    >
+      <TooltipProvider>
+        <ErrorBoundary>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <DataPrefetcher>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/chart" element={<Chart />} />
+                <Route path="/gift/:name" element={<GiftDetail />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </DataPrefetcher>
+          </BrowserRouter>
+        </ErrorBoundary>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

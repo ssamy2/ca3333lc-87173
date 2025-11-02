@@ -2,31 +2,13 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 
 export const USE_MOCK_DATA = false; // Always use real API
 
-// Get API base URL from environment
+// Get API base URL
 const API_BASE_URL = 'https://channelsseller.site';
 
-// ALWAYS use secure proxy for all API calls
-const shouldUseProxy = true;
-
-// Get the secure proxy URL
-const getProxyUrl = (): string => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  return supabaseUrl 
-    ? `${supabaseUrl}/functions/v1/secure-proxy`
-    : 'https://ymgqsiwwlcpbuxbjkslc.supabase.co/functions/v1/secure-proxy';
-};
-
-// Build API URL with secure proxy
-const buildApiUrl = (path: string, token: string | null): string => {
+// Build API URL directly (no proxy needed - CloudFlare protection is in place)
+const buildApiUrl = (path: string): string => {
   const timestamp = Date.now();
-  
-  if (!token) {
-    throw new Error('TOKEN_REQUIRED');
-  }
-  
-  // Always use proxy with authentication token
-  const endpoint = `${path}?_t=${timestamp}`;
-  return `${getProxyUrl()}?endpoint=${encodeURIComponent(endpoint)}`;
+  return `${API_BASE_URL}${path}${path.includes('?') ? '&' : '?'}_t=${timestamp}`;
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)
@@ -41,42 +23,27 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
 };
 
 // Fetch NFT gifts for a specific username
-export const fetchNFTGifts = async (username: string, token: string | null) => {
+export const fetchNFTGifts = async (username: string) => {
   // Clean username by removing @ if present
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  if (!token) {
-    throw new Error('TOKEN_REQUIRED');
-  }
+  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`);
   
-  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`, token);
-  
-  console.log('Fetching NFT data with authentication...');
+  console.log('Fetching NFT data...');
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'X-Auth-Token': token,
       },
       signal: getTimeoutSignal(20000)
     });
-
-    // Update operations count from response header
-    const operationsRemaining = response.headers.get('X-Operations-Remaining');
-    if (operationsRemaining) {
-      window.dispatchEvent(new CustomEvent('operationsUpdate', {
-        detail: { operationsRemaining: parseInt(operationsRemaining) }
-      }));
-    }
     
     if (!response.ok) {
       console.error('API response not OK:', response.status, response.statusText);
       
-      if (response.status === 401) {
-        throw new Error('TOKEN_EXPIRED');
-      } else if (response.status === 404) {
+      if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       } else if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
@@ -110,8 +77,6 @@ export const fetchNFTGifts = async (username: string, token: string | null) => {
     
     // Re-throw specific errors
     if (error instanceof Error && (
-        error.message === 'TOKEN_EXPIRED' ||
-        error.message === 'TOKEN_REQUIRED' ||
         error.message.startsWith('RATE_LIMIT_EXCEEDED') ||
         ['USER_NOT_FOUND', 'CANNOT_RECEIVE_GIFTS', 'ACCESS_FORBIDDEN', 'SERVER_ERROR', 'PARSE_ERROR'].includes(error.message)
     )) {
@@ -124,40 +89,24 @@ export const fetchNFTGifts = async (username: string, token: string | null) => {
 };
 
 // Fetch User Profile (photo and name)
-export const fetchUserProfile = async (username: string, token: string | null) => {
+export const fetchUserProfile = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  if (!token) {
-    throw new Error('TOKEN_REQUIRED');
-  }
+  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
   
-  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`, token);
-  
-  console.log('Fetching user profile with authentication...');
+  console.log('Fetching user profile...');
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'X-Auth-Token': token,
       },
       signal: getTimeoutSignal(10000)
     });
-
-    // Update operations count
-    const operationsRemaining = response.headers.get('X-Operations-Remaining');
-    if (operationsRemaining) {
-      window.dispatchEvent(new CustomEvent('operationsUpdate', {
-        detail: { operationsRemaining: parseInt(operationsRemaining) }
-      }));
-    }
     
     if (!response.ok) {
       console.error('User profile API response not OK:', response.status);
-      if (response.status === 401) {
-        throw new Error('TOKEN_EXPIRED');
-      }
       if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       }
@@ -175,12 +124,7 @@ export const fetchUserProfile = async (username: string, token: string | null) =
   } catch (error) {
     console.error('User profile request failed:', error);
     
-    // Re-throw token errors
-    if (error instanceof Error && (error.message === 'TOKEN_EXPIRED' || error.message === 'TOKEN_REQUIRED')) {
-      throw error;
-    }
-    
-    // Return fallback data for other errors
+    // Return fallback data for errors
     return {
       name: cleanUsername,
       photo_base64: null
@@ -192,9 +136,6 @@ export const fetchUserProfile = async (username: string, token: string | null) =
 const processAPIResponse = (responseData: any, isProxy: boolean, username?: string) => {
   // Check for API error responses
   if (responseData && responseData.error) {
-    if (responseData.error === 'TOKEN_EXPIRED') {
-      throw new Error('TOKEN_EXPIRED');
-    }
     if (responseData.error === 'Cannot receive gifts' || responseData.error === 'Invalid username') {
       throw new Error('CANNOT_RECEIVE_GIFTS');
     }

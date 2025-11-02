@@ -25,6 +25,9 @@ interface BlackFloorItem {
   short_name: string;
   black_price: number;
   recorded_at: string;
+  change_24h_percent?: number;
+  change_1w_percent?: number;
+  change_1m_percent?: number;
 }
 
 interface Model {
@@ -113,11 +116,38 @@ const GiftDetail = () => {
       const response = await fetch('https://channelsseller.site/api/black-floor');
       const data: BlackFloorItem[] = await response.json();
       
-      // Filter for this specific gift and get only the latest records
+      // Filter for this specific gift
       const giftRecords = data.filter(item => item.gift_name === giftName);
       
-      // Sort by recorded_at descending and keep latest records
+      // Sort by recorded_at descending
       giftRecords.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+      
+      // Calculate time period changes if we have enough data
+      if (giftRecords.length > 0) {
+        const latestPrice = giftRecords[0].black_price;
+        const now = new Date(giftRecords[0].recorded_at);
+        
+        // Calculate 24h change
+        const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const record24h = giftRecords.find(r => new Date(r.recorded_at) <= dayAgo);
+        if (record24h) {
+          giftRecords[0].change_24h_percent = ((latestPrice - record24h.black_price) / record24h.black_price) * 100;
+        }
+        
+        // Calculate 1w change
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const record1w = giftRecords.find(r => new Date(r.recorded_at) <= weekAgo);
+        if (record1w) {
+          giftRecords[0].change_1w_percent = ((latestPrice - record1w.black_price) / record1w.black_price) * 100;
+        }
+        
+        // Calculate 1m change
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const record1m = giftRecords.find(r => new Date(r.recorded_at) <= monthAgo);
+        if (record1m) {
+          giftRecords[0].change_1m_percent = ((latestPrice - record1m.black_price) / record1m.black_price) * 100;
+        }
+      }
       
       setBlackFloorData(giftRecords);
     } catch (error) {
@@ -130,8 +160,23 @@ const GiftDetail = () => {
     if (dataSource === 'black') {
       if (blackFloorData.length === 0) return [];
       
+      // Filter data based on time range
+      let filteredData = blackFloorData;
+      const now = new Date(blackFloorData[0].recorded_at);
+      
+      if (timeRange === '24h') {
+        const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        filteredData = blackFloorData.filter(item => new Date(item.recorded_at) >= cutoff);
+      } else if (timeRange === '1w') {
+        const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        filteredData = blackFloorData.filter(item => new Date(item.recorded_at) >= cutoff);
+      } else if (timeRange === '1m') {
+        const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        filteredData = blackFloorData.filter(item => new Date(item.recorded_at) >= cutoff);
+      }
+      
       // Map black floor data to chart format with candlestick data
-      return blackFloorData.map((item, index, arr) => {
+      return filteredData.map((item, index, arr) => {
         const price = item.black_price;
         const prevPrice = index > 0 ? arr[index - 1].black_price : price;
         const nextPrice = index < arr.length - 1 ? arr[index + 1].black_price : price;
@@ -259,6 +304,30 @@ const GiftDetail = () => {
   };
 
   const calculatePriceChange = () => {
+    // If Black mode is selected, calculate from black floor data based on time range
+    if (dataSource === 'black' && blackFloorData.length > 0) {
+      const latestRecord = blackFloorData[0]; // Already sorted by recorded_at descending
+      
+      if (timeRange === '24h' && latestRecord.change_24h_percent !== undefined) {
+        return latestRecord.change_24h_percent;
+      } else if (timeRange === '1w' && latestRecord.change_1w_percent !== undefined) {
+        return latestRecord.change_1w_percent;
+      } else if (timeRange === '1m' && latestRecord.change_1m_percent !== undefined) {
+        return latestRecord.change_1m_percent;
+      }
+      
+      // Fallback: calculate from chart data
+      const chartData = getChartData();
+      if (chartData.length > 0) {
+        const firstPrice = chartData[0].price;
+        const lastPrice = chartData[chartData.length - 1].price;
+        if (firstPrice === 0) return 0;
+        return ((lastPrice - firstPrice) / firstPrice) * 100;
+      }
+      return 0;
+    }
+    
+    // Market data (original logic)
     const chartData = getChartData();
     
     if (!chartData || chartData.length === 0) return 0;
@@ -641,13 +710,22 @@ const GiftDetail = () => {
             {/* Right Side: Price, Change */}
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5 text-2xl font-bold text-foreground mb-0.5">
-                {currency === 'ton' ? (
+                {dataSource === 'black' && blackFloorData.length > 0 ? (
+                  // Show black floor price
                   <>
                     <TonIcon className="w-5 h-5" />
-                    {giftData.info.priceTon.toFixed(2)}
+                    {blackFloorData[0].black_price.toFixed(2)}
                   </>
                 ) : (
-                  <>$ {giftData.info.priceUsd.toFixed(2)}</>
+                  // Show market price
+                  currency === 'ton' ? (
+                    <>
+                      <TonIcon className="w-5 h-5" />
+                      {giftData.info.priceTon.toFixed(2)}
+                    </>
+                  ) : (
+                    <>$ {giftData.info.priceUsd.toFixed(2)}</>
+                  )
                 )}
               </div>
               <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>

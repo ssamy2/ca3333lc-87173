@@ -217,8 +217,8 @@ const TelegramApp: React.FC = () => {
     try {
       // Fetch both NFT data and user profile in parallel
       const [data, profile] = await Promise.all([
-        fetchNFTGifts(searchUsername, token),
-        fetchUserProfile(searchUsername, token)
+        fetchNFTGifts(searchUsername),
+        fetchUserProfile(searchUsername)
       ]);
 
       if (data.success && data.data) {
