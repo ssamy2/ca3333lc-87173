@@ -77,28 +77,27 @@ const DownloadHeatmapModal: React.FC<DownloadHeatmapModalProps> = ({ trigger, on
 
   return (
     <>
-      <span onClick={() => setIsOpen(true)} className="w-full flex justify-center cursor-pointer hover:opacity-80 transition-opacity">
+      <span onClick={() => setIsOpen(true)} className="w-full flex justify-center">
         {trigger}
       </span>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-md" onClick={() => setIsOpen(false)} />
-          <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl p-8 w-full lg:w-5/6 max-w-md border border-gray-700">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div className="relative bg-secondaryTransparent rounded-xl shadow-xl p-6 w-full lg:w-5/6 max-w-md">
             <div className="w-full mt-2 flex flex-col items-center">
-              <h1 className="flex flex-row items-center mb-5 gap-x-2 text-xl font-bold text-white">
-                <Download size={50} className="text-blue-400" />
-                Download Heatmap
+              <h1 className="flex flex-row items-center mb-5 gap-x-1 text-lg font-bold">
+                <Download size={50} className="text-primary" />
               </h1>
-              <p className="mb-4 text-center text-gray-300">The image will be sent to you shortly.</p>
+              <p className="mb-3 text-center">Image will be sent to you soon</p>
               <button
                 onClick={() => {
                   onDownload();
                   setIsOpen(false);
                 }}
-                className="w-full px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-xl font-semibold text-white transition-colors"
+                className="w-full px-4 py-2 bg-primary rounded-xl"
               >
-                OK
+                Ok
               </button>
             </div>
           </div>
@@ -118,7 +117,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string,
         img.onload = () => resolve();
         img.onerror = () => resolve();
         img.crossOrigin = 'anonymous';
-        img.src = item.imageName;
+        img.src = item.imageName; // Use full URL
         imageMap.set(item.imageName, img);
       });
     })
@@ -152,10 +151,12 @@ const transformGiftData = (
     const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
 
     if (chartType === 'marketcap') {
+      // Market Cap mode - size based on market cap value
       const marketCapStr = currency === 'ton' 
         ? (item.marketCapTon || '0')
         : (item.marketCapUsd || '0');
       
+      // Parse market cap string (e.g., "203.07K" -> 203070)
       const parseMarketCap = (str: string): number => {
         const num = parseFloat(str.replace(/[KM,]/g, ''));
         if (str.includes('M')) return num * 1000000;
@@ -164,8 +165,9 @@ const transformGiftData = (
       };
       
       const marketCapValue = parseMarketCap(marketCapStr);
-      const size = Math.sqrt(marketCapValue) / 100;
+      const size = Math.sqrt(marketCapValue) / 100; // Scale for reasonable sizes
 
+      // Calculate percentChange for colors even in marketcap mode
       let previousPrice = currentPrice;
       
       switch (timeGap) {
@@ -192,7 +194,7 @@ const transformGiftData = (
 
       return {
         name: item.name,
-        percentChange: Number(percentChange.toFixed(2)),
+        percentChange: Number(percentChange.toFixed(2)), // Use actual change for colors
         size,
         imageName: item.image,
         price: currentPrice,
@@ -200,6 +202,7 @@ const transformGiftData = (
       };
     }
 
+    // Change mode - existing logic
     let previousPrice = currentPrice;
     
     switch (timeGap) {
@@ -247,7 +250,7 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
   data.forEach(item => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = item.imageName;
+    img.src = item.imageName; // Use full URL
     imageMap.set(item.imageName, img);
   });
   
@@ -291,19 +294,15 @@ const createImagePlugin = (
 
         if (width <= 0 || height <= 0) return;
 
-        const color = item.percentChange > 0 ? '#10b981' 
-          : item.percentChange < 0 ? '#ef4444' 
-          : '#6b7280';
+        const color = item.percentChange > 0 ? '#018f35' 
+          : item.percentChange < 0 ? '#dc2626' 
+          : '#8F9779';
 
-        const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, color + '80');
-
-        ctx.fillStyle = gradient;
-        ctx.strokeStyle = '#374151';
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = borderWidth / zoomLevel;
         ctx.beginPath();
-        ctx.roundRect(x, y, width, height, 8);
+        ctx.roundRect(x, y, width, height, 0);
         ctx.fill();
         if (borderWidth > 0) ctx.stroke();
         ctx.closePath();
@@ -346,10 +345,11 @@ const createImagePlugin = (
         ctx.textAlign = 'center';
         ctx.strokeStyle = 'transparent';
         ctx.lineWidth = 0;
-        ctx.font = `bold ${titleFontSize}px 'Inter', sans-serif`;
+        ctx.font = `bold ${titleFontSize}px sans-serif`;
         ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
         if (chartType === 'change') {
+          // Show percentage change
           ctx.font = `${titleFontSize}px sans-serif`;
           const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
           ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
@@ -386,11 +386,13 @@ const createImagePlugin = (
             ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
           }
 
+          // Display Market Cap
           ctx.font = `${marketCapFontSize}px sans-serif`;
           ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
           const marketCapText = `MC: ${item.marketCap}`;
           ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
         } else {
+          // Market Cap mode - show market cap prominently
           ctx.font = `bold ${titleFontSize}px sans-serif`;
           ctx.fillStyle = 'white';
           const marketCapText = `MC: ${item.marketCap}`;
@@ -435,8 +437,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 3840;
-    canvas.height = 2160;
+    canvas.width = 3840;  // Doubled from 1920
+    canvas.height = 2160; // Doubled from 1080
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -486,3 +488,171 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           console.error('No user ID found');
           tempChart.destroy();
           return;
+        }
+
+        // Send to Supabase Edge Function
+        try {
+          // Remove the Base64 prefix (data:image/jpeg;base64,)
+          const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+          
+          // Get Telegram initData for authentication
+          const initData = telegramWebApp.initData || "";
+          
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+            },
+            body: JSON.stringify({
+              image: cleanBase64,
+              initData: initData
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to send image');
+          }
+          
+          console.log('Image sent successfully');
+        } catch (err) {
+          console.error('Error sending image:', err);
+        }
+
+        tempChart.destroy();
+      } catch (error) {
+        console.error('Error sending image:', error);
+        tempChart.destroy();
+      }
+    }, 0);
+  };
+
+  useEffect(() => {
+    const filteredData = data.filter(item => !item.preSale);
+    const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
+    setDisplayData(transformed);
+    setIsLoading(false);
+  }, [data, chartType, timeGap, currency]);
+
+  const chartData: ChartData<'treemap'> = {
+    datasets: [{
+      data: [],
+      tree: displayData,
+      key: 'size',
+      imageMap: preloadImages(displayData),
+      backgroundColor: 'transparent'
+    } as any]
+  };
+
+  const chartOptions: ChartOptions<'treemap'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+      zoom: {
+        zoom: {
+          wheel: { enabled: false },
+          pinch: { enabled: false },
+          mode: 'xy'
+        },
+        pan: {
+          enabled: false,
+          mode: 'xy',
+          onPan: (context: any) => {
+            updateInteractivity(context.chart);
+          }
+        }
+      }
+    },
+    events: []
+  };
+
+  const handleResetZoom = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      (chart as any).resetZoom();
+      chart.update('none');
+      updateInteractivity(chart);
+    }
+    handleHapticFeedback();
+  };
+
+  const handleZoomOut = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+      const newZoom = Math.max(1, zoomLevel - 0.5);
+      if (newZoom === 1) {
+        (chart as any).resetZoom();
+      } else {
+        (chart as any).zoom(newZoom / zoomLevel);
+      }
+      chart.update('none');
+      updateInteractivity(chart);
+    }
+    handleHapticFeedback();
+  };
+
+  const handleZoomIn = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+      const newZoom = Math.min(10, zoomLevel + 0.3);
+      (chart as any).zoom(newZoom / zoomLevel);
+      chart.update('none');
+      updateInteractivity(chart);
+    }
+    handleHapticFeedback();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex justify-center items-center min-h-[600px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full flex flex-col items-center gap-3 px-3">
+      {/* Control Buttons */}
+      <div className="w-full flex gap-2">
+        <button
+          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
+          onClick={handleResetZoom}
+        >
+          <RotateCcw size={18} />
+          Reset Zoom
+        </button>
+        
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          onClick={handleZoomOut}
+        >
+          <ZoomOut size={20} />
+        </button>
+        
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          onClick={handleZoomIn}
+        >
+          <ZoomIn size={20} />
+        </button>
+      </div>
+
+      {/* Chart */}
+      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
+        <Chart
+          ref={chartRef}
+          type="treemap"
+          data={chartData}
+          options={chartOptions}
+          plugins={[createImagePlugin(chartType, currency)]}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default TreemapHeatmap;
