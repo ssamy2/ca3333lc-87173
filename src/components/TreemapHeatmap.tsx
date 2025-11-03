@@ -19,7 +19,8 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  ArrowLeft
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 
 ChartJS.register(
@@ -65,6 +66,12 @@ interface TreemapHeatmapProps {
   chartType: 'change' | 'marketcap';
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
+  dataSource: 'normal' | 'black';
+  onChartTypeChange: (type: 'change' | 'marketcap') => void;
+  onTimeGapChange: (gap: '24h' | '1w' | '1m') => void;
+  onCurrencyChange: (currency: 'ton' | 'usd') => void;
+  onDataSourceChange: (source: 'normal' | 'black') => void;
+  onRefresh: () => void;
 }
 
 interface DownloadHeatmapModalProps {
@@ -117,7 +124,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string,
         img.onload = () => resolve();
         img.onerror = () => resolve();
         img.crossOrigin = 'anonymous';
-        img.src = item.imageName; // Use full URL
+        img.src = item.imageName;
         imageMap.set(item.imageName, img);
       });
     })
@@ -151,12 +158,10 @@ const transformGiftData = (
     const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
 
     if (chartType === 'marketcap') {
-      // Market Cap mode - size based on market cap value
       const marketCapStr = currency === 'ton' 
         ? (item.marketCapTon || '0')
         : (item.marketCapUsd || '0');
       
-      // Parse market cap string (e.g., "203.07K" -> 203070)
       const parseMarketCap = (str: string): number => {
         const num = parseFloat(str.replace(/[KM,]/g, ''));
         if (str.includes('M')) return num * 1000000;
@@ -165,9 +170,8 @@ const transformGiftData = (
       };
       
       const marketCapValue = parseMarketCap(marketCapStr);
-      const size = Math.sqrt(marketCapValue) / 100; // Scale for reasonable sizes
+      const size = Math.sqrt(marketCapValue) / 100;
 
-      // Calculate percentChange for colors even in marketcap mode
       let previousPrice = currentPrice;
       
       switch (timeGap) {
@@ -194,7 +198,7 @@ const transformGiftData = (
 
       return {
         name: item.name,
-        percentChange: Number(percentChange.toFixed(2)), // Use actual change for colors
+        percentChange: Number(percentChange.toFixed(2)),
         size,
         imageName: item.image,
         price: currentPrice,
@@ -202,7 +206,6 @@ const transformGiftData = (
       };
     }
 
-    // Change mode - existing logic
     let previousPrice = currentPrice;
     
     switch (timeGap) {
@@ -250,7 +253,7 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
   data.forEach(item => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = item.imageName; // Use full URL
+    img.src = item.imageName;
     imageMap.set(item.imageName, img);
   });
   
@@ -349,7 +352,6 @@ const createImagePlugin = (
         ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
         if (chartType === 'change') {
-          // Show percentage change
           ctx.font = `${titleFontSize}px sans-serif`;
           const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
           ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
@@ -386,13 +388,11 @@ const createImagePlugin = (
             ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
           }
 
-          // Display Market Cap
           ctx.font = `${marketCapFontSize}px sans-serif`;
           ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
           const marketCapText = `MC: ${item.marketCap}`;
           ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
         } else {
-          // Market Cap mode - show market cap prominently
           ctx.font = `bold ${titleFontSize}px sans-serif`;
           ctx.fillStyle = 'white';
           const marketCapText = `MC: ${item.marketCap}`;
@@ -416,11 +416,18 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
   data,
   chartType,
   timeGap,
-  currency
+  currency,
+  dataSource,
+  onChartTypeChange,
+  onTimeGapChange,
+  onCurrencyChange,
+  onDataSourceChange,
+  onRefresh
 }) => {
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
+  const [colorMode, setColorMode] = useState<'normal' | 'vibrant'>('normal');
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -437,8 +444,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 3840;  // Doubled from 1920
-    canvas.height = 2160; // Doubled from 1080
+    canvas.width = 3840;
+    canvas.height = 2160;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -490,9 +497,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        // Send to external API
         try {
-          // Remove the Base64 prefix (data:image/jpeg;base64,)
           const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
           
           const response = await fetch('https://channelsseller.site/api/send-image', {
@@ -613,11 +618,118 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
   }
 
   return (
-    <div className="w-full flex flex-col items-center gap-3 px-3">
-      {/* Control Buttons */}
+    <div className="w-full flex flex-col items-center gap-4 px-4">
+      {/* Metric Filters */}
+      <div className="w-full flex gap-1 bg-muted/30 p-1 rounded-2xl">
+        <button
+          onClick={() => onChartTypeChange('change')}
+          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
+            chartType === 'change' 
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Change
+        </button>
+        <button
+          onClick={() => onChartTypeChange('marketcap')}
+          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
+            chartType === 'marketcap' 
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Market Cap
+        </button>
+      </div>
+
+      {/* Time & Top Filters */}
+      <div className="w-full flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-1 bg-muted/30 p-1 rounded-xl">
+          {['24h', '1w', '1m'].map((gap) => (
+            <button
+              key={gap}
+              onClick={() => onTimeGapChange(gap as '24h' | '1w' | '1m')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                timeGap === gap
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {gap}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-1 bg-muted/30 p-1 rounded-xl">
+          {['Top 50', 'Top 30', 'Top 15'].map((top) => (
+            <button
+              key={top}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
+            >
+              {top}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setColorMode(colorMode === 'normal' ? 'vibrant' : 'normal')}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-green-400 text-white shadow-sm hover:scale-105 transition-transform"
+        >
+          <Sparkles size={14} />
+        </button>
+      </div>
+
+      {/* Data Source & Currency Filters */}
+      <div className="w-full flex items-center justify-between gap-4">
+        <div className="flex gap-1 bg-muted/30 p-1 rounded-xl">
+          {['normal', 'black'].map((source) => (
+            <button
+              key={source}
+              onClick={() => onDataSourceChange(source as 'normal' | 'black')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+                dataSource === source
+                  ? source === 'black'
+                    ? 'bg-foreground text-background shadow-sm'
+                    : 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {source}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1 bg-muted/30 p-1 rounded-xl">
+            {['ton', 'usd'].map((curr) => (
+              <button
+                key={curr}
+                onClick={() => onCurrencyChange(curr as 'ton' | 'usd')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  currency === curr
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {curr.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={onRefresh}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-background border shadow-sm hover:scale-105 transition-transform"
+          >
+            <RefreshCw size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Chart Controls */}
       <div className="w-full flex gap-2">
         <button
-          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
+          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium hover:bg-accent transition-colors"
           onClick={handleResetZoom}
         >
           <RotateCcw size={18} />
@@ -625,14 +737,14 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
         </button>
         
         <button
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border hover:bg-accent transition-colors"
           onClick={handleZoomOut}
         >
           <ZoomOut size={20} />
         </button>
         
         <button
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border hover:bg-accent transition-colors"
           onClick={handleZoomIn}
         >
           <ZoomIn size={20} />
@@ -642,7 +754,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
       {/* Download Button */}
       <DownloadHeatmapModal
         trigger={
-          <button className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-medium">
+          <button className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
             <Download size={18} />
             Download Heatmap as Image
           </button>
@@ -651,7 +763,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
       />
 
       {/* Chart */}
-      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
+      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border shadow-sm">
         <Chart
           ref={chartRef}
           type="treemap"
