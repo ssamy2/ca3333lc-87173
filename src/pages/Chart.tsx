@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, LayoutGrid, List, BarChart3 } from 'lucide-react';
+import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, DollarSign, Download, RefreshCw } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import { Link } from 'react-router-dom';
 import TreemapHeatmap from '@/components/TreemapHeatmap';
@@ -256,177 +256,195 @@ const Chart = () => {
           window.location.href = '/';
         }
       }} />
-      <div className={`p-2 space-y-2 ${dataSource === 'black' ? 'font-inter' : ''}`}>
+      <div className={`p-4 space-y-4 ${dataSource === 'black' ? 'font-inter' : ''}`}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className={`text-xl font-bold ${dataSource === 'black' ? 'text-[#C9A14B] text-[48px]' : 'text-foreground'}`}>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className={`text-2xl font-bold ${dataSource === 'black' ? 'text-[#C9A14B]' : 'text-foreground'}`}>
             {dataSource === 'black' ? 'BLACK GIFTS' : 'Market Charts'}
           </h1>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-            <span className={`text-xs ${dataSource === 'black' ? 'text-white/60' : 'text-muted-foreground'}`}>Live</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className={`text-sm font-medium ${dataSource === 'black' ? 'text-white/70' : 'text-muted-foreground'}`}>Live</span>
           </div>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex gap-2 justify-center">
+        {/* View Mode Toggle - Circular Buttons */}
+        <div className="flex gap-3 justify-center">
           <Button
             onClick={() => setViewMode('list')}
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="icon"
-            className="rounded-full h-9 w-9"
+            variant={viewMode === 'list' ? 'glassBlue' : 'glass'}
+            size="circleSm"
           >
-            <List className="w-4 h-4" />
+            <List className="w-5 h-5" />
           </Button>
           <Button
             onClick={() => setViewMode('grid')}
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            className="rounded-full h-9 w-9"
+            variant={viewMode === 'grid' ? 'glassBlue' : 'glass'}
+            size="circleSm"
           >
-            <LayoutGrid className="w-4 h-4" />
+            <LayoutGrid className="w-5 h-5" />
           </Button>
           <Button
             onClick={() => setViewMode('heatmap')}
-            variant={viewMode === 'heatmap' ? 'default' : 'outline'}
-            size="icon"
-            className="rounded-full h-9 w-9"
+            variant={viewMode === 'heatmap' ? 'glassBlue' : 'glass'}
+            size="circleSm"
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="space-y-2">
-          {/* Data Source Filter */}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setDataSource('market')}
-              variant={dataSource === 'market' ? 'default' : 'outline'}
-              size="sm"
-              className="flex-1 h-8 text-xs"
-            >
-              All
-            </Button>
-            <Button
-              onClick={() => setDataSource('black')}
-              variant={dataSource === 'black' ? 'default' : 'outline'}
-              size="sm"
-              className={`flex-1 h-8 text-xs ${dataSource === 'black' ? 'bg-[#0B0B0D] text-white hover:bg-[#0B0B0D]/90' : 'bg-black text-white hover:bg-black/80'}`}
-            >
-              Black
-            </Button>
-          </div>
+        {viewMode === 'heatmap' && (
+          <div className="space-y-3">
+            {/* Chart Type - Pill Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setChartType('change')}
+                variant={chartType === 'change' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                change
+              </Button>
+              <Button
+                onClick={() => setChartType('marketcap')}
+                variant={chartType === 'marketcap' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium text-white/60"
+              >
+                Market Cap
+              </Button>
+            </div>
 
-          {viewMode === 'heatmap' && (
-            <>
-              {/* Chart Type */}
-              <div className="flex gap-2">
+            {/* Time Period - Circular Buttons */}
+            {chartType === 'change' && (
+              <div className="flex gap-2 justify-center items-center flex-wrap">
                 <Button
-                  onClick={() => setChartType('change')}
-                  variant={chartType === 'change' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
+                  onClick={() => setTimeGap('24h')}
+                  variant={timeGap === '24h' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold"
                 >
-                  Change
+                  24H
                 </Button>
                 <Button
-                  onClick={() => setChartType('marketcap')}
-                  variant={chartType === 'marketcap' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
+                  onClick={() => setTimeGap('1w')}
+                  variant={timeGap === '1w' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold"
                 >
-                  Market Cap
-                </Button>
-              </div>
-
-              {/* Currency */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setCurrency('ton')}
-                  variant={currency === 'ton' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
-                >
-                  TON
+                  1w
                 </Button>
                 <Button
-                  onClick={() => setCurrency('usd')}
-                  variant={currency === 'usd' ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 h-10 text-sm rounded-xl"
+                  onClick={() => setTimeGap('1m')}
+                  variant={timeGap === '1m' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold"
                 >
-                  USD
-                </Button>
-              </div>
-
-              {chartType === 'change' && (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setTimeGap('24h')}
-                    variant={timeGap === '24h' ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1 h-10 text-sm rounded-xl"
-                  >
-                    24H
-                  </Button>
-                  <Button
-                    onClick={() => setTimeGap('1w')}
-                    variant={timeGap === '1w' ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1 h-10 text-sm rounded-xl"
-                  >
-                    1w
-                  </Button>
-                  <Button
-                    onClick={() => setTimeGap('1m')}
-                    variant={timeGap === '1m' ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1 h-10 text-sm rounded-xl"
-                  >
-                    1m
-                  </Button>
-                </div>
-              )}
-
-              {/* Top Filter */}
-              <div className="grid grid-cols-4 gap-2">
-                <Button
-                  onClick={() => setTopFilter('all')}
-                  variant={topFilter === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-10 text-sm rounded-xl"
-                >
-                  All
+                  1m
                 </Button>
                 <Button
                   onClick={() => setTopFilter('top50')}
-                  variant={topFilter === 'top50' ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-10 text-sm rounded-xl"
+                  variant={topFilter === 'top50' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold text-xs"
                 >
                   Top 50
                 </Button>
                 <Button
                   onClick={() => setTopFilter('top35')}
-                  variant={topFilter === 'top35' ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-10 text-sm rounded-xl"
+                  variant={topFilter === 'top35' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold text-xs"
                 >
-                  Top 35
+                  Top 30
                 </Button>
                 <Button
                   onClick={() => setTopFilter('top25')}
-                  variant={topFilter === 'top25' ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-10 text-sm rounded-xl"
+                  variant={topFilter === 'top25' ? 'glassBlue' : 'glass'}
+                  size="circle"
+                  className="font-semibold text-xs"
                 >
-                  Top 25
+                  Top 15
                 </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="glass"
+                    size="circleSm"
+                    className="w-14 h-10"
+                  >
+                    <div className="flex gap-1">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                  </Button>
+                </div>
               </div>
-            </>
-          )}
-        </div>
+            )}
+
+            {/* Data Source & Currency - Pill Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setDataSource('market')}
+                variant={dataSource === 'market' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                Normal
+              </Button>
+              <Button
+                onClick={() => setDataSource('black')}
+                variant={dataSource === 'black' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                Black
+              </Button>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <Button
+                variant="glass"
+                size="circleSm"
+                className="flex items-center gap-1"
+              >
+                <TrendingUp className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={() => setCurrency('ton')}
+                variant={currency === 'ton' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium flex items-center justify-center gap-2"
+              >
+                <TonIcon className="w-4 h-4" />
+                ton
+              </Button>
+              <Button
+                onClick={() => setCurrency('usd')}
+                variant={currency === 'usd' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                usd
+              </Button>
+              <Button
+                variant="glass"
+                size="circleSm"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Download Button */}
+            <Button
+              variant="glassBlue"
+              size="lg"
+              className="w-full rounded-2xl font-semibold text-base h-14 shadow-[0_8px_32px_rgba(33,150,243,0.5)]"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              Download Heatmap as Image
+            </Button>
+          </div>
+        )}
 
 
         {/* Content */}
