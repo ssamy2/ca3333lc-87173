@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, DollarSign, Download, RefreshCw } from 'lucide-react';
+import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, TrendingDown, DollarSign, Download, RefreshCw } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import { Link } from 'react-router-dom';
 import TreemapHeatmap from '@/components/TreemapHeatmap';
@@ -91,6 +91,7 @@ const Chart = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
+  const [sortMode, setSortMode] = useState<'default' | 'priceUp' | 'priceDown'>('default');
 
 
   const getFilteredData = () => {
@@ -169,12 +170,49 @@ const Chart = () => {
         return marketCapB - marketCapA;
       });
     } else {
-      // Sort by absolute change (biggest changes first regardless of sign)
-      entries.sort((a, b) => {
-        const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-        const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-        return Math.abs(changeB) - Math.abs(changeA);
-      });
+      // Sort based on sortMode
+      if (sortMode === 'priceUp') {
+        // Price Up: positive (descending) → zero → negative
+        entries.sort((a, b) => {
+          const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
+          const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
+          
+          if (changeA > 0 && changeB <= 0) return -1;
+          if (changeA <= 0 && changeB > 0) return 1;
+          if (changeA > 0 && changeB > 0) return changeB - changeA;
+          
+          if (changeA === 0 && changeB < 0) return -1;
+          if (changeA < 0 && changeB === 0) return 1;
+          
+          if (changeA < 0 && changeB < 0) return changeA - changeB;
+          
+          return 0;
+        });
+      } else if (sortMode === 'priceDown') {
+        // Price Down: negative (descending by abs value) → zero → positive
+        entries.sort((a, b) => {
+          const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
+          const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
+          
+          if (changeA < 0 && changeB >= 0) return -1;
+          if (changeA >= 0 && changeB < 0) return 1;
+          if (changeA < 0 && changeB < 0) return changeA - changeB;
+          
+          if (changeA === 0 && changeB > 0) return -1;
+          if (changeA > 0 && changeB === 0) return 1;
+          
+          if (changeA > 0 && changeB > 0) return changeA - changeB;
+          
+          return 0;
+        });
+      } else {
+        // Default: sort by absolute change (biggest changes first)
+        entries.sort((a, b) => {
+          const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
+          const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
+          return Math.abs(changeB) - Math.abs(changeA);
+        });
+      }
     }
 
     // Apply top filter
@@ -295,7 +333,29 @@ const Chart = () => {
 
         {viewMode === 'heatmap' && (
           <div className="space-y-3">
-            {/* Chart Type - Pill Buttons */}
+            {/* Sort Mode - Price Up/Down */}
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant={sortMode === 'priceUp' ? 'glass' : 'glassDark'}
+                size="pillSm"
+                onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
+                className="min-w-[100px] transition-all duration-300"
+              >
+                <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
+                <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
+              </Button>
+              <Button
+                variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
+                size="pillSm"
+                onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
+                className="min-w-[100px] transition-all duration-300"
+              >
+                <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
+                <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
+              </Button>
+            </div>
+
+            {/* Chart Type & Data Source */}
             <div className="flex gap-2">
               <Button
                 onClick={() => setChartType('change')}
@@ -303,21 +363,21 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                change
+                Change
               </Button>
               <Button
                 onClick={() => setChartType('marketcap')}
                 variant={chartType === 'marketcap' ? 'glass' : 'glassDark'}
                 size="pill"
-                className="flex-1 font-medium text-white/60"
+                className="flex-1 font-medium"
               >
                 Market Cap
               </Button>
             </div>
 
-            {/* Time Period - Circular Buttons */}
+            {/* Time Period */}
             {chartType === 'change' && (
-              <div className="flex gap-2 justify-center items-center flex-wrap">
+              <div className="flex gap-2 justify-center">
                 <Button
                   onClick={() => setTimeGap('24h')}
                   variant={timeGap === '24h' ? 'glassBlue' : 'glass'}
@@ -342,46 +402,46 @@ const Chart = () => {
                 >
                   1m
                 </Button>
-                <Button
-                  onClick={() => setTopFilter('top50')}
-                  variant={topFilter === 'top50' ? 'glassBlue' : 'glass'}
-                  size="circle"
-                  className="font-semibold text-xs"
-                >
-                  Top 50
-                </Button>
-                <Button
-                  onClick={() => setTopFilter('top35')}
-                  variant={topFilter === 'top35' ? 'glassBlue' : 'glass'}
-                  size="circle"
-                  className="font-semibold text-xs"
-                >
-                  Top 30
-                </Button>
-                <Button
-                  onClick={() => setTopFilter('top25')}
-                  variant={topFilter === 'top25' ? 'glassBlue' : 'glass'}
-                  size="circle"
-                  className="font-semibold text-xs"
-                >
-                  Top 15
-                </Button>
-                <div className="flex gap-2">
-                  <Button
-                    variant="glass"
-                    size="circleSm"
-                    className="w-14 h-10"
-                  >
-                    <div className="flex gap-1">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    </div>
-                  </Button>
-                </div>
               </div>
             )}
 
-            {/* Data Source & Currency - Pill Buttons */}
+            {/* Top Filter */}
+            <div className="flex gap-2 justify-center">
+              <Button
+                onClick={() => setTopFilter('all')}
+                variant={topFilter === 'all' ? 'glassBlue' : 'glass'}
+                size="pillSm"
+                className="font-semibold"
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => setTopFilter('top50')}
+                variant={topFilter === 'top50' ? 'glassBlue' : 'glass'}
+                size="pillSm"
+                className="font-semibold"
+              >
+                Top 50
+              </Button>
+              <Button
+                onClick={() => setTopFilter('top35')}
+                variant={topFilter === 'top35' ? 'glassBlue' : 'glass'}
+                size="pillSm"
+                className="font-semibold"
+              >
+                Top 30
+              </Button>
+              <Button
+                onClick={() => setTopFilter('top25')}
+                variant={topFilter === 'top25' ? 'glassBlue' : 'glass'}
+                size="pillSm"
+                className="font-semibold"
+              >
+                Top 15
+              </Button>
+            </div>
+
+            {/* Data Source */}
             <div className="flex gap-2">
               <Button
                 onClick={() => setDataSource('market')}
@@ -389,7 +449,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                Normal
+                All
               </Button>
               <Button
                 onClick={() => setDataSource('black')}
@@ -401,14 +461,8 @@ const Chart = () => {
               </Button>
             </div>
 
-            <div className="flex gap-2 items-center">
-              <Button
-                variant="glass"
-                size="circleSm"
-                className="flex items-center gap-1"
-              >
-                <TrendingUp className="w-4 h-4" />
-              </Button>
+            {/* Currency */}
+            <div className="flex gap-2">
               <Button
                 onClick={() => setCurrency('ton')}
                 variant={currency === 'ton' ? 'glass' : 'glassDark'}
@@ -416,21 +470,16 @@ const Chart = () => {
                 className="flex-1 font-medium flex items-center justify-center gap-2"
               >
                 <TonIcon className="w-4 h-4" />
-                ton
+                TON
               </Button>
               <Button
                 onClick={() => setCurrency('usd')}
                 variant={currency === 'usd' ? 'glass' : 'glassDark'}
                 size="pill"
-                className="flex-1 font-medium"
+                className="flex-1 font-medium flex items-center justify-center gap-2"
               >
-                usd
-              </Button>
-              <Button
-                variant="glass"
-                size="circleSm"
-              >
-                <RefreshCw className="w-4 h-4" />
+                <DollarSign className="w-4 h-4" />
+                USD
               </Button>
             </div>
 
@@ -441,7 +490,7 @@ const Chart = () => {
               className="w-full rounded-2xl font-semibold text-base h-14 shadow-[0_8px_32px_rgba(33,150,243,0.5)]"
             >
               <Download className="w-5 h-5 mr-2" />
-              Download Heatmap as Image
+              Download Heatmap
             </Button>
           </div>
         )}

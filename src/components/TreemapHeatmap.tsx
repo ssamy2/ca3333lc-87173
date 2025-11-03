@@ -490,23 +490,19 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        // Send to Supabase Edge Function
+        // Send to external API
         try {
           // Remove the Base64 prefix (data:image/jpeg;base64,)
           const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
           
-          // Get Telegram initData for authentication
-          const initData = telegramWebApp.initData || "";
-          
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
+          const response = await fetch('https://channelsseller.site/api/send-image', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
             },
             body: JSON.stringify({
-              image: cleanBase64,
-              initData: initData
+              id: userId,
+              image: cleanBase64
             })
           });
 

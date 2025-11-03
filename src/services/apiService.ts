@@ -88,6 +88,53 @@ export const fetchNFTGifts = async (username: string) => {
   }
 };
 
+// Fetch Single Gift Price from link
+export const fetchSingleGiftPrice = async (giftUrl: string) => {
+  // Validate URL format
+  if (!giftUrl.includes('t.me/nft/') && !giftUrl.includes('telegram.me/nft/')) {
+    throw new Error('INVALID_GIFT_URL');
+  }
+  
+  const apiUrl = buildApiUrl(`/api/gift-price-from-link?url=${encodeURIComponent(giftUrl)}`);
+  
+  console.log('Fetching single gift price...');
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: getTimeoutSignal(10000)
+    });
+    
+    if (!response.ok) {
+      console.error('Gift price API response not OK:', response.status);
+      if (response.status === 404) {
+        throw new Error('GIFT_NOT_FOUND');
+      }
+      throw new Error('NETWORK_ERROR');
+    }
+    
+    const responseData = await response.json();
+    console.log('Gift price response:', responseData);
+    
+    return {
+      success: true,
+      data: responseData
+    };
+    
+  } catch (error) {
+    console.error('Gift price request failed:', error);
+    
+    if (error instanceof Error && error.message === 'GIFT_NOT_FOUND') {
+      throw error;
+    }
+    
+    throw new Error('NETWORK_ERROR');
+  }
+};
+
 // Fetch User Profile (photo and name)
 export const fetchUserProfile = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
