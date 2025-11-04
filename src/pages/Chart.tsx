@@ -86,7 +86,8 @@ const Chart = () => {
   
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
-  const [topFilter, setTopFilter] = useState<TopFilter>('all');
+  const [topFilterGrid, setTopFilterGrid] = useState<TopFilter>('all'); // For grid/list - show all by default
+  const [topFilterHeatmap, setTopFilterHeatmap] = useState<TopFilter>('top25'); // For heatmap - show top 25 by default
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
@@ -95,6 +96,9 @@ const Chart = () => {
 
 
   const getFilteredData = () => {
+    // Determine which filter to use based on view mode
+    const currentTopFilter = viewMode === 'heatmap' ? topFilterHeatmap : topFilterGrid;
+    
     if (dataSource === 'black') {
       // Convert black floor data to market data format
       // IMPORTANT: Only show gifts that exist in market data (already released)
@@ -135,11 +139,11 @@ const Chart = () => {
       blackEntries.sort((a, b) => (b[1].priceTon || b[1].price_ton) - (a[1].priceTon || a[1].price_ton));
 
       // Apply top filter
-      if (topFilter === 'top50') {
+      if (currentTopFilter === 'top50') {
         blackEntries = blackEntries.slice(0, 50);
-      } else if (topFilter === 'top35') {
+      } else if (currentTopFilter === 'top35') {
         blackEntries = blackEntries.slice(0, 35);
-      } else if (topFilter === 'top25') {
+      } else if (currentTopFilter === 'top25') {
         blackEntries = blackEntries.slice(0, 25);
       }
 
@@ -216,11 +220,11 @@ const Chart = () => {
     }
 
     // Apply top filter
-    if (topFilter === 'top50') {
+    if (currentTopFilter === 'top50') {
       entries = entries.slice(0, 50);
-    } else if (topFilter === 'top35') {
+    } else if (currentTopFilter === 'top35') {
       entries = entries.slice(0, 35);
-    } else if (topFilter === 'top25') {
+    } else if (currentTopFilter === 'top25') {
       entries = entries.slice(0, 25);
     }
 
@@ -331,29 +335,32 @@ const Chart = () => {
           </Button>
         </div>
 
+        {/* Sort Mode - Price Up/Down (for Grid and List only) */}
+        {(viewMode === 'grid' || viewMode === 'list') && (
+          <div className="flex gap-3 justify-center">
+            <Button
+              variant={sortMode === 'priceUp' ? 'glass' : 'glassDark'}
+              size="pillSm"
+              onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
+              className="min-w-[100px] transition-all duration-300"
+            >
+              <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
+              <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
+            </Button>
+            <Button
+              variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
+              size="pillSm"
+              onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
+              className="min-w-[100px] transition-all duration-300"
+            >
+              <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
+              <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
+            </Button>
+          </div>
+        )}
+
         {viewMode === 'heatmap' && (
           <div className="space-y-3">
-            {/* Sort Mode - Price Up/Down */}
-            <div className="flex gap-3 justify-center">
-              <Button
-                variant={sortMode === 'priceUp' ? 'glass' : 'glassDark'}
-                size="pillSm"
-                onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
-                className="min-w-[100px] transition-all duration-300"
-              >
-                <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
-                <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
-              </Button>
-              <Button
-                variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
-                size="pillSm"
-                onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
-                className="min-w-[100px] transition-all duration-300"
-              >
-                <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
-                <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
-              </Button>
-            </div>
 
             {/* Chart Type & Data Source */}
             <div className="flex gap-2">
@@ -405,35 +412,35 @@ const Chart = () => {
               </div>
             )}
 
-            {/* Top Filter */}
+            {/* Top Filter (Heatmap Only) */}
             <div className="flex gap-2 justify-center">
               <Button
-                onClick={() => setTopFilter('all')}
-                variant={topFilter === 'all' ? 'glassBlue' : 'glass'}
+                onClick={() => setTopFilterHeatmap('all')}
+                variant={topFilterHeatmap === 'all' ? 'glassBlue' : 'glass'}
                 size="pillSm"
                 className="font-semibold"
               >
                 All
               </Button>
               <Button
-                onClick={() => setTopFilter('top50')}
-                variant={topFilter === 'top50' ? 'glassBlue' : 'glass'}
+                onClick={() => setTopFilterHeatmap('top50')}
+                variant={topFilterHeatmap === 'top50' ? 'glassBlue' : 'glass'}
                 size="pillSm"
                 className="font-semibold"
               >
                 Top 50
               </Button>
               <Button
-                onClick={() => setTopFilter('top35')}
-                variant={topFilter === 'top35' ? 'glassBlue' : 'glass'}
+                onClick={() => setTopFilterHeatmap('top35')}
+                variant={topFilterHeatmap === 'top35' ? 'glassBlue' : 'glass'}
                 size="pillSm"
                 className="font-semibold"
               >
                 Top 30
               </Button>
               <Button
-                onClick={() => setTopFilter('top25')}
-                variant={topFilter === 'top25' ? 'glassBlue' : 'glass'}
+                onClick={() => setTopFilterHeatmap('top25')}
+                variant={topFilterHeatmap === 'top25' ? 'glassBlue' : 'glass'}
                 size="pillSm"
                 className="font-semibold"
               >
