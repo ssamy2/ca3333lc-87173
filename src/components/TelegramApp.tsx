@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Calculator, RefreshCw, User } from 'lucide-react';
+import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
 import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
@@ -12,7 +12,7 @@ import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
-import { fetchNFTGifts, fetchUserProfile } from '@/services/apiService';
+import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme';
 import novaLogo from '@/assets/nova-logo-new.png';
 
@@ -84,6 +84,9 @@ const TelegramApp: React.FC = () => {
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'chart'>('home');
+  const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
+  const [giftUrl, setGiftUrl] = useState('');
+  const [singleGift, setSingleGift] = useState<any | null>(null);
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
 
@@ -297,8 +300,53 @@ const TelegramApp: React.FC = () => {
   };
 
   const handleSearch = () => {
-    if (username.trim() && countdown === 0) {
-      fetchNFTs(username.trim());
+    if (searchMode === 'user') {
+      if (username.trim() && countdown === 0) {
+        fetchNFTs(username.trim());
+      }
+    } else {
+      handleGiftSearch();
+    }
+  };
+
+  const handleGiftSearch = async () => {
+    if (!giftUrl.trim()) {
+      setError('Please enter a valid gift URL');
+      return;
+    }
+
+    if (countdown > 0) return;
+
+    setLoading(true);
+    setError(null);
+    setSingleGift(null);
+    setNftData(null);
+
+    try {
+      const result = await fetchSingleGiftPrice(giftUrl.trim());
+      setSingleGift(result.data);
+      toast({
+        title: "Success!",
+        description: `Found gift: ${result.data.gift_name}`,
+      });
+    } catch (err) {
+      console.error('Gift search error:', err);
+      if (err instanceof Error) {
+        if (err.message === 'GIFT_NOT_FOUND') {
+          setError('Gift not found. Please check the URL.');
+        } else if (err.message === 'INVALID_GIFT_URL') {
+          setError('Invalid gift URL. Please use a valid t.me/nft/ link.');
+        } else {
+          setError('Failed to fetch gift data. Please try again.');
+        }
+      }
+      toast({
+        title: "Error",
+        description: "Failed to fetch gift data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -508,27 +556,75 @@ const TelegramApp: React.FC = () => {
 
         {/* Search Section */}
         <div className="telegram-card p-5 animate-slide-up border border-border/50 shadow-[var(--shadow-card)]">
+          {/* Search Mode Toggle */}
+          <div className="mb-4">
+            <div className="flex gap-2 bg-background/50 p-1.5 rounded-xl border border-border">
+              <button
+                onClick={() => {
+                  setSearchMode('user');
+                  setError(null);
+                  setSingleGift(null);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
+                  searchMode === 'user'
+                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <User className="w-4 h-4 inline-block mr-2" />
+                User Profile
+              </button>
+              <button
+                onClick={() => {
+                  setSearchMode('gift');
+                  setError(null);
+                  setNftData(null);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
+                  searchMode === 'gift'
+                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Gift className="w-4 h-4 inline-block mr-2" />
+                Single Gift
+              </button>
+            </div>
+          </div>
+
           <div className="flex gap-2 mb-4">
-            <Input
-              type="text"
-              placeholder={currentUser ? `@${currentUser}` : "Enter username..."}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
-              disabled={loading || countdown > 0}
-            />
+            {searchMode === 'user' ? (
+              <Input
+                type="text"
+                placeholder={currentUser ? `@${currentUser}` : "Enter username..."}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
+                disabled={loading || countdown > 0}
+              />
+            ) : (
+              <Input
+                type="text"
+                placeholder="Enter gift URL (e.g., https://t.me/nft/...)"
+                value={giftUrl}
+                onChange={(e) => setGiftUrl(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
+                disabled={loading || countdown > 0}
+              />
+            )}
             <Button 
               onClick={handleSearch}
-              disabled={loading || countdown > 0 || !username.trim()}
+              disabled={loading || countdown > 0 || (searchMode === 'user' ? !username.trim() : !giftUrl.trim())}
               className="h-12 px-5 rounded-xl bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
             >
               <Search className="w-5 h-5" />
             </Button>
           </div>
 
-          {/* Search History */}
-          {searchHistory.length > 0 && (
+          {/* Search History - Only for user mode */}
+          {searchMode === 'user' && searchHistory.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground font-medium">Recent Searches</p>
@@ -601,6 +697,68 @@ const TelegramApp: React.FC = () => {
             onRetry={() => handleSearch()} 
             canRetry={countdown === 0}
           />
+        )}
+
+        {/* Single Gift Display */}
+        {singleGift && !loading && !error && (
+          <div className="space-y-5 animate-bounce-in pb-6">
+            <div className="telegram-card p-6 border border-border/50 shadow-[var(--shadow-card)]">
+              <div className="flex flex-col items-center">
+                {/* Gift Image */}
+                <div className="relative w-56 h-56 mb-6 rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src={singleGift.image}
+                    alt={singleGift.gift_name}
+                    className="w-full h-full object-contain bg-gradient-to-br from-primary/5 via-background to-accent/5"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+
+                {/* Gift Info */}
+                <div className="text-center mb-6 space-y-2">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+                    {singleGift.gift_name}
+                  </h2>
+                  <p className="text-lg text-muted-foreground font-medium">{singleGift.model}</p>
+                  {singleGift.backdrop && (
+                    <p className="text-sm text-accent font-medium bg-accent/10 px-3 py-1 rounded-full inline-block border border-accent/20">
+                      {singleGift.backdrop}
+                    </p>
+                  )}
+                </div>
+
+                {/* Price Cards */}
+                <div className="grid grid-cols-2 gap-4 w-full mb-6">
+                  <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <TonIcon className="w-5 h-5 text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">Price (TON)</p>
+                    </div>
+                    <p className="text-3xl font-bold text-primary text-center">{singleGift.price_ton.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-accent/10 via-background to-accent/5 rounded-2xl p-5 border border-accent/20 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-sm text-muted-foreground font-medium">Price (USD)</span>
+                    </div>
+                    <p className="text-3xl font-bold text-accent text-center">${singleGift.price_usd.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {/* Rarity */}
+                {singleGift.rarity && (
+                  <div className="w-full bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-5 border border-border shadow-lg">
+                    <p className="text-sm text-muted-foreground mb-2 text-center font-medium">Rarity</p>
+                    <p className="text-2xl font-bold text-foreground text-center">
+                      {(singleGift.rarity * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {nftData && !loading && !error && (
