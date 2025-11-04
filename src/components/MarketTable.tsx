@@ -15,6 +15,12 @@ interface MarketTableItem {
   tonPriceWeekAgo?: number;
   tonPriceMonthAgo?: number;
   priceTon?: number;
+  change_24h_ton_percent?: number;
+  change_1w_ton_percent?: number;
+  change_1m_ton_percent?: number;
+  change_3m_ton_percent?: number;
+  change_1y_ton_percent?: number;
+  available_periods?: string[];
 }
 
 interface MarketTableProps {
@@ -51,9 +57,24 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
         <tbody>
           {data.map(([name, item], index) => {
             const currentPrice = item.priceTon || item.price_ton;
-            const change24h = item['change_24h_ton_%'];
-            const changeWeek = calculateChange(currentPrice, item.tonPriceWeekAgo);
-            const changeMonth = calculateChange(currentPrice, item.tonPriceMonthAgo);
+            
+            // For black mode, use the pre-calculated changes
+            const change24h = isBlackMode && item.change_24h_ton_percent !== undefined
+              ? item.change_24h_ton_percent
+              : item['change_24h_ton_%'];
+            
+            const changeWeek = isBlackMode && item.change_1w_ton_percent !== undefined
+              ? item.change_1w_ton_percent
+              : calculateChange(currentPrice, item.tonPriceWeekAgo);
+            
+            const changeMonth = isBlackMode && item.change_1m_ton_percent !== undefined
+              ? item.change_1m_ton_percent
+              : calculateChange(currentPrice, item.tonPriceMonthAgo);
+            
+            // Check if data is available
+            const has24h = isBlackMode ? item.available_periods?.includes('24h') : true;
+            const hasWeek = isBlackMode ? item.available_periods?.includes('1w') : true;
+            const hasMonth = isBlackMode ? item.available_periods?.includes('1m') : true;
 
             return (
               <Link 
@@ -109,29 +130,41 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
 
                   {/* 24h Change */}
                   <td className="py-3 px-2 text-right">
-                    <span className={`font-semibold text-sm ${
-                      change24h > 0 ? 'text-green-500' : change24h < 0 ? 'text-red-500' : 'text-muted-foreground'
-                    }`}>
-                      {change24h > 0 ? '+' : ''}{change24h.toFixed(2)}%
-                    </span>
+                    {has24h ? (
+                      <span className={`font-semibold text-sm ${
+                        change24h > 0 ? 'text-green-500' : change24h < 0 ? 'text-red-500' : 'text-muted-foreground'
+                      }`}>
+                        {change24h > 0 ? '+' : ''}{change24h.toFixed(2)}%
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
 
                   {/* Week Change */}
                   <td className="py-3 px-2 text-right hidden sm:table-cell">
-                    <span className={`font-semibold text-sm ${
-                      changeWeek > 0 ? 'text-green-500' : changeWeek < 0 ? 'text-red-500' : 'text-muted-foreground'
-                    }`}>
-                      {changeWeek > 0 ? '+' : ''}{changeWeek.toFixed(2)}%
-                    </span>
+                    {hasWeek ? (
+                      <span className={`font-semibold text-sm ${
+                        changeWeek > 0 ? 'text-green-500' : changeWeek < 0 ? 'text-red-500' : 'text-muted-foreground'
+                      }`}>
+                        {changeWeek > 0 ? '+' : ''}{changeWeek.toFixed(2)}%
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
 
                   {/* Month Change */}
                   <td className="py-3 px-2 text-right hidden lg:table-cell">
-                    <span className={`font-semibold text-sm ${
-                      changeMonth > 0 ? 'text-green-500' : changeMonth < 0 ? 'text-red-500' : 'text-muted-foreground'
-                    }`}>
-                      {changeMonth > 0 ? '+' : ''}{changeMonth.toFixed(2)}%
-                    </span>
+                    {hasMonth ? (
+                      <span className={`font-semibold text-sm ${
+                        changeMonth > 0 ? 'text-green-500' : changeMonth < 0 ? 'text-red-500' : 'text-muted-foreground'
+                      }`}>
+                        {changeMonth > 0 ? '+' : ''}{changeMonth.toFixed(2)}%
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               </Link>

@@ -28,6 +28,10 @@ interface BlackFloorItem {
   change_24h_percent?: number;
   change_1w_percent?: number;
   change_1m_percent?: number;
+  change_3m_percent?: number;
+  change_1y_percent?: number;
+  available_periods?: string[];
+  oldest_available_date?: string;
 }
 
 interface Model {
@@ -125,28 +129,69 @@ const GiftDetail = () => {
       // Calculate time period changes if we have enough data
       if (giftRecords.length > 0) {
         const latestPrice = giftRecords[0].black_price;
-        const now = new Date(giftRecords[0].recorded_at);
+        const currentTime = new Date(giftRecords[0].recorded_at).getTime();
+        
+        const available_periods: string[] = [];
+        
+        // Helper function to find closest record to a target date
+        const findClosestRecord = (targetTime: number) => {
+          return giftRecords
+            .filter(r => new Date(r.recorded_at).getTime() <= targetTime)
+            .sort((a, b) => 
+              Math.abs(new Date(a.recorded_at).getTime() - targetTime) - 
+              Math.abs(new Date(b.recorded_at).getTime() - targetTime)
+            )[0];
+        };
+        
+        // Helper function to calculate change
+        const calculateChange = (oldPrice: number) => {
+          if (oldPrice > 0) {
+            return ((latestPrice - oldPrice) / oldPrice) * 100;
+          }
+          return 0;
+        };
         
         // Calculate 24h change
-        const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const record24h = giftRecords.find(r => new Date(r.recorded_at) <= dayAgo);
-        if (record24h) {
-          giftRecords[0].change_24h_percent = ((latestPrice - record24h.black_price) / record24h.black_price) * 100;
+        const dayAgo = currentTime - 24 * 60 * 60 * 1000;
+        const record24h = findClosestRecord(dayAgo);
+        if (record24h && new Date(record24h.recorded_at).getTime() <= dayAgo) {
+          giftRecords[0].change_24h_percent = calculateChange(record24h.black_price);
+          available_periods.push('24h');
         }
         
         // Calculate 1w change
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const record1w = giftRecords.find(r => new Date(r.recorded_at) <= weekAgo);
-        if (record1w) {
-          giftRecords[0].change_1w_percent = ((latestPrice - record1w.black_price) / record1w.black_price) * 100;
+        const weekAgo = currentTime - 7 * 24 * 60 * 60 * 1000;
+        const record1w = findClosestRecord(weekAgo);
+        if (record1w && new Date(record1w.recorded_at).getTime() <= weekAgo) {
+          giftRecords[0].change_1w_percent = calculateChange(record1w.black_price);
+          available_periods.push('1w');
         }
         
         // Calculate 1m change
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const record1m = giftRecords.find(r => new Date(r.recorded_at) <= monthAgo);
-        if (record1m) {
-          giftRecords[0].change_1m_percent = ((latestPrice - record1m.black_price) / record1m.black_price) * 100;
+        const monthAgo = currentTime - 30 * 24 * 60 * 60 * 1000;
+        const record1m = findClosestRecord(monthAgo);
+        if (record1m && new Date(record1m.recorded_at).getTime() <= monthAgo) {
+          giftRecords[0].change_1m_percent = calculateChange(record1m.black_price);
+          available_periods.push('1m');
         }
+        
+        // Calculate 3m change
+        const threeMonthsAgo = currentTime - 90 * 24 * 60 * 60 * 1000;
+        const record3m = findClosestRecord(threeMonthsAgo);
+        if (record3m && new Date(record3m.recorded_at).getTime() <= threeMonthsAgo) {
+          giftRecords[0].change_3m_percent = calculateChange(record3m.black_price);
+          available_periods.push('3m');
+        }
+        
+        // Calculate 1y change
+        const yearAgo = currentTime - 365 * 24 * 60 * 60 * 1000;
+        const record1y = findClosestRecord(yearAgo);
+        if (record1y && new Date(record1y.recorded_at).getTime() <= yearAgo) {
+          giftRecords[0].change_1y_percent = calculateChange(record1y.black_price);
+          available_periods.push('1y');
+        }
+        
+        giftRecords[0].available_periods = available_periods;
       }
       
       setBlackFloorData(giftRecords);
@@ -845,6 +890,80 @@ const GiftDetail = () => {
           <Sparkles className="w-4 h-4" />
           View Models {giftData?.models && `(${giftData.models.length})`}
         </Button>
+
+        {/* Black Floor Price Changes */}
+        {dataSource === 'black' && blackFloorData.length > 0 && blackFloorData[0].available_periods && blackFloorData[0].available_periods.length > 0 && (
+          <Card className="p-4 bg-card/50 backdrop-blur">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">Price Changes</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {blackFloorData[0].available_periods.includes('24h') && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mb-1">24h</span>
+                  <span className={`text-base font-bold ${
+                    blackFloorData[0].change_24h_percent! > 0 ? 'text-green-500' : 
+                    blackFloorData[0].change_24h_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}>
+                    {blackFloorData[0].change_24h_percent! > 0 ? '+' : ''}
+                    {blackFloorData[0].change_24h_percent!.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {blackFloorData[0].available_periods.includes('1w') && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mb-1">1 Week</span>
+                  <span className={`text-base font-bold ${
+                    blackFloorData[0].change_1w_percent! > 0 ? 'text-green-500' : 
+                    blackFloorData[0].change_1w_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}>
+                    {blackFloorData[0].change_1w_percent! > 0 ? '+' : ''}
+                    {blackFloorData[0].change_1w_percent!.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {blackFloorData[0].available_periods.includes('1m') && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mb-1">1 Month</span>
+                  <span className={`text-base font-bold ${
+                    blackFloorData[0].change_1m_percent! > 0 ? 'text-green-500' : 
+                    blackFloorData[0].change_1m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}>
+                    {blackFloorData[0].change_1m_percent! > 0 ? '+' : ''}
+                    {blackFloorData[0].change_1m_percent!.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {blackFloorData[0].available_periods.includes('3m') && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mb-1">3 Months</span>
+                  <span className={`text-base font-bold ${
+                    blackFloorData[0].change_3m_percent! > 0 ? 'text-green-500' : 
+                    blackFloorData[0].change_3m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}>
+                    {blackFloorData[0].change_3m_percent! > 0 ? '+' : ''}
+                    {blackFloorData[0].change_3m_percent!.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {blackFloorData[0].available_periods.includes('1y') && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mb-1">1 Year</span>
+                  <span className={`text-base font-bold ${
+                    blackFloorData[0].change_1y_percent! > 0 ? 'text-green-500' : 
+                    blackFloorData[0].change_1y_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}>
+                    {blackFloorData[0].change_1y_percent! > 0 ? '+' : ''}
+                    {blackFloorData[0].change_1y_percent!.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+            </div>
+            {blackFloorData[0].oldest_available_date && (
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Data available since: {new Date(blackFloorData[0].oldest_available_date).toLocaleDateString()}
+              </p>
+            )}
+          </Card>
+        )}
 
         {giftData?.models && (
           <GiftModelsDialog 

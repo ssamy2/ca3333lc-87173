@@ -42,6 +42,13 @@ interface BlackFloorItem {
   short_name: string;
   black_price: number;
   recorded_at: string;
+  change_24h_ton_percent?: number;
+  change_1w_ton_percent?: number;
+  change_1m_ton_percent?: number;
+  change_3m_ton_percent?: number;
+  change_1y_ton_percent?: number;
+  oldest_available_date?: string;
+  available_periods?: string[];
 }
 
 interface GiftHistoricalData {
@@ -181,12 +188,14 @@ const Chart = () => {
           const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
           const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
           
+          // Zero changes always go to the end
+          if (changeA === 0 && changeB !== 0) return 1;
+          if (changeA !== 0 && changeB === 0) return -1;
+          if (changeA === 0 && changeB === 0) return 0;
+          
           if (changeA > 0 && changeB <= 0) return -1;
           if (changeA <= 0 && changeB > 0) return 1;
           if (changeA > 0 && changeB > 0) return changeB - changeA;
-          
-          if (changeA === 0 && changeB < 0) return -1;
-          if (changeA < 0 && changeB === 0) return 1;
           
           if (changeA < 0 && changeB < 0) return changeA - changeB;
           
@@ -198,22 +207,30 @@ const Chart = () => {
           const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
           const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
           
+          // Zero changes always go to the end
+          if (changeA === 0 && changeB !== 0) return 1;
+          if (changeA !== 0 && changeB === 0) return -1;
+          if (changeA === 0 && changeB === 0) return 0;
+          
           if (changeA < 0 && changeB >= 0) return -1;
           if (changeA >= 0 && changeB < 0) return 1;
           if (changeA < 0 && changeB < 0) return changeA - changeB;
-          
-          if (changeA === 0 && changeB > 0) return -1;
-          if (changeA > 0 && changeB === 0) return 1;
           
           if (changeA > 0 && changeB > 0) return changeA - changeB;
           
           return 0;
         });
       } else {
-        // Default: sort by absolute change (biggest changes first)
+        // Default: sort by absolute change (biggest changes first), zeros at the end
         entries.sort((a, b) => {
           const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
           const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
+          
+          // Zero changes go to the end
+          if (changeA === 0 && changeB !== 0) return 1;
+          if (changeA !== 0 && changeB === 0) return -1;
+          if (changeA === 0 && changeB === 0) return 0;
+          
           return Math.abs(changeB) - Math.abs(changeA);
         });
       }
@@ -335,27 +352,49 @@ const Chart = () => {
           </Button>
         </div>
 
-        {/* Sort Mode - Price Up/Down (for Grid and List only) */}
+        {/* Sort Mode - Price Up/Down & Data Source (for Grid and List only) */}
         {(viewMode === 'grid' || viewMode === 'list') && (
-          <div className="flex gap-3 justify-center">
-            <Button
-              variant={sortMode === 'priceUp' ? 'glass' : 'glassDark'}
-              size="pillSm"
-              onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
-              className="min-w-[100px] transition-all duration-300"
-            >
-              <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
-              <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
-            </Button>
-            <Button
-              variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
-              size="pillSm"
-              onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
-              className="min-w-[100px] transition-all duration-300"
-            >
-              <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
-              <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
-            </Button>
+          <div className="space-y-3">
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant={sortMode === 'priceUp' ? 'glass' : 'glassDark'}
+                size="pillSm"
+                onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
+                className="min-w-[100px] transition-all duration-300"
+              >
+                <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
+                <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
+              </Button>
+              <Button
+                variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
+                size="pillSm"
+                onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
+                className="min-w-[100px] transition-all duration-300"
+              >
+                <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
+                <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
+              </Button>
+            </div>
+            
+            {/* Data Source Toggle */}
+            <div className="flex gap-2 justify-center">
+              <Button
+                onClick={() => setDataSource('market')}
+                variant={dataSource === 'market' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => setDataSource('black')}
+                variant={dataSource === 'black' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium"
+              >
+                Black
+              </Button>
+            </div>
           </div>
         )}
 
