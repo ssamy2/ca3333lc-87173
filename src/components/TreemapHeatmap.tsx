@@ -412,12 +412,16 @@ const createImagePlugin = (
   };
 };
 
-export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
+export interface TreemapHeatmapHandle {
+  downloadImage: () => Promise<void>;
+}
+
+export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeatmapProps>(({
   data,
   chartType,
   timeGap,
   currency
-}) => {
+}, ref) => {
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
@@ -430,7 +434,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
     }
   }, []);
 
-  const downloadImage = async () => {
+  const downloadImage = useCallback(async () => {
     handleHapticFeedback();
     
     const chart = chartRef.current;
@@ -525,7 +529,12 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
         tempChart.destroy();
       }
     }, 0);
-  };
+  }, [data, chartType, timeGap, currency, handleHapticFeedback]);
+
+  // Expose downloadImage to parent components
+  React.useImperativeHandle(ref, () => ({
+    downloadImage
+  }), [downloadImage]);
 
   useEffect(() => {
     const filteredData = data.filter(item => !item.preSale);
@@ -653,6 +662,8 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TreemapHeatmap.displayName = 'TreemapHeatmap';
 
 export default TreemapHeatmap;

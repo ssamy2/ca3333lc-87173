@@ -100,6 +100,9 @@ const Chart = () => {
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
   const [sortMode, setSortMode] = useState<'default' | 'priceUp' | 'priceDown'>('default');
+  
+  // Add ref for TreemapHeatmap
+  const treemapRef = React.useRef<any>(null);
 
 
   const getFilteredData = () => {
@@ -568,6 +571,7 @@ const Chart = () => {
 
             {/* Download Button */}
             <Button
+              onClick={() => treemapRef.current?.downloadImage()}
               variant="glassBlue"
               size="lg"
               className="w-full rounded-2xl font-semibold text-base h-14 shadow-[0_8px_32px_rgba(33,150,243,0.5)]"
@@ -665,6 +669,7 @@ const Chart = () => {
 
         {viewMode === 'heatmap' && (
           <TreemapHeatmap 
+            ref={treemapRef}
             data={getGiftItems()} 
             chartType={chartType}
             timeGap={timeGap}
