@@ -61,7 +61,7 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
             // For black mode, use the pre-calculated changes
             const change24h = isBlackMode && item.change_24h_ton_percent !== undefined
               ? item.change_24h_ton_percent
-              : item['change_24h_ton_%'];
+              : item['change_24h_ton_%'] || 0;
             
             const changeWeek = isBlackMode && item.change_1w_ton_percent !== undefined
               ? item.change_1w_ton_percent
@@ -72,9 +72,9 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
               : calculateChange(currentPrice, item.tonPriceMonthAgo);
             
             // Check if data is available
-            const has24h = isBlackMode ? item.available_periods?.includes('24h') : true;
-            const hasWeek = isBlackMode ? item.available_periods?.includes('1w') : true;
-            const hasMonth = isBlackMode ? item.available_periods?.includes('1m') : true;
+            const has24h = isBlackMode ? (item.available_periods?.includes('24h') ?? false) : true;
+            const hasWeek = isBlackMode ? (item.available_periods?.includes('1w') ?? false) : true;
+            const hasMonth = isBlackMode ? (item.available_periods?.includes('1m') ?? false) : true;
 
             return (
               <Link 
@@ -98,10 +98,10 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                         isBlackMode={isBlackMode}
                       />
                       <div className="flex flex-col min-w-0">
-                        <span className="font-semibold text-foreground truncate text-sm md:text-base">
+                       <span className={`font-semibold truncate text-sm md:text-base ${isBlackMode ? 'text-white' : 'text-foreground'}`}>
                           {name}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className={`text-xs ${isBlackMode ? 'text-white/50' : 'text-muted-foreground'}`}>
                           {formatSupply(item.upgradedSupply)} / {formatSupply(item.upgradedSupply ? item.upgradedSupply * 1.05 : 0)}
                         </span>
                       </div>
@@ -112,7 +112,7 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-1">
                       <TonIcon className="w-4 h-4 flex-shrink-0" />
-                      <span className="font-semibold text-foreground text-sm md:text-base">
+                      <span className={`font-semibold text-sm md:text-base ${isBlackMode ? 'text-[#B87333]' : 'text-foreground'}`}>
                         {currentPrice.toFixed(2)}
                       </span>
                     </div>
@@ -122,7 +122,7 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                   <td className="py-3 px-2 hidden md:table-cell">
                     <div className="flex items-center gap-1">
                       <TonIcon className="w-4 h-4 flex-shrink-0" />
-                      <span className="font-medium text-foreground text-sm">
+                      <span className={`font-medium text-sm ${isBlackMode ? 'text-white/70' : 'text-foreground'}`}>
                         {item.market_cap_ton || '—'}
                       </span>
                     </div>

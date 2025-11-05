@@ -4,11 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Chart from "./pages/Chart";
 import GiftDetail from "./pages/GiftDetail";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AppLoader from "@/components/AppLoader";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 
 // Configure React Query for optimal caching
@@ -29,34 +31,42 @@ const DataPrefetcher = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="light"
-      themes={["light", "dark"]}
-      enableSystem={false}
-      storageKey="nova-theme"
-    >
-      <TooltipProvider>
-        <ErrorBoundary>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <DataPrefetcher>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/chart" element={<Chart />} />
-                <Route path="/gift/:name" element={<GiftDetail />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </DataPrefetcher>
-          </BrowserRouter>
-        </ErrorBoundary>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        themes={["light", "dark"]}
+        enableSystem={false}
+        storageKey="nova-theme"
+      >
+        <TooltipProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            {isLoading ? (
+              <AppLoader onComplete={() => setIsLoading(false)} />
+            ) : (
+              <BrowserRouter>
+                <DataPrefetcher>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/chart" element={<Chart />} />
+                    <Route path="/gift/:name" element={<GiftDetail />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </DataPrefetcher>
+              </BrowserRouter>
+            )}
+          </ErrorBoundary>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -109,22 +109,28 @@ const Chart = () => {
     if (dataSource === 'black') {
       // Convert black floor data to market data format
       // IMPORTANT: Only show gifts that exist in market data (already released)
-      let blackEntries: [string, NFTMarketData & { short_name?: string; change_24h_ton_percent?: number }][] = blackFloorData
+      if (!marketData || !blackFloorData || blackFloorData.length === 0) {
+        return [];
+      }
+      
+      let blackEntries: [string, NFTMarketData & { 
+        short_name?: string; 
+        change_24h_ton_percent?: number;
+        change_1w_ton_percent?: number;
+        change_1m_ton_percent?: number;
+        change_3m_ton_percent?: number;
+        change_1y_ton_percent?: number;
+        available_periods?: string[];
+        tonPriceWeekAgo?: number;
+        tonPriceMonthAgo?: number;
+      }][] = blackFloorData
         .filter(item => {
-          // Only include if gift exists in market data
           const existsInMarket = marketData[item.gift_name];
-          if (!existsInMarket) {
-            console.log(`[Chart] Black gift "${item.gift_name}" not in market data - skipping`);
-          }
           return existsInMarket;
         })
         .map(item => {
           const marketImage = marketData[item.gift_name]?.image_url;
-          
-          // Use market image if available, otherwise use short_name endpoint
           const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
-          
-          console.log(`[Chart] Black gift "${item.gift_name}" - Using ${marketImage ? 'market image' : 'short_name'} (${item.short_name})`);
           
           return [
             item.gift_name,
@@ -133,19 +139,50 @@ const Chart = () => {
               priceUsd: item.black_price * 2.16,
               price_ton: item.black_price,
               price_usd: item.black_price * 2.16,
-              'change_24h_ton_%': (item as any).change_24h_ton_percent || 0,
-              'change_24h_usd_%': (item as any).change_24h_ton_percent || 0,
+              'change_24h_ton_%': item.change_24h_ton_percent || 0,
+              'change_24h_usd_%': item.change_24h_ton_percent || 0,
               image_url: imageUrl,
               short_name: item.short_name,
-              change_24h_ton_percent: (item as any).change_24h_ton_percent || 0,
+              change_24h_ton_percent: item.change_24h_ton_percent || 0,
+              change_1w_ton_percent: item.change_1w_ton_percent || 0,
+              change_1m_ton_percent: item.change_1m_ton_percent || 0,
+              change_3m_ton_percent: item.change_3m_ton_percent || 0,
+              change_1y_ton_percent: item.change_1y_ton_percent || 0,
+              available_periods: item.available_periods || [],
+              tonPriceWeekAgo: item.black_price,
+              tonPriceMonthAgo: item.black_price,
+              upgradedSupply: marketData[item.gift_name]?.upgradedSupply || 0,
             }
           ];
         });
 
-      // Sort by price (highest first)
-      blackEntries.sort((a, b) => (b[1].priceTon || b[1].price_ton) - (a[1].priceTon || a[1].price_ton));
+      // Sort - zeros always at end
+      if (sortMode === 'priceUp') {
+        blackEntries.sort((a, b) => {
+          const changeA = a[1].change_24h_ton_percent || 0;
+          const changeB = b[1].change_24h_ton_percent || 0;
+          
+          if (changeA === 0 && changeB !== 0) return 1;
+          if (changeA !== 0 && changeB === 0) return -1;
+          if (changeA === 0 && changeB === 0) return 0;
+          
+          return changeB - changeA;
+        });
+      } else if (sortMode === 'priceDown') {
+        blackEntries.sort((a, b) => {
+          const changeA = a[1].change_24h_ton_percent || 0;
+          const changeB = b[1].change_24h_ton_percent || 0;
+          
+          if (changeA === 0 && changeB !== 0) return 1;
+          if (changeA !== 0 && changeB === 0) return -1;
+          if (changeA === 0 && changeB === 0) return 0;
+          
+          return changeA - changeB;
+        });
+      } else {
+        blackEntries.sort((a, b) => (b[1].priceTon || b[1].price_ton) - (a[1].priceTon || a[1].price_ton));
+      }
 
-      // Apply top filter
       if (currentTopFilter === 'top50') {
         blackEntries = blackEntries.slice(0, 50);
       } else if (currentTopFilter === 'top35') {
@@ -157,7 +194,7 @@ const Chart = () => {
       return blackEntries;
     }
 
-    // Market data
+    if (!marketData) return [];
     let entries = Object.entries(marketData);
 
     // Sort based on chart type

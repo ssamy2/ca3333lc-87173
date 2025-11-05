@@ -860,7 +860,7 @@ const GiftDetail = () => {
         </div>
 
         {/* Time Range Toggle - Blue style */}
-        {dataSource === 'market' && (
+        {dataSource === 'market' ? (
           <div className="flex gap-2 overflow-x-auto pb-2">
             {(['24h', '3d', '1w', '1m', '3m', 'all'] as TimeRange[]).map((range) => (
               <Button
@@ -878,7 +878,92 @@ const GiftDetail = () => {
               </Button>
             ))}
           </div>
-        )}
+        ) : blackFloorData.length > 0 && blackFloorData[0].available_periods ? (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {blackFloorData[0].available_periods.includes('24h') && (
+              <Button
+                onClick={() => setTimeRange('24h')}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === '24h' 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                24H
+              </Button>
+            )}
+            {blackFloorData[0].available_periods.includes('3d') && (
+              <Button
+                onClick={() => setTimeRange('3d')}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === '3d' 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                3D
+              </Button>
+            )}
+            {blackFloorData[0].available_periods.includes('1w') && (
+              <Button
+                onClick={() => setTimeRange('1w')}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === '1w' 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                1W
+              </Button>
+            )}
+            {blackFloorData[0].available_periods.includes('1m') && (
+              <Button
+                onClick={() => setTimeRange('1m')}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === '1m' 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                1M
+              </Button>
+            )}
+            {blackFloorData[0].available_periods.includes('3m') && (
+              <Button
+                onClick={() => setTimeRange('3m')}
+                variant="ghost"
+                size="sm"
+                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                  timeRange === '3m' 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                3M
+              </Button>
+            )}
+            <Button
+              onClick={() => setTimeRange('all')}
+              variant="ghost"
+              size="sm"
+              className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                timeRange === 'all' 
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
+                  : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+              }`}
+            >
+              All
+            </Button>
+          </div>
+        ) : null}
 
         {/* View Models Button */}
         <Button
