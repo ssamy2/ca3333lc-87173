@@ -3,7 +3,7 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 export const USE_MOCK_DATA = false; // Always use real API
 
 // Get API base URL
-const API_BASE_URL = 'https://channelsseller.site';
+const API_BASE_URL = 'http://151.241.228.83';
 
 // Build API URL directly (no proxy needed - CloudFlare protection is in place)
 const buildApiUrl = (path: string): string => {

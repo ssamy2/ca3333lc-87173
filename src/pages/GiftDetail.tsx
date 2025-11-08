@@ -97,7 +97,7 @@ const GiftDetail = () => {
   const fetchGiftData = async (giftName: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://channelsseller.site/api/gift-data?name=${encodeURIComponent(giftName)}`);
+      const response = await fetch(`http://151.241.228.83/api/gift-data?name=${encodeURIComponent(giftName)}`);
       
       if (!response.ok) {
         console.error('Gift data fetch failed:', response.status);
@@ -117,7 +117,7 @@ const GiftDetail = () => {
 
   const fetchBlackFloorData = async (giftName: string) => {
     try {
-      const response = await fetch('https://channelsseller.site/api/black-floor');
+      const response = await fetch('http://151.241.228.83/api/black-floor');
       const data: BlackFloorItem[] = await response.json();
       
       // Filter for this specific gift
@@ -709,7 +709,7 @@ const GiftDetail = () => {
     }
     
     // Priority 3: Fallback to constructed URL
-    return `https://channelsseller.site/api/image/${giftData.info.image}`;
+    return `http://151.241.228.83/api/image/${giftData.info.image}`;
   };
 
   const imageUrl = getCorrectImageUrl();

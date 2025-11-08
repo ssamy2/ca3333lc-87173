@@ -276,7 +276,7 @@ const createImagePlugin = (
       const toncoinImage = imageMap.get('toncoin') || new Image();
       if (!imageMap.has('toncoin')) {
         toncoinImage.crossOrigin = 'anonymous';
-        toncoinImage.src = 'https://channelsseller.site/api/image/toncoin';
+        toncoinImage.src = 'http://151.241.228.83/api/image/toncoin';
         imageMap.set('toncoin', toncoinImage);
       }
 

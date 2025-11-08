@@ -17,7 +17,7 @@ interface BlackFloorItem {
 
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
-  const response = await fetch('https://channelsseller.site/api/black-floor');
+  const response = await fetch('http://151.241.228.83/api/black-floor');
   if (!response.ok) {
     throw new Error('Failed to fetch black floor data');
   }

@@ -28,7 +28,7 @@ interface MarketData {
 
 // Fetch market data from API
 const fetchMarketData = async (): Promise<MarketData> => {
-  const response = await fetch('https://channelsseller.site/api/market-data');
+  const response = await fetch('http://151.241.228.83/api/market-data');
   if (!response.ok) {
     throw new Error('Failed to fetch market data');
   }

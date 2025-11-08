@@ -113,7 +113,7 @@ serve(async (req) => {
     console.log("Sending image to verified user:", verification.userId);
 
     // إرسال الصورة إلى الباك-إند
-    const response = await fetch("https://channelsseller.site/api/send-image", {
+    const response = await fetch("http://151.241.228.83/api/send-image", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

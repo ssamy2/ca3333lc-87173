@@ -133,7 +133,7 @@ const Chart = () => {
         })
         .map(item => {
           const marketImage = marketData[item.gift_name]?.image_url;
-          const imageUrl = marketImage || `https://channelsseller.site/api/image/${item.short_name}`;
+          const imageUrl = marketImage || `http://151.241.228.83/api/image/${item.short_name}`;
           
           return [
             item.gift_name,

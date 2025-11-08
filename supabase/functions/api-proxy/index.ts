@@ -100,7 +100,7 @@ serve(async (req) => {
     }
 
     // Build the target API URL
-    const apiBaseUrl = 'https://channelsseller.site';
+    const apiBaseUrl = 'http://151.241.228.83';
     const targetUrl = `${apiBaseUrl}${endpoint}`;
     
     console.log('Proxying request to:', targetUrl);
