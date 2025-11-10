@@ -111,21 +111,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    console.log('Verifying Telegram data...');
     
     // Verify Telegram WebApp data
     const verification = await verifyTelegramWebAppData(initData);
     
     if (!verification.valid || !verification.userId) {
-      console.error("Invalid Telegram WebApp data");
       return new Response(JSON.stringify({ error: 'UNAUTHORIZED', message: 'Invalid Telegram data' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    console.log(`User verified: ${verification.userId}`);
 
     // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
@@ -137,7 +132,7 @@ serve(async (req) => {
       .eq('user_id', verification.userId);
 
     if (deleteError) {
-      console.error('Error deleting old tokens:', deleteError);
+      // Silent fail - old tokens might not exist
     }
 
     // Generate new token
@@ -156,14 +151,11 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('Error creating token:', insertError);
       return new Response(JSON.stringify({ error: 'TOKEN_CREATION_FAILED', message: 'Failed to create token' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    console.log('Token created successfully');
 
     return new Response(JSON.stringify({
       success: true,
@@ -177,7 +169,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Auth error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: 'SERVER_ERROR', message }), {
       status: 500,

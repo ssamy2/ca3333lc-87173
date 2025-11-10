@@ -496,8 +496,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
         // Send to Supabase Edge Function
         try {
-          // Remove the Base64 prefix (data:image/jpeg;base64,)
-          const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+          // Validate image is a proper Base64 data URL
+          if (!imageUrl.startsWith('data:image/')) {
+            throw new Error('Invalid image format');
+          }
           
           // Get Telegram initData for authentication
           const initData = telegramWebApp.initData || "";
@@ -509,7 +511,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
             },
             body: JSON.stringify({
-              image: cleanBase64,
+              image: imageUrl,
               initData: initData
             })
           });
@@ -517,8 +519,6 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           if (!response.ok) {
             throw new Error('Failed to send image');
           }
-          
-          console.log('Image sent successfully');
         } catch (err) {
           console.error('Error sending image:', err);
         }

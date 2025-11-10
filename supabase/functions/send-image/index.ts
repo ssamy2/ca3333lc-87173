@@ -100,17 +100,35 @@ serve(async (req) => {
     // Verify Telegram WebApp data
     const verification = await verifyTelegramWebAppData(initData);
     if (!verification.valid || !verification.userId) {
-      console.error("Invalid Telegram WebApp data");
       return new Response(JSON.stringify({ error: "Unauthorized: Invalid Telegram data" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // إزالة البادئة (مثل data:image/jpeg;base64,)
-    const cleanBase64 = image.replace(/^data:image\/\w+;base64,/, "");
+    // Validate image format and extract Base64
+    const base64Pattern = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/;
+    const match = image.match(base64Pattern);
+    
+    if (!match) {
+      return new Response(JSON.stringify({ error: "Invalid image format. Only JPEG, PNG, and WebP are supported" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    console.log("Sending image to verified user:", verification.userId);
+    const cleanBase64 = match[2];
+    
+    // Validate Base64 size (max 10MB)
+    const sizeInBytes = (cleanBase64.length * 3) / 4;
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+    
+    if (sizeInBytes > maxSizeInBytes) {
+      return new Response(JSON.stringify({ error: "Image size exceeds 10MB limit" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // إرسال الصورة إلى الباك-إند
     const response = await fetch("http://151.241.228.83/api/send-image", {
@@ -131,7 +149,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Send image error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

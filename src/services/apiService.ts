@@ -25,8 +25,6 @@ export const fetchNFTGifts = async (username: string) => {
   
   const apiUrl = buildApiUrl(`/api/user/${encodeURIComponent(cleanUsername)}/nfts`);
   
-  console.log('Fetching NFT data...');
-  
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -37,8 +35,6 @@ export const fetchNFTGifts = async (username: string) => {
     });
     
     if (!response.ok) {
-      console.error('API response not OK:', response.status, response.statusText);
-      
       if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       } else if (response.status === 429) {
@@ -61,16 +57,12 @@ export const fetchNFTGifts = async (username: string) => {
       const text = await response.text();
       responseData = text ? JSON.parse(text) : {};
     } catch (parseError) {
-      console.error('Parse error:', parseError);
       throw new Error('PARSE_ERROR');
     }
     
-    console.log('API Response:', responseData);
     return processAPIResponse(responseData, cleanUsername);
     
   } catch (error) {
-    console.error('API request failed:', error);
-    
     // Re-throw specific errors
     if (error instanceof Error && (
         error.message.startsWith('RATE_LIMIT_EXCEEDED') ||
@@ -93,8 +85,6 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   
   const apiUrl = buildApiUrl(`/api/gift/from-link?url=${encodeURIComponent(giftUrl)}`);
   
-  console.log('Fetching single gift price...');
-  
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -105,7 +95,6 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     });
     
     if (!response.ok) {
-      console.error('Gift price API response not OK:', response.status);
       if (response.status === 404) {
         throw new Error('GIFT_NOT_FOUND');
       }
@@ -113,7 +102,6 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     }
     
     const responseData = await response.json();
-    console.log('Gift price response:', responseData);
     
     // Normalize the response to match expected format
     const normalizedData = {
@@ -127,8 +115,6 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     };
     
   } catch (error) {
-    console.error('Gift price request failed:', error);
-    
     if (error instanceof Error && error.message === 'GIFT_NOT_FOUND') {
       throw error;
     }
@@ -143,8 +129,6 @@ export const fetchUserProfile = async (username: string) => {
   
   const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
   
-  console.log('Fetching user profile...');
-  
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -155,7 +139,6 @@ export const fetchUserProfile = async (username: string) => {
     });
     
     if (!response.ok) {
-      console.error('User profile API response not OK:', response.status);
       if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       }
@@ -163,7 +146,6 @@ export const fetchUserProfile = async (username: string) => {
     }
     
     const responseData = await response.json();
-    console.log('User profile response:', responseData);
     
     return {
       name: responseData.name || cleanUsername,
@@ -171,8 +153,6 @@ export const fetchUserProfile = async (username: string) => {
     };
     
   } catch (error) {
-    console.error('User profile request failed:', error);
-    
     // Return fallback data for errors
     return {
       name: cleanUsername,
