@@ -67,11 +67,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.valid) {
         setUserId(data.user_id?.toString() || null);
         setIsAuthenticated(true);
-        setIsSubscribed(data.subscribed || false);
+        setIsSubscribed(data.is_subscribed || false);
 
         // Store in localStorage
         localStorage.setItem('telegram_user_id', data.user_id?.toString() || '');
-        localStorage.setItem('telegram_subscribed', data.subscribed ? 'true' : 'false');
+        localStorage.setItem('telegram_subscribed', data.is_subscribed ? 'true' : 'false');
+        
+        console.log('✅ Auth successful:', { userId: data.user_id, isSubscribed: data.is_subscribed });
       } else {
         throw new Error('Invalid authentication');
       }
