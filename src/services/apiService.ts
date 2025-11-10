@@ -3,7 +3,7 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 export const USE_MOCK_DATA = false; // Always use real API
 
 // Get API base URL
-const API_BASE_URL = 'http://151.241.228.83';
+const API_BASE_URL = 'http://151.241.228.83:8001';
 
 // Build API URL directly (no proxy needed - CloudFlare protection is in place)
 const buildApiUrl = (path: string): string => {
@@ -24,10 +24,10 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
 
 // Fetch NFT gifts for a specific username
 export const fetchNFTGifts = async (username: string) => {
-  // Clean username by removing @ if present
-  const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+  // Clean username and add @ if not present
+  const cleanUsername = username.startsWith('@') ? username : `@${username}`;
   
-  const apiUrl = buildApiUrl(`/api/user-nfts?username=${encodeURIComponent(cleanUsername)}`);
+  const apiUrl = buildApiUrl(`/api/user/${encodeURIComponent(cleanUsername)}/nfts`);
   
   console.log('Fetching NFT data...');
   
@@ -70,7 +70,7 @@ export const fetchNFTGifts = async (username: string) => {
     }
     
     console.log('API Response:', responseData);
-    return processAPIResponse(responseData, true, cleanUsername);
+    return processAPIResponse(responseData, cleanUsername);
     
   } catch (error) {
     console.error('API request failed:', error);
@@ -95,7 +95,7 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     throw new Error('INVALID_GIFT_URL');
   }
   
-  const apiUrl = buildApiUrl(`/api/gift-price-from-link?url=${encodeURIComponent(giftUrl)}`);
+  const apiUrl = buildApiUrl(`/api/gift/from-link?url=${encodeURIComponent(giftUrl)}`);
   
   console.log('Fetching single gift price...');
   
@@ -180,12 +180,27 @@ export const fetchUserProfile = async (username: string) => {
 };
 
 // Helper function to process API response
-const processAPIResponse = (responseData: any, isProxy: boolean, username?: string) => {
-  // Check for API error responses
-  if (responseData && responseData.error) {
-    if (responseData.error === 'Cannot receive gifts' || responseData.error === 'Invalid username') {
-      throw new Error('CANNOT_RECEIVE_GIFTS');
-    }
+const processAPIResponse = (responseData: any, username?: string) => {
+  // Handle empty gifts response
+  if (responseData && responseData.total_nfts === 0) {
+    return {
+      success: true,
+      data: {
+        owner: username || 'user',
+        visible_nfts: 0,
+        prices: {
+          floor_price: { TON: 0, USD: 0, STAR: 0 },
+          avg_price: { TON: 0, USD: 0, STAR: 0 }
+        },
+        nfts: [],
+        total_saved_gifts: 0
+      },
+      stats: {
+        items: 0,
+        total_gifts: 0,
+        enriched: 0
+      }
+    };
   }
   
   // Transform new API response format to expected format
@@ -195,16 +210,16 @@ const processAPIResponse = (responseData: any, isProxy: boolean, username?: stri
       ? Math.min(...responseData.nft_gifts.map((gift: any) => gift.price_ton || 0))
       : 0;
     
-    // Calculate minimum floor price in USD (assuming TON price from total_ton/total_usd ratio)
-    const tonToUsdRatio = responseData.total_ton > 0 
-      ? responseData.total_usd / responseData.total_ton 
-      : 2.81; // fallback ratio
+    // Calculate minimum floor price in USD
+    const tonToUsdRatio = responseData.total_value_ton > 0 
+      ? responseData.total_value_usd / responseData.total_value_ton 
+      : 2.12; // fallback ratio
     const minFloorPriceUSD = minFloorPrice * tonToUsdRatio;
     
     return {
       success: true,
       data: {
-        owner: username || responseData.username || 'user',
+        owner: username || 'user',
         visible_nfts: responseData.total_nfts || 0,
         prices: {
           floor_price: { 
@@ -213,36 +228,37 @@ const processAPIResponse = (responseData: any, isProxy: boolean, username?: stri
             STAR: 0 
           },
           avg_price: { 
-            TON: responseData.total_ton || 0, 
-            USD: responseData.total_usd || 0, 
+            TON: responseData.total_value_ton || 0, 
+            USD: responseData.total_value_usd || 0, 
             STAR: 0 
           }
         },
         nfts: responseData.nft_gifts.map((gift: any) => ({
           count: 1,
-          name: gift.gift_name || gift.title || 'Unknown',
+          name: gift.gift_name || 'Unknown',
           model: gift.model || 'Unknown',
+          pattern: gift.pattern || '',
           floor_price: gift.price_ton || 0,
           avg_price: gift.price_ton || 0,
-          price_change_percent: gift.price_change_percent || (Math.random() * 20 - 5),
-          image: gift.image || gift.image_url,
-          title: gift.title,
+          price_change_percent: 0,
+          image: gift.image || '',
+          title: gift.gift_name || 'Unknown',
           backdrop: gift.backdrop || '',
-          model_rarity: gift.model_rarity || '',
-          quantity_issued: gift.quantity_issued || 0,
-          quantity_total: gift.quantity_total || 0,
-          quantity_raw: gift.quantity_raw || '',
-          description: gift.description || '',
-          tg_deeplink: gift.tg_deeplink || '',
+          model_rarity: gift.rarity || 0,
+          quantity_issued: gift.mint || 0,
+          quantity_total: 0,
+          quantity_raw: gift.mint ? `#${gift.mint}` : '',
+          description: '',
+          tg_deeplink: gift.link || '',
           details: {
-            links: gift.nft_link ? [gift.nft_link] : []
+            links: gift.link ? [gift.link] : []
           }
         })),
-        total_saved_gifts: responseData.total_saved_gifts
+        total_saved_gifts: responseData.total_nfts
       },
       stats: {
         items: responseData.total_nfts || 0,
-        total_gifts: responseData.total_saved_gifts || 0,
+        total_gifts: responseData.total_nfts || 0,
         enriched: responseData.total_nfts || 0
       }
     };
