@@ -718,16 +718,32 @@ const TelegramApp: React.FC = () => {
                 </div>
 
                 {/* Gift Info */}
-                <div className="text-center mb-6 space-y-2">
+                <div className="text-center mb-6 space-y-3">
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
                     {singleGift.gift_name}
                   </h2>
-                  <p className="text-lg text-muted-foreground font-medium">{singleGift.model}</p>
-                  {singleGift.backdrop && (
-                    <p className="text-sm text-accent font-medium bg-accent/10 px-3 py-1 rounded-full inline-block border border-accent/20">
-                      {singleGift.backdrop}
-                    </p>
-                  )}
+                  
+                  {/* Model and Backdrop */}
+                  <div className="flex flex-col gap-2 items-center">
+                    {singleGift.model && (
+                      <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-xl border border-primary/30">
+                        <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                        <span className="text-sm font-semibold text-primary">Model:</span>
+                        <span className="text-sm font-medium text-foreground">{singleGift.model}</span>
+                      </div>
+                    )}
+                    {singleGift.backdrop && (
+                      <div className="flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-xl border border-accent/30">
+                        <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-accent">Backdrop:</span>
+                        <span className="text-sm font-medium text-foreground">{singleGift.backdrop}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Price Cards */}
@@ -748,11 +764,11 @@ const TelegramApp: React.FC = () => {
                 </div>
 
                 {/* Rarity */}
-                {singleGift.rarity && (
+                {singleGift.rarity !== undefined && (
                   <div className="w-full bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-5 border border-border shadow-lg">
                     <p className="text-sm text-muted-foreground mb-2 text-center font-medium">Rarity</p>
                     <p className="text-2xl font-bold text-foreground text-center">
-                      {(singleGift.rarity * 100).toFixed(2)}%
+                      {singleGift.rarity}
                     </p>
                   </div>
                 )}
