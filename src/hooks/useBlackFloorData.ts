@@ -139,9 +139,8 @@ export const useBlackFloorData = () => {
   return useQuery({
     queryKey: ['black-floor-data'],
     queryFn: fetchBlackFloorData,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
     refetchOnWindowFocus: false,
     initialData: () => getCachedData('black-floor-data'),
   });
