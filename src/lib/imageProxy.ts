@@ -5,15 +5,14 @@ export const proxyImageUrl = (imageUrl: string): string => {
     return imageUrl;
   }
   
-  // For HTTP URLs from our API, proxy them through our edge function
+  // For HTTP URLs from our API, proxy them through the new domain
   if (imageUrl.startsWith('http://')) {
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
     // Extract the path from the full URL
     const url = new URL(imageUrl);
     const path = url.pathname + url.search;
     
-    // Return proxied URL
-    return `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent(path)}`;
+    // Return proxied URL through new domain
+    return `https://www.channelsseller.site${path}`;
   }
   
   return imageUrl;

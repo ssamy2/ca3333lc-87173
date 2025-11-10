@@ -32,10 +32,9 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
   const fetchModels = async () => {
     try {
       setLoading(true);
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const proxyUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/market-data')}`;
+      const apiUrl = 'https://www.channelsseller.site/api/market-data';
       
-      const response = await fetch(proxyUrl);
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error('Failed to fetch models');

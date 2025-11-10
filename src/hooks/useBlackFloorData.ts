@@ -17,8 +17,7 @@ interface BlackFloorItem {
 
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const apiUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/black/summary')}`;
+  const apiUrl = 'https://www.channelsseller.site/api/black/summary';
   
   const response = await fetch(apiUrl);
   if (!response.ok) {

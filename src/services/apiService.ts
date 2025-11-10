@@ -2,12 +2,9 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 
 export const USE_MOCK_DATA = false; // Always use real API
 
-// Get Supabase URL from environment
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-// Build API URL through proxy
+// Build API URL directly to new domain
 const buildApiUrl = (path: string): string => {
-  return `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent(path)}`;
+  return `https://www.channelsseller.site${path}`;
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)

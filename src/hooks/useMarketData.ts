@@ -28,8 +28,7 @@ interface MarketData {
 
 // Fetch market data from API
 const fetchMarketData = async (): Promise<MarketData> => {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const apiUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/market-data')}`;
+  const apiUrl = 'https://www.channelsseller.site/api/market-data';
   
   const response = await fetch(apiUrl);
   if (!response.ok) {
