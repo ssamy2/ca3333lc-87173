@@ -1,17 +1,21 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, RefreshCw, CheckCircle } from 'lucide-react';
+import { ExternalLink, RefreshCw, CheckCircle, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TonIcon from './TonIcon';
 import NvaIcon from './NvaIcon';
 
 interface SubscribePromptProps {
   onCheckAgain: () => void;
+  onSkip?: () => void;
 }
 
-const SubscribePrompt: React.FC<SubscribePromptProps> = ({ onCheckAgain }) => {
+const SubscribePrompt: React.FC<SubscribePromptProps> = ({ onCheckAgain, onSkip }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden"
+      onClick={onSkip}
+    >
       {/* Animated background particles */}
       <div className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
@@ -57,13 +61,23 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ onCheckAgain }) => {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-6" onClick={(e) => e.stopPropagation()}>
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="telegram-card p-8 text-center space-y-6 border-2 border-primary/30 shadow-2xl backdrop-blur-md"
+          className="telegram-card p-8 text-center space-y-6 border-2 border-primary/30 shadow-2xl backdrop-blur-md relative"
         >
+          {/* Close button */}
+          {onSkip && (
+            <button
+              onClick={onSkip}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+              aria-label="Skip"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
           {/* Logo with enhanced glow */}
           <motion.div
             className="flex justify-center"

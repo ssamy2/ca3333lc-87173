@@ -17,7 +17,10 @@ interface BlackFloorItem {
 
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
-  const response = await fetch('http://151.241.228.83:8001/api/black/summary');
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const apiUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/black/summary')}`;
+  
+  const response = await fetch(apiUrl);
   if (!response.ok) {
     throw new Error('Failed to fetch black floor data');
   }

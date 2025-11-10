@@ -92,6 +92,7 @@ const TelegramApp: React.FC = () => {
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
+  const [hasSkippedSubscribe, setHasSkippedSubscribe] = useState(false);
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
 
@@ -407,8 +408,11 @@ const TelegramApp: React.FC = () => {
     return <AppLoader onComplete={() => {}} />;
   }
 
-  if (!isAuthenticated || !isSubscribed) {
-    return <SubscribePrompt onCheckAgain={checkSubscription} />;
+  if (!isAuthenticated || (!isSubscribed && !hasSkippedSubscribe)) {
+    return <SubscribePrompt 
+      onCheckAgain={checkSubscription} 
+      onSkip={() => setHasSkippedSubscribe(true)}
+    />;
   }
 
   return (

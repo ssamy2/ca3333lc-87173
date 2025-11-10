@@ -28,7 +28,10 @@ interface MarketData {
 
 // Fetch market data from API
 const fetchMarketData = async (): Promise<MarketData> => {
-  const response = await fetch('http://151.241.228.83:8001/api/market-data');
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const apiUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/market-data')}`;
+  
+  const response = await fetch(apiUrl);
   if (!response.ok) {
     throw new Error('Failed to fetch market data');
   }

@@ -44,8 +44,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Telegram WebApp not available');
       }
 
-      // Send to backend for verification
-      const response = await fetch('http://151.241.228.83:8001/api/verify-auth', {
+      // Send to backend for verification through proxy
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const apiUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/verify-auth')}`;
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
