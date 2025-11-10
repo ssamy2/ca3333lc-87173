@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLoader from "@/components/AppLoader";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Configure React Query for optimal caching
 const queryClient = new QueryClient({
@@ -45,23 +46,25 @@ const App = () => {
       >
         <TooltipProvider>
           <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            {isLoading ? (
-              <AppLoader onComplete={() => setIsLoading(false)} />
-            ) : (
-              <BrowserRouter>
-                <DataPrefetcher>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/chart" element={<Chart />} />
-                    <Route path="/gift/:name" element={<GiftDetail />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </DataPrefetcher>
-              </BrowserRouter>
-            )}
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              {isLoading ? (
+                <AppLoader onComplete={() => setIsLoading(false)} />
+              ) : (
+                <BrowserRouter>
+                  <DataPrefetcher>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/chart" element={<Chart />} />
+                      <Route path="/gift/:name" element={<GiftDetail />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </DataPrefetcher>
+                </BrowserRouter>
+              )}
+            </AuthProvider>
           </ErrorBoundary>
         </TooltipProvider>
       </ThemeProvider>
