@@ -29,50 +29,93 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    const MAX_LOAD_TIME = 4000; // 4 seconds max
+    const startTime = Date.now();
+    let progressInterval: NodeJS.Timeout;
+    
+    // Smooth progress animation
+    const animateProgress = () => {
+      progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const targetProgress = Math.min((elapsed / MAX_LOAD_TIME) * 100, 99);
+        
+        setProgress(prev => {
+          const diff = targetProgress - prev;
+          return prev + diff * 0.1; // Smooth easing
+        });
+      }, 50);
+    };
+
     const processSteps = async () => {
       try {
-        // Step 1: Auth
-        await updateStep(0, 'loading');
-        setProgress(20);
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await updateStep(0, 'success');
-        setProgress(40);
-
-        // Step 2: Data - Actually load the data
-        await updateStep(1, 'loading');
-        setProgress(60);
+        animateProgress();
         
-        // Prefetch all data in parallel
-        await Promise.all([
+        // Step 1: Auth (fast)
+        setCurrentStep(0);
+        setSteps(prev => prev.map((step, i) => 
+          i === 0 ? { ...step, status: 'loading' } : step
+        ));
+        
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        setSteps(prev => prev.map((step, i) => 
+          i === 0 ? { ...step, status: 'success' } : step
+        ));
+
+        // Step 2: Data - with timeout
+        setCurrentStep(1);
+        setSteps(prev => prev.map((step, i) => 
+          i === 1 ? { ...step, status: 'loading' } : step
+        ));
+        
+        // Race between data loading and timeout
+        const dataPromise = Promise.all([
           prefetchMarketData(),
           prefetchBlackFloorData()
         ]);
         
-        setProgress(90);
-        await updateStep(1, 'success');
+        const timeoutPromise = new Promise(resolve => 
+          setTimeout(resolve, 2500)
+        );
+        
+        await Promise.race([dataPromise, timeoutPromise]);
+        
+        setSteps(prev => prev.map((step, i) => 
+          i === 1 ? { ...step, status: 'success' } : step
+        ));
 
+        // Wait for remaining time or complete at 4s
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(200, MAX_LOAD_TIME - elapsed);
+        await new Promise(resolve => setTimeout(resolve, remaining));
+        
         // Complete
+        clearInterval(progressInterval);
         setProgress(100);
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise(resolve => setTimeout(resolve, 300));
         onComplete();
+        
       } catch (error) {
         console.error('Error during loading:', error);
-        // Continue anyway after a short delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        onComplete();
+        
+        // Complete anyway after max time
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, MAX_LOAD_TIME - elapsed);
+        
+        setTimeout(() => {
+          clearInterval(progressInterval);
+          setProgress(100);
+          setTimeout(() => onComplete(), 300);
+        }, remaining);
       }
     };
 
     processSteps();
+    
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
   }, [onComplete, prefetchMarketData, prefetchBlackFloorData]);
-
-  const updateStep = async (index: number, status: LoadingStep['status']) => {
-    setCurrentStep(index);
-    setSteps(prev => prev.map((step, i) => 
-      i === index ? { ...step, status } : step
-    ));
-    await new Promise(resolve => setTimeout(resolve, 100));
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
