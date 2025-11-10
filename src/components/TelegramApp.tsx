@@ -15,6 +15,9 @@ import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
 import { proxyImageUrl } from '@/lib/imageProxy';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/contexts/AuthContext';
+import AppLoader from './AppLoader';
+import SubscribePrompt from './SubscribePrompt';
 import novaLogo from '@/assets/nova-logo-new.png';
 
 interface UserProfile {
@@ -70,6 +73,7 @@ interface APIResponse {
 }
 
 const TelegramApp: React.FC = () => {
+  const { isAuthenticated, isSubscribed, isLoading: authLoading, checkSubscription } = useAuth();
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
   const [currentUserFullName, setCurrentUserFullName] = useState('');
@@ -396,6 +400,15 @@ const TelegramApp: React.FC = () => {
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
+  }
+
+  // Check authentication and subscription
+  if (authLoading) {
+    return <AppLoader onComplete={() => {}} />;
+  }
+
+  if (!isAuthenticated || !isSubscribed) {
+    return <SubscribePrompt onCheckAgain={checkSubscription} />;
   }
 
   return (

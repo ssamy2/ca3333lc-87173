@@ -17,10 +17,7 @@ interface BlackFloorItem {
 
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const proxyUrl = `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent('/api/black-floor')}`;
-  
-  const response = await fetch(proxyUrl);
+  const response = await fetch('http://151.241.228.83:8001/api/black/summary');
   if (!response.ok) {
     throw new Error('Failed to fetch black floor data');
   }
@@ -135,23 +132,27 @@ const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
 };
 
 // Custom hook for black floor data with caching
-// TEMPORARILY DISABLED: Endpoint not available in new API
 export const useBlackFloorData = () => {
   return useQuery({
     queryKey: ['black-floor-data'],
-    queryFn: async () => [], // Return empty array instead of fetching
-    staleTime: Infinity, // Never refetch
-    gcTime: Infinity, // Keep in cache forever
-    refetchInterval: false, // Don't auto-refresh
+    queryFn: fetchBlackFloorData,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: 30000,
     refetchOnWindowFocus: false,
-    enabled: false, // Disable query
+    initialData: () => getCachedData('black-floor-data'),
   });
 };
 
 // Prefetch black floor data
-// TEMPORARILY DISABLED: Endpoint not available in new API
 export const usePrefetchBlackFloorData = () => {
+  const queryClient = useQueryClient();
+  
   return () => {
-    // Do nothing - endpoint not available
+    queryClient.prefetchQuery({
+      queryKey: ['black-floor-data'],
+      queryFn: fetchBlackFloorData,
+      staleTime: 30000,
+    });
   };
 };

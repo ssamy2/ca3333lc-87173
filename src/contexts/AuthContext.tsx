@@ -2,122 +2,104 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
-  token: string | null;
-  operationsRemaining: number;
-  isAuthenticated: boolean;
-  isLoading: boolean;
   userId: string | null;
-  username: string | null;
-  authenticate: (initData: string) => Promise<void>;
-  logout: () => void;
+  isAuthenticated: boolean;
+  isSubscribed: boolean;
+  isLoading: boolean;
+  authenticate: () => Promise<void>;
+  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [operationsRemaining, setOperationsRemaining] = useState<number>(0);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token in localStorage
-    const storedToken = localStorage.getItem('telegram_auth_token');
-    const storedOperations = localStorage.getItem('operations_remaining');
-    const storedUserId = localStorage.getItem('user_id');
-    const storedUsername = localStorage.getItem('username');
+    const storedUserId = localStorage.getItem('telegram_user_id');
+    const storedSubscribed = localStorage.getItem('telegram_subscribed');
 
-    if (storedToken && storedOperations) {
-      setToken(storedToken);
-      setOperationsRemaining(parseInt(storedOperations));
+    if (storedUserId && storedSubscribed === 'true') {
       setUserId(storedUserId);
-      setUsername(storedUsername);
       setIsAuthenticated(true);
+      setIsSubscribed(true);
+      setIsLoading(false);
+    } else {
+      // Auto-authenticate on mount
+      authenticate();
     }
-
-    setIsLoading(false);
   }, []);
 
-  const authenticate = async (initData: string) => {
+  const authenticate = async () => {
     try {
       setIsLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('telegram-auth', {
-        body: { initData }
+      // Get initData from Telegram WebApp
+      const initData = window.Telegram?.WebApp?.initData;
+      
+      if (!initData) {
+        throw new Error('Telegram WebApp not available');
+      }
+
+      // Send to backend for verification
+      const response = await fetch('http://151.241.228.83:8001/api/verify-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          init_data: initData
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
 
-      if (data.success) {
-        setToken(data.token);
-        setOperationsRemaining(data.operations_remaining);
-        setUserId(data.user_id);
-        setUsername(data.username);
+      const data = await response.json();
+
+      if (data.valid) {
+        setUserId(data.user_id?.toString() || null);
         setIsAuthenticated(true);
+        setIsSubscribed(data.subscribed || false);
 
         // Store in localStorage
-        localStorage.setItem('telegram_auth_token', data.token);
-        localStorage.setItem('operations_remaining', data.operations_remaining.toString());
-        localStorage.setItem('user_id', data.user_id);
-        if (data.username) localStorage.setItem('username', data.username);
+        localStorage.setItem('telegram_user_id', data.user_id?.toString() || '');
+        localStorage.setItem('telegram_subscribed', data.subscribed ? 'true' : 'false');
       } else {
-        throw new Error(data.message || 'Authentication failed');
+        throw new Error('Invalid authentication');
       }
     } catch (error) {
       console.error('Authentication error:', error);
-      throw error;
+      setIsAuthenticated(false);
+      setIsSubscribed(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setOperationsRemaining(0);
-    setUserId(null);
-    setUsername(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('telegram_auth_token');
-    localStorage.removeItem('operations_remaining');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('username');
-  };
-
-  const updateOperationsRemaining = (count: number) => {
-    setOperationsRemaining(count);
-    localStorage.setItem('operations_remaining', count.toString());
-
-    if (count <= 0) {
-      logout();
+  const checkSubscription = async () => {
+    try {
+      setIsLoading(true);
+      await authenticate(); // Re-verify authentication and subscription
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Listen for operations count updates from API calls
-  useEffect(() => {
-    const handleOperationsUpdate = (event: CustomEvent) => {
-      updateOperationsRemaining(event.detail.operationsRemaining);
-    };
-
-    window.addEventListener('operationsUpdate' as any, handleOperationsUpdate);
-
-    return () => {
-      window.removeEventListener('operationsUpdate' as any, handleOperationsUpdate);
-    };
-  }, []);
 
   return (
     <AuthContext.Provider
       value={{
-        token,
-        operationsRemaining,
-        isAuthenticated,
-        isLoading,
         userId,
-        username,
+        isAuthenticated,
+        isSubscribed,
+        isLoading,
         authenticate,
-        logout,
+        checkSubscription,
       }}
     >
       {children}

@@ -16,10 +16,8 @@ interface AppLoaderProps {
 
 const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
   const [steps, setSteps] = useState<LoadingStep[]>([
-    { id: 'auth', label: 'Authenticating...', status: 'pending' },
-    { id: 'market', label: 'Loading market data...', status: 'pending' },
-    { id: 'black', label: 'Loading black floor data...', status: 'pending' },
-    { id: 'images', label: 'Preloading images...', status: 'pending' },
+    { id: 'auth', label: 'جاري المصادقة...', status: 'pending' },
+    { id: 'data', label: 'تحميل البيانات...', status: 'pending' },
   ]);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -27,28 +25,17 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
 
   useEffect(() => {
     const processSteps = async () => {
-      // Step 1: Telegram Auth (instant)
+      // Step 1: Auth
       await updateStep(0, 'loading');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setProgress(30);
+      await new Promise(resolve => setTimeout(resolve, 800));
       await updateStep(0, 'success');
 
-      // Step 2: Market Data
+      // Step 2: Data
       await updateStep(1, 'loading');
-      setProgress(25);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      await updateStep(1, 'success');
-
-      // Step 3: Black Floor Data
-      await updateStep(2, 'loading');
-      setProgress(50);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      await updateStep(2, 'success');
-
-      // Step 4: Images
-      await updateStep(3, 'loading');
-      setProgress(75);
+      setProgress(70);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      await updateStep(3, 'success');
+      await updateStep(1, 'success');
 
       // Complete
       setProgress(100);
