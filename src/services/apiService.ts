@@ -2,13 +2,12 @@ import { mockNFTResponse, mockErrorResponses } from './mockData';
 
 export const USE_MOCK_DATA = false; // Always use real API
 
-// Get API base URL
-const API_BASE_URL = 'http://151.241.228.83:8001';
+// Get Supabase URL from environment
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
-// Build API URL directly (no proxy needed - CloudFlare protection is in place)
+// Build API URL through proxy
 const buildApiUrl = (path: string): string => {
-  const timestamp = Date.now();
-  return `${API_BASE_URL}${path}${path.includes('?') ? '&' : '?'}_t=${timestamp}`;
+  return `${SUPABASE_URL}/functions/v1/api-proxy?endpoint=${encodeURIComponent(path)}`;
 };
 
 // Robust timeout signal (polyfill for AbortSignal.timeout)
