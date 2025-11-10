@@ -32,22 +32,39 @@ serve(async (req) => {
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+        'Accept': 'application/json, image/*',
+        'User-Agent': 'Lovable-Proxy/1.0',
       },
       body: req.method !== 'GET' && req.method !== 'HEAD' ? await req.text() : undefined,
     });
 
-    // Get response data
-    const data = await response.text();
-    
     console.log('Proxy response status:', response.status);
+
+    // Check if this is an image response
+    const contentType = response.headers.get('Content-Type') || '';
+    const isImage = contentType.startsWith('image/');
+    
+    if (isImage) {
+      // For images, return binary data with proper headers
+      const imageData = await response.arrayBuffer();
+      return new Response(imageData, {
+        status: response.status,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        },
+      });
+    }
+
+    // For JSON/text responses
+    const data = await response.text();
     
     return new Response(data, {
       status: response.status,
       headers: {
         ...corsHeaders,
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Content-Type': contentType || 'application/json',
       },
     });
 

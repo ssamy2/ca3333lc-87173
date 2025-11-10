@@ -135,27 +135,23 @@ const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
 };
 
 // Custom hook for black floor data with caching
+// TEMPORARILY DISABLED: Endpoint not available in new API
 export const useBlackFloorData = () => {
   return useQuery({
     queryKey: ['black-floor-data'],
-    queryFn: fetchBlackFloorData,
-    staleTime: 30000, // Data is fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    queryFn: async () => [], // Return empty array instead of fetching
+    staleTime: Infinity, // Never refetch
+    gcTime: Infinity, // Keep in cache forever
+    refetchInterval: false, // Don't auto-refresh
     refetchOnWindowFocus: false,
-    initialData: () => getCachedData('black-floor-data'), // Use cached data initially
+    enabled: false, // Disable query
   });
 };
 
 // Prefetch black floor data
+// TEMPORARILY DISABLED: Endpoint not available in new API
 export const usePrefetchBlackFloorData = () => {
-  const queryClient = useQueryClient();
-  
   return () => {
-    queryClient.prefetchQuery({
-      queryKey: ['black-floor-data'],
-      queryFn: fetchBlackFloorData,
-      staleTime: 30000,
-    });
+    // Do nothing - endpoint not available
   };
 };

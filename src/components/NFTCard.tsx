@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import TonIcon from './TonIcon';
+import { proxyImageUrl } from '@/lib/imageProxy';
 
 interface NFTGift {
   count: number;
@@ -94,7 +95,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           {nft.image && !imageError ? (
             <>
               <img 
-                src={nft.image}
+                src={proxyImageUrl(nft.image)}
                 alt={`${nft.name} NFT`}
                 className="w-full h-full object-cover rounded-xl"
                 onError={handleImageError}

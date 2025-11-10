@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import { toast } from 'sonner';
+import { proxyImageUrl } from '@/lib/imageProxy';
 
 interface GiftModel {
   name: string;
@@ -90,7 +91,7 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
                 >
                   {/* Image */}
                   <img
-                    src={model.image_url}
+                    src={proxyImageUrl(model.image_url)}
                     alt={model.name}
                     className="w-12 h-12 rounded-lg object-cover"
                     onError={(e) => {

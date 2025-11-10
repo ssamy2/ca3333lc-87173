@@ -13,6 +13,7 @@ import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
+import { proxyImageUrl } from '@/lib/imageProxy';
 import { useTheme } from '@/hooks/useTheme';
 import novaLogo from '@/assets/nova-logo-new.png';
 
@@ -707,7 +708,7 @@ const TelegramApp: React.FC = () => {
                 {/* Gift Image */}
                 <div className="relative w-56 h-56 mb-6 rounded-2xl overflow-hidden shadow-2xl">
                   <img
-                    src={singleGift.image}
+                    src={proxyImageUrl(singleGift.image)}
                     alt={singleGift.gift_name}
                     className="w-full h-full object-contain bg-gradient-to-br from-primary/5 via-background to-accent/5"
                     onError={(e) => {
