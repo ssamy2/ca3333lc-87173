@@ -110,7 +110,7 @@ const ProfileSettingsPage = () => {
             <Globe className="w-5 h-5" />
             <h3 className="text-base font-medium">{t('language')}</h3>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleLanguageChange('en')}
               className={`p-3 rounded-lg border-2 transition-all ${
@@ -140,6 +140,16 @@ const ProfileSettingsPage = () => {
               }`}
             >
               <div className="text-sm font-medium">{t('russian')}</div>
+            </button>
+            <button
+              onClick={() => handleLanguageChange('zh')}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                language === 'zh'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-card hover:bg-muted'
+              }`}
+            >
+              <div className="text-sm font-medium">{t('chinese')}</div>
             </button>
           </div>
         </Card>

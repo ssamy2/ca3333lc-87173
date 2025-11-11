@@ -411,8 +411,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 3840;
-    canvas.height = 2160;
+    canvas.width = 2000;
+    canvas.height = 1200;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 

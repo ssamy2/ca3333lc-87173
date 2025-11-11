@@ -1,6 +1,58 @@
-export type Language = 'en' | 'ar' | 'ru';
+export type Language = 'en' | 'ar' | 'ru' | 'zh';
 
 export const translations = {
+  zh: {
+    // Language names
+    english: '🇬🇧 English',
+    arabic: '🇮🇶 العربية',
+    russian: '🇷🇺 Русский',
+    chinese: '🇨🇳 中文',
+    
+    // Common
+    settings: '设置',
+    theme: '主题',
+    language: '语言',
+    light: '浅色',
+    dark: '深色',
+    system: '系统',
+    community: '社区',
+    
+    // Community links
+    joinTelegramChannel: '加入 Telegram 频道',
+    joinTelegramGroup: '加入 Telegram 群组',
+    
+    // Home page
+    heroTitle: '精确计算您的礼物价值',
+    heroDescription: '通过我们先进的实时市场数据分析工具，即时了解您 Telegram 礼物的真实价值',
+    heroExample: '💡 选择您的礼物 → 查看实时价格 → 做出明智决策',
+    footerNote: '💎 所有价格每5分钟自动更新一次，来源于 Telegram 官方市场和可信交易渠道',
+    
+    // My Gifts
+    myGifts: '我的礼物',
+    totalValue: '总价值',
+    noGiftsYet: '还没有礼物',
+    noGiftsDescription: '您的 Telegram 礼物将显示在这里。从朋友那里收到礼物后开始收集吧！',
+    
+    // View modes
+    gridView: '网格视图',
+    listView: '列表视图',
+    
+    // Gift details
+    floor: '底价',
+    avgPrice: '平均价格',
+    priceChange: '价格变化',
+    viewInStore: '在商店查看',
+    
+    // Status
+    loading: '加载中...',
+    error: '出错了',
+    retry: '重试',
+    
+    // Actions
+    refresh: '刷新',
+    share: '分享',
+    close: '关闭',
+  },
   en: {
     // Navigation
     settings: 'Settings',
@@ -17,9 +69,10 @@ export const translations = {
     
     // Language
     language: 'Language',
-    english: 'English',
-    arabic: 'Arabic',
-    russian: 'Russian',
+    english: '🇬🇧 English',
+    arabic: '🇮🇶 العربية',
+    russian: '🇷🇺 Русский',
+    chinese: '🇨🇳 中文',
     
     // Community
     community: 'Community',
@@ -109,9 +162,10 @@ export const translations = {
     
     // Language
     language: 'اللغة',
-    english: 'الإنجليزية',
-    arabic: 'العربية',
-    russian: 'الروسية',
+    english: '🇬🇧 الإنجليزية',
+    arabic: '🇮🇶 العربية',
+    russian: '🇷🇺 الروسية',
+    chinese: '🇨🇳 中文',
     
     // Community
     community: 'المجتمع',
@@ -201,9 +255,10 @@ export const translations = {
     
     // Language
     language: 'Язык',
-    english: 'Английский',
-    arabic: 'Арабский',
-    russian: 'Русский',
+    english: '🇬🇧 Английский',
+    arabic: '🇮🇶 Арабский',
+    russian: '🇷🇺 Русский',
+    chinese: '🇨🇳 中文',
     
     // Community
     community: 'Сообщество',
