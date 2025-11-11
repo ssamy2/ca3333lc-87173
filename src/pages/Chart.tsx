@@ -11,6 +11,8 @@ import BottomNav from '@/components/BottomNav';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useBlackFloorData } from '@/hooks/useBlackFloorData';
 import MarketTable from '@/components/MarketTable';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/i18n/translations';
 
 interface NFTMarketData {
   priceTon: number;
@@ -85,11 +87,16 @@ interface GiftItem {
 }
 
 const Chart = () => {
+  const { language } = useLanguage();
   // Use React Query hooks for data fetching with caching
   const { data: marketData = {}, isLoading: marketLoading } = useMarketData();
   const { data: blackFloorData = [], isLoading: blackLoading } = useBlackFloorData();
   
   const loading = marketLoading || blackLoading;
+  
+  // Translation helper
+  const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
+    getTranslation(language, key);
   
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
@@ -359,11 +366,11 @@ const Chart = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h1 className={`text-2xl font-bold ${dataSource === 'black' ? 'text-[#C9A14B]' : 'text-foreground'}`}>
-            {dataSource === 'black' ? 'BLACK GIFTS' : 'Market Charts'}
+            {dataSource === 'black' ? t('blackGifts') : t('marketCharts')}
           </h1>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className={`text-sm font-medium ${dataSource === 'black' ? 'text-white/70' : 'text-muted-foreground'}`}>Live</span>
+            <span className={`text-sm font-medium ${dataSource === 'black' ? 'text-white/70' : 'text-muted-foreground'}`}>{t('live')}</span>
           </div>
         </div>
 
@@ -403,7 +410,7 @@ const Chart = () => {
                 className="min-w-[100px] transition-all duration-300"
               >
                 <TrendingUp className={`h-4 w-4 ${sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}`} />
-                <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>Price Up</span>
+                <span className={sortMode === 'priceUp' ? 'text-green-400' : 'text-green-500/50'}>{t('priceUp')}</span>
               </Button>
               <Button
                 variant={sortMode === 'priceDown' ? 'glass' : 'glassDark'}
@@ -412,7 +419,7 @@ const Chart = () => {
                 className="min-w-[100px] transition-all duration-300"
               >
                 <TrendingDown className={`h-4 w-4 ${sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}`} />
-                <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>Price Down</span>
+                <span className={sortMode === 'priceDown' ? 'text-red-400' : 'text-red-500/50'}>{t('priceDown')}</span>
               </Button>
             </div>
             
@@ -424,7 +431,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                All
+                {t('all')}
               </Button>
               <Button
                 onClick={() => setDataSource('black')}
@@ -432,7 +439,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                Black
+                {t('black')}
               </Button>
             </div>
           </div>
@@ -449,7 +456,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                Change
+                {t('change')}
               </Button>
               <Button
                 onClick={() => setChartType('marketcap')}
@@ -457,7 +464,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                Market Cap
+                {t('marketCap')}
               </Button>
             </div>
 

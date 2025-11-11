@@ -6,7 +6,6 @@ import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
 import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
-import EmptyState from './EmptyState';
 import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
@@ -20,6 +19,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLoader from './AppLoader';
 import SubscribePrompt from './SubscribePrompt';
 import novaLogo from '@/assets/nova-logo-new.png';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/i18n/translations';
 
 interface UserProfile {
   name: string;
@@ -75,6 +76,7 @@ interface APIResponse {
 
 const TelegramApp: React.FC = () => {
   const { isAuthenticated, isSubscribed, isLoading: authLoading, checkSubscription } = useAuth();
+  const { language } = useLanguage();
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
   const [currentUserFullName, setCurrentUserFullName] = useState('');
@@ -96,6 +98,10 @@ const TelegramApp: React.FC = () => {
   const [hasSkippedSubscribe, setHasSkippedSubscribe] = useState(false);
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
+  
+  // Translation helper
+  const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
+    getTranslation(language, key);
 
   // Initialize Telegram WebApp
   useEffect(() => {
@@ -461,45 +467,14 @@ const TelegramApp: React.FC = () => {
                 </div>
                 
                 <div className="flex-1">
-                  <h1 className="text-2xl font-bold text-gradient">Nova</h1>
-                  <p className="text-sm text-muted-foreground font-medium">Telegram Gifts Price Checker</p>
+                  <h1 className="text-2xl font-bold text-gradient">{t('appTitle')}</h1>
+                  <p className="text-sm text-muted-foreground font-medium">{t('appSubtitle')}</p>
                 </div>
                 
                 {/* Theme Toggle - Top Right */}
                 <div className="self-start">
                   <ThemeToggle />
                 </div>
-              </div>
-
-              {/* Channel and Chat Links */}
-              <div className="flex gap-3">
-                <Button
-                  asChild
-                  variant="outline"
-                  className="flex-1 h-11 rounded-xl font-semibold border-border/50 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all duration-300"
-                >
-                  <a 
-                    href="https://t.me/GT_Rolet" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    📢 Channel
-                  </a>
-                </Button>
-                
-                <Button
-                  asChild
-                  variant="outline"
-                  className="flex-1 h-11 rounded-xl font-semibold border-border/50 hover:bg-accent/10 hover:border-accent/30 hover:text-accent transition-all duration-300"
-                >
-                  <a 
-                    href="https://t.me/Gifts_Super" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    💬 Chat
-                  </a>
-                </Button>
               </div>
             </div>
           </div>
@@ -544,14 +519,14 @@ const TelegramApp: React.FC = () => {
                     {currentUserFullName || 'User'}
                   </h3>
                   <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
-                    Active
+                    {t('active')}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">@</span>
                   <span className="font-mono text-sm font-medium text-foreground/90">{currentUser}</span>
                   <div className="w-1 h-1 bg-primary rounded-full"></div>
-                  <span className="text-xs text-muted-foreground">Telegram</span>
+                  <span className="text-xs text-muted-foreground">{t('telegram')}</span>
                 </div>
               </div>
             </div>
@@ -572,7 +547,7 @@ const TelegramApp: React.FC = () => {
                     </svg>
                   )}
                   <span className="tracking-wide">
-                    {loading ? 'Loading...' : 'Check My Gifts'}
+                    {loading ? t('loading') : t('checkMyGifts')}
                   </span>
                 </div>
                 {/* Button Shine Effect */}
@@ -600,7 +575,7 @@ const TelegramApp: React.FC = () => {
                 }`}
               >
                 <User className="w-4 h-4 inline-block mr-2" />
-                User Profile
+                {t('userProfile')}
               </button>
               <button
                 onClick={() => {
@@ -615,7 +590,7 @@ const TelegramApp: React.FC = () => {
                 }`}
               >
                 <Gift className="w-4 h-4 inline-block mr-2" />
-                Single Gift
+                {t('singleGift')}
               </button>
             </div>
           </div>
@@ -624,7 +599,7 @@ const TelegramApp: React.FC = () => {
             {searchMode === 'user' ? (
               <Input
                 type="text"
-                placeholder={currentUser ? `@${currentUser}` : "Enter username..."}
+                placeholder={currentUser ? `@${currentUser}` : t('enterUsername')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -634,7 +609,7 @@ const TelegramApp: React.FC = () => {
             ) : (
               <Input
                 type="text"
-                placeholder="Enter gift URL (e.g., https://t.me/nft/...)"
+                placeholder={t('enterGiftUrl')}
                 value={giftUrl}
                 onChange={(e) => setGiftUrl(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -655,7 +630,7 @@ const TelegramApp: React.FC = () => {
           {searchMode === 'user' && searchHistory.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground font-medium">Recent Searches</p>
+                <p className="text-xs text-muted-foreground font-medium">{t('recentSearches')}</p>
                 <button
                   onClick={clearHistory}
                   className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors flex items-center gap-1"
@@ -663,7 +638,7 @@ const TelegramApp: React.FC = () => {
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Clear All
+                  {t('clearAll')}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -701,10 +676,10 @@ const TelegramApp: React.FC = () => {
             <div className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <TonIcon className="w-5 h-5 text-warning animate-pulse" />
-                <span className="text-sm font-medium text-warning">Rate Limited</span>
+                <span className="text-sm font-medium text-warning">{t('rateLimited')}</span>
               </div>
               <p className="text-xs text-warning/80">
-                Please wait {countdown} seconds before next request
+                {t('pleaseWait').replace('{seconds}', countdown.toString())}
               </p>
               <div className="mt-2 w-full bg-warning/20 rounded-full h-1">
                 <div 
@@ -758,7 +733,7 @@ const TelegramApp: React.FC = () => {
                         <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                         </svg>
-                        <span className="text-sm font-semibold text-primary">Model:</span>
+                        <span className="text-sm font-semibold text-primary">{t('model')}:</span>
                         <span className="text-sm font-medium text-foreground">{singleGift.model}</span>
                       </div>
                     )}
@@ -767,7 +742,7 @@ const TelegramApp: React.FC = () => {
                         <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span className="text-sm font-semibold text-accent">Backdrop:</span>
+                        <span className="text-sm font-semibold text-accent">{t('backdrop')}:</span>
                         <span className="text-sm font-medium text-foreground">{singleGift.backdrop}</span>
                       </div>
                     )}
@@ -779,13 +754,13 @@ const TelegramApp: React.FC = () => {
                   <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <TonIcon className="w-5 h-5 text-primary" />
-                      <p className="text-sm text-muted-foreground font-medium">Price (TON)</p>
+                      <p className="text-sm text-muted-foreground font-medium">{t('priceTon')}</p>
                     </div>
                     <p className="text-3xl font-bold text-primary text-center">{singleGift.price_ton.toFixed(2)}</p>
                   </div>
                   <div className="bg-gradient-to-br from-accent/10 via-background to-accent/5 rounded-2xl p-5 border border-accent/20 shadow-lg">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <span className="text-sm text-muted-foreground font-medium">Price (USD)</span>
+                      <span className="text-sm text-muted-foreground font-medium">{t('priceUsd')}</span>
                     </div>
                     <p className="text-3xl font-bold text-accent text-center">${singleGift.price_usd.toFixed(2)}</p>
                   </div>
@@ -794,7 +769,7 @@ const TelegramApp: React.FC = () => {
                 {/* Rarity */}
                 {singleGift.rarity !== undefined && (
                   <div className="w-full bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-5 border border-border shadow-lg">
-                    <p className="text-sm text-muted-foreground mb-2 text-center font-medium">Rarity</p>
+                    <p className="text-sm text-muted-foreground mb-2 text-center font-medium">{t('rarity')}</p>
                     <p className="text-2xl font-bold text-foreground text-center">
                       {singleGift.rarity}
                     </p>
@@ -889,10 +864,6 @@ const TelegramApp: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
-
-        {!loading && !error && !nftData && currentUser && (
-          <EmptyState onSearch={() => handleSearch()} />
         )}
 
       </div>

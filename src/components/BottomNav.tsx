@@ -13,8 +13,11 @@ const BottomNav = ({
   const { language } = useLanguage();
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
     getTranslation(language, key);
+  // Determine flex direction based on language for RTL support
+  const isRTL = language === 'ar';
+  
   return <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-50 mx-[5px]">
-      <div className="flex items-center justify-around h-20 max-w-lg mx-auto">
+      <div className={cn("flex items-center justify-around h-20 max-w-lg mx-auto", isRTL && "flex-row-reverse")}>
         <button onClick={() => onTabChange('home')} className={cn("flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all relative", activeTab === 'home' ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
           <Home className={cn("w-7 h-7 transition-all", activeTab === 'home' && "scale-110")} />
           <span className="text-xs font-medium">{t('home')}</span>
