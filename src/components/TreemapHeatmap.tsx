@@ -15,13 +15,12 @@ import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import {
-  Download,
   ZoomIn,
   ZoomOut,
-  RotateCcw,
-  ArrowLeft
+  RotateCcw
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { sendHeatmapImage } from '@/utils/heatmapImageSender';
+import { ImageSendDialog } from '@/components/ImageSendDialog';
 
 ChartJS.register(
   TreemapController, 
@@ -68,45 +67,6 @@ interface TreemapHeatmapProps {
   currency: 'ton' | 'usd';
 }
 
-interface DownloadHeatmapModalProps {
-  trigger: React.ReactNode;
-  onDownload: () => void;
-}
-
-const DownloadHeatmapModal: React.FC<DownloadHeatmapModalProps> = ({ trigger, onDownload }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <>
-      <span onClick={() => setIsOpen(true)} className="w-full flex justify-center">
-        {trigger}
-      </span>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-          <div className="relative bg-secondaryTransparent rounded-xl shadow-xl p-6 w-full lg:w-5/6 max-w-md">
-            <div className="w-full mt-2 flex flex-col items-center">
-              <h1 className="flex flex-row items-center mb-5 gap-x-1 text-lg font-bold">
-                <Download size={50} className="text-primary" />
-              </h1>
-              <p className="mb-3 text-center">Image will be sent to you soon</p>
-              <button
-                onClick={() => {
-                  onDownload();
-                  setIsOpen(false);
-                }}
-                className="w-full px-4 py-2 bg-primary rounded-xl"
-              >
-                Ok
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
 
 const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string, HTMLImageElement>> => {
   const imageMap = new Map<string, HTMLImageElement>();
@@ -426,7 +386,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
-  const { toast } = useToast();
+  const [showSendDialog, setShowSendDialog] = useState(false);
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -439,12 +399,20 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const downloadImage = useCallback(async () => {
     handleHapticFeedback();
     
+    const telegramWebApp = (window as any).Telegram?.WebApp;
+    const isTelegram = !!telegramWebApp;
+    
+    // Show dialog immediately for Telegram users
+    if (isTelegram) {
+      setShowSendDialog(true);
+    }
+    
     const chart = chartRef.current;
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 3840;  // Doubled from 1920
-    canvas.height = 2160; // Doubled from 1080
+    canvas.width = 3840;
+    canvas.height = 2160;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -476,11 +444,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
     setTimeout(async () => {
       try {
-        const imageUrl = canvas.toDataURL('image/jpeg', 1);
-        const telegramWebApp = (window as any).Telegram?.WebApp;
-        const isTelegram = !!telegramWebApp;
-        
         if (!isTelegram) {
+          // Download directly for non-Telegram users
+          const imageUrl = canvas.toDataURL('image/jpeg', 1);
           const link = document.createElement('a');
           link.download = `heatmap-${Date.now()}.jpeg`;
           link.href = imageUrl;
@@ -496,64 +462,19 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           return;
         }
 
-        // Send directly to backend API
-        try {
-          // Validate image is a proper Base64 data URL
-          if (!imageUrl.startsWith('data:image/')) {
-            throw new Error('Invalid image format');
+        // Send image using utility function
+        await sendHeatmapImage({
+          canvas,
+          userId: userId.toString(),
+          onSuccess: () => {
+            tempChart.destroy();
+          },
+          onError: () => {
+            tempChart.destroy();
           }
-          
-          const response = await fetch('https://channelsseller.site/api/send-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              id: userId.toString(),
-              image: imageUrl
-            })
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Server response error:', errorData);
-            toast({
-              title: "Error",
-              description: "Failed to send image. Please try again.",
-              variant: "destructive",
-            });
-            throw new Error('Failed to send image');
-          }
-          
-          // Parse response
-          const result = await response.json();
-          
-          // Check if response has done: true
-          if (result.done === true) {
-            toast({
-              title: "✅ Success!",
-              description: "Image has been sent to your private messages successfully!",
-              duration: 5000,
-            });
-          } else {
-            // Fallback if response format is different
-            toast({
-              title: "Image Sent",
-              description: "Your image is being processed.",
-            });
-          }
-        } catch (err) {
-          console.error('Error sending image:', err);
-          toast({
-            title: "Error",
-            description: "Failed to send image. Please try again.",
-            variant: "destructive",
-          });
-        }
-
-        tempChart.destroy();
+        });
       } catch (error) {
-        console.error('Error sending image:', error);
+        console.error('Error processing image:', error);
         tempChart.destroy();
       }
     }, 0);
@@ -652,43 +573,47 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   }
 
   return (
-    <div className="w-full flex flex-col items-center gap-3 px-3">
-      {/* Control Buttons */}
-      <div className="w-full flex gap-2">
-        <button
-          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
-          onClick={handleResetZoom}
-        >
-          <RotateCcw size={18} />
-          Reset Zoom
-        </button>
-        
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-          onClick={handleZoomOut}
-        >
-          <ZoomOut size={20} />
-        </button>
-        
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-          onClick={handleZoomIn}
-        >
-          <ZoomIn size={20} />
-        </button>
-      </div>
+    <>
+      <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
+      
+      <div className="w-full flex flex-col items-center gap-3 px-3">
+        {/* Control Buttons */}
+        <div className="w-full flex gap-2">
+          <button
+            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
+            onClick={handleResetZoom}
+          >
+            <RotateCcw size={18} />
+            Reset Zoom
+          </button>
+          
+          <button
+            className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+            onClick={handleZoomOut}
+          >
+            <ZoomOut size={20} />
+          </button>
+          
+          <button
+            className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
+            onClick={handleZoomIn}
+          >
+            <ZoomIn size={20} />
+          </button>
+        </div>
 
-      {/* Chart */}
-      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
-        <Chart
-          ref={chartRef}
-          type="treemap"
-          data={chartData}
-          options={chartOptions}
-          plugins={[createImagePlugin(chartType, currency)]}
-        />
+        {/* Chart */}
+        <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
+          <Chart
+            ref={chartRef}
+            type="treemap"
+            data={chartData}
+            options={chartOptions}
+            plugins={[createImagePlugin(chartType, currency)]}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 });
 

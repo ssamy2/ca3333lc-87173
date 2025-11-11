@@ -4,7 +4,7 @@ import { getCachedData, setCachedData } from '@/services/marketCache';
 interface BlackFloorItem {
   gift_name: string;
   short_name: string;
-  price_ton: number;
+  black_price: number;
   market_cap_ton?: string;
   image_url?: string;
   change_24h_ton_percent?: number;
@@ -63,16 +63,16 @@ const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
     return {
       gift_name: item.gift_name,
       short_name: shortName,
-      price_ton: item.current_black_price_ton,
-      market_cap_ton: undefined, // Black market doesn't provide market cap
+      black_price: item.current_black_price_ton,
+      market_cap_ton: undefined,
       image_url: `https://www.channelsseller.site/api/image/${shortName}`,
       change_24h_ton_percent: item.daily_change_percent_ton,
       change_1w_ton_percent: item.weekly_change_percent_ton,
       change_1m_ton_percent: item.monthly_change_percent_ton ?? undefined,
       change_3m_ton_percent: item.quarterly_change_percent_ton ?? undefined,
-      change_1y_ton_percent: undefined, // Not provided by API
+      change_1y_ton_percent: undefined,
       available_periods,
-      upgradedSupply: undefined, // Black market doesn't track supply
+      upgradedSupply: undefined,
     };
   });
   
