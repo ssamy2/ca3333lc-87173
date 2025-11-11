@@ -97,18 +97,15 @@ const GiftDetail = () => {
   const fetchGiftData = async (giftName: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://151.241.228.83/api/gift-data?name=${encodeURIComponent(giftName)}`);
+      const response = await fetch(`https://www.channelsseller.site/api/gift/${encodeURIComponent(giftName)}/data`);
       
       if (!response.ok) {
-        console.error('Gift data fetch failed:', response.status);
         throw new Error('Failed to fetch gift data');
       }
       
       const data = await response.json();
-      console.log('Gift data received:', data);
       setGiftData(data);
     } catch (error) {
-      console.error('Error fetching gift data:', error);
       toast.error('Failed to load gift details');
     } finally {
       setLoading(false);
@@ -117,25 +114,35 @@ const GiftDetail = () => {
 
   const fetchBlackFloorData = async (giftName: string) => {
     try {
-      const response = await fetch('http://151.241.228.83/api/black-floor');
-      const data: BlackFloorItem[] = await response.json();
+      const response = await fetch(`https://www.channelsseller.site/api/black/${encodeURIComponent(giftName)}`);
       
-      // Filter for this specific gift
-      const giftRecords = data.filter(item => item.gift_name === giftName);
+      if (!response.ok) {
+        return;
+      }
       
-      // Sort by recorded_at descending
-      giftRecords.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+      const data: Array<{timestamp: string; price_ton: number; price_usd: number}> = await response.json();
       
-      // Calculate time period changes if we have enough data
-      if (giftRecords.length > 0) {
-        const latestPrice = giftRecords[0].black_price;
-        const currentTime = new Date(giftRecords[0].recorded_at).getTime();
+      // Sort by timestamp descending (newest first)
+      const sortedData = data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      // Transform to BlackFloorItem format
+      const transformedData: BlackFloorItem[] = sortedData.map(item => ({
+        gift_name: giftName,
+        short_name: giftName.toLowerCase().replace(/\s+/g, ''),
+        black_price: item.price_ton,
+        recorded_at: item.timestamp,
+      }));
+      
+      // Calculate percentage changes if we have enough data
+      if (transformedData.length > 0) {
+        const latestPrice = transformedData[0].black_price;
+        const currentTime = new Date(transformedData[0].recorded_at).getTime();
         
         const available_periods: string[] = [];
         
-        // Helper function to find closest record to a target date
+        // Helper to find closest record
         const findClosestRecord = (targetTime: number) => {
-          return giftRecords
+          return transformedData
             .filter(r => new Date(r.recorded_at).getTime() <= targetTime)
             .sort((a, b) => 
               Math.abs(new Date(a.recorded_at).getTime() - targetTime) - 
@@ -143,7 +150,7 @@ const GiftDetail = () => {
             )[0];
         };
         
-        // Helper function to calculate change
+        // Helper to calculate change
         const calculateChange = (oldPrice: number) => {
           if (oldPrice > 0) {
             return ((latestPrice - oldPrice) / oldPrice) * 100;
@@ -155,7 +162,7 @@ const GiftDetail = () => {
         const dayAgo = currentTime - 24 * 60 * 60 * 1000;
         const record24h = findClosestRecord(dayAgo);
         if (record24h && new Date(record24h.recorded_at).getTime() <= dayAgo) {
-          giftRecords[0].change_24h_percent = calculateChange(record24h.black_price);
+          transformedData[0].change_24h_percent = calculateChange(record24h.black_price);
           available_periods.push('24h');
         }
         
@@ -163,7 +170,7 @@ const GiftDetail = () => {
         const weekAgo = currentTime - 7 * 24 * 60 * 60 * 1000;
         const record1w = findClosestRecord(weekAgo);
         if (record1w && new Date(record1w.recorded_at).getTime() <= weekAgo) {
-          giftRecords[0].change_1w_percent = calculateChange(record1w.black_price);
+          transformedData[0].change_1w_percent = calculateChange(record1w.black_price);
           available_periods.push('1w');
         }
         
@@ -171,7 +178,7 @@ const GiftDetail = () => {
         const monthAgo = currentTime - 30 * 24 * 60 * 60 * 1000;
         const record1m = findClosestRecord(monthAgo);
         if (record1m && new Date(record1m.recorded_at).getTime() <= monthAgo) {
-          giftRecords[0].change_1m_percent = calculateChange(record1m.black_price);
+          transformedData[0].change_1m_percent = calculateChange(record1m.black_price);
           available_periods.push('1m');
         }
         
@@ -179,24 +186,16 @@ const GiftDetail = () => {
         const threeMonthsAgo = currentTime - 90 * 24 * 60 * 60 * 1000;
         const record3m = findClosestRecord(threeMonthsAgo);
         if (record3m && new Date(record3m.recorded_at).getTime() <= threeMonthsAgo) {
-          giftRecords[0].change_3m_percent = calculateChange(record3m.black_price);
+          transformedData[0].change_3m_percent = calculateChange(record3m.black_price);
           available_periods.push('3m');
         }
         
-        // Calculate 1y change
-        const yearAgo = currentTime - 365 * 24 * 60 * 60 * 1000;
-        const record1y = findClosestRecord(yearAgo);
-        if (record1y && new Date(record1y.recorded_at).getTime() <= yearAgo) {
-          giftRecords[0].change_1y_percent = calculateChange(record1y.black_price);
-          available_periods.push('1y');
-        }
-        
-        giftRecords[0].available_periods = available_periods;
+        transformedData[0].available_periods = available_periods;
       }
       
-      setBlackFloorData(giftRecords);
+      setBlackFloorData(transformedData);
     } catch (error) {
-      console.error('Error fetching black floor data:', error);
+      // Silently fail if black market data is not available
     }
   };
 
