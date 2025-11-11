@@ -708,7 +708,7 @@ const GiftDetail = () => {
     }
     
     // Priority 3: Fallback to constructed URL
-    return `http://151.241.228.83/api/image/${giftData.info.image}`;
+    return `https://www.channelsseller.site/api/image/${giftData.info.image}`;
   };
 
   const imageUrl = getCorrectImageUrl();

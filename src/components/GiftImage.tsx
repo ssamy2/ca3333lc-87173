@@ -48,16 +48,15 @@ const GiftImage: React.FC<GiftImageProps> = ({
     // Try all possible URL formats to find cached version
     const possibleUrls = [
       imageUrl,
-      `http://151.241.228.83/api/image/${camelCase}`,
-      shortName ? `http://151.241.228.83/api/image/${shortName}` : null,
-      `http://151.241.228.83/api/image/${kebabCase}`,
-      `http://151.241.228.83/api/image/${name}`,
+      `https://www.channelsseller.site/api/image/${camelCase}`,
+      shortName ? `https://www.channelsseller.site/api/image/${shortName}` : null,
+      `https://www.channelsseller.site/api/image/${kebabCase}`,
+      `https://www.channelsseller.site/api/image/${name}`,
     ].filter(Boolean) as string[];
 
     for (const url of possibleUrls) {
       const cached = imageCache.getImageFromCache(url);
       if (cached) {
-        console.log(`[GiftImage] "${name}" - Found cached version with URL: ${url}`);
         return url;
       }
     }
@@ -82,32 +81,26 @@ const GiftImage: React.FC<GiftImageProps> = ({
       case 1:
         // For black mode with short_name that's different from imageUrl, try it
         if (isBlackMode && shortName && !imageUrl.includes(shortName)) {
-          console.log(`[GiftImage] "${name}" - Trying shortName fallback: ${shortName}`);
-          return `http://151.241.228.83/api/image/${shortName}`;
+          return `https://www.channelsseller.site/api/image/${shortName}`;
         }
         // Otherwise try camelCase
-        console.log(`[GiftImage] "${name}" - Trying camelCase fallback: ${camelCase}`);
-        return `http://151.241.228.83/api/image/${camelCase}`;
+        return `https://www.channelsseller.site/api/image/${camelCase}`;
       case 2:
         // Try short_name if not tried yet
         if (shortName && !imageUrl.includes(shortName)) {
-          console.log(`[GiftImage] "${name}" - Trying shortName fallback (2nd attempt): ${shortName}`);
-          return `http://151.241.228.83/api/image/${shortName}`;
+          return `https://www.channelsseller.site/api/image/${shortName}`;
         }
         // Try camelCase if not tried yet
         if (!imageUrl.includes(camelCase)) {
-          console.log(`[GiftImage] "${name}" - Trying camelCase fallback (2nd attempt): ${camelCase}`);
-          return `http://151.241.228.83/api/image/${camelCase}`;
+          return `https://www.channelsseller.site/api/image/${camelCase}`;
         }
         return null;
       case 3:
         // Try kebab-case
-        console.log(`[GiftImage] "${name}" - Trying kebab-case fallback: ${kebabCase}`);
-        return `http://151.241.228.83/api/image/${kebabCase}`;
+        return `https://www.channelsseller.site/api/image/${kebabCase}`;
       case 4:
         // Try original name without transformation
-        console.log(`[GiftImage] "${name}" - Trying original name fallback: ${name}`);
-        return `http://151.241.228.83/api/image/${name}`;
+        return `https://www.channelsseller.site/api/image/${name}`;
       default:
         return null;
     }
@@ -118,11 +111,9 @@ const GiftImage: React.FC<GiftImageProps> = ({
     const nextUrl = getFallbackUrl(nextLevel);
 
     if (nextUrl && nextUrl !== currentSrc) {
-      console.log(`[GiftImage] "${name}" (shortName: ${shortName || 'N/A'}) - Image failed, trying fallback level ${nextLevel}`);
       setCurrentSrc(nextUrl);
       setFallbackLevel(nextLevel);
     } else {
-      console.log(`[GiftImage] "${name}" (shortName: ${shortName || 'N/A'}) - All image fallbacks failed, showing icon`);
       setImageError(true);
     }
   };
