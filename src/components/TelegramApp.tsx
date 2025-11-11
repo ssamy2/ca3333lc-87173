@@ -12,6 +12,7 @@ import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
+import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
 import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
 import { proxyImageUrl } from '@/lib/imageProxy';
 import { useTheme } from '@/hooks/useTheme';
@@ -88,7 +89,7 @@ const TelegramApp: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
-  const [activeTab, setActiveTab] = useState<'home' | 'chart'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'settings'>('home');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
@@ -398,6 +399,15 @@ const TelegramApp: React.FC = () => {
     return (
       <>
         <Chart />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
+  if (activeTab === 'settings') {
+    return (
+      <>
+        <ProfileSettingsPage />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
