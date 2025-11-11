@@ -449,7 +449,22 @@ const TelegramApp: React.FC = () => {
       )}
 
       <div className="max-w-md mx-auto p-4 space-y-6">
-
+        {/* Hero Section */}
+        {!nftData && !singleGift && !loading && !error && (
+          <div className="telegram-card p-6 animate-slide-up border border-border/50 shadow-[var(--shadow-card)] text-center space-y-4">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+              {t('heroTitle')}
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t('heroDescription')}
+            </p>
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+              <p className="text-xs text-primary font-medium">
+                💡 {t('heroExample')}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Search Section */}
         <div className="telegram-card p-5 animate-slide-up border border-border/50 shadow-[var(--shadow-card)]">
@@ -757,6 +772,15 @@ const TelegramApp: React.FC = () => {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Footer Note - shown only when data is loaded */}
+        {(nftData || singleGift) && !loading && (
+          <div className="telegram-card p-4 border border-border/30 bg-muted/30">
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              ℹ️ {t('footerNote')}
+            </p>
           </div>
         )}
 

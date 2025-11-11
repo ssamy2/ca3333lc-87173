@@ -86,6 +86,12 @@ export const translations = {
     black: 'Black',
     change: 'Change',
     marketCap: 'Market Cap',
+    
+    // Home Page Hero
+    heroTitle: 'Calculate Your Gift Value Accurately Now',
+    heroDescription: 'Track Telegram NFT gift prices in real-time. Get accurate valuations, market insights, and price history for all your collectibles.',
+    heroExample: 'Enter a username or gift URL above to start',
+    footerNote: 'Prices are updated automatically from verified market sources. Data refreshes every few minutes to ensure accuracy.',
   },
   ar: {
     // Navigation
@@ -172,6 +178,12 @@ export const translations = {
     black: 'بلاك',
     change: 'التغير',
     marketCap: 'القيمة السوقية',
+    
+    // Home Page Hero
+    heroTitle: 'احسب قيمة هداياك بدقة الآن',
+    heroDescription: 'تتبع أسعار هدايا NFT على تليجرام في الوقت الفعلي. احصل على تقييمات دقيقة ورؤى السوق وسجل الأسعار لجميع مقتنياتك.',
+    heroExample: 'أدخل اسم مستخدم أو رابط هدية أعلاه للبدء',
+    footerNote: 'يتم تحديث الأسعار تلقائيًا من مصادر السوق الموثوقة. تُحدث البيانات كل بضع دقائق لضمان الدقة.',
   },
   ru: {
     // Navigation
@@ -258,6 +270,12 @@ export const translations = {
     black: 'Черный',
     change: 'Изменение',
     marketCap: 'Рыночная капитализация',
+    
+    // Home Page Hero
+    heroTitle: 'Точно рассчитайте стоимость ваших подарков сейчас',
+    heroDescription: 'Отслеживайте цены NFT подарков Telegram в режиме реального времени. Получайте точные оценки, рыночную аналитику и историю цен для всех ваших коллекционных предметов.',
+    heroExample: 'Введите имя пользователя или URL подарка выше, чтобы начать',
+    footerNote: 'Цены обновляются автоматически из проверенных рыночных источников. Данные обновляются каждые несколько минут для обеспечения точности.',
   },
 };
 

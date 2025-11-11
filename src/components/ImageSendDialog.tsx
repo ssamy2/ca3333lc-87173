@@ -13,7 +13,7 @@ export const ImageSendDialog: React.FC<ImageSendDialogProps> = ({ isOpen, onClos
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" 
         onClick={onClose}
       />
       
@@ -36,7 +36,17 @@ export const ImageSendDialog: React.FC<ImageSendDialogProps> = ({ isOpen, onClos
 
         {/* OK Button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            const backdrop = document.querySelector('.fixed.inset-0.bg-black\\/60');
+            const dialog = document.querySelector('.relative.bg-\\[\\#2A2D3A\\]');
+            if (backdrop && dialog) {
+              backdrop.classList.add('opacity-0');
+              dialog.classList.add('scale-95', 'opacity-0');
+              setTimeout(onClose, 300);
+            } else {
+              onClose();
+            }
+          }}
           className="w-full bg-gradient-to-r from-[#3D8FD1] to-[#2563eb] hover:from-[#4A9FE1] hover:to-[#3573fc] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
         >
           Ok

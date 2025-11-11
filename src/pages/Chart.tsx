@@ -111,6 +111,13 @@ const Chart = () => {
   // Add ref for TreemapHeatmap
   const treemapRef = React.useRef<any>(null);
 
+  // Force TON currency when switching to Black mode
+  React.useEffect(() => {
+    if (dataSource === 'black') {
+      setCurrency('ton');
+    }
+  }, [dataSource]);
+
 
   const getFilteredData = () => {
     // Determine which filter to use based on view mode
@@ -556,27 +563,29 @@ const Chart = () => {
               </Button>
             </div>
 
-            {/* Currency */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setCurrency('ton')}
-                variant={currency === 'ton' ? 'glass' : 'glassDark'}
-                size="pill"
-                className="flex-1 font-medium flex items-center justify-center gap-2"
-              >
-                <TonIcon className="w-4 h-4" />
-                TON
-              </Button>
-              <Button
-                onClick={() => setCurrency('usd')}
-                variant={currency === 'usd' ? 'glass' : 'glassDark'}
-                size="pill"
-                className="flex-1 font-medium flex items-center justify-center gap-2"
-              >
-                <DollarSign className="w-4 h-4" />
-                USD
-              </Button>
-            </div>
+            {/* Currency - Only show if not Black mode */}
+            {dataSource !== 'black' && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setCurrency('ton')}
+                  variant={currency === 'ton' ? 'glass' : 'glassDark'}
+                  size="pill"
+                  className="flex-1 font-medium flex items-center justify-center gap-2"
+                >
+                  <TonIcon className="w-4 h-4" />
+                  TON
+                </Button>
+                <Button
+                  onClick={() => setCurrency('usd')}
+                  variant={currency === 'usd' ? 'glass' : 'glassDark'}
+                  size="pill"
+                  className="flex-1 font-medium flex items-center justify-center gap-2"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  USD
+                </Button>
+              </div>
+            )}
 
             {/* Download Button */}
             <Button
@@ -595,7 +604,7 @@ const Chart = () => {
         {/* Content */}
         {viewMode === 'grid' && (
           <div 
-            className="grid grid-cols-4 gap-3 mx-2"
+            className="grid grid-cols-3 gap-2 mx-1"
             style={dataSource === 'black' ? {
               backgroundImage: `
                 radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
@@ -630,7 +639,7 @@ const Chart = () => {
                   className="no-underline"
                 >
                   <Card
-                    className={`p-1.5 md:p-4 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                    className={`p-2 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
                     <div className="w-full flex-1 flex items-center justify-center min-h-0">
                       <GiftImage
@@ -642,18 +651,18 @@ const Chart = () => {
                         style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
                       />
                     </div>
-                    <div className="w-full flex flex-col items-center gap-0.5 md:gap-2">
-                      <div className="flex items-center gap-0.5 md:gap-1.5 justify-center">
-                        <TonIcon className={`w-2.5 h-2.5 md:w-4 md:h-4 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
+                    <div className="w-full flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-1 justify-center">
+                        <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
                         <span 
-                          className={`font-semibold text-[11px] md:text-lg ${dataSource === 'black' ? 'text-[#B87333] md:text-xl font-[600]' : 'text-foreground'}`}
+                          className={`font-semibold text-sm ${dataSource === 'black' ? 'text-[#B87333] font-[600]' : 'text-foreground'}`}
                         >
                           {price.toFixed(2)}
                         </span>
                       </div>
                       {!isNeutral && (
                         <span
-                          className={`text-[9px] md:text-sm font-medium ${
+                          className={`text-xs font-medium ${
                             isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                           }`}
                         >
