@@ -93,6 +93,13 @@ const GiftDetail = () => {
       fetchBlackFloorData(name);
     }
   }, [name]);
+  
+  // Auto-switch to market if black data has only one record
+  useEffect(() => {
+    if (dataSource === 'black' && blackFloorData.length <= 1) {
+      setDataSource('market');
+    }
+  }, [blackFloorData, dataSource]);
 
   const fetchGiftData = async (giftName: string) => {
     try {
@@ -690,6 +697,10 @@ const GiftDetail = () => {
 
   const priceChange = calculatePriceChange();
   const isPositive = priceChange >= 0;
+  
+  // Check if black market data has only one record (no price changes)
+  const hasBlackData = blackFloorData.length > 1;
+  const isBlackPriceStable = dataSource === 'black' && blackFloorData.length === 1;
 
   // Get correct image_url from giftData or fallback to market cache
   const getCorrectImageUrl = () => {
@@ -781,6 +792,14 @@ const GiftDetail = () => {
 
         {/* Chart */}
         <Card className="p-3 bg-card/50 backdrop-blur">
+          {/* Black Market Stable Price Notice */}
+          {isBlackPriceStable && (
+            <div className="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <p className="text-sm text-yellow-500 text-center font-medium">
+                ⚠️ السعر ثابت - لا يوجد تغيير في سعر البلاك ماركت
+              </p>
+            </div>
+          )}
           {renderChart()}
         </Card>
 
@@ -800,18 +819,21 @@ const GiftDetail = () => {
             >
               Normal
             </Button>
-            <Button
-              onClick={() => setDataSource('black')}
-              variant="ghost"
-              size="sm"
-              className={`px-5 h-9 rounded-full font-medium transition-all ${
-                dataSource === 'black' 
-                  ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                  : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
-              }`}
-            >
-              Black
-            </Button>
+            {/* Only show Black button if there's more than one record */}
+            {hasBlackData && (
+              <Button
+                onClick={() => setDataSource('black')}
+                variant="ghost"
+                size="sm"
+                className={`px-5 h-9 rounded-full font-medium transition-all ${
+                  dataSource === 'black' 
+                    ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
+                    : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+                }`}
+              >
+                Black
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
