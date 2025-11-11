@@ -130,7 +130,7 @@ serve(async (req) => {
       });
     }
 
-    // إرسال الصورة إلى الباك-إند
+    // إرسال Base64 فقط إلى الباك-إند
     const response = await fetch("http://151.241.228.83/api/send-image", {
       method: "POST",
       headers: {
@@ -138,7 +138,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         id: verification.userId,
-        image: cleanBase64, // Base64 صافي بدون البادئة
+        image: cleanBase64, // Base64 فقط بدون أي بادئة
       }),
     });
 

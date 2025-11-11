@@ -21,6 +21,7 @@ import {
   RotateCcw,
   ArrowLeft
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 ChartJS.register(
   TreemapController, 
@@ -425,6 +426,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
+  const { toast } = useToast();
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -517,10 +519,40 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           });
 
           if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Server response error:', errorData);
+            toast({
+              title: "Error",
+              description: "Failed to send image. Please try again.",
+              variant: "destructive",
+            });
             throw new Error('Failed to send image');
+          }
+          
+          // Parse response
+          const result = await response.json();
+          
+          // Check if response has done: true
+          if (result.done === true) {
+            toast({
+              title: "✅ Success!",
+              description: "Image has been sent to your private messages successfully!",
+              duration: 5000,
+            });
+          } else {
+            // Fallback if response format is different
+            toast({
+              title: "Image Sent",
+              description: "Your image is being processed.",
+            });
           }
         } catch (err) {
           console.error('Error sending image:', err);
+          toast({
+            title: "Error",
+            description: "Failed to send image. Please try again.",
+            variant: "destructive",
+          });
         }
 
         tempChart.destroy();

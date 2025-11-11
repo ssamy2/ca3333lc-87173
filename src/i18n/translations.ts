@@ -24,7 +24,7 @@ export const translations = {
     // Community
     community: 'Community',
     joinTelegramChannel: 'Join Telegram Channel',
-    joinTelegramGroup: 'Join Telegram Group',
+    joinTelegramGroup: 'Join Telegram Community',
     
     // App Header
     appTitle: 'Nova',
@@ -110,7 +110,7 @@ export const translations = {
     // Community
     community: 'المجتمع',
     joinTelegramChannel: 'انضم لقناة التليجرام',
-    joinTelegramGroup: 'انضم لمجموعة التليجرام',
+    joinTelegramGroup: 'انضم لمجتمع التليجرام',
     
     // App Header
     appTitle: 'نوفا',
@@ -196,7 +196,7 @@ export const translations = {
     // Community
     community: 'Сообщество',
     joinTelegramChannel: 'Присоединиться к каналу Telegram',
-    joinTelegramGroup: 'Присоединиться к группе Telegram',
+    joinTelegramGroup: 'Присоединиться к сообществу Telegram',
     
     // App Header
     appTitle: 'Нова',

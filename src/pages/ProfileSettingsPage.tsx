@@ -193,7 +193,7 @@ const ProfileSettingsPage = () => {
               <ExternalLink className="w-4 h-4" />
             </Button>
             <Button
-              onClick={() => openTelegramLink('https://t.me/GT_Rolet_Chat')}
+              onClick={() => openTelegramLink('https://t.me/Gifts_Super')}
               variant="outline"
               className="w-full justify-between rounded-xl h-12"
             >
@@ -204,12 +204,71 @@ const ProfileSettingsPage = () => {
         </Card>
 
         {/* Surprises Coming Soon */}
-        <div className="flex justify-center items-center py-8">
-          <img 
-            src={surprisesImage} 
-            alt="Surprises Coming Soon" 
-            className="w-full max-w-md h-auto opacity-90"
-          />
+        <div className="flex justify-center items-center py-12">
+          <div className="relative w-full max-w-sm">
+            {/* Background glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/20 via-yellow-600/10 to-transparent blur-3xl rounded-full"></div>
+            
+            {/* Main card */}
+            <div className="relative bg-gradient-to-b from-black/80 via-gray-900/70 to-black/80 rounded-3xl p-8 border border-yellow-500/20 shadow-2xl shadow-yellow-500/10">
+              {/* Stars decoration */}
+              <div className="absolute top-4 left-6 w-3 h-3 bg-yellow-400 rounded-full opacity-40 animate-pulse"></div>
+              <div className="absolute top-8 right-8 w-2 h-2 bg-yellow-300 rounded-full opacity-60 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <div className="absolute bottom-12 left-8 w-2 h-2 bg-yellow-400 rounded-full opacity-50 animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-6 right-12 w-3 h-3 bg-yellow-300 rounded-full opacity-40 animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+              
+              {/* Content */}
+              <div className="flex flex-col items-center space-y-6">
+                {/* Nova Logo */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center border border-yellow-500/30">
+                    <span className="text-yellow-500 text-lg">🎁</span>
+                  </div>
+                  <span className="text-yellow-400 font-medium text-lg tracking-wide">Nova</span>
+                </div>
+                
+                {/* Soon text - handwritten style */}
+                <div className="relative">
+                  <h2 
+                    className="text-6xl font-bold text-yellow-400 tracking-wider"
+                    style={{ 
+                      fontFamily: 'cursive',
+                      textShadow: '0 0 30px rgba(250, 204, 21, 0.5), 0 0 60px rgba(250, 204, 21, 0.3)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))'
+                    }}
+                  >
+                    Soon...
+                  </h2>
+                  <div className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent"></div>
+                </div>
+                
+                {/* Question mark with glow */}
+                <div className="relative mt-8">
+                  <div className="absolute inset-0 bg-yellow-500/30 blur-2xl rounded-full scale-150"></div>
+                  <div className="relative w-32 h-32 bg-gradient-to-b from-yellow-400/90 to-yellow-500/80 rounded-full flex items-center justify-center shadow-2xl shadow-yellow-500/50 border-4 border-yellow-300/30">
+                    <span className="text-white text-7xl font-bold" style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' }}>?</span>
+                  </div>
+                  
+                  {/* Sparkle stars around question mark */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4">
+                    <svg width="24" height="24" viewBox="0 0 24 24" className="text-yellow-300 animate-pulse">
+                      <path fill="currentColor" d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.6-6.3 4.6 2.3-7.4-6-4.6h7.6z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute bottom-2 -left-8">
+                    <svg width="20" height="20" viewBox="0 0 24 24" className="text-yellow-400 animate-pulse" style={{ animationDelay: '0.3s' }}>
+                      <path fill="currentColor" d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.6-6.3 4.6 2.3-7.4-6-4.6h7.6z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute -bottom-4 -right-8">
+                    <svg width="18" height="18" viewBox="0 0 24 24" className="text-yellow-300 animate-pulse" style={{ animationDelay: '0.6s' }}>
+                      <path fill="currentColor" d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.6-6.3 4.6 2.3-7.4-6-4.6h7.6z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
