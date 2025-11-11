@@ -4,15 +4,32 @@ import { getCachedData, setCachedData } from '@/services/marketCache';
 interface BlackFloorItem {
   gift_name: string;
   short_name: string;
-  black_price: number;
-  recorded_at: string;
+  price_ton: number;
+  market_cap_ton?: string;
+  image_url?: string;
   change_24h_ton_percent?: number;
   change_1w_ton_percent?: number;
   change_1m_ton_percent?: number;
   change_3m_ton_percent?: number;
   change_1y_ton_percent?: number;
-  oldest_available_date?: string;
-  available_periods?: string[]; // e.g., ['24h', '1w', '1m']
+  available_periods?: string[];
+  upgradedSupply?: number;
+}
+
+interface BlackAPIResponse {
+  [key: string]: {
+    gift_name: string;
+    current_black_price_ton: number;
+    current_black_price_usd: number;
+    daily_change_percent_ton: number;
+    daily_past_price_ton: number;
+    weekly_change_percent_ton: number;
+    weekly_past_price_ton: number;
+    monthly_change_percent_ton: number | null;
+    monthly_past_price_ton: number | null;
+    quarterly_change_percent_ton: number | null;
+    quarterly_past_price_ton: number | null;
+  };
 }
 
 // Fetch black floor data from API
@@ -23,114 +40,46 @@ const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
   if (!response.ok) {
     throw new Error('Failed to fetch black floor data');
   }
-  const data: BlackFloorItem[] = await response.json();
+  const data: BlackAPIResponse = await response.json();
   
-  // Filter to get only the latest record for each gift
-  const latestRecords = new Map<string, BlackFloorItem>();
-  
-  data.forEach(item => {
-    const existing = latestRecords.get(item.gift_name);
-    if (!existing || new Date(item.recorded_at) > new Date(existing.recorded_at)) {
-      latestRecords.set(item.gift_name, item);
-    }
-  });
-  
-  const filteredData = Array.from(latestRecords.values());
-  
-  // Calculate changes for all available periods for each gift
-  const dataWithChange = filteredData.map(item => {
-    const currentTime = new Date(item.recorded_at).getTime();
-    const currentPrice = item.black_price;
-    
-    // Get all records for this gift
-    const giftRecords = data.filter(d => d.gift_name === item.gift_name);
-    
-    // Find oldest record
-    const oldestRecord = giftRecords.reduce((oldest, record) => {
-      return new Date(record.recorded_at) < new Date(oldest.recorded_at) ? record : oldest;
-    }, item);
-    
+  // Convert object of objects to array
+  const processedData: BlackFloorItem[] = Object.entries(data).map(([shortName, item]) => {
     const available_periods: string[] = [];
     
-    // Helper function to find closest record to a target date
-    const findClosestRecord = (targetTime: number) => {
-      return giftRecords
-        .filter(r => new Date(r.recorded_at).getTime() <= targetTime)
-        .sort((a, b) => 
-          Math.abs(new Date(a.recorded_at).getTime() - targetTime) - 
-          Math.abs(new Date(b.recorded_at).getTime() - targetTime)
-        )[0];
-    };
-    
-    // Helper function to calculate change
-    const calculateChange = (oldPrice: number) => {
-      if (oldPrice > 0) {
-        return ((currentPrice - oldPrice) / oldPrice) * 100;
-      }
-      return 0;
-    };
-    
-    // 24h change
-    let change_24h = 0;
-    const dayAgo = currentTime - 24 * 60 * 60 * 1000;
-    const record24h = findClosestRecord(dayAgo);
-    if (record24h && new Date(record24h.recorded_at).getTime() <= dayAgo) {
-      change_24h = calculateChange(record24h.black_price);
+    // Check which periods have data
+    if (item.daily_past_price_ton !== null && item.daily_change_percent_ton !== null) {
       available_periods.push('24h');
     }
-    
-    // 1 week change
-    let change_1w = 0;
-    const weekAgo = currentTime - 7 * 24 * 60 * 60 * 1000;
-    const record1w = findClosestRecord(weekAgo);
-    if (record1w && new Date(record1w.recorded_at).getTime() <= weekAgo) {
-      change_1w = calculateChange(record1w.black_price);
+    if (item.weekly_past_price_ton !== null && item.weekly_change_percent_ton !== null) {
       available_periods.push('1w');
     }
-    
-    // 1 month change
-    let change_1m = 0;
-    const monthAgo = currentTime - 30 * 24 * 60 * 60 * 1000;
-    const record1m = findClosestRecord(monthAgo);
-    if (record1m && new Date(record1m.recorded_at).getTime() <= monthAgo) {
-      change_1m = calculateChange(record1m.black_price);
+    if (item.monthly_past_price_ton !== null && item.monthly_change_percent_ton !== null) {
       available_periods.push('1m');
     }
-    
-    // 3 months change
-    let change_3m = 0;
-    const threeMonthsAgo = currentTime - 90 * 24 * 60 * 60 * 1000;
-    const record3m = findClosestRecord(threeMonthsAgo);
-    if (record3m && new Date(record3m.recorded_at).getTime() <= threeMonthsAgo) {
-      change_3m = calculateChange(record3m.black_price);
+    if (item.quarterly_past_price_ton !== null && item.quarterly_change_percent_ton !== null) {
       available_periods.push('3m');
     }
     
-    // 1 year change
-    let change_1y = 0;
-    const yearAgo = currentTime - 365 * 24 * 60 * 60 * 1000;
-    const record1y = findClosestRecord(yearAgo);
-    if (record1y && new Date(record1y.recorded_at).getTime() <= yearAgo) {
-      change_1y = calculateChange(record1y.black_price);
-      available_periods.push('1y');
-    }
-    
     return {
-      ...item,
-      change_24h_ton_percent: change_24h,
-      change_1w_ton_percent: change_1w,
-      change_1m_ton_percent: change_1m,
-      change_3m_ton_percent: change_3m,
-      change_1y_ton_percent: change_1y,
-      oldest_available_date: oldestRecord.recorded_at,
+      gift_name: item.gift_name,
+      short_name: shortName,
+      price_ton: item.current_black_price_ton,
+      market_cap_ton: undefined, // Black market doesn't provide market cap
+      image_url: `https://www.channelsseller.site/api/image/${shortName}`,
+      change_24h_ton_percent: item.daily_change_percent_ton,
+      change_1w_ton_percent: item.weekly_change_percent_ton,
+      change_1m_ton_percent: item.monthly_change_percent_ton ?? undefined,
+      change_3m_ton_percent: item.quarterly_change_percent_ton ?? undefined,
+      change_1y_ton_percent: undefined, // Not provided by API
       available_periods,
+      upgradedSupply: undefined, // Black market doesn't track supply
     };
   });
   
   // Cache the data
-  setCachedData('black-floor-data', dataWithChange);
+  setCachedData('black-floor-data', processedData);
   
-  return dataWithChange;
+  return processedData;
 };
 
 // Custom hook for black floor data with caching
