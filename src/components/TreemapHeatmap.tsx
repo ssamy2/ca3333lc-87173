@@ -496,25 +496,21 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           return;
         }
 
-        // Send to Supabase Edge Function
+        // Send directly to backend API
         try {
           // Validate image is a proper Base64 data URL
           if (!imageUrl.startsWith('data:image/')) {
             throw new Error('Invalid image format');
           }
           
-          // Get Telegram initData for authentication
-          const initData = telegramWebApp.initData || "";
-          
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-image`, {
+          const response = await fetch('https://channelsseller.site/api/send-image', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              image: imageUrl,
-              initData: initData
+              id: userId.toString(),
+              image: imageUrl
             })
           });
 

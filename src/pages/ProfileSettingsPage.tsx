@@ -30,10 +30,10 @@ const ProfileSettingsPage = () => {
     const loadUserProfile = async () => {
       if (userId) {
         try {
-          const profile = await fetchUserProfile(userId);
+          const profile = await fetchUserProfile(`@${userId}`);
           setUserData({
             name: profile.name || 'User',
-            username: `user_${userId}`,
+            username: userId,
             avatar_url: profile.photo_base64 || null,
           });
         } catch (error) {
