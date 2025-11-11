@@ -1,0 +1,62 @@
+export type Language = 'en' | 'ar' | 'ru';
+
+export const translations = {
+  en: {
+    settings: 'Settings',
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+    community: 'Community',
+    joinTelegramChannel: 'Join Telegram Channel',
+    joinTelegramGroup: 'Join Telegram Group',
+    language: 'Language',
+    english: 'English',
+    arabic: 'Arabic',
+    russian: 'Russian',
+    home: 'Home',
+    chart: 'Chart',
+    gift: 'Gift',
+    profile: 'Profile',
+  },
+  ar: {
+    settings: 'الإعدادات',
+    theme: 'المظهر',
+    light: 'فاتح',
+    dark: 'داكن',
+    system: 'النظام',
+    community: 'المجتمع',
+    joinTelegramChannel: 'انضم لقناة التليجرام',
+    joinTelegramGroup: 'انضم لمجموعة التليجرام',
+    language: 'اللغة',
+    english: 'الإنجليزية',
+    arabic: 'العربية',
+    russian: 'الروسية',
+    home: 'الرئيسية',
+    chart: 'الرسم البياني',
+    gift: 'الهدية',
+    profile: 'الملف الشخصي',
+  },
+  ru: {
+    settings: 'Настройки',
+    theme: 'Тема',
+    light: 'Светлая',
+    dark: 'Темная',
+    system: 'Системная',
+    community: 'Сообщество',
+    joinTelegramChannel: 'Присоединиться к каналу Telegram',
+    joinTelegramGroup: 'Присоединиться к группе Telegram',
+    language: 'Язык',
+    english: 'Английский',
+    arabic: 'Арабский',
+    russian: 'Русский',
+    home: 'Главная',
+    chart: 'График',
+    gift: 'Подарок',
+    profile: 'Профиль',
+  },
+};
+
+export const getTranslation = (lang: Language, key: keyof typeof translations.en): string => {
+  return translations[lang][key] || translations.en[key];
+};
