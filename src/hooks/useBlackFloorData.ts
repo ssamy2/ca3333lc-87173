@@ -14,6 +14,10 @@ interface BlackFloorItem {
   change_1y_ton_percent?: number;
   available_periods?: string[];
   upgradedSupply?: number;
+  // Past prices for accurate change calculations
+  daily_past_price_ton?: number | null;
+  weekly_past_price_ton?: number | null;
+  monthly_past_price_ton?: number | null;
 }
 
 interface BlackAPIResponse {
@@ -73,6 +77,9 @@ const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
       change_1y_ton_percent: undefined,
       available_periods,
       upgradedSupply: undefined,
+      daily_past_price_ton: item.daily_past_price_ton,
+      weekly_past_price_ton: item.weekly_past_price_ton,
+      monthly_past_price_ton: item.monthly_past_price_ton,
     };
   });
   

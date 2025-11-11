@@ -139,31 +139,33 @@ const Chart = () => {
           return existsInMarket;
         })
         .map(item => {
-          const marketImage = marketData[item.gift_name]?.image_url;
-          const imageUrl = marketImage || `http://151.241.228.83/api/image/${item.short_name}`;
-          
-          return [
-            item.gift_name,
-            {
-              priceTon: item.black_price,
-              priceUsd: item.black_price * 2.16,
-              price_ton: item.black_price,
-              price_usd: item.black_price * 2.16,
-              'change_24h_ton_%': item.change_24h_ton_percent || 0,
-              'change_24h_usd_%': item.change_24h_ton_percent || 0,
-              image_url: imageUrl,
-              short_name: item.short_name,
-              change_24h_ton_percent: item.change_24h_ton_percent || 0,
-              change_1w_ton_percent: item.change_1w_ton_percent || 0,
-              change_1m_ton_percent: item.change_1m_ton_percent || 0,
-              change_3m_ton_percent: item.change_3m_ton_percent || 0,
-              change_1y_ton_percent: item.change_1y_ton_percent || 0,
-              available_periods: item.available_periods || [],
-              tonPriceWeekAgo: item.black_price,
-              tonPriceMonthAgo: item.black_price,
-              upgradedSupply: marketData[item.gift_name]?.upgradedSupply || 0,
-            }
-          ];
+      const marketImage = marketData[item.gift_name]?.image_url;
+      const imageUrl = marketImage || `https://www.channelsseller.site/api/image/${item.short_name}`;
+      
+      return [
+        item.gift_name,
+        {
+          priceTon: item.black_price,
+          priceUsd: item.black_price * 2.16,
+          price_ton: item.black_price,
+          price_usd: item.black_price * 2.16,
+          'change_24h_ton_%': item.change_24h_ton_percent || 0,
+          'change_24h_usd_%': item.change_24h_ton_percent || 0,
+          image_url: imageUrl,
+          short_name: item.short_name,
+          change_24h_ton_percent: item.change_24h_ton_percent || 0,
+          change_1w_ton_percent: item.change_1w_ton_percent || 0,
+          change_1m_ton_percent: item.change_1m_ton_percent || 0,
+          change_3m_ton_percent: item.change_3m_ton_percent || 0,
+          change_1y_ton_percent: item.change_1y_ton_percent || 0,
+          available_periods: item.available_periods || [],
+          // Past prices for heatmap change calculations
+          tonPrice24hAgo: item.daily_past_price_ton ?? item.black_price,
+          tonPriceWeekAgo: item.weekly_past_price_ton ?? item.black_price,
+          tonPriceMonthAgo: item.monthly_past_price_ton ?? item.black_price,
+          upgradedSupply: marketData[item.gift_name]?.upgradedSupply || 0,
+        }
+      ];
         });
 
       // Sort - zeros always at end

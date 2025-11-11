@@ -7,8 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation, Language } from '@/i18n/translations';
-import { fetchUserProfile } from '@/services/apiService';
-import surprisesImage from '@/assets/surprises-coming.png';
+// Removed external API usage – we'll read from Telegram Mini App directly
 
 const ProfileSettingsPage = () => {
   const navigate = useNavigate();
@@ -28,20 +27,22 @@ const ProfileSettingsPage = () => {
 
   useEffect(() => {
     const loadUserProfile = async () => {
-      if (userId) {
-        try {
-          const profile = await fetchUserProfile(`@${userId}`);
+      try {
+        const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+        if (tgUser) {
+          const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'User';
           setUserData({
-            name: profile.name || 'User',
-            username: userId,
-            avatar_url: profile.photo_base64 || null,
+            name: fullName,
+            username: tgUser.username || `user_${userId || 'guest'}`,
+            avatar_url: (tgUser as any).photo_url || null,
           });
-        } catch (error) {
-          console.error('Failed to load user profile:', error);
-        } finally {
-          setIsLoading(false);
+        } else {
+          // Fallback: keep defaults
+          setUserData(prev => ({ ...prev }));
         }
-      } else {
+      } catch (error) {
+        console.error('Failed to load Telegram user profile:', error);
+      } finally {
         setIsLoading(false);
       }
     };
