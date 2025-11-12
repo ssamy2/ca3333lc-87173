@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCachedData, setCachedData } from '@/services/marketCache';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface BlackFloorItem {
   gift_name: string;
@@ -39,9 +40,19 @@ interface BlackAPIResponse {
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
   const apiUrl = 'https://www.channelsseller.site/api/black/summary';
+  const headers = await getAuthHeaders();
   
-  const response = await fetch(apiUrl);
+  const response = await fetch(apiUrl, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
+  });
+  
   if (!response.ok) {
+    if (response.status === 401) {
+      console.log('Access Denied S2170');
+    }
     throw new Error('Failed to fetch black floor data');
   }
   const data: BlackAPIResponse = await response.json();

@@ -1,4 +1,5 @@
 import { mockNFTResponse, mockErrorResponses } from './mockData';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 export const USE_MOCK_DATA = false; // Always use real API
 
@@ -24,18 +25,23 @@ export const fetchNFTGifts = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username : `@${username}`;
   
   const apiUrl = buildApiUrl(`/api/user/${encodeURIComponent(cleanUsername)}/nfts`);
+  const authHeaders = await getAuthHeaders();
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...authHeaders
       },
       signal: getTimeoutSignal(20000)
     });
     
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        console.log('Access Denied S2170');
+        throw new Error('ACCESS_DENIED');
+      } else if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       } else if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
@@ -84,18 +90,23 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   }
   
   const apiUrl = buildApiUrl(`/api/gift/from-link?url=${encodeURIComponent(giftUrl)}`);
+  const authHeaders = await getAuthHeaders();
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...authHeaders
       },
       signal: getTimeoutSignal(10000)
     });
     
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        console.log('Access Denied S2170');
+        throw new Error('ACCESS_DENIED');
+      } else if (response.status === 404) {
         throw new Error('GIFT_NOT_FOUND');
       }
       throw new Error('NETWORK_ERROR');
@@ -128,18 +139,23 @@ export const fetchUserProfile = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
   const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
+  const authHeaders = await getAuthHeaders();
   
   try {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...authHeaders
       },
       signal: getTimeoutSignal(10000)
     });
     
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        console.log('Access Denied S2170');
+        throw new Error('ACCESS_DENIED');
+      } else if (response.status === 404) {
         throw new Error('USER_NOT_FOUND');
       }
       throw new Error('NETWORK_ERROR');

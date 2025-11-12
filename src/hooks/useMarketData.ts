@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCachedData, setCachedData } from '@/services/marketCache';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface NFTMarketData {
   priceTon: number;
@@ -29,9 +30,19 @@ interface MarketData {
 // Fetch market data from API
 const fetchMarketData = async (): Promise<MarketData> => {
   const apiUrl = 'https://www.channelsseller.site/api/market-data';
+  const headers = await getAuthHeaders();
   
-  const response = await fetch(apiUrl);
+  const response = await fetch(apiUrl, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
+  });
+  
   if (!response.ok) {
+    if (response.status === 401) {
+      console.log('Access Denied S2170');
+    }
     throw new Error('Failed to fetch market data');
   }
   const data = await response.json();
