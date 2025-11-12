@@ -9,6 +9,7 @@ import TonIcon from '@/components/TonIcon';
 import GiftModelsDialog from '@/components/GiftModelsDialog';
 import GiftImage from '@/components/GiftImage';
 import { getCachedData } from '@/services/marketCache';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface GiftInfo {
   name: string;
@@ -104,7 +105,13 @@ const GiftDetail = () => {
   const fetchGiftData = async (giftName: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://www.channelsseller.site/api/gift/${encodeURIComponent(giftName)}/data`);
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`https://www.channelsseller.site/api/gift/${encodeURIComponent(giftName)}/data`, {
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch gift data');
@@ -121,7 +128,13 @@ const GiftDetail = () => {
 
   const fetchBlackFloorData = async (giftName: string) => {
     try {
-      const response = await fetch(`https://www.channelsseller.site/api/black/${encodeURIComponent(giftName)}`);
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`https://www.channelsseller.site/api/black/${encodeURIComponent(giftName)}`, {
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
       
       if (!response.ok) {
         return;
