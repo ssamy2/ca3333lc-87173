@@ -278,8 +278,8 @@ const createImagePlugin = (
         // Calculate sizes using T (smallest dimension)
         const T = Math.min(width, height);
         
-        // Image size = T/4 (preserving aspect ratio)
-        const imageSize = (T / 4) * textScale;
+        // Image size = T/6 for better proportions (preserving aspect ratio)
+        const imageSize = (T / 6) * textScale;
         const aspectRatio = image.width / image.height;
         
         let imageWidth = imageSize;
@@ -290,11 +290,11 @@ const createImagePlugin = (
           imageWidth = imageSize * aspectRatio;
         }
 
-        // Font sizes: title = T/10 (min 1px, max 18px)
-        const titleFontSize = Math.min(Math.max(T / 10, 1), 18) * scale;
-        const valueFontSize = 0.8 * titleFontSize;
-        const marketCapFontSize = 0.65 * titleFontSize;
-        const spacing = Math.min(Math.max(T / 40, 0), 8) * scale;
+        // Font sizes: smaller for better fit - title = T/14 (min 8px, max 16px)
+        const titleFontSize = Math.min(Math.max(T / 14, 8), 16) * scale;
+        const valueFontSize = 0.75 * titleFontSize;
+        const marketCapFontSize = 0.6 * titleFontSize;
+        const spacing = Math.min(Math.max(T / 50, 2), 6) * scale;
         
         const totalTextHeight = chartType === 'marketcap'
           ? imageHeight + (2 * titleFontSize) + 3 * spacing
@@ -457,7 +457,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           tooltip: { enabled: false }
         }
       },
-      plugins: [createImagePlugin(chartType, currency, 70, 2, 2.4, 1)]
+      plugins: [createImagePlugin(chartType, currency, 50, 1.5, 1.8, 1)]
     });
 
     setTimeout(async () => {
