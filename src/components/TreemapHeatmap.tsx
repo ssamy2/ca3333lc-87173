@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
+import { imageCache } from '@/services/imageCache';
 
 ChartJS.register(
   TreemapController, 
@@ -488,8 +489,31 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   useEffect(() => {
     const filteredData = data.filter(item => !item.preSale);
     const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
-    setDisplayData(transformed);
-    setIsLoading(false);
+    
+    // Check if all images are already cached
+    const allImagesCached = transformed.every(item => {
+      const cached = imageCache.getImageFromCache(item.imageName);
+      return cached !== null;
+    });
+    
+    if (allImagesCached) {
+      // All images are cached, display immediately without loading
+      setDisplayData(transformed);
+      setIsLoading(false);
+    } else {
+      // Some images need loading
+      setIsLoading(true);
+      setDisplayData(transformed);
+      
+      // Preload uncached images
+      const imageUrls = transformed.map(item => item.imageName);
+      imageCache.preloadUncachedImages(imageUrls).then(() => {
+        setIsLoading(false);
+      }).catch((error) => {
+        console.error('Error preloading images:', error);
+        setIsLoading(false);
+      });
+    }
   }, [data, chartType, timeGap, currency]);
 
   const chartData: ChartData<'treemap'> = {

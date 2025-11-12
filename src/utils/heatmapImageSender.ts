@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast";
+import { getAuthHeaders } from "@/lib/telegramAuth";
 
 interface SendImageOptions {
   canvas: HTMLCanvasElement;
@@ -25,11 +26,15 @@ export const sendHeatmapImage = async ({
     // Extract only base64 data (remove data:image/webp;base64, prefix)
     const base64Data = imageDataUrl.split(',')[1];
     
+    // Get auth headers
+    const authHeaders = await getAuthHeaders();
+    
     // Send to API
     const response = await fetch('https://channelsseller.site/api/send-image', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...authHeaders
       },
       body: JSON.stringify({
         id: userId,
