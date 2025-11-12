@@ -1,5 +1,7 @@
 import React from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/i18n/translations';
 
 interface ImageSendDialogProps {
   isOpen: boolean;
@@ -7,6 +9,8 @@ interface ImageSendDialogProps {
 }
 
 export const ImageSendDialog: React.FC<ImageSendDialogProps> = ({ isOpen, onClose }) => {
+  const { language } = useLanguage();
+  
   if (!isOpen) return null;
 
   return (
@@ -31,7 +35,7 @@ export const ImageSendDialog: React.FC<ImageSendDialogProps> = ({ isOpen, onClos
 
         {/* Message */}
         <p className="text-foreground text-center text-base font-medium mb-5">
-          ستصلك الصورة قريباً
+          {getTranslation(language, 'imageWillBeSent')}
         </p>
 
         {/* OK Button */}
@@ -39,7 +43,7 @@ export const ImageSendDialog: React.FC<ImageSendDialogProps> = ({ isOpen, onClos
           onClick={onClose}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-6 rounded-lg transition-colors duration-200 active:scale-95"
         >
-          حسناً
+          {getTranslation(language, 'ok')}
         </button>
       </div>
     </div>

@@ -1,9 +1,12 @@
 import { toast } from "@/hooks/use-toast";
 import { getAuthHeaders } from "@/lib/telegramAuth";
+import { getTranslation } from "@/i18n/translations";
+import { Language } from "@/i18n/translations";
 
 interface SendImageOptions {
   canvas: HTMLCanvasElement;
   userId: string;
+  language: Language;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
@@ -11,19 +14,20 @@ interface SendImageOptions {
 export const sendHeatmapImage = async ({
   canvas,
   userId,
+  language,
   onSuccess,
   onError
 }: SendImageOptions): Promise<void> => {
   try {
-    // Convert canvas to base64 image (webp format for better compression)
-    const imageDataUrl = canvas.toDataURL('image/webp', 0.95);
+    // Convert canvas to base64 image (JPEG format with 100% quality for best results)
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
     
     // Validate image format
     if (!imageDataUrl.startsWith('data:image/')) {
       throw new Error('Invalid image format');
     }
 
-    // Extract only base64 data (remove data:image/webp;base64, prefix)
+    // Extract only base64 data (remove data:image/jpeg;base64, prefix)
     const base64Data = imageDataUrl.split(',')[1];
     
     // Get auth headers
@@ -54,24 +58,24 @@ export const sendHeatmapImage = async ({
     // Check if response indicates success
     if (result.done === true) {
       toast({
-        title: "✅ Success!",
-        description: "Image has been sent to your private messages successfully!",
+        title: getTranslation(language, 'imageSentSuccess'),
+        description: getTranslation(language, 'imageSentSuccessDesc'),
         duration: 5000,
       });
       onSuccess?.();
     } else {
       // Fallback if response format is different
       toast({
-        title: "Image Sent",
-        description: "Your image is being processed.",
+        title: getTranslation(language, 'imageSending'),
+        description: getTranslation(language, 'imageWillBeSent'),
       });
       onSuccess?.();
     }
   } catch (error) {
     console.error('Error sending image:', error);
     toast({
-      title: "Error",
-      description: "Failed to send image. Please try again.",
+      title: getTranslation(language, 'imageSentError'),
+      description: getTranslation(language, 'imageSentErrorDesc'),
       variant: "destructive",
     });
     onError?.(error as Error);

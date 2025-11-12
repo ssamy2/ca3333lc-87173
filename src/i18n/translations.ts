@@ -27,6 +27,15 @@ export const translations = {
     heroExample: '💡 选择您的礼物 → 查看实时价格 → 做出明智决策',
     footerNote: '💎 所有价格每5分钟自动更新一次，来源于 Telegram 官方市场和可信交易渠道',
     
+    // Image Sending
+    imageSending: '正在发送',
+    imageWillBeSent: '图片即将发送给您',
+    imageSentSuccess: '✅ 成功！',
+    imageSentSuccessDesc: '图片已成功发送到您的私信！',
+    imageSentError: '错误',
+    imageSentErrorDesc: '发送图片失败。请重试。',
+    ok: '确定',
+    
     // My Gifts
     myGifts: '我的礼物',
     totalValue: '总价值',
@@ -140,6 +149,15 @@ export const translations = {
     change: 'Change',
     marketCap: 'Market Cap',
     
+    // Image Sending
+    imageSending: 'Sending Image',
+    imageWillBeSent: 'Image will be sent to you soon',
+    imageSentSuccess: '✅ Success!',
+    imageSentSuccessDesc: 'Image has been sent to your private messages successfully!',
+    imageSentError: 'Error',
+    imageSentErrorDesc: 'Failed to send image. Please try again.',
+    ok: 'OK',
+    
     // Home Page Hero
     heroTitle: 'Calculate Your Gift Value Accurately Now',
     heroDescription: 'Track Telegram NFT gift prices in real-time. Get accurate valuations, market insights, and price history for all your collectibles.',
@@ -233,6 +251,15 @@ export const translations = {
     change: 'التغير',
     marketCap: 'القيمة السوقية',
     
+    // Image Sending
+    imageSending: 'جاري الإرسال',
+    imageWillBeSent: 'ستصلك الصورة قريباً',
+    imageSentSuccess: '✅ نجح!',
+    imageSentSuccessDesc: 'تم إرسال الصورة إلى رسائلك الخاصة بنجاح!',
+    imageSentError: 'خطأ',
+    imageSentErrorDesc: 'فشل إرسال الصورة. يرجى المحاولة مرة أخرى.',
+    ok: 'حسناً',
+    
     // Home Page Hero
     heroTitle: 'احسب قيمة هداياك بدقة الآن',
     heroDescription: 'تتبع أسعار هدايا NFT على تليجرام في الوقت الفعلي. احصل على تقييمات دقيقة ورؤى السوق وسجل الأسعار لجميع مقتنياتك.',
@@ -325,6 +352,15 @@ export const translations = {
     black: 'Черный',
     change: 'Изменение',
     marketCap: 'Рыночная капитализация',
+    
+    // Image Sending
+    imageSending: 'Отправка изображения',
+    imageWillBeSent: 'Изображение будет отправлено вам в ближайшее время',
+    imageSentSuccess: '✅ Успешно!',
+    imageSentSuccessDesc: 'Изображение успешно отправлено в ваши личные сообщения!',
+    imageSentError: 'Ошибка',
+    imageSentErrorDesc: 'Не удалось отправить изображение. Пожалуйста, попробуйте еще раз.',
+    ok: 'ОК',
     
     // Home Page Hero
     heroTitle: 'Точно рассчитайте стоимость ваших подарков сейчас',

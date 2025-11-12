@@ -22,6 +22,7 @@ import {
 import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 ChartJS.register(
   TreemapController, 
@@ -403,6 +404,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const { language } = useLanguage();
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -482,6 +484,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         await sendHeatmapImage({
           canvas,
           userId: userId.toString(),
+          language,
           onSuccess: () => {
             tempChart.destroy();
           },
