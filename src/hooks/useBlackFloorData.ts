@@ -108,7 +108,7 @@ export const useBlackFloorData = () => {
     staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Cache for 10 minutes
     refetchOnWindowFocus: false,
-    initialData: () => getCachedData('black-floor-data'),
+    placeholderData: () => getCachedData('black-floor-data'),
   });
 };
 
