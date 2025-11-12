@@ -225,7 +225,7 @@ const createImagePlugin = (
   fontSize: number = 15,
   scale: number = 1,
   textScale: number = 1,
-  borderWidth: number = 0
+  borderWidth: number = 1
 ): Plugin<'treemap'> => {
   return {
     id: 'treemapImages',
@@ -256,24 +256,29 @@ const createImagePlugin = (
 
         if (width <= 0 || height <= 0) return;
 
+        // Colors based on percent change
         const color = item.percentChange > 0 ? '#018f35' 
           : item.percentChange < 0 ? '#dc2626' 
           : '#8F9779';
 
+        // Draw rectangle with 1px border
         ctx.fillStyle = color;
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = borderWidth / zoomLevel;
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 0);
         ctx.fill();
-        if (borderWidth > 0) ctx.stroke();
+        ctx.stroke();
         ctx.closePath();
 
         const image = imageMap.get(item.imageName);
         if (!image?.complete || image.naturalWidth === 0) return;
 
-        const minDimension = Math.min(width, height);
-        const imageSize = Math.min(Math.max(minDimension / 4, 5), 1000) * textScale;
+        // Calculate sizes using T (smallest dimension)
+        const T = Math.min(width, height);
+        
+        // Image size = T/4 (preserving aspect ratio)
+        const imageSize = (T / 4) * textScale;
         const aspectRatio = image.width / image.height;
         
         let imageWidth = imageSize;
@@ -284,10 +289,11 @@ const createImagePlugin = (
           imageWidth = imageSize * aspectRatio;
         }
 
-        const titleFontSize = Math.min(Math.max(minDimension / 10, 1), 18) * scale;
+        // Font sizes: title = T/10 (min 1px, max 18px)
+        const titleFontSize = Math.min(Math.max(T / 10, 1), 18) * scale;
         const valueFontSize = 0.8 * titleFontSize;
         const marketCapFontSize = 0.65 * titleFontSize;
-        const spacing = Math.min(Math.max(minDimension / 40, 0), 8) * scale;
+        const spacing = Math.min(Math.max(T / 40, 0), 8) * scale;
         
         const totalTextHeight = chartType === 'marketcap'
           ? imageHeight + (2 * titleFontSize) + 3 * spacing
@@ -295,6 +301,7 @@ const createImagePlugin = (
         const textStartY = y + (height - totalTextHeight) / 2;
         const centerX = x + width / 2;
 
+        // Draw image
         ctx.drawImage(
           image,
           x + (width - imageWidth) / 2,
@@ -303,10 +310,14 @@ const createImagePlugin = (
           imageHeight
         );
 
+        // White text with subtle shadow
+        ctx.shadowColor = '#1e293b';
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.strokeStyle = 'transparent';
-        ctx.lineWidth = 0;
         ctx.font = `bold ${titleFontSize}px sans-serif`;
         ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
@@ -361,9 +372,13 @@ const createImagePlugin = (
           ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
         }
 
+        // Watermark on first element only
         if (index === 0) {
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
           ctx.font = `${fontSize}px sans-serif`;
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
           ctx.textAlign = 'right';
           ctx.fillText('@Novachartbot', x + width - 5, y + height - 5);
         }
@@ -412,8 +427,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     if (!chart) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 2000;
-    canvas.height = 1200;
+    canvas.width = 1920;
+    canvas.height = 1080;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -440,13 +455,13 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           tooltip: { enabled: false }
         }
       },
-      plugins: [createImagePlugin(chartType, currency, 70, 2, 2.4, 2)]
+      plugins: [createImagePlugin(chartType, currency, 70, 2, 2.4, 1)]
     });
 
     setTimeout(async () => {
       try {
         if (!isTelegram) {
-          // Download directly for non-Telegram users
+          // Download directly for non-Telegram users (JPEG 100%)
           const imageUrl = canvas.toDataURL('image/jpeg', 1);
           const link = document.createElement('a');
           link.download = `heatmap-${Date.now()}.jpeg`;
