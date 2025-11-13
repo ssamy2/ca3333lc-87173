@@ -272,11 +272,27 @@ const createImagePlugin = (
         ctx.stroke();
         ctx.closePath();
 
+        // Set clipping region to prevent text overflow
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x + 2, y + 2, width - 4, height - 4);
+        ctx.clip();
+
         const image = imageMap.get(item.imageName);
-        if (!image?.complete || image.naturalWidth === 0) return;
+        if (!image?.complete || image.naturalWidth === 0) {
+          ctx.restore();
+          return;
+        }
 
         // Calculate sizes using T (smallest dimension)
         const T = Math.min(width, height);
+        
+        // Skip rendering text if box is too small
+        const minBoxSize = 40;
+        if (T < minBoxSize) {
+          ctx.restore();
+          return;
+        }
         
         // Image size = T/6 for better proportions (preserving aspect ratio)
         const imageSize = (T / 6) * textScale;
@@ -290,8 +306,8 @@ const createImagePlugin = (
           imageWidth = imageSize * aspectRatio;
         }
 
-        // Font sizes: smaller for better fit - title = T/14 (min 8px, max 16px)
-        const titleFontSize = Math.min(Math.max(T / 14, 8), 16) * scale;
+        // Font sizes: smaller for better fit - title = T/14 (min 6px, max 16px)
+        const titleFontSize = Math.min(Math.max(T / 14, 6), 16) * scale;
         const valueFontSize = 0.75 * titleFontSize;
         const marketCapFontSize = 0.6 * titleFontSize;
         const spacing = Math.min(Math.max(T / 50, 2), 6) * scale;
@@ -320,57 +336,78 @@ const createImagePlugin = (
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.font = `bold ${titleFontSize}px sans-serif`;
-        ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
-
-        if (chartType === 'change') {
-          // Show percentage change
-          ctx.font = `${titleFontSize}px sans-serif`;
-          const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
-          ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
-
-          ctx.font = `${valueFontSize}px sans-serif`;
-          
-          const bottomText = `${item.price.toFixed(2)}`;
-          const bottomTextWidth = ctx.measureText(bottomText).width;
-          const bottomCoinSize = 1 * valueFontSize;
-          const bottomCoinOffsetX = -0.1 * valueFontSize;
-          const bottomTextOffsetX = -0.05 * valueFontSize;
-
-          if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
-            try {
-              ctx.drawImage(
-                toncoinImage,
-                centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
-                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
-                bottomCoinSize,
-                bottomCoinSize
-              );
-              ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-            } catch (error) {
-              console.error('Error drawing toncoin image for bottomText:', error);
-              ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-            }
-          } else if (currency === 'ton') {
-            ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-          } else if (currency === 'usd') {
-            const dollarWidth = ctx.measureText('$').width;
-            ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-            ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-          } else {
-            ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+        
+        // Truncate name if too long for small boxes
+        let displayName = item.name;
+        const maxWidth = width - 10;
+        const nameWidth = ctx.measureText(displayName).width;
+        if (nameWidth > maxWidth && T < 80) {
+          // Truncate for small boxes
+          while (ctx.measureText(displayName + '...').width > maxWidth && displayName.length > 0) {
+            displayName = displayName.slice(0, -1);
           }
+          displayName = displayName + '...';
+        }
+        
+        ctx.fillText(displayName, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
-          // Display Market Cap
-          ctx.font = `${marketCapFontSize}px sans-serif`;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-          const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
-        } else {
-          // Market Cap mode - show market cap prominently
-          ctx.font = `bold ${titleFontSize}px sans-serif`;
-          ctx.fillStyle = 'white';
-          const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
+        // Only show additional details if box is large enough
+        if (T >= 60) {
+          if (chartType === 'change') {
+            // Show percentage change
+            ctx.font = `${titleFontSize}px sans-serif`;
+            const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
+            ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
+
+            // Only show price and MC if box is even larger
+            if (T >= 80) {
+              ctx.font = `${valueFontSize}px sans-serif`;
+              
+              const bottomText = `${item.price.toFixed(2)}`;
+              const bottomTextWidth = ctx.measureText(bottomText).width;
+              const bottomCoinSize = 1 * valueFontSize;
+              const bottomCoinOffsetX = -0.1 * valueFontSize;
+              const bottomTextOffsetX = -0.05 * valueFontSize;
+
+              if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
+                try {
+                  ctx.drawImage(
+                    toncoinImage,
+                    centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
+                    textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
+                    bottomCoinSize,
+                    bottomCoinSize
+                  );
+                  ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+                } catch (error) {
+                  console.error('Error drawing toncoin image for bottomText:', error);
+                  ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+                }
+              } else if (currency === 'ton') {
+                ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+              } else if (currency === 'usd') {
+                const dollarWidth = ctx.measureText('$').width;
+                ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+                ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+              } else {
+                ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+              }
+
+              // Display Market Cap only for larger boxes
+              if (T >= 100) {
+                ctx.font = `${marketCapFontSize}px sans-serif`;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                const marketCapText = `MC: ${item.marketCap}`;
+                ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
+              }
+            }
+          } else {
+            // Market Cap mode - show market cap prominently
+            ctx.font = `bold ${titleFontSize}px sans-serif`;
+            ctx.fillStyle = 'white';
+            const marketCapText = `MC: ${item.marketCap}`;
+            ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
+          }
         }
 
         // Watermark on first element only
@@ -383,6 +420,9 @@ const createImagePlugin = (
           ctx.textAlign = 'right';
           ctx.fillText('@Novachartbot', x + width - 5, y + height - 5);
         }
+        
+        // Restore clipping region
+        ctx.restore();
       });
 
       ctx.restore();
