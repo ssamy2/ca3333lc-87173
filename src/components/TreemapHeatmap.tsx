@@ -14,7 +14,10 @@ import {
 import { TreemapController, TreemapElement } from "chartjs-chart-treemap";
 import { Chart } from "react-chartjs-2";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { Download, ZoomIn, ZoomOut, RotateCcw, RefreshCw, Sparkles, Diamond } from "lucide-react";
+import { Download, ZoomIn, ZoomOut, RotateCcw, RefreshCw, Diamond } from "lucide-react";
+import { sendHeatmapImage } from '@/utils/heatmapImageSender';
+import { useLanguage } from '@/contexts/LanguageContext';
+import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
   TreemapController,
@@ -258,8 +261,7 @@ const createImagePlugin = (
 
       const toncoinImage = imageMap.get("toncoin") || new Image();
       if (!imageMap.has("toncoin")) {
-        toncoinImage.crossOrigin = "anonymous";
-        toncoinImage.src = "https://channelsseller.site/api/image/toncoin";
+        toncoinImage.src = tonIconSrc;
         imageMap.set("toncoin", toncoinImage);
       }
 
@@ -428,6 +430,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
+  const { language } = useLanguage();
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -479,11 +482,11 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
 
     setTimeout(async () => {
       try {
-        const imageUrl = canvas.toDataURL("image/jpeg", 1);
         const telegramWebApp = (window as any).Telegram?.WebApp;
         const isTelegram = !!telegramWebApp;
 
         if (!isTelegram) {
+          const imageUrl = canvas.toDataURL("image/jpeg", 1);
           const link = document.createElement("a");
           link.download = `heatmap-${Date.now()}.jpeg`;
           link.href = imageUrl;
@@ -499,32 +502,21 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
           return;
         }
 
-        try {
-          const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, "");
-
-          const response = await fetch("https://channelsseller.site/api/send-image", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id: userId,
-              image: cleanBase64,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to send image");
+        // Use the old method from heatmapImageSender
+        await sendHeatmapImage({
+          canvas,
+          userId: userId.toString(),
+          language,
+          onSuccess: () => {
+            tempChart.destroy();
+          },
+          onError: (error) => {
+            console.error('Error sending image:', error);
+            tempChart.destroy();
           }
-
-          console.log("Image sent successfully");
-        } catch (err) {
-          console.error("Error sending image:", err);
-        }
-
-        tempChart.destroy();
+        });
       } catch (error) {
-        console.error("Error sending image:", error);
+        console.error("Error in downloadImage:", error);
         tempChart.destroy();
       }
     }, 0);
@@ -623,64 +615,7 @@ export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center gap-4 px-4">
-      {/* First Row - Metric Type */}
-      <div className="w-full flex gap-1 bg-muted/30 p-1 rounded-2xl">
-        <button
-          onClick={() => onChartTypeChange("change")}
-          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
-            chartType === "change" ? "bg-gray-800 text-white shadow-sm" : "bg-gray-900 text-gray-300 hover:text-white"
-          }`}
-        >
-          Change
-        </button>
-        <button
-          onClick={() => onChartTypeChange("marketcap")}
-          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
-            chartType === "marketcap"
-              ? "bg-gray-800 text-white shadow-sm"
-              : "bg-gray-900 text-gray-300 hover:text-white"
-          }`}
-        >
-          Market Cap
-        </button>
-      </div>
-
-      {/* Second Row - Time & Top Filters */}
-      <div className="w-full flex items-center gap-2 overflow-x-auto pb-2">
-        {/* Time Filters */}
-        <div className="flex gap-2">
-          {["24H", "1w", "1m"].map((gap) => (
-            <button
-              key={gap}
-              onClick={() => onTimeGapChange(gap.toLowerCase().replace("h", "h") as "24h" | "1w" | "1m")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm ${
-                timeGap === gap.toLowerCase().replace("h", "h") ? "ring-2 ring-blue-300" : ""
-              }`}
-            >
-              {gap}
-            </button>
-          ))}
-        </div>
-
-        {/* Top Filters */}
-        <div className="flex gap-2">
-          {["Top 50", "Top 30", "Top 15"].map((top) => (
-            <button
-              key={top}
-              className="px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm hover:shadow-md transition-all"
-            >
-              {top}
-            </button>
-          ))}
-        </div>
-
-        {/* Color Mode Toggle */}
-        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-green-400 text-white shadow-sm hover:scale-105 transition-transform">
-          <Sparkles size={14} />
-        </button>
-      </div>
-
-      {/* Third Row - Data Source & Currency */}
+      {/* Data Source & Currency */}
       <div className="w-full flex items-center justify-between gap-4">
         {/* Data Source */}
         <div className="flex gap-1 bg-gray-200/50 p-1 rounded-2xl">
