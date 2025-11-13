@@ -23,6 +23,7 @@ import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
 import { useLanguage } from '@/contexts/LanguageContext';
+import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
   TreemapController, 
@@ -238,8 +239,7 @@ const createImagePlugin = (
       
       const toncoinImage = imageMap.get('toncoin') || new Image();
       if (!imageMap.has('toncoin')) {
-        toncoinImage.crossOrigin = 'anonymous';
-        toncoinImage.src = 'http://151.241.228.83/api/image/toncoin';
+        toncoinImage.src = tonIconSrc;
         imageMap.set('toncoin', toncoinImage);
       }
 
