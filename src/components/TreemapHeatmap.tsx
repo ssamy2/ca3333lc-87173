@@ -14,12 +14,7 @@ import {
 import { TreemapController, TreemapElement } from "chartjs-chart-treemap";
 import { Chart } from "react-chartjs-2";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
-import { sendHeatmapImage } from "@/utils/heatmapImageSender";
-import { ImageSendDialog } from "@/components/ImageSendDialog";
-import { imageCache } from "@/services/imageCache";
-import { useLanguage } from "@/contexts/LanguageContext";
-import tonIconSrc from "@/assets/ton-icon.png";
+import { Download, ZoomIn, ZoomOut, RotateCcw, RefreshCw, Sparkles, Diamond } from "lucide-react";
 
 ChartJS.register(
   TreemapController,
@@ -64,7 +59,53 @@ interface TreemapHeatmapProps {
   chartType: "change" | "marketcap";
   timeGap: "24h" | "1w" | "1m";
   currency: "ton" | "usd";
+  dataSource: "normal" | "black";
+  onChartTypeChange: (type: "change" | "marketcap") => void;
+  onTimeGapChange: (gap: "24h" | "1w" | "1m") => void;
+  onCurrencyChange: (currency: "ton" | "usd") => void;
+  onDataSourceChange: (source: "normal" | "black") => void;
+  onRefresh: () => void;
 }
+
+interface DownloadHeatmapModalProps {
+  trigger: React.ReactNode;
+  onDownload: () => void;
+}
+
+const DownloadHeatmapModal: React.FC<DownloadHeatmapModalProps> = ({ trigger, onDownload }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <span onClick={() => setIsOpen(true)} className="w-full flex justify-center">
+        {trigger}
+      </span>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div className="relative bg-secondaryTransparent rounded-xl shadow-xl p-6 w-full lg:w-5/6 max-w-md">
+            <div className="w-full mt-2 flex flex-col items-center">
+              <h1 className="flex flex-row items-center mb-5 gap-x-1 text-lg font-bold">
+                <Download size={50} className="text-primary" />
+              </h1>
+              <p className="mb-3 text-center">Image will be sent to you soon</p>
+              <button
+                onClick={() => {
+                  onDownload();
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-2 bg-primary rounded-xl"
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string, HTMLImageElement>> => {
   const imageMap = new Map<string, HTMLImageElement>();
@@ -205,7 +246,7 @@ const createImagePlugin = (
   fontSize: number = 15,
   scale: number = 1,
   textScale: number = 1,
-  borderWidth: number = 1,
+  borderWidth: number = 0,
 ): Plugin<"treemap"> => {
   return {
     id: "treemapImages",
@@ -217,7 +258,8 @@ const createImagePlugin = (
 
       const toncoinImage = imageMap.get("toncoin") || new Image();
       if (!imageMap.has("toncoin")) {
-        toncoinImage.src = tonIconSrc;
+        toncoinImage.crossOrigin = "anonymous";
+        toncoinImage.src = "https://channelsseller.site/api/image/toncoin";
         imageMap.set("toncoin", toncoinImage);
       }
 
@@ -243,23 +285,14 @@ const createImagePlugin = (
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 0);
         ctx.fill();
-        ctx.stroke();
+        if (borderWidth > 0) ctx.stroke();
         ctx.closePath();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x + 2, y + 2, width - 4, height - 4);
-        ctx.clip();
-
         const image = imageMap.get(item.imageName);
-        if (!image?.complete || image.naturalWidth === 0) {
-          ctx.restore();
-          return;
-        }
+        if (!image?.complete || image.naturalWidth === 0) return;
 
-        const T = Math.min(width, height);
-
-        const imageSize = (T / 6) * textScale;
+        const minDimension = Math.min(width, height);
+        const imageSize = Math.min(Math.max(minDimension / 4, 5), 1000) * textScale;
         const aspectRatio = image.width / image.height;
 
         let imageWidth = imageSize;
@@ -270,97 +303,109 @@ const createImagePlugin = (
           imageWidth = imageSize * aspectRatio;
         }
 
-        const baseFontSize = Math.max(Math.min(T / 8, 16), 6);
-        const titleFontSize = baseFontSize * scale;
-        const valueFontSize = baseFontSize * 0.7 * scale;
-        const marketCapFontSize = baseFontSize * 0.55 * scale;
-        const spacing = Math.max(Math.min(T / 60, 5), 1) * scale;
+        const titleFontSize = Math.min(Math.max(minDimension / 10, 1), 18) * scale;
+        const valueFontSize = 0.8 * titleFontSize;
+        const marketCapFontSize = 0.65 * titleFontSize;
+        const spacing = Math.min(Math.max(minDimension / 40, 0), 8) * scale;
 
         const totalTextHeight =
           chartType === "marketcap"
-            ? imageHeight + titleFontSize + 2 * spacing
-            : imageHeight + (titleFontSize + valueFontSize + marketCapFontSize) + 3 * spacing;
+            ? imageHeight + 2 * titleFontSize + 3 * spacing
+            : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
         const textStartY = y + (height - totalTextHeight) / 2;
         const centerX = x + width / 2;
 
         ctx.drawImage(image, x + (width - imageWidth) / 2, textStartY, imageWidth, imageHeight);
 
-        ctx.shadowColor = "#1e293b";
-        ctx.shadowBlur = 1.5;
-        ctx.shadowOffsetX = 0.5;
-        ctx.shadowOffsetY = 0.5;
-
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
+        ctx.strokeStyle = "transparent";
+        ctx.lineWidth = 0;
+        ctx.font = `bold ${titleFontSize}px sans-serif`;
+        ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
 
         if (chartType === "change") {
-          ctx.font = `bold ${titleFontSize}px sans-serif`;
-          const nameY = textStartY + imageHeight + titleFontSize + spacing;
-          ctx.fillText(item.name, centerX, nameY);
-
-          ctx.font = `${valueFontSize}px sans-serif`;
+          ctx.font = `${titleFontSize}px sans-serif`;
           const valueText = `${item.percentChange >= 0 ? "+" : ""}${item.percentChange}%`;
-          const valueY = nameY + valueFontSize + spacing;
-          ctx.fillText(valueText, centerX, valueY);
+          ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
 
           ctx.font = `${valueFontSize}px sans-serif`;
 
           const bottomText = `${item.price.toFixed(2)}`;
           const bottomTextWidth = ctx.measureText(bottomText).width;
-          const bottomCoinSize = 0.9 * valueFontSize;
+          const bottomCoinSize = 1 * valueFontSize;
           const bottomCoinOffsetX = -0.1 * valueFontSize;
           const bottomTextOffsetX = -0.05 * valueFontSize;
-
-          const bottomY = valueY + valueFontSize + spacing;
 
           if (currency === "ton" && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
             try {
               ctx.drawImage(
                 toncoinImage,
                 centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
-                bottomY - 0.8 * bottomCoinSize,
+                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
                 bottomCoinSize,
                 bottomCoinSize,
               );
-              ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, bottomY);
+              ctx.fillText(
+                bottomText,
+                centerX + bottomCoinSize / 2 + bottomCoinOffsetX,
+                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+              );
             } catch (error) {
-              ctx.fillText(`💎 ${bottomText}`, centerX, bottomY);
+              console.error("Error drawing toncoin image for bottomText:", error);
+              ctx.fillText(
+                `💎 ${bottomText}`,
+                centerX,
+                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+              );
             }
           } else if (currency === "ton") {
-            ctx.fillText(`💎 ${bottomText}`, centerX, bottomY);
+            ctx.fillText(
+              `💎 ${bottomText}`,
+              centerX,
+              textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+            );
           } else if (currency === "usd") {
             const dollarWidth = ctx.measureText("$").width;
-            ctx.fillText("$", centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, bottomY);
-            ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, bottomY);
+            ctx.fillText(
+              "$",
+              centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2,
+              textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+            );
+            ctx.fillText(
+              bottomText,
+              centerX + dollarWidth / 2 + bottomTextOffsetX,
+              textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+            );
           } else {
-            ctx.fillText(bottomText, centerX, bottomY);
+            ctx.fillText(
+              bottomText,
+              centerX,
+              textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing,
+            );
           }
 
           ctx.font = `${marketCapFontSize}px sans-serif`;
           ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
           const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, bottomY + marketCapFontSize + spacing);
+          ctx.fillText(
+            marketCapText,
+            centerX,
+            textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing,
+          );
         } else {
           ctx.font = `bold ${titleFontSize}px sans-serif`;
           ctx.fillStyle = "white";
-          const nameY = textStartY + imageHeight + titleFontSize + spacing;
-          ctx.fillText(item.name, centerX, nameY);
-
           const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, nameY + titleFontSize + spacing);
+          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
         }
 
         if (index === 0) {
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
           ctx.font = `${fontSize}px sans-serif`;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
           ctx.textAlign = "right";
           ctx.fillText("@Novachartbot", x + width - 5, y + height - 5);
         }
-
-        ctx.restore();
       });
 
       ctx.restore();
@@ -368,273 +413,374 @@ const createImagePlugin = (
   };
 };
 
-export interface TreemapHeatmapHandle {
-  downloadImage: () => Promise<void>;
-}
+export const TreemapHeatmap: React.FC<TreemapHeatmapProps> = ({
+  data,
+  chartType,
+  timeGap,
+  currency,
+  dataSource,
+  onChartTypeChange,
+  onTimeGapChange,
+  onCurrencyChange,
+  onDataSourceChange,
+  onRefresh,
+}) => {
+  const chartRef = useRef<ChartJS>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
 
-export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeatmapProps>(
-  ({ data, chartType, timeGap, currency }, ref) => {
-    const chartRef = useRef<ChartJS>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
-    const [showSendDialog, setShowSendDialog] = useState(false);
-    const { language } = useLanguage();
+  const handleHapticFeedback = useCallback(() => {
+    if ((window as any).Telegram?.WebApp) {
+      (window as any).Telegram.WebApp.HapticFeedback.impactOccurred("light");
+    } else if ("vibrate" in navigator) {
+      navigator.vibrate(50);
+    }
+  }, []);
 
-    const handleHapticFeedback = useCallback(() => {
-      if ((window as any).Telegram?.WebApp) {
-        (window as any).Telegram.WebApp.HapticFeedback.impactOccurred("light");
-      } else if ("vibrate" in navigator) {
-        navigator.vibrate(50);
-      }
-    }, []);
+  const downloadImage = async () => {
+    handleHapticFeedback();
 
-    const downloadImage = useCallback(async () => {
-      handleHapticFeedback();
+    const chart = chartRef.current;
+    if (!chart) return;
 
-      const telegramWebApp = (window as any).Telegram?.WebApp;
-      const isTelegram = !!telegramWebApp;
+    const canvas = document.createElement("canvas");
+    canvas.width = 3840;
+    canvas.height = 2160;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      if (isTelegram) {
-        setShowSendDialog(true);
-      }
+    const transformedData = transformGiftData(data, chartType, timeGap, currency);
+    const imageMap = await preloadImagesAsync(transformedData);
 
-      const chart = chartRef.current;
-      if (!chart) return;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = 1920;
-      canvas.height = 1080;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const transformedData = transformGiftData(data, chartType, timeGap, currency);
-      const imageMap = await preloadImagesAsync(transformedData);
-
-      const tempChart = new ChartJS(ctx, {
-        type: "treemap",
-        data: {
-          datasets: [
-            {
-              data: [],
-              tree: transformedData,
-              key: "size",
-              imageMap,
-              backgroundColor: "transparent",
-            } as any,
-          ],
+    const tempChart = new ChartJS(ctx, {
+      type: "treemap",
+      data: {
+        datasets: [
+          {
+            data: [],
+            tree: transformedData,
+            key: "size",
+            imageMap,
+            backgroundColor: "transparent",
+          } as any,
+        ],
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
         },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false },
-          },
-        },
-        plugins: [createImagePlugin(chartType, currency, 50, 1.5, 1.8, 1)],
-      });
+      },
+      plugins: [createImagePlugin(chartType, currency, 70, 2, 2.4, 2)],
+    });
 
-      setTimeout(async () => {
-        try {
-          if (!isTelegram) {
-            const imageUrl = canvas.toDataURL("image/jpeg", 1);
-            const link = document.createElement("a");
-            link.download = `heatmap-${Date.now()}.jpeg`;
-            link.href = imageUrl;
-            link.click();
-            tempChart.destroy();
-            return;
-          }
+    setTimeout(async () => {
+      try {
+        const imageUrl = canvas.toDataURL("image/jpeg", 1);
+        const telegramWebApp = (window as any).Telegram?.WebApp;
+        const isTelegram = !!telegramWebApp;
 
-          const userId = telegramWebApp.initDataUnsafe?.user?.id;
-          if (!userId) {
-            console.error("No user ID found");
-            tempChart.destroy();
-            return;
-          }
-
-          await sendHeatmapImage({
-            canvas,
-            userId: userId.toString(),
-            language,
-            onSuccess: () => {
-              tempChart.destroy();
-            },
-            onError: () => {
-              tempChart.destroy();
-            },
-          });
-        } catch (error) {
-          console.error("Error processing image:", error);
+        if (!isTelegram) {
+          const link = document.createElement("a");
+          link.download = `heatmap-${Date.now()}.jpeg`;
+          link.href = imageUrl;
+          link.click();
           tempChart.destroy();
+          return;
         }
-      }, 0);
-    }, [data, chartType, timeGap, currency, handleHapticFeedback]);
 
-    React.useImperativeHandle(
-      ref,
-      () => ({
-        downloadImage,
-      }),
-      [downloadImage],
-    );
+        const userId = telegramWebApp.initDataUnsafe?.user?.id;
+        if (!userId) {
+          console.error("No user ID found");
+          tempChart.destroy();
+          return;
+        }
 
-    useEffect(() => {
-      const filteredData = data.filter((item) => !item.preSale);
-      const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
+        try {
+          const cleanBase64 = imageUrl.replace(/^data:image\/\w+;base64,/, "");
 
-      const allImagesCached = transformed.every((item) => {
-        const cached = imageCache.getImageFromCache(item.imageName);
-        return cached !== null;
-      });
-
-      if (allImagesCached) {
-        setDisplayData(transformed);
-        setIsLoading(false);
-      } else {
-        setIsLoading(true);
-        setDisplayData(transformed);
-
-        const imageUrls = transformed.map((item) => item.imageName);
-        imageCache
-          .preloadUncachedImages(imageUrls)
-          .then(() => {
-            setIsLoading(false);
-          })
-          .catch((error) => {
-            console.error("Error preloading images:", error);
-            setIsLoading(false);
-          });
-      }
-    }, [data, chartType, timeGap, currency]);
-
-    const chartData: ChartData<"treemap"> = {
-      datasets: [
-        {
-          data: [],
-          tree: displayData,
-          key: "size",
-          imageMap: preloadImages(displayData),
-          backgroundColor: "transparent",
-        } as any,
-      ],
-    };
-
-    const chartOptions: ChartOptions<"treemap"> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-        zoom: {
-          zoom: {
-            wheel: { enabled: false },
-            pinch: { enabled: false },
-            mode: "xy",
-          },
-          pan: {
-            enabled: false,
-            mode: "xy",
-            onPan: (context: any) => {
-              updateInteractivity(context.chart);
+          const response = await fetch("https://channelsseller.site/api/send-image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+              id: userId,
+              image: cleanBase64,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to send image");
+          }
+
+          console.log("Image sent successfully");
+        } catch (err) {
+          console.error("Error sending image:", err);
+        }
+
+        tempChart.destroy();
+      } catch (error) {
+        console.error("Error sending image:", error);
+        tempChart.destroy();
+      }
+    }, 0);
+  };
+
+  useEffect(() => {
+    const filteredData = data.filter((item) => !item.preSale);
+    const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
+    setDisplayData(transformed);
+    setIsLoading(false);
+  }, [data, chartType, timeGap, currency]);
+
+  const chartData: ChartData<"treemap"> = {
+    datasets: [
+      {
+        data: [],
+        tree: displayData,
+        key: "size",
+        imageMap: preloadImages(displayData),
+        backgroundColor: "transparent",
+      } as any,
+    ],
+  };
+
+  const chartOptions: ChartOptions<"treemap"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+      zoom: {
+        zoom: {
+          wheel: { enabled: false },
+          pinch: { enabled: false },
+          mode: "xy",
+        },
+        pan: {
+          enabled: false,
+          mode: "xy",
+          onPan: (context: any) => {
+            updateInteractivity(context.chart);
           },
         },
       },
-      events: [],
-    };
+    },
+    events: [],
+  };
 
-    const handleResetZoom = () => {
-      const chart = chartRef.current;
-      if (chart) {
-        (chart as any).resetZoom();
-        chart.update("none");
-        updateInteractivity(chart);
-      }
-      handleHapticFeedback();
-    };
-
-    const handleZoomOut = () => {
-      const chart = chartRef.current;
-      if (chart) {
-        const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-        const newZoom = Math.max(1, zoomLevel - 0.5);
-        if (newZoom === 1) {
-          (chart as any).resetZoom();
-        } else {
-          (chart as any).zoom(newZoom / zoomLevel);
-        }
-        chart.update("none");
-        updateInteractivity(chart);
-      }
-      handleHapticFeedback();
-    };
-
-    const handleZoomIn = () => {
-      const chart = chartRef.current;
-      if (chart) {
-        const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-        const newZoom = Math.min(10, zoomLevel + 0.3);
-        (chart as any).zoom(newZoom / zoomLevel);
-        chart.update("none");
-        updateInteractivity(chart);
-      }
-      handleHapticFeedback();
-    };
-
-    if (isLoading) {
-      return (
-        <div className="w-full flex justify-center items-center min-h-[600px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      );
+  const handleResetZoom = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      (chart as any).resetZoom();
+      chart.update("none");
+      updateInteractivity(chart);
     }
+    handleHapticFeedback();
+  };
 
+  const handleZoomOut = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+      const newZoom = Math.max(1, zoomLevel - 0.5);
+
+      if (newZoom === 1) {
+        (chart as any).resetZoom();
+      } else {
+        (chart as any).zoom(newZoom / zoomLevel);
+      }
+
+      chart.update("none");
+      updateInteractivity(chart);
+    }
+    handleHapticFeedback();
+  };
+
+  const handleZoomIn = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+      const newZoom = Math.min(10, zoomLevel + 0.3);
+      (chart as any).zoom(newZoom / zoomLevel);
+      chart.update("none");
+      updateInteractivity(chart);
+    }
+    handleHapticFeedback();
+  };
+
+  if (isLoading) {
     return (
-      <>
-        <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
-
-        <div className="w-full flex flex-col items-center gap-3 px-3">
-          <div className="w-full flex gap-2">
-            <button
-              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
-              onClick={handleResetZoom}
-            >
-              <RotateCcw size={18} />
-              Reset Zoom
-            </button>
-
-            <button
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-              onClick={handleZoomOut}
-            >
-              <ZoomOut size={20} />
-            </button>
-
-            <button
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-              onClick={handleZoomIn}
-            >
-              <ZoomIn size={20} />
-            </button>
-          </div>
-
-          <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
-            <Chart
-              ref={chartRef}
-              type="treemap"
-              data={chartData}
-              options={chartOptions}
-              plugins={[createImagePlugin(chartType, currency)]}
-            />
-          </div>
-        </div>
-      </>
+      <div className="w-full flex justify-center items-center min-h-[600px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     );
-  },
-);
+  }
 
-TreemapHeatmap.displayName = "TreemapHeatmap";
+  return (
+    <div className="w-full flex flex-col items-center gap-4 px-4">
+      {/* First Row - Metric Type */}
+      <div className="w-full flex gap-1 bg-muted/30 p-1 rounded-2xl">
+        <button
+          onClick={() => onChartTypeChange("change")}
+          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
+            chartType === "change" ? "bg-gray-800 text-white shadow-sm" : "bg-gray-900 text-gray-300 hover:text-white"
+          }`}
+        >
+          Change
+        </button>
+        <button
+          onClick={() => onChartTypeChange("marketcap")}
+          className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 ${
+            chartType === "marketcap"
+              ? "bg-gray-800 text-white shadow-sm"
+              : "bg-gray-900 text-gray-300 hover:text-white"
+          }`}
+        >
+          Market Cap
+        </button>
+      </div>
+
+      {/* Second Row - Time & Top Filters */}
+      <div className="w-full flex items-center gap-2 overflow-x-auto pb-2">
+        {/* Time Filters */}
+        <div className="flex gap-2">
+          {["24H", "1w", "1m"].map((gap) => (
+            <button
+              key={gap}
+              onClick={() => onTimeGapChange(gap.toLowerCase().replace("h", "h") as "24h" | "1w" | "1m")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm ${
+                timeGap === gap.toLowerCase().replace("h", "h") ? "ring-2 ring-blue-300" : ""
+              }`}
+            >
+              {gap}
+            </button>
+          ))}
+        </div>
+
+        {/* Top Filters */}
+        <div className="flex gap-2">
+          {["Top 50", "Top 30", "Top 15"].map((top) => (
+            <button
+              key={top}
+              className="px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm hover:shadow-md transition-all"
+            >
+              {top}
+            </button>
+          ))}
+        </div>
+
+        {/* Color Mode Toggle */}
+        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-green-400 text-white shadow-sm hover:scale-105 transition-transform">
+          <Sparkles size={14} />
+        </button>
+      </div>
+
+      {/* Third Row - Data Source & Currency */}
+      <div className="w-full flex items-center justify-between gap-4">
+        {/* Data Source */}
+        <div className="flex gap-1 bg-gray-200/50 p-1 rounded-2xl">
+          <button
+            onClick={() => onDataSourceChange("normal")}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              dataSource === "normal" ? "bg-gray-300 text-gray-800 shadow-sm" : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            onClick={() => onDataSourceChange("black")}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              dataSource === "black" ? "bg-black text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Black
+          </button>
+        </div>
+
+        {/* Currency & Refresh */}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1 bg-gray-200/50 p-1 rounded-2xl">
+            <button
+              onClick={() => onCurrencyChange("ton")}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                currency === "ton" ? "bg-blue-500 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              <Diamond size={14} />
+              TON
+            </button>
+            <button
+              onClick={() => onCurrencyChange("usd")}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                currency === "usd" ? "bg-blue-500 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              USD
+            </button>
+          </div>
+
+          <button
+            onClick={onRefresh}
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-white border shadow-sm hover:scale-105 transition-transform"
+          >
+            <RefreshCw size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Chart Controls */}
+      <div className="w-full flex gap-2">
+        <button
+          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium hover:bg-accent transition-colors"
+          onClick={handleResetZoom}
+        >
+          <RotateCcw size={18} />
+          Reset Zoom
+        </button>
+
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border hover:bg-accent transition-colors"
+          onClick={handleZoomOut}
+        >
+          <ZoomOut size={20} />
+        </button>
+
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border hover:bg-accent transition-colors"
+          onClick={handleZoomIn}
+        >
+          <ZoomIn size={20} />
+        </button>
+      </div>
+
+      {/* Download Button */}
+      <DownloadHeatmapModal
+        trigger={
+          <button className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+            <Download size={18} />
+            Download Heatmap as Image
+          </button>
+        }
+        onDownload={downloadImage}
+      />
+
+      {/* Chart */}
+      <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border shadow-sm">
+        <Chart
+          ref={chartRef}
+          type="treemap"
+          data={chartData}
+          options={chartOptions}
+          plugins={[createImagePlugin(chartType, currency)]}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default TreemapHeatmap;
