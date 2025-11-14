@@ -4,6 +4,7 @@ import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import { toast } from 'sonner';
 import { proxyImageUrl } from '@/lib/imageProxy';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface GiftModel {
   name: string;
@@ -33,10 +34,19 @@ const ModelsDialog: React.FC<ModelsDialogProps> = ({ open, onOpenChange }) => {
     try {
       setLoading(true);
       const apiUrl = 'https://www.channelsseller.site/api/market-data';
+      const authHeaders = await getAuthHeaders();
       
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        }
+      });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Access Denied S2170');
+        }
         throw new Error('Failed to fetch models');
       }
       

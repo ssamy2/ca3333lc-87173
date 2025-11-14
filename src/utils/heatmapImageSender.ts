@@ -52,7 +52,7 @@ export const sendHeatmapImage = async ({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-    const response = await fetch('https://channelsseller.site/api/send-image', {
+    const response = await fetch('https://www.channelsseller.site/api/send-image', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
