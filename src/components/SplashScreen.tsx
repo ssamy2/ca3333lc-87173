@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import TonIcon from './TonIcon';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -8,116 +7,236 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('Initializing...');
+  const [isVisible, setIsVisible] = useState(true);
+  const [requestsComplete, setRequestsComplete] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  const smoothFillProgress = useCallback(() => {
+    try {
+      const fillInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(fillInterval);
+            return 100;
+          }
+          const increment = Math.random() * 5 + 10;
+          return Math.min(prev + increment, 100);
+        });
+      }, Math.random() * 40 + 80);
+
+      return () => {
+        try {
+          clearInterval(fillInterval);
+        } catch (error) {
+          console.error('[SplashScreen] Error clearing fill interval:', error);
+        }
+      };
+    } catch (error) {
+      console.error('[SplashScreen] Error in smoothFillProgress:', error);
+      return () => {};
+    }
+  }, []);
 
   useEffect(() => {
-    const stages = [
-      { progress: 20, status: 'Connecting to Telegram...', delay: 300 },
-      { progress: 40, status: 'Authenticating...', delay: 600 },
-      { progress: 60, status: 'Loading market data...', delay: 900 },
-      { progress: 80, status: 'Preloading images...', delay: 1200 },
-      { progress: 100, status: 'Ready!', delay: 1500 },
-    ];
+    try {
+      console.log('[SplashScreen] Component mounted');
+      
+      const simulateRequests = async () => {
+        try {
+          await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+          console.log('[SplashScreen] Requests completed');
+          setRequestsComplete(true);
+        } catch (error) {
+          console.error('[SplashScreen] Error in simulateRequests:', error);
+          setRequestsComplete(true);
+        }
+      };
 
-    stages.forEach(({ progress, status, delay }) => {
-      setTimeout(() => {
-        setProgress(progress);
-        setStatus(status);
-      }, delay);
-    });
+      simulateRequests();
 
-    setTimeout(() => {
+      const progressInterval = setInterval(() => {
+        try {
+          setProgress(prev => {
+            if (prev >= 70) return prev;
+            return prev + Math.random() * 3 + 2;
+          });
+        } catch (error) {
+          console.error('[SplashScreen] Error updating progress:', error);
+        }
+      }, 100);
+
+      const maxTimeout = setTimeout(() => {
+        try {
+          console.log('[SplashScreen] Max timeout reached (5s)');
+          setRequestsComplete(true);
+        } catch (error) {
+          console.error('[SplashScreen] Error in maxTimeout:', error);
+        }
+      }, 5000);
+
+      return () => {
+        try {
+          clearInterval(progressInterval);
+          clearTimeout(maxTimeout);
+        } catch (error) {
+          console.error('[SplashScreen] Error in cleanup:', error);
+        }
+      };
+    } catch (error) {
+      console.error('[SplashScreen] Critical error in useEffect:', error);
+      setRequestsComplete(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (requestsComplete && progress < 100) {
+        console.log('[SplashScreen] Requests complete, filling progress');
+        const cleanup = smoothFillProgress();
+        return cleanup;
+      }
+    } catch (error) {
+      console.error('[SplashScreen] Error in requestsComplete effect:', error);
+    }
+  }, [requestsComplete, progress, smoothFillProgress]);
+
+  useEffect(() => {
+    try {
+      if (progress >= 100 && isAuthenticated) {
+        console.log('[SplashScreen] Progress complete and authenticated, hiding splash');
+        
+        const hideTimeout = setTimeout(() => {
+          try {
+            setIsVisible(false);
+            setTimeout(() => {
+              try {
+                onComplete();
+              } catch (error) {
+                console.error('[SplashScreen] Error calling onComplete:', error);
+              }
+            }, 350);
+          } catch (error) {
+            console.error('[SplashScreen] Error hiding splash:', error);
+          }
+        }, 300);
+
+        return () => {
+          try {
+            clearTimeout(hideTimeout);
+          } catch (error) {
+            console.error('[SplashScreen] Error clearing hideTimeout:', error);
+          }
+        };
+      }
+    } catch (error) {
+      console.error('[SplashScreen] Critical error in completion effect:', error);
       onComplete();
-    }, 1800);
-  }, [onComplete]);
+    }
+  }, [progress, isAuthenticated, onComplete]);
+
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-background via-background/95 to-primary/5"
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--background)',
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '0 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '48px',
+        }}
       >
-        <div className="w-full max-w-md px-8 space-y-8">
-          {/* Logo */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col items-center space-y-4"
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '24px',
+          }}
+        >
+          <img
+            src="/splash-logo.svg"
+            alt="Logo"
+            style={{
+              width: '120px',
+              height: '120px',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }}
+            onError={(e) => {
+              try {
+                console.error('[SplashScreen] Error loading logo');
+                e.currentTarget.style.display = 'none';
+              } catch (error) {
+                console.error('[SplashScreen] Error in onError handler:', error);
+              }
+            }}
+          />
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: 700,
+              textAlign: 'center',
+              background: 'linear-gradient(to right, var(--primary), var(--primary))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
           >
-            <div className="relative">
-              <TonIcon className="w-24 h-24 text-primary animate-pulse" />
-              <motion.div
-                className="absolute inset-0 bg-primary/20 rounded-full blur-xl"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-            </div>
-            
-            <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              NFT Gifts Market
-            </h1>
-          </motion.div>
-
-          {/* Progress Bar */}
-          <div className="space-y-3">
-            <div role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
-              <div style={{ height: '5px', background: 'var(--secondary)', borderRadius: '50px', width: '100%', overflow: 'hidden' }}>
-                <div 
-                  style={{ 
-                    height: '5px', 
-                    width: `${progress}%`, 
-                    background: 'var(--primary)', 
-                    transition: 'width 0.5s ease-in-out', 
-                    borderRadius: 'inherit' 
-                  }}
-                >
-                  <span style={{ display: 'none' }}>{progress}%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Text */}
-            <motion.p
-              key={status}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center text-muted-foreground text-sm"
-            >
-              {status}
-            </motion.p>
-          </div>
-
-          {/* Loading Dots */}
-          <div className="flex justify-center space-x-2">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="w-2 h-2 bg-primary rounded-full"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.3, 1, 0.3],
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                }}
-              />
-            ))}
-          </div>
+            Nova Calculator
+          </h1>
         </div>
-      </motion.div>
-    </AnimatePresence>
+
+        <div
+          style={{
+            width: '100%',
+            height: '12px',
+            background: 'var(--secondary)',
+            borderRadius: '50px',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${progress}%`,
+              background: 'var(--primary)',
+              transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderRadius: 'inherit',
+            }}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
+        }
+      `}</style>
+    </div>
   );
 };
 
