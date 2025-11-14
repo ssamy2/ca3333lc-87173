@@ -24,16 +24,16 @@ export const sendHeatmapImage = async ({
       throw new Error('Missing required parameters: canvas or userId');
     }
 
-    // Convert canvas to base64 image (JPEG with 100% quality)
-    // Maximum quality for best results, file size will be larger but worth it
-    const imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+    // Convert canvas to base64 image (PNG format as backend expects)
+    // Backend sends as image/png to Telegram
+    const imageDataUrl = canvas.toDataURL('image/png');
     
     // Validate image format
     if (!imageDataUrl.startsWith('data:image/')) {
       throw new Error('Invalid image format generated from canvas');
     }
 
-    // Extract only base64 data (remove data:image/jpeg;base64, prefix)
+    // Extract only base64 data (remove data:image/png;base64, prefix)
     const base64Data = imageDataUrl.split(',')[1];
     
     if (!base64Data || base64Data.length === 0) {
@@ -103,7 +103,7 @@ export const sendHeatmapImage = async ({
     
     // Provide fallback download option
     try {
-      const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
+      const imageUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `nova-heatmap-fallback-${Date.now()}.jpeg`;
       link.href = imageUrl;

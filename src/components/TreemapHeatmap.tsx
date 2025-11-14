@@ -211,7 +211,12 @@ const transformGiftData = (
       ? (item.marketCapTon || '0')
       : (item.marketCapUsd || '0');
     
-    const size = 2 * Math.pow(Math.abs(percentChange) + 1, 1.5);
+    // Size calculation: zero change = minimum size, actual change = larger
+    // If percentChange is 0, size = 1 (minimum)
+    // If percentChange > 0, size increases with the change
+    const size = Math.abs(percentChange) === 0 
+      ? 1  // Minimum size for zero change
+      : 2 * Math.pow(Math.abs(percentChange) + 1, 1.5);
 
     return {
       name: item.name,
@@ -533,10 +538,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      // Create high-resolution canvas for export (2.5x for better quality)
+      // Create high-resolution canvas for export (2x for PNG compression)
       const canvas = document.createElement('canvas');
-      canvas.width = 2035;  // 814 * 2.5
-      canvas.height = 1875; // 750 * 2.5
+      canvas.width = 1628;  // 814 * 2
+      canvas.height = 1500; // 750 * 2
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Failed to get canvas context');
@@ -573,7 +578,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             tooltip: { enabled: false }
           }
         },
-        plugins: [createImagePlugin(chartType, currency, 125, 2.5, 2.5, 2.5)]  // 2.5x scale for export
+        plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
       });
 
       // Wait for chart to render then process
