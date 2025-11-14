@@ -238,8 +238,10 @@ const calculateSpacing = (minDimension: number, scale: number = 1) => {
   return spacing;
 };
 
-const shouldDrawText = (width: number, height: number, minSize: number = 40) => {
-  return width > minSize && height > minSize;
+const shouldDrawText = (width: number, height: number, minSize: number = 40, scale: number = 1) => {
+  // For high-resolution exports, use smaller threshold
+  const threshold = minSize / scale;
+  return width > threshold && height > threshold;
 };
 
 const handleTextOverflow = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, fontSize: number) => {
@@ -322,13 +324,25 @@ const createImagePlugin = (
 
         // Check if element is too small to draw content
         const minDimension = Math.min(width, height);
-        if (!shouldDrawText(width, height, 30)) {
-          // For very small elements, just show a dot or minimal indicator
-          if (minDimension > 10) {
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(x + width/2, y + height/2, Math.min(3, minDimension/6), 0, 2 * Math.PI);
-            ctx.fill();
+        // Use scale-adjusted threshold for better small element rendering
+        if (!shouldDrawText(width, height, 25, scale)) {
+          // For very small elements, show minimal info instead of just a dot
+          if (minDimension > 8 * scale) {
+            // Draw a small colored square with initial letter
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.font = `bold ${Math.max(8, minDimension * 0.4)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw first letter of name if space allows
+            if (minDimension > 15 * scale) {
+              ctx.fillText(item.name.charAt(0), x + width/2, y + height/2);
+            } else {
+              // Just a dot for very tiny elements
+              ctx.beginPath();
+              ctx.arc(x + width/2, y + height/2, Math.min(3 * scale, minDimension/6), 0, 2 * Math.PI);
+              ctx.fill();
+            }
           }
           return;
         }
@@ -514,10 +528,11 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      // Create high-resolution canvas
+      // Create ultra high-resolution canvas for export
       const canvas = document.createElement('canvas');
-      canvas.width = 814;
-      canvas.height = 750;
+      // Use 4x resolution for much better quality (similar to 'All' view)
+      canvas.width = 3256;  // 814 * 4
+      canvas.height = 3000; // 750 * 4
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Failed to get canvas context');
@@ -554,7 +569,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             tooltip: { enabled: false }
           }
         },
-        plugins: [createImagePlugin(chartType, currency, 50, 1.5, 1.8, 1)]
+        plugins: [createImagePlugin(chartType, currency, 200, 4, 4, 4)]  // Higher scale for export
       });
 
       // Wait for chart to render then process

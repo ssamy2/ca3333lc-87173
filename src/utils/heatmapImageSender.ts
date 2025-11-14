@@ -24,7 +24,8 @@ export const sendHeatmapImage = async ({
       throw new Error('Missing required parameters: canvas or userId');
     }
 
-    // Convert canvas to base64 image (JPEG format with 100% quality for best results)
+    // Convert canvas to base64 image (JPEG with 100% quality)
+    // Maximum quality for best results, file size will be larger but worth it
     const imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
     
     // Validate image format
