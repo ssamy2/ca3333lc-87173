@@ -6,6 +6,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isSubscribed: boolean;
   isLoading: boolean;
+  authError: boolean;
   authenticate: () => Promise<void>;
   checkSubscription: () => Promise<void>;
 }
@@ -17,31 +18,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem('telegram_user_id');
-    const storedSubscribed = localStorage.getItem('telegram_subscribed');
-
-    if (storedUserId && storedSubscribed === 'true') {
-      setUserId(storedUserId);
-      setIsAuthenticated(true);
-      setIsSubscribed(true);
-      setIsLoading(false);
-    } else {
-      // Auto-authenticate on mount
-      authenticate();
-    }
+    // دائماً نصادق للحصول على توكن جديد
+    // لأن Telegram ينتج initData جديد في كل مرة
+    // والباك اند يحتاج توكن جديد لكل جلسة
+    authenticate();
   }, []);
 
   const authenticate = async () => {
     try {
       setIsLoading(true);
+      setAuthError(false);
 
       // Get initData from Telegram WebApp
       const initData = window.Telegram?.WebApp?.initData;
       
       if (!initData) {
-        throw new Error('Telegram WebApp not available');
+        console.error('Telegram WebApp not available');
+        setAuthError(true);
+        setIsLoading(false);
+        return;
       }
 
       // Send to backend for verification
@@ -58,7 +56,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (!response.ok) {
-        throw new Error('Authentication failed');
+        console.error('Authentication failed with status:', response.status);
+        setAuthError(true);
+        setIsLoading(false);
+        return;
       }
 
       const data = await response.json();
@@ -67,17 +68,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUserId(data.user_id?.toString() || null);
         setIsAuthenticated(true);
         setIsSubscribed(data.is_subscribed || false);
+        setAuthError(false);
 
-        // Store in localStorage
-        localStorage.setItem('telegram_user_id', data.user_id?.toString() || '');
-        localStorage.setItem('telegram_subscribed', data.is_subscribed ? 'true' : 'false');
+        // لا نحفظ بيانات المصادقة في localStorage
+        // الكاش للصور فقط - المصادقة تتم في كل مرة
       } else {
-        throw new Error('Invalid authentication');
+        console.error('Invalid authentication response');
+        setAuthError(true);
       }
     } catch (error) {
       console.error('Authentication error:', error);
       setIsAuthenticated(false);
       setIsSubscribed(false);
+      setAuthError(true);
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated,
         isSubscribed,
         isLoading,
+        authError,
         authenticate,
         checkSubscription,
       }}

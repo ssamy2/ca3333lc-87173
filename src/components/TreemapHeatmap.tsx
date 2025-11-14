@@ -516,8 +516,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
       // Create high-resolution canvas
       const canvas = document.createElement('canvas');
-      canvas.width = 1920;
-      canvas.height = 1080;
+      canvas.width = 814;
+      canvas.height = 750;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Failed to get canvas context');

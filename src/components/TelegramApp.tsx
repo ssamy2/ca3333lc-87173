@@ -18,6 +18,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLoader from './AppLoader';
 import SubscribePrompt from './SubscribePrompt';
+import TelegramAuthError from './TelegramAuthError';
 import novaLogo from '@/assets/nova-logo-new.png';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
@@ -75,7 +76,7 @@ interface APIResponse {
 }
 
 const TelegramApp: React.FC = () => {
-  const { isAuthenticated, isSubscribed, isLoading: authLoading, checkSubscription } = useAuth();
+  const { isAuthenticated, isSubscribed, isLoading: authLoading, authError, checkSubscription } = useAuth();
   const { language } = useLanguage();
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
@@ -434,6 +435,11 @@ const TelegramApp: React.FC = () => {
   // Check authentication and subscription
   if (authLoading) {
     return <AppLoader onComplete={() => {}} />;
+  }
+
+  // إذا كان هناك خطأ في المصادقة، اعرض واجهة الخطأ
+  if (authError) {
+    return <TelegramAuthError />;
   }
 
   if (!isAuthenticated) {

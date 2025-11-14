@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SubscribePromptProps {
   isOpen: boolean;
@@ -9,6 +10,28 @@ interface SubscribePromptProps {
 }
 
 const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) => {
+  const { language } = useLanguage();
+
+  const translations = {
+    en: {
+      title: 'Nova Charts',
+      description: 'Subscribe to our main channel to not miss important events and updates, as well as receive exclusive offers from us.',
+      subscribeButton: 'Subscribe'
+    },
+    ru: {
+      title: 'Nova Charts',
+      description: 'Подпишитесь на наш основной канал, чтобы не пропустить важные события и обновления, а также получать эксклюзивные предложения от нас.',
+      subscribeButton: 'Подписаться'
+    },
+    ar: {
+      title: 'Nova Charts',
+      description: 'اشترك في قناتنا الرئيسية لكي لا تفوت الأحداث والتحديثات المهمة، بالإضافة إلى تلقي العروض الحصرية منا.',
+      subscribeButton: 'اشترك'
+    }
+  };
+
+  const t = translations[language as keyof typeof translations] || translations.en;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -16,15 +39,16 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/50 backdrop-blur-sm"
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/50"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: 100, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 100, opacity: 0, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-sm mx-auto mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main Card */}
@@ -62,7 +86,7 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
               {/* Description */}
               <div className="text-center mb-8">
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Subscribe to our main channel to not miss important events and updates, as well as receive exclusive offers from us.
+                  {t.description}
                 </p>
               </div>
 
@@ -78,7 +102,7 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
                   rel="noopener noreferrer"
                   className="flex items-center justify-center"
                 >
-                  Subscribe
+                  {t.subscribeButton}
                 </a>
               </Button>
             </div>

@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import TonIcon from './TonIcon';
-import NvaIcon from './NvaIcon';
-import { CheckCircle2, Sparkles } from 'lucide-react';
 import { usePrefetchMarketData } from '@/hooks/useMarketData';
 import { usePrefetchBlackFloorData } from '@/hooks/useBlackFloorData';
-
-interface LoadingStep {
-  id: string;
-  label: string;
-  status: 'pending' | 'loading' | 'success' | 'error';
-}
 
 interface AppLoaderProps {
   onComplete: () => void;
@@ -20,55 +10,25 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
   const prefetchMarketData = usePrefetchMarketData();
   const prefetchBlackFloorData = usePrefetchBlackFloorData();
   
-  const [steps, setSteps] = useState<LoadingStep[]>([
-    { id: 'auth', label: 'Authenticating...', status: 'pending' },
-    { id: 'data', label: 'Loading data...', status: 'pending' },
-  ]);
-
-  const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const MAX_LOAD_TIME = 4000; // 4 seconds max
+    const MAX_LOAD_TIME = 3000;
     const startTime = Date.now();
     let progressInterval: NodeJS.Timeout;
     
-    // Smooth progress animation
     const animateProgress = () => {
       progressInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const targetProgress = Math.min((elapsed / MAX_LOAD_TIME) * 100, 99);
-        
-        setProgress(prev => {
-          const diff = targetProgress - prev;
-          return prev + diff * 0.1; // Smooth easing
-        });
+        setProgress(Math.floor(targetProgress));
       }, 50);
     };
 
-    const processSteps = async () => {
+    const loadData = async () => {
       try {
         animateProgress();
         
-        // Step 1: Auth (fast)
-        setCurrentStep(0);
-        setSteps(prev => prev.map((step, i) => 
-          i === 0 ? { ...step, status: 'loading' } : step
-        ));
-        
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        setSteps(prev => prev.map((step, i) => 
-          i === 0 ? { ...step, status: 'success' } : step
-        ));
-
-        // Step 2: Data - with timeout
-        setCurrentStep(1);
-        setSteps(prev => prev.map((step, i) => 
-          i === 1 ? { ...step, status: 'loading' } : step
-        ));
-        
-        // Race between data loading and timeout
         const dataPromise = Promise.all([
           prefetchMarketData(),
           prefetchBlackFloorData()
@@ -80,37 +40,29 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
         
         await Promise.race([dataPromise, timeoutPromise]);
         
-        setSteps(prev => prev.map((step, i) => 
-          i === 1 ? { ...step, status: 'success' } : step
-        ));
-
-        // Wait for remaining time or complete at 4s
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(200, MAX_LOAD_TIME - elapsed);
         await new Promise(resolve => setTimeout(resolve, remaining));
         
-        // Complete
         clearInterval(progressInterval);
         setProgress(100);
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 200));
         onComplete();
         
       } catch (error) {
         console.error('Error during loading:', error);
-        
-        // Complete anyway after max time
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, MAX_LOAD_TIME - elapsed);
         
         setTimeout(() => {
           clearInterval(progressInterval);
           setProgress(100);
-          setTimeout(() => onComplete(), 300);
+          setTimeout(() => onComplete(), 200);
         }, remaining);
       }
     };
 
-    processSteps();
+    loadData();
     
     return () => {
       if (progressInterval) clearInterval(progressInterval);
@@ -118,222 +70,30 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
   }, [onComplete, prefetchMarketData, prefetchBlackFloorData]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
-      {/* Animated background particles */}
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </div>
+    <div className="fixed inset-0 z-50 flex flex-col justify-center items-center bg-background">
+      <div className="w-1/2 lg:w-5/6 max-w-96 rounded-xl">
+        <div className="w-full flex flex-col items-center justify-center mb-5">
+          <div className="p-5 bg-background rounded-full animate-pulse">
+            <img src="/logo.png" width="100" height="100" alt="Logo" />
+          </div>
+        </div>
 
-      {/* Radial gradient background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(circle at 50% 50%, rgba(33,150,243,0.12) 0%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-md px-6 flex flex-col items-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center space-y-8 w-full"
-        >
-          {/* Logo with glow effect */}
-          <motion.div
-            className="flex justify-center mb-6"
-            animate={{
-              rotate: [0, 360],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          >
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary via-primary to-accent blur-xl opacity-40 animate-pulse"></div>
-              <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 backdrop-blur-sm flex items-center justify-center border border-primary/20">
-                <TonIcon className="w-14 h-14" />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Title */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h1 className="text-4xl font-bold text-gradient mb-2 tracking-tight">
-              Nova Charts
-            </h1>
-            <p className="text-muted-foreground text-sm font-medium">
-              Preparing your experience
-            </p>
-          </motion.div>
-
-          {/* Modern Progress Bar */}
-          <div className="space-y-3 w-full px-4">
-            <div className="relative h-2.5 bg-gradient-to-r from-muted via-muted to-muted rounded-full overflow-hidden shadow-inner">
-              {/* Animated gradient fill */}
-              <motion.div
-                className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
-                initial={{ width: '0%' }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <div className="w-full h-full bg-gradient-to-r from-primary via-accent to-primary animate-gradient-x"></div>
-              </motion.div>
-              
-              {/* Shimmer effect */}
-              <motion.div
-                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                animate={{
-                  x: ['-100%', '300%'],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
-            </div>
-            
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-lg font-bold text-primary">{progress}%</span>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-4 h-4 text-accent" />
-              </motion.div>
+        <div role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
+          <div style={{ height: '5px', background: 'var(--secondary)', borderRadius: '50px', width: '100%', overflow: 'hidden' }}>
+            <div 
+              style={{ 
+                height: '5px', 
+                width: `${progress}%`, 
+                background: 'var(--primary)', 
+                transition: 'width 0.5s ease-in-out', 
+                borderRadius: 'inherit' 
+              }}
+            >
+              <span style={{ display: 'none' }}>{progress}%</span>
             </div>
           </div>
-
-          {/* Loading Steps - Minimalist */}
-          <motion.div 
-            className="space-y-2 w-full px-4"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            {steps.map((step, index) => (
-              <motion.div
-                key={step.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-card/30 backdrop-blur-md border border-border/30 shadow-sm"
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.15 }}
-              >
-                <div className="flex-shrink-0">
-                  {step.status === 'loading' && (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <div className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent" />
-                    </motion.div>
-                  )}
-                  {step.status === 'success' && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    </motion.div>
-                  )}
-                  {step.status === 'pending' && (
-                    <div className="w-5 h-5 rounded-full bg-muted/50" />
-                  )}
-                </div>
-                <span className={`text-sm font-medium transition-colors ${
-                  step.status === 'success' ? 'text-foreground' : 
-                  step.status === 'loading' ? 'text-primary' :
-                  'text-muted-foreground'
-                }`}>
-                  {step.label}
-                </span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* Bottom Section - Nova Bots Series */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="mt-12 text-center"
-        >
-          <div className="relative inline-block">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 blur-xl"></div>
-            
-            {/* Text */}
-            <div className="relative px-6 py-3 rounded-full bg-card/40 backdrop-blur-md border border-primary/20">
-              <div className="flex items-center gap-2">
-                <NvaIcon className="w-5 h-5" />
-                <p className="text-sm font-semibold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                  Nova Bots Series
-                </p>
-                <span className="text-xs font-medium text-muted-foreground px-2 py-0.5 rounded-full bg-muted/50">
-                  Coming Soon
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        </div>
       </div>
-
-      {/* Custom CSS for gradient animation */}
-      <style>{`
-        @keyframes gradient-x {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 3s ease infinite;
-        }
-      `}</style>
     </div>
   );
 };
