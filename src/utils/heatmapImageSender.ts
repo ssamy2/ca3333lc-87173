@@ -43,10 +43,11 @@ export const sendHeatmapImage = async ({
     // Get auth headers
     const authHeaders = await getAuthHeaders();
     
-    // Show loading toast
-    toast({
+    // Show loading toast (dismissible)
+    const loadingToast = toast({
       title: getTranslation(language, 'imageSending') || 'Sending Image...',
       description: getTranslation(language, 'imageWillBeSent') || 'Please wait while we send your heatmap.',
+      duration: Infinity, // Stay until dismissed or replaced
     });
     
     // Send to API with timeout
@@ -84,7 +85,8 @@ export const sendHeatmapImage = async ({
       toast({
         title: getTranslation(language, 'imageSentSuccess') || 'Image Sent Successfully!',
         description: getTranslation(language, 'imageSentSuccessDesc') || 'Your heatmap has been sent to your Telegram.',
-        duration: 5000,
+        duration: 2000, // Auto-dismiss after 2 seconds
+        className: 'animate-in slide-in-from-top-5',
       });
       onSuccess?.();
     } else {
@@ -92,6 +94,7 @@ export const sendHeatmapImage = async ({
       toast({
         title: getTranslation(language, 'imageSending') || 'Image Processing...',
         description: getTranslation(language, 'imageWillBeSent') || 'Your image is being processed and will be sent shortly.',
+        duration: 2000,
       });
       onSuccess?.();
     }

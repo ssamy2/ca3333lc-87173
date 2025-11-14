@@ -544,11 +544,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      // Create ultra high-resolution canvas for export
+      // Create high-resolution canvas for export (2x for balanced quality/size)
       const canvas = document.createElement('canvas');
-      // Use 4x resolution for much better quality (similar to 'All' view)
-      canvas.width = 3256;  // 814 * 4
-      canvas.height = 3000; // 750 * 4
+      canvas.width = 1628;  // 814 * 2
+      canvas.height = 1500; // 750 * 2
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Failed to get canvas context');
@@ -585,7 +584,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             tooltip: { enabled: false }
           }
         },
-        plugins: [createImagePlugin(chartType, currency, 200, 4, 4, 4)]  // Higher scale for export
+        plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
       });
 
       // Wait for chart to render then process
@@ -650,6 +649,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     const filteredData = data.filter(item => !item.preSale);
     const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
     
+    // Always display data immediately - don't wait for images
+    setDisplayData(transformed);
+    
     // Check if all images are already cached
     const allImagesCached = transformed.every(item => {
       const cached = imageCache.getImageFromCache(item.imageName);
@@ -657,18 +659,21 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     });
     
     if (allImagesCached) {
-      // All images are cached, display immediately without loading
-      setDisplayData(transformed);
+      // All images are cached, no loading needed
       setIsLoading(false);
     } else {
-      // Some images need loading
+      // Some images need loading - show chart but indicate loading
       setIsLoading(true);
-      setDisplayData(transformed);
       
-      // Preload uncached images
+      // Preload uncached images in background
       const imageUrls = transformed.map(item => item.imageName);
       imageCache.preloadUncachedImages(imageUrls).then(() => {
         setIsLoading(false);
+        // Force chart update to show loaded images
+        const chart = chartRef.current;
+        if (chart && chart.update) {
+          chart.update('none');
+        }
       }).catch((error) => {
         console.error('Error preloading images:', error);
         setIsLoading(false);
@@ -790,23 +795,19 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     handleHapticFeedback();
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full flex flex-col justify-center items-center min-h-[600px] gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <div className="text-sm text-muted-foreground">Loading heatmap images...</div>
-        <div className="w-48 bg-secondary rounded-full h-2">
-          <div className="bg-primary h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
       
       <div className="w-full flex flex-col items-center gap-3 px-3">
+        {/* Loading indicator - small and non-intrusive */}
+        {isLoading && (
+          <div className="w-full flex items-center justify-center gap-2 py-2 bg-secondary/50 rounded-lg animate-in fade-in">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <span className="text-xs text-muted-foreground">Loading images...</span>
+          </div>
+        )}
+        
         {/* Control Buttons */}
         <div className="w-full flex gap-2">
           <button
