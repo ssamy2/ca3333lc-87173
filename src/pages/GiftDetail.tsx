@@ -241,9 +241,9 @@ const GiftDetail = () => {
       
       // Map black floor data to chart format with candlestick data
       return filteredData.map((item, index, arr) => {
-        const price = item.black_price;
-        const prevPrice = index > 0 ? arr[index - 1].black_price : price;
-        const nextPrice = index < arr.length - 1 ? arr[index + 1].black_price : price;
+        const price = item.black_price || 0;
+        const prevPrice = index > 0 ? (arr[index - 1].black_price || 0) : price;
+        const nextPrice = index < arr.length - 1 ? (arr[index + 1].black_price || 0) : price;
         
         return {
           date: new Date(item.recorded_at).toLocaleDateString(),
