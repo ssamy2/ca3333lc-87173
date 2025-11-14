@@ -19,10 +19,10 @@ import {
   ZoomOut,
   RotateCcw
 } from 'lucide-react';
-import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
@@ -497,89 +497,113 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   }, []);
 
   const downloadImage = useCallback(async () => {
-    handleHapticFeedback();
-    
-    const telegramWebApp = (window as any).Telegram?.WebApp;
-    const isTelegram = !!telegramWebApp;
-    
-    // Show dialog immediately for Telegram users
-    if (isTelegram) {
-      setShowSendDialog(true);
-    }
-    
-    const chart = chartRef.current;
-    if (!chart) return;
+    try {
+      handleHapticFeedback();
+      
+      const telegramWebApp = (window as any).Telegram?.WebApp;
+      const isTelegram = !!telegramWebApp;
+      
+      // Show dialog immediately for Telegram users
+      if (isTelegram) {
+        setShowSendDialog(true);
+      }
+      
+      const chart = chartRef.current;
+      if (!chart) {
+        console.error('Chart reference not found');
+        return;
+      }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+      // Create high-resolution canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('Failed to get canvas context');
+        return;
+      }
 
-    const transformedData = transformGiftData(data, chartType, timeGap, currency);
-    const imageMap = await preloadImagesAsync(transformedData);
+      // Transform data and preload images
+      const transformedData = transformGiftData(data, chartType, timeGap, currency);
+      const imageMap = await preloadImagesAsync(transformedData);
 
-    const tempChart = new ChartJS(ctx, {
-      type: 'treemap',
-      data: {
-        datasets: [{
-          data: [],
-          tree: transformedData,
-          key: 'size',
-          imageMap,
-          backgroundColor: 'transparent'
-        } as any]
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false }
-        }
-      },
-      plugins: [createImagePlugin(chartType, currency, 50, 1.5, 1.8, 1)]
-    });
+      // Create temporary chart for export
+      const tempChart = new ChartJS(ctx, {
+        type: 'treemap',
+        data: {
+          datasets: [{
+            data: [],
+            tree: transformedData,
+            key: 'size',
+            imageMap,
+            backgroundColor: 'transparent'
+          } as any]
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        },
+        plugins: [createImagePlugin(chartType, currency, 50, 1.5, 1.8, 1)]
+      });
 
-    setTimeout(async () => {
-      try {
-        if (!isTelegram) {
-          // Download directly for non-Telegram users (JPEG 100%)
-          const imageUrl = canvas.toDataURL('image/jpeg', 1);
-          const link = document.createElement('a');
-          link.download = `heatmap-${Date.now()}.jpeg`;
-          link.href = imageUrl;
-          link.click();
-          tempChart.destroy();
-          return;
-        }
-
-        const userId = telegramWebApp.initDataUnsafe?.user?.id;
-        if (!userId) {
-          console.error('No user ID found');
-          tempChart.destroy();
-          return;
-        }
-
-        // Send image using utility function
-        await sendHeatmapImage({
-          canvas,
-          userId: userId.toString(),
-          language,
-          onSuccess: () => {
+      // Wait for chart to render then process
+      setTimeout(async () => {
+        try {
+          if (!isTelegram) {
+            // Download directly for non-Telegram users
+            const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
+            const link = document.createElement('a');
+            link.download = `nova-heatmap-${Date.now()}.jpeg`;
+            link.href = imageUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             tempChart.destroy();
-          },
-          onError: () => {
+            return;
+          }
+
+          // Telegram user flow
+          const userId = telegramWebApp?.initDataUnsafe?.user?.id;
+          if (!userId) {
+            console.error('No Telegram user ID found');
+            tempChart.destroy();
+            return;
+          }
+
+          // Send image via Telegram
+          if (typeof sendHeatmapImage === 'function') {
+            await sendHeatmapImage({
+              canvas,
+              userId: userId.toString(),
+              language,
+              onSuccess: () => {
+                console.log('Image sent successfully');
+                tempChart.destroy();
+              },
+              onError: (error) => {
+                console.error('Error sending image:', error);
+                tempChart.destroy();
+              }
+            });
+          } else {
+            console.error('sendHeatmapImage function not available');
             tempChart.destroy();
           }
-        });
-      } catch (error) {
-        console.error('Error processing image:', error);
-        tempChart.destroy();
-      }
-    }, 0);
-  }, [data, chartType, timeGap, currency, handleHapticFeedback]);
+        } catch (error) {
+          console.error('Error in image processing:', error);
+          tempChart.destroy();
+        }
+      }, 100); // Increased timeout for better rendering
+    } catch (error) {
+      console.error('Error in downloadImage:', error);
+    }
+  }, [data, chartType, timeGap, currency, language, handleHapticFeedback]);
 
   // Expose downloadImage to parent components
   React.useImperativeHandle(ref, () => ({
