@@ -221,6 +221,54 @@ const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> 
   return imageMap;
 };
 
+// Font cache for performance optimization
+const fontCache = new Map<string, { width: number; height: number }>();
+
+// Helper functions for dynamic sizing
+const calculateFontSize = (minDimension: number, scale: number = 1) => {
+  const titleFontSize = Math.min(Math.max(minDimension / 10, 10), 18) * scale;
+  const valueFontSize = 0.8 * titleFontSize;
+  const marketCapFontSize = 0.65 * titleFontSize;
+  
+  return { titleFontSize, valueFontSize, marketCapFontSize };
+};
+
+const calculateSpacing = (minDimension: number, scale: number = 1) => {
+  const spacing = Math.min(Math.max(minDimension / 40, 2), 8) * scale;
+  return spacing;
+};
+
+const shouldDrawText = (width: number, height: number, minSize: number = 40) => {
+  return width > minSize && height > minSize;
+};
+
+const handleTextOverflow = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, fontSize: number) => {
+  ctx.font = `${fontSize}px sans-serif`;
+  const textWidth = ctx.measureText(text).width;
+  
+  if (textWidth <= maxWidth) return text;
+  
+  // تقصير النص مع إضافة ...
+  let shortened = text;
+  while (shortened.length > 3 && ctx.measureText(shortened + '...').width > maxWidth) {
+    shortened = shortened.slice(0, -1);
+  }
+  return shortened.length > 3 ? shortened + '...' : text.slice(0, 3);
+};
+
+const calculateTotalTextHeight = (
+  chartType: 'change' | 'marketcap',
+  imageHeight: number,
+  fontSizes: { titleFontSize: number; valueFontSize: number; marketCapFontSize: number },
+  spacing: number
+) => {
+  const { titleFontSize, valueFontSize, marketCapFontSize } = fontSizes;
+  
+  return chartType === 'marketcap'
+    ? imageHeight + (2 * titleFontSize) + 3 * spacing
+    : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
+};
+
 const createImagePlugin = (
   chartType: 'change' | 'marketcap',
   currency: 'ton' | 'usd',
@@ -262,24 +310,39 @@ const createImagePlugin = (
           : item.percentChange < 0 ? '#dc2626' 
           : '#8F9779';
 
-        // Draw rectangle with 1px border
+        // Draw rectangle with adaptive border
         ctx.fillStyle = color;
         ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = borderWidth / zoomLevel;
+        ctx.lineWidth = Math.max(borderWidth / zoomLevel, 0.5);
         ctx.beginPath();
-        ctx.roundRect(x, y, width, height, 0);
+        ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
         ctx.fill();
         ctx.stroke();
         ctx.closePath();
 
+        // Check if element is too small to draw content
+        const minDimension = Math.min(width, height);
+        if (!shouldDrawText(width, height, 30)) {
+          // For very small elements, just show a dot or minimal indicator
+          if (minDimension > 10) {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x + width/2, y + height/2, Math.min(3, minDimension/6), 0, 2 * Math.PI);
+            ctx.fill();
+          }
+          return;
+        }
+
         const image = imageMap.get(item.imageName);
         if (!image?.complete || image.naturalWidth === 0) return;
 
-        // Calculate sizes using T (smallest dimension)
-        const T = Math.min(width, height);
+        // Dynamic font sizing based on element size
+        const fontSizes = calculateFontSize(minDimension, scale);
+        const spacing = calculateSpacing(minDimension, scale);
         
-        // Image size = T/6 for better proportions (preserving aspect ratio)
-        const imageSize = (T / 6) * textScale;
+        // Adaptive image sizing - larger for bigger elements
+        const imageRatio = Math.min(0.4, Math.max(0.15, minDimension / 200));
+        const imageSize = minDimension * imageRatio * textScale;
         const aspectRatio = image.width / image.height;
         
         let imageWidth = imageSize;
@@ -290,100 +353,119 @@ const createImagePlugin = (
           imageWidth = imageSize * aspectRatio;
         }
 
-        // Font sizes: smaller for better fit - title = T/14 (min 8px, max 16px)
-        const titleFontSize = Math.min(Math.max(T / 14, 8), 16) * scale;
-        const valueFontSize = 0.75 * titleFontSize;
-        const marketCapFontSize = 0.6 * titleFontSize;
-        const spacing = Math.min(Math.max(T / 50, 2), 6) * scale;
+        // Calculate available space for text
+        const availableWidth = width * 0.9; // 90% of width for text
+        const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
         
-        const totalTextHeight = chartType === 'marketcap'
-          ? imageHeight + (2 * titleFontSize) + 3 * spacing
-          : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
-        const textStartY = y + (height - totalTextHeight) / 2;
+        // Check if content fits
+        if (totalTextHeight > height * 0.9) {
+          // Scale down everything proportionally
+          const scaleFactor = (height * 0.9) / totalTextHeight;
+          fontSizes.titleFontSize *= scaleFactor;
+          fontSizes.valueFontSize *= scaleFactor;
+          fontSizes.marketCapFontSize *= scaleFactor;
+          imageWidth *= scaleFactor;
+          imageHeight *= scaleFactor;
+        }
+        
+        const finalTotalHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
+        const textStartY = y + (height - finalTotalHeight) / 2;
         const centerX = x + width / 2;
 
-        // Draw image
-        ctx.drawImage(
-          image,
-          x + (width - imageWidth) / 2,
-          textStartY,
-          imageWidth,
-          imageHeight
-        );
+        // Draw image with better centering
+        const imageX = x + (width - imageWidth) / 2;
+        const imageY = textStartY;
+        
+        ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
 
-        // White text with subtle shadow
-        ctx.shadowColor = '#1e293b';
-        ctx.shadowBlur = 2;
+        // Enhanced text rendering with better contrast
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 3;
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
         
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.font = `bold ${titleFontSize}px sans-serif`;
-        ctx.fillText(item.name, centerX, textStartY + imageHeight + titleFontSize + spacing);
+        ctx.textBaseline = 'middle';
+
+        // Title with overflow handling
+        ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
+        const truncatedName = handleTextOverflow(ctx, item.name, availableWidth, fontSizes.titleFontSize);
+        ctx.fillText(truncatedName, centerX, textStartY + imageHeight + fontSizes.titleFontSize/2 + spacing);
 
         if (chartType === 'change') {
           // Show percentage change
-          ctx.font = `${titleFontSize}px sans-serif`;
+          ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
           const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
-          ctx.fillText(valueText, centerX, textStartY + imageHeight + 2 * titleFontSize + 2 * spacing);
+          const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
+          ctx.fillText(truncatedValue, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 1.5 + 2 * spacing);
 
-          ctx.font = `${valueFontSize}px sans-serif`;
-          
+          // Price with currency
+          ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
           const bottomText = `${item.price.toFixed(2)}`;
-          const bottomTextWidth = ctx.measureText(bottomText).width;
-          const bottomCoinSize = 1 * valueFontSize;
-          const bottomCoinOffsetX = -0.1 * valueFontSize;
-          const bottomTextOffsetX = -0.05 * valueFontSize;
+          const priceY = textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize/2 + 3 * spacing;
 
           if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
             try {
+              const coinSize = fontSizes.valueFontSize * 0.8;
+              const textWidth = ctx.measureText(bottomText).width;
+              const totalWidth = coinSize + textWidth + 2;
+              
+              // Draw coin icon
               ctx.drawImage(
                 toncoinImage,
-                centerX - bottomTextWidth / 2 - bottomCoinSize - bottomCoinOffsetX,
-                textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing - 0.8 * bottomCoinSize,
-                bottomCoinSize,
-                bottomCoinSize
+                centerX - totalWidth/2,
+                priceY - coinSize/2,
+                coinSize,
+                coinSize
               );
-              ctx.fillText(bottomText, centerX + bottomCoinSize / 2 + bottomCoinOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+              
+              // Draw price text
+              ctx.fillText(bottomText, centerX + coinSize/2 + 2, priceY);
             } catch (error) {
-              console.error('Error drawing toncoin image for bottomText:', error);
-              ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+              console.error('Error drawing toncoin image:', error);
+              ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
             }
           } else if (currency === 'ton') {
-            ctx.fillText(`💎 ${bottomText}`, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
           } else if (currency === 'usd') {
-            const dollarWidth = ctx.measureText('$').width;
-            ctx.fillText('$', centerX - bottomTextWidth / 2 - bottomTextOffsetX - dollarWidth / 2, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
-            ctx.fillText(bottomText, centerX + dollarWidth / 2 + bottomTextOffsetX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            ctx.fillText(`$${bottomText}`, centerX, priceY);
           } else {
-            ctx.fillText(bottomText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + 3 * spacing);
+            ctx.fillText(bottomText, centerX, priceY);
           }
 
-          // Display Market Cap
-          ctx.font = `${marketCapFontSize}px sans-serif`;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-          const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + 2 * titleFontSize + valueFontSize + marketCapFontSize + 4 * spacing);
+          // Market Cap with better visibility
+          if (minDimension > 60) { // Only show for larger elements
+            ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            const marketCapText = `MC: ${item.marketCap}`;
+            const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
+            ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize/2 + 4 * spacing);
+          }
         } else {
           // Market Cap mode - show market cap prominently
-          ctx.font = `bold ${titleFontSize}px sans-serif`;
+          ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
           ctx.fillStyle = 'white';
           const marketCapText = `MC: ${item.marketCap}`;
-          ctx.fillText(marketCapText, centerX, textStartY + imageHeight + titleFontSize + 2 * spacing);
-        }
-
-        // Watermark on first element only
-        if (index === 0) {
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.font = `${fontSize}px sans-serif`;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-          ctx.textAlign = 'right';
-          ctx.fillText('@Novachartbot', x + width - 5, y + height - 5);
+          const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.titleFontSize);
+          ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize + 2 * spacing);
         }
       });
+
+      // Enhanced watermark positioning - always visible
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.font = `${Math.max(fontSize, 12)}px sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      
+      // Position watermark at bottom-right of chart area
+      const chartArea = chart.chartArea;
+      if (chartArea) {
+        ctx.fillText('@Novachartbot', chartArea.right - 10, chartArea.bottom - 10);
+      }
 
       ctx.restore();
     }
@@ -552,20 +634,27 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       tooltip: { enabled: false },
       zoom: {
         zoom: {
-          wheel: { enabled: false },
-          pinch: { enabled: false },
-          mode: 'xy'
+          wheel: { enabled: true, speed: 0.1 },
+          pinch: { enabled: true },
+          mode: 'xy',
+          onZoom: (context: any) => {
+            updateInteractivity(context.chart);
+          }
         },
         pan: {
-          enabled: false,
+          enabled: true,
           mode: 'xy',
           onPan: (context: any) => {
             updateInteractivity(context.chart);
           }
+        },
+        limits: {
+          x: { min: -1000, max: 1000 },
+          y: { min: -1000, max: 1000 }
         }
       }
     },
-    events: []
+    events: ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend']
   };
 
   const handleResetZoom = () => {
@@ -608,8 +697,12 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   if (isLoading) {
     return (
-      <div className="w-full flex justify-center items-center min-h-[600px]">
+      <div className="w-full flex flex-col justify-center items-center min-h-[600px] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-sm text-muted-foreground">Loading heatmap images...</div>
+        <div className="w-48 bg-secondary rounded-full h-2">
+          <div className="bg-primary h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
+        </div>
       </div>
     );
   }
