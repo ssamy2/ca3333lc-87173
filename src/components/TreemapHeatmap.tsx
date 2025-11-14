@@ -91,18 +91,34 @@ const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string,
 };
 
 const updateInteractivity = (chart: ChartJS) => {
-  const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-  chart.options.plugins!.zoom!.pan!.enabled = zoomLevel > 1;
-  (chart.options as any).events = zoomLevel > 1 
-    ? ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'] 
-    : [];
-  
-  const canvas = chart.canvas;
-  if (canvas) {
-    canvas.style.cursor = zoomLevel > 1 ? 'pointer' : 'default';
+  try {
+    if (!chart || !chart.options) return;
+    
+    const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+    
+    // Safely update pan enabled state
+    if (chart.options.plugins?.zoom?.pan) {
+      chart.options.plugins.zoom.pan.enabled = zoomLevel > 1;
+    }
+    
+    // Update events
+    (chart.options as any).events = zoomLevel > 1 
+      ? ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'] 
+      : [];
+    
+    // Update cursor style
+    const canvas = chart.canvas;
+    if (canvas) {
+      canvas.style.cursor = zoomLevel > 1 ? 'pointer' : 'default';
+    }
+    
+    // Update chart safely
+    if (chart.update) {
+      chart.update('none');
+    }
+  } catch (error) {
+    console.error('Error updating interactivity:', error);
   }
-  
-  chart.update('none');
 };
 
 const transformGiftData = (
@@ -687,14 +703,26 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           pinch: { enabled: true },
           mode: 'xy',
           onZoom: (context: any) => {
-            updateInteractivity(context.chart);
+            try {
+              if (context?.chart) {
+                updateInteractivity(context.chart);
+              }
+            } catch (error) {
+              console.error('Error in onZoom:', error);
+            }
           }
         },
         pan: {
           enabled: true,
           mode: 'xy',
           onPan: (context: any) => {
-            updateInteractivity(context.chart);
+            try {
+              if (context?.chart) {
+                updateInteractivity(context.chart);
+              }
+            } catch (error) {
+              console.error('Error in onPan:', error);
+            }
           }
         },
         limits: {
@@ -707,39 +735,57 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   };
 
   const handleResetZoom = () => {
-    const chart = chartRef.current;
-    if (chart) {
-      (chart as any).resetZoom();
-      chart.update('none');
-      updateInteractivity(chart);
+    try {
+      const chart = chartRef.current;
+      if (chart && (chart as any).resetZoom) {
+        (chart as any).resetZoom();
+        if (chart.update) {
+          chart.update('none');
+        }
+        updateInteractivity(chart);
+      }
+    } catch (error) {
+      console.error('Error resetting zoom:', error);
     }
     handleHapticFeedback();
   };
 
   const handleZoomOut = () => {
-    const chart = chartRef.current;
-    if (chart) {
-      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-      const newZoom = Math.max(1, zoomLevel - 0.5);
-      if (newZoom === 1) {
-        (chart as any).resetZoom();
-      } else {
-        (chart as any).zoom(newZoom / zoomLevel);
+    try {
+      const chart = chartRef.current;
+      if (chart) {
+        const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+        const newZoom = Math.max(1, zoomLevel - 0.5);
+        if (newZoom === 1 && (chart as any).resetZoom) {
+          (chart as any).resetZoom();
+        } else if ((chart as any).zoom) {
+          (chart as any).zoom(newZoom / zoomLevel);
+        }
+        if (chart.update) {
+          chart.update('none');
+        }
+        updateInteractivity(chart);
       }
-      chart.update('none');
-      updateInteractivity(chart);
+    } catch (error) {
+      console.error('Error zooming out:', error);
     }
     handleHapticFeedback();
   };
 
   const handleZoomIn = () => {
-    const chart = chartRef.current;
-    if (chart) {
-      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-      const newZoom = Math.min(10, zoomLevel + 0.3);
-      (chart as any).zoom(newZoom / zoomLevel);
-      chart.update('none');
-      updateInteractivity(chart);
+    try {
+      const chart = chartRef.current;
+      if (chart && (chart as any).zoom) {
+        const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+        const newZoom = Math.min(10, zoomLevel + 0.3);
+        (chart as any).zoom(newZoom / zoomLevel);
+        if (chart.update) {
+          chart.update('none');
+        }
+        updateInteractivity(chart);
+      }
+    } catch (error) {
+      console.error('Error zooming in:', error);
     }
     handleHapticFeedback();
   };
