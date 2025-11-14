@@ -69,7 +69,12 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
 
         <div className="space-y-3">
           {models.map((model) => {
-            const change24h = model.tonPrice24hAgo > 0 
+            // Skip models with null prices
+            if (!model.priceTon || model.priceTon === null) {
+              return null;
+            }
+            
+            const change24h = (model.tonPrice24hAgo && model.tonPrice24hAgo > 0) 
               ? ((model.priceTon - model.tonPrice24hAgo) / model.tonPrice24hAgo) * 100 
               : 0;
             const isPositive = change24h >= 0;
@@ -102,7 +107,7 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
                 <div className="text-right">
                   <div className="flex items-center gap-1 font-semibold text-foreground">
                     <TonIcon className="w-4 h-4" />
-                    {model.priceTon.toFixed(0)}
+                    {(model.priceTon || 0).toFixed(0)}
                   </div>
                   {change24h !== 0 && (
                     <div
