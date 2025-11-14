@@ -69,15 +69,23 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
 
         <div className="space-y-3">
           {models.map((model) => {
-            // Skip models with null prices
-            if (!model.priceTon || model.priceTon === null) {
-              return null;
-            }
-            
-            const change24h = (model.tonPrice24hAgo && model.tonPrice24hAgo > 0) 
-              ? ((model.priceTon - model.tonPrice24hAgo) / model.tonPrice24hAgo) * 100 
-              : 0;
-            const isPositive = change24h >= 0;
+            try {
+              // Log model data for debugging
+              console.log('Rendering model:', model.name, {
+                priceTon: model.priceTon,
+                tonPrice24hAgo: model.tonPrice24hAgo
+              });
+              
+              // Skip models with null prices
+              if (!model.priceTon || model.priceTon === null) {
+                console.log('Skipping model with null price:', model.name);
+                return null;
+              }
+              
+              const change24h = (model.tonPrice24hAgo && model.tonPrice24hAgo > 0) 
+                ? ((model.priceTon - model.tonPrice24hAgo) / model.tonPrice24hAgo) * 100 
+                : 0;
+              const isPositive = change24h >= 0;
             
             return (
               <div
@@ -127,6 +135,10 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
                 </div>
               </div>
             );
+            } catch (error) {
+              console.error('Error rendering model:', model.name, error);
+              return null;
+            }
           })}
         </div>
       </DialogContent>

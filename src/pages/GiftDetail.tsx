@@ -1010,7 +1010,13 @@ const GiftDetail = () => {
         {/* View Models Button */}
         <Button
           variant="outline"
-          onClick={() => setShowModels(true)}
+          onClick={() => {
+            console.log('Opening Models Dialog:', {
+              modelsCount: giftData?.models?.length,
+              models: giftData?.models
+            });
+            setShowModels(true);
+          }}
           className="w-full gap-2"
           disabled={!giftData?.models || giftData.models.length === 0}
         >
