@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePrefetchMarketData } from '@/hooks/useMarketData';
 import { usePrefetchBlackFloorData } from '@/hooks/useBlackFloorData';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Logo component as inline SVG
 const LogoIcon = () => (
@@ -24,104 +25,240 @@ interface AppLoaderProps {
 const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
   const prefetchMarketData = usePrefetchMarketData();
   const prefetchBlackFloorData = usePrefetchBlackFloorData();
+  const { isAuthenticated } = useAuth();
   
   const [progress, setProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [requestsComplete, setRequestsComplete] = useState(false);
+
+  const smoothFillProgress = useCallback(() => {
+    try {
+      const fillInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(fillInterval);
+            return 100;
+          }
+          const increment = Math.random() * 5 + 10;
+          return Math.min(prev + increment, 100);
+        });
+      }, Math.random() * 40 + 80);
+
+      return () => {
+        try {
+          clearInterval(fillInterval);
+        } catch (error) {
+          console.error('[AppLoader] Error clearing fill interval:', error);
+        }
+      };
+    } catch (error) {
+      console.error('[AppLoader] Error in smoothFillProgress:', error);
+      return () => {};
+    }
+  }, []);
 
   useEffect(() => {
-    const MAX_LOAD_TIME = 3000;
-    const startTime = Date.now();
-    let progressInterval: NodeJS.Timeout;
-    
-    const animateProgress = () => {
-      progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const targetProgress = Math.min((elapsed / MAX_LOAD_TIME) * 100, 99);
-        setProgress(Math.floor(targetProgress));
-      }, 50);
-    };
+    try {
+      console.log('[AppLoader] Component mounted');
+      
+      const loadData = async () => {
+        try {
+          await Promise.all([
+            prefetchMarketData(),
+            prefetchBlackFloorData()
+          ]);
+          console.log('[AppLoader] Data loaded successfully');
+          setRequestsComplete(true);
+        } catch (error) {
+          console.error('[AppLoader] Error loading data:', error);
+          setRequestsComplete(true);
+        }
+      };
 
-    const loadData = async () => {
-      try {
-        animateProgress();
-        
-        const dataPromise = Promise.all([
-          prefetchMarketData(),
-          prefetchBlackFloorData()
-        ]);
-        
-        const timeoutPromise = new Promise(resolve => 
-          setTimeout(resolve, 2500)
-        );
-        
-        await Promise.race([dataPromise, timeoutPromise]);
-        
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(200, MAX_LOAD_TIME - elapsed);
-        await new Promise(resolve => setTimeout(resolve, remaining));
-        
-        clearInterval(progressInterval);
-        setProgress(100);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        onComplete();
-        
-      } catch (error) {
-        console.error('Error during loading:', error);
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, MAX_LOAD_TIME - elapsed);
-        
-        setTimeout(() => {
+      loadData();
+
+      const progressInterval = setInterval(() => {
+        try {
+          setProgress(prev => {
+            if (prev >= 70) return prev;
+            return prev + Math.random() * 3 + 2;
+          });
+        } catch (error) {
+          console.error('[AppLoader] Error updating progress:', error);
+        }
+      }, 100);
+
+      const maxTimeout = setTimeout(() => {
+        try {
+          console.log('[AppLoader] Max timeout reached (5s)');
+          setRequestsComplete(true);
+        } catch (error) {
+          console.error('[AppLoader] Error in maxTimeout:', error);
+        }
+      }, 5000);
+
+      return () => {
+        try {
           clearInterval(progressInterval);
-          setProgress(100);
-          setTimeout(() => onComplete(), 200);
-        }, remaining);
-      }
-    };
+          clearTimeout(maxTimeout);
+        } catch (error) {
+          console.error('[AppLoader] Error in cleanup:', error);
+        }
+      };
+    } catch (error) {
+      console.error('[AppLoader] Critical error in useEffect:', error);
+      setRequestsComplete(true);
+    }
+  }, [prefetchMarketData, prefetchBlackFloorData]);
 
-    loadData();
-    
-    return () => {
-      if (progressInterval) clearInterval(progressInterval);
-    };
-  }, [onComplete, prefetchMarketData, prefetchBlackFloorData]);
+  useEffect(() => {
+    try {
+      if (requestsComplete && progress < 100) {
+        console.log('[AppLoader] Requests complete, filling progress');
+        const cleanup = smoothFillProgress();
+        return cleanup;
+      }
+    } catch (error) {
+      console.error('[AppLoader] Error in requestsComplete effect:', error);
+    }
+  }, [requestsComplete, progress, smoothFillProgress]);
+
+  useEffect(() => {
+    try {
+      if (progress >= 100 && isAuthenticated) {
+        console.log('[AppLoader] Progress complete and authenticated, hiding loader');
+        
+        const hideTimeout = setTimeout(() => {
+          try {
+            setIsVisible(false);
+            setTimeout(() => {
+              try {
+                onComplete();
+              } catch (error) {
+                console.error('[AppLoader] Error calling onComplete:', error);
+              }
+            }, 350);
+          } catch (error) {
+            console.error('[AppLoader] Error hiding loader:', error);
+          }
+        }, 300);
+
+        return () => {
+          try {
+            clearTimeout(hideTimeout);
+          } catch (error) {
+            console.error('[AppLoader] Error clearing hideTimeout:', error);
+          }
+        };
+      }
+    } catch (error) {
+      console.error('[AppLoader] Critical error in completion effect:', error);
+      onComplete();
+    }
+  }, [progress, isAuthenticated, onComplete]);
+
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-center items-center bg-background">
-      <div className="w-1/2 lg:w-5/6 max-w-96 rounded-xl">
-        <div className="w-full flex flex-col items-center justify-center mb-5">
-          <div className="p-5 rounded-full">
-            <div className="animate-pulse">
-              <LogoIcon />
-            </div>
-          </div>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--background)',
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '0 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '48px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '24px',
+          }}
+        >
+          <img
+            src="/splash-logo.svg"
+            alt="Logo"
+            style={{
+              width: '120px',
+              height: '120px',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }}
+            onError={(e) => {
+              try {
+                console.error('[AppLoader] Error loading logo');
+                e.currentTarget.style.display = 'none';
+              } catch (error) {
+                console.error('[AppLoader] Error in onError handler:', error);
+              }
+            }}
+          />
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: 700,
+              textAlign: 'center',
+              background: 'linear-gradient(to right, var(--primary), var(--primary))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            Nova Calculator
+          </h1>
         </div>
 
-        <div role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
-          <div style={{ 
-            height: '5px', 
-            background: '#e5e7eb', 
-            borderRadius: '50px', 
-            width: '100%', 
-            overflow: 'hidden' 
-          }}>
-            <div 
-              style={{ 
-                height: '5px', 
-                width: `${progress}%`, 
-                background: 'linear-gradient(90deg, #2196F3 0%, #21CBF3 100%)', 
-                transition: 'width 0.3s ease-out', 
-                borderRadius: 'inherit' 
-              }}
-            >
-              <span style={{ display: 'none' }}>{progress}%</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Progress Text */}
-        <div className="text-center mt-3">
-          <span className="text-sm font-medium" style={{ color: '#2196F3' }}>{progress}%</span>
+        <div
+          style={{
+            width: '100%',
+            height: '12px',
+            background: 'var(--secondary)',
+            borderRadius: '50px',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${progress}%`,
+              background: 'var(--primary)',
+              transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderRadius: 'inherit',
+            }}
+          />
         </div>
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
+        }
+      `}</style>
     </div>
   );
 };
