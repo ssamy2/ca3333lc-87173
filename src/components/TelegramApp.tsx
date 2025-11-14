@@ -96,6 +96,7 @@ const TelegramApp: React.FC = () => {
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
   const [hasSkippedSubscribe, setHasSkippedSubscribe] = useState(false);
+  const [showSubscribePopup, setShowSubscribePopup] = useState(false);
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
   
@@ -149,6 +150,17 @@ const TelegramApp: React.FC = () => {
       setSearchHistory(JSON.parse(history));
     }
   }, []);
+
+  // Show subscription popup after authentication (optional)
+  useEffect(() => {
+    if (isAuthenticated && !isSubscribed && !hasSkippedSubscribe) {
+      // Show popup after a short delay to let the main app load
+      const timer = setTimeout(() => {
+        setShowSubscribePopup(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, isSubscribed, hasSkippedSubscribe]);
 
   // Countdown timer
   useEffect(() => {
@@ -424,11 +436,8 @@ const TelegramApp: React.FC = () => {
     return <AppLoader onComplete={() => {}} />;
   }
 
-  if (!isAuthenticated || (!isSubscribed && !hasSkippedSubscribe)) {
-    return <SubscribePrompt 
-      onCheckAgain={checkSubscription} 
-      onSkip={() => setHasSkippedSubscribe(true)}
-    />;
+  if (!isAuthenticated) {
+    return <AppLoader onComplete={() => {}} />;
   }
 
   return (
@@ -787,6 +796,15 @@ const TelegramApp: React.FC = () => {
       </div>
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      {/* Optional Subscription Popup */}
+      <SubscribePrompt 
+        isOpen={showSubscribePopup}
+        onClose={() => {
+          setShowSubscribePopup(false);
+          setHasSkippedSubscribe(true);
+        }}
+      />
     </div>
   );
 };
