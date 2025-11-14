@@ -92,9 +92,13 @@ const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string,
 
 const updateInteractivity = (chart: ChartJS) => {
   try {
-    if (!chart || !chart.options) return;
+    if (!chart || !chart.options) {
+      console.warn('[updateInteractivity] Chart or options is null');
+      return;
+    }
     
     const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+    console.log('[updateInteractivity] Zoom level:', zoomLevel);
     
     // Safely update pan enabled state
     if (chart.options.plugins?.zoom?.pan) {
@@ -102,22 +106,41 @@ const updateInteractivity = (chart: ChartJS) => {
     }
     
     // Update events
-    (chart.options as any).events = zoomLevel > 1 
-      ? ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'] 
-      : [];
+    try {
+      (chart.options as any).events = zoomLevel > 1 
+        ? ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'] 
+        : [];
+    } catch (error) {
+      console.error('[updateInteractivity] Error updating events:', error);
+    }
     
     // Update cursor style
-    const canvas = chart.canvas;
-    if (canvas) {
-      canvas.style.cursor = zoomLevel > 1 ? 'pointer' : 'default';
+    try {
+      const canvas = chart.canvas;
+      if (canvas) {
+        canvas.style.cursor = zoomLevel > 1 ? 'pointer' : 'default';
+      }
+    } catch (error) {
+      console.error('[updateInteractivity] Error updating cursor:', error);
     }
     
-    // Update chart safely
-    if (chart.update) {
-      chart.update('none');
+    // Update chart safely - with extra protection
+    try {
+      if (chart.update && typeof chart.update === 'function') {
+        // Check if chart is in a valid state
+        if (chart.data && chart.options) {
+          chart.update('none');
+        } else {
+          console.warn('[updateInteractivity] Chart not in valid state for update');
+        }
+      }
+    } catch (error) {
+      console.error('[updateInteractivity] Error calling chart.update:', error);
+      // Don't throw - just log
     }
   } catch (error) {
-    console.error('Error updating interactivity:', error);
+    console.error('[updateInteractivity] Critical error:', error);
+    // Don't throw - absorb the error
   }
 };
 
@@ -646,42 +669,57 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   }), [downloadImage]);
 
   useEffect(() => {
-    const filteredData = data.filter(item => !item.preSale);
-    const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
-    
-    // Always display data immediately - don't wait for images
-    setDisplayData(transformed);
-    
-    // Check if all images are already cached
-    const allImagesCached = transformed.every(item => {
-      const cached = imageCache.getImageFromCache(item.imageName);
-      return cached !== null;
-    });
-    
-    if (allImagesCached) {
-      // All images are cached, no loading needed
-      setIsLoading(false);
-    } else {
-      // Some images need loading - show chart but indicate loading
-      setIsLoading(true);
+    try {
+      console.log('[Treemap] useEffect triggered - chartType:', chartType, 'timeGap:', timeGap, 'currency:', currency);
       
-      // Preload uncached images in background
-      const imageUrls = transformed.map(item => item.imageName);
-      imageCache.preloadUncachedImages(imageUrls).then(() => {
-        setIsLoading(false);
-        // Force chart update to show loaded images
+      const filteredData = data.filter(item => !item.preSale);
+      const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
+      
+      console.log('[Treemap] Transformed data count:', transformed.length);
+      
+      // Always display data immediately - don't wait for images
+      setDisplayData(transformed);
+      
+      // Check if all images are already cached
+      const allImagesCached = transformed.every(item => {
         try {
-          const chart = chartRef.current;
-          if (chart && typeof chart.update === 'function') {
-            chart.update('none');
-          }
+          const cached = imageCache.getImageFromCache(item.imageName);
+          return cached !== null;
         } catch (error) {
-          console.error('Error updating chart after image load:', error);
+          console.error('[Treemap] Error checking cache for:', item.imageName, error);
+          return false;
         }
-      }).catch((error) => {
-        console.error('Error preloading images:', error);
-        setIsLoading(false);
       });
+      
+      console.log('[Treemap] All images cached:', allImagesCached);
+      
+      if (allImagesCached) {
+        // All images are cached, no loading needed
+        setIsLoading(false);
+      } else {
+        // Some images need loading - show chart but indicate loading
+        setIsLoading(true);
+        
+        // Preload uncached images in background
+        const imageUrls = transformed.map(item => item.imageName);
+        
+        imageCache.preloadUncachedImages(imageUrls)
+          .then(() => {
+            console.log('[Treemap] Images preloaded successfully');
+            setIsLoading(false);
+            
+            // DON'T update chart immediately - let React re-render naturally
+            // chart.update() causes the crash when switching modes
+          })
+          .catch((error) => {
+            console.error('[Treemap] Error preloading images:', error);
+            setIsLoading(false);
+          });
+      }
+    } catch (error) {
+      console.error('[Treemap] Critical error in useEffect:', error);
+      setIsLoading(false);
+      // Don't crash - just log and continue
     }
   }, [data, chartType, timeGap, currency]);
 
@@ -745,58 +783,136 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   const handleResetZoom = () => {
     try {
+      console.log('[handleResetZoom] Starting reset');
       const chart = chartRef.current;
-      if (chart && (chart as any).resetZoom) {
-        (chart as any).resetZoom();
-        if (chart.update) {
-          chart.update('none');
+      
+      if (!chart) {
+        console.warn('[handleResetZoom] Chart ref is null');
+        return;
+      }
+      
+      if ((chart as any).resetZoom && typeof (chart as any).resetZoom === 'function') {
+        try {
+          (chart as any).resetZoom();
+          console.log('[handleResetZoom] Reset zoom successful');
+        } catch (resetError) {
+          console.error('[handleResetZoom] Error in resetZoom():', resetError);
         }
-        updateInteractivity(chart);
+        
+        // Don't call chart.update() immediately - causes crashes
+        // Let React handle the re-render
+        
+        try {
+          updateInteractivity(chart);
+        } catch (updateError) {
+          console.error('[handleResetZoom] Error in updateInteractivity:', updateError);
+        }
+      } else {
+        console.warn('[handleResetZoom] resetZoom function not available');
       }
     } catch (error) {
-      console.error('Error resetting zoom:', error);
+      console.error('[handleResetZoom] Critical error:', error);
+    } finally {
+      try {
+        handleHapticFeedback();
+      } catch (error) {
+        console.error('[handleResetZoom] Error in haptic feedback:', error);
+      }
     }
-    handleHapticFeedback();
   };
 
   const handleZoomOut = () => {
     try {
+      console.log('[handleZoomOut] Starting zoom out');
       const chart = chartRef.current;
-      if (chart) {
+      
+      if (!chart) {
+        console.warn('[handleZoomOut] Chart ref is null');
+        return;
+      }
+      
+      try {
         const zoomLevel = (chart as any).getZoomLevel?.() || 1;
         const newZoom = Math.max(1, zoomLevel - 0.5);
-        if (newZoom === 1 && (chart as any).resetZoom) {
-          (chart as any).resetZoom();
-        } else if ((chart as any).zoom) {
-          (chart as any).zoom(newZoom / zoomLevel);
+        
+        console.log('[handleZoomOut] Current zoom:', zoomLevel, 'New zoom:', newZoom);
+        
+        if (newZoom === 1 && (chart as any).resetZoom && typeof (chart as any).resetZoom === 'function') {
+          try {
+            (chart as any).resetZoom();
+          } catch (resetError) {
+            console.error('[handleZoomOut] Error in resetZoom:', resetError);
+          }
+        } else if ((chart as any).zoom && typeof (chart as any).zoom === 'function') {
+          try {
+            (chart as any).zoom(newZoom / zoomLevel);
+          } catch (zoomError) {
+            console.error('[handleZoomOut] Error in zoom:', zoomError);
+          }
         }
-        if (chart.update) {
-          chart.update('none');
+        
+        // Don't call chart.update() - causes crashes
+        
+        try {
+          updateInteractivity(chart);
+        } catch (updateError) {
+          console.error('[handleZoomOut] Error in updateInteractivity:', updateError);
         }
-        updateInteractivity(chart);
+      } catch (error) {
+        console.error('[handleZoomOut] Error in zoom logic:', error);
       }
     } catch (error) {
-      console.error('Error zooming out:', error);
+      console.error('[handleZoomOut] Critical error:', error);
+    } finally {
+      try {
+        handleHapticFeedback();
+      } catch (error) {
+        console.error('[handleZoomOut] Error in haptic feedback:', error);
+      }
     }
-    handleHapticFeedback();
   };
 
   const handleZoomIn = () => {
     try {
+      console.log('[handleZoomIn] Starting zoom in');
       const chart = chartRef.current;
-      if (chart && (chart as any).zoom) {
-        const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-        const newZoom = Math.min(10, zoomLevel + 0.3);
-        (chart as any).zoom(newZoom / zoomLevel);
-        if (chart.update) {
-          chart.update('none');
+      
+      if (!chart) {
+        console.warn('[handleZoomIn] Chart ref is null');
+        return;
+      }
+      
+      if ((chart as any).zoom && typeof (chart as any).zoom === 'function') {
+        try {
+          const zoomLevel = (chart as any).getZoomLevel?.() || 1;
+          const newZoom = Math.min(10, zoomLevel + 0.3);
+          
+          console.log('[handleZoomIn] Current zoom:', zoomLevel, 'New zoom:', newZoom);
+          
+          (chart as any).zoom(newZoom / zoomLevel);
+        } catch (zoomError) {
+          console.error('[handleZoomIn] Error in zoom:', zoomError);
         }
-        updateInteractivity(chart);
+        
+        // Don't call chart.update() - causes crashes
+        
+        try {
+          updateInteractivity(chart);
+        } catch (updateError) {
+          console.error('[handleZoomIn] Error in updateInteractivity:', updateError);
+        }
+      } else {
+        console.warn('[handleZoomIn] zoom function not available');
       }
     } catch (error) {
-      console.error('Error zooming in:', error);
+      console.error('[handleZoomIn] Critical error:', error);
+    } finally {
+      try {
+        handleHapticFeedback();
+      } catch (error) {
+        console.error('[handleZoomIn] Error in haptic feedback:', error);
+      }
     }
-    handleHapticFeedback();
   };
 
   return (
