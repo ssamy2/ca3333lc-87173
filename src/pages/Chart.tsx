@@ -641,7 +641,7 @@ const Chart = () => {
                   <Card
                     className={`p-2 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
-                    <div className="w-full flex-1 flex items-center justify-center min-h-0">
+                    <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-2">
                       <GiftImage
                         imageUrl={data.image_url}
                         name={name}
@@ -651,7 +651,7 @@ const Chart = () => {
                         style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
                       />
                     </div>
-                    <div className="w-full flex flex-col items-center gap-1">
+                    <div className="w-full flex flex-col items-center gap-1 mt-1">
                       <div className="flex items-center gap-1 justify-center">
                         <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
                         <span 

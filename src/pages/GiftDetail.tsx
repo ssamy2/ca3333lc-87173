@@ -368,40 +368,46 @@ const GiftDetail = () => {
   };
 
   const calculatePriceChange = () => {
-    // If Black mode is selected, calculate from black floor data based on time range
-    if (dataSource === 'black' && blackFloorData.length > 0) {
-      const latestRecord = blackFloorData[0]; // Already sorted by recorded_at descending
-      
-      if (timeRange === '24h' && latestRecord.change_24h_percent !== undefined) {
-        return latestRecord.change_24h_percent;
-      } else if (timeRange === '1w' && latestRecord.change_1w_percent !== undefined) {
-        return latestRecord.change_1w_percent;
-      } else if (timeRange === '1m' && latestRecord.change_1m_percent !== undefined) {
-        return latestRecord.change_1m_percent;
+    try {
+      // If Black mode is selected, calculate from black floor data based on time range
+      if (dataSource === 'black' && blackFloorData.length > 0) {
+        const latestRecord = blackFloorData[0]; // Already sorted by recorded_at descending
+        
+        if (timeRange === '24h' && latestRecord.change_24h_percent !== undefined && latestRecord.change_24h_percent !== null) {
+          return latestRecord.change_24h_percent;
+        } else if (timeRange === '1w' && latestRecord.change_1w_percent !== undefined && latestRecord.change_1w_percent !== null) {
+          return latestRecord.change_1w_percent;
+        } else if (timeRange === '1m' && latestRecord.change_1m_percent !== undefined && latestRecord.change_1m_percent !== null) {
+          return latestRecord.change_1m_percent;
+        }
+        
+        // Fallback: calculate from chart data
+        const chartData = getChartData();
+        if (chartData && chartData.length > 1) {
+          const firstPrice = chartData[0]?.price;
+          const lastPrice = chartData[chartData.length - 1]?.price;
+          if (firstPrice && lastPrice && firstPrice !== 0) {
+            return ((lastPrice - firstPrice) / firstPrice) * 100;
+          }
+        }
+        return 0;
       }
       
-      // Fallback: calculate from chart data
+      // Market data (original logic)
       const chartData = getChartData();
-      if (chartData.length > 0) {
-        const firstPrice = chartData[0].price;
-        const lastPrice = chartData[chartData.length - 1].price;
-        if (firstPrice === 0) return 0;
-        return ((lastPrice - firstPrice) / firstPrice) * 100;
-      }
+      
+      if (!chartData || chartData.length === 0) return 0;
+      
+      // Use first and last prices from the current chart view
+      const firstPrice = chartData[0]?.price;
+      const lastPrice = chartData[chartData.length - 1]?.price;
+      
+      if (!firstPrice || !lastPrice || firstPrice === 0) return 0;
+      return ((lastPrice - firstPrice) / firstPrice) * 100;
+    } catch (error) {
+      console.error('Error calculating price change:', error);
       return 0;
     }
-    
-    // Market data (original logic)
-    const chartData = getChartData();
-    
-    if (!chartData || chartData.length === 0) return 0;
-    
-    // Use first and last prices from the current chart view
-    const firstPrice = chartData[0].price;
-    const lastPrice = chartData[chartData.length - 1].price;
-    
-    if (firstPrice === 0) return 0;
-    return ((lastPrice - firstPrice) / firstPrice) * 100;
   };
 
 
@@ -581,7 +587,7 @@ const GiftDetail = () => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   const change = data.close - data.open;
-                  const changePercent = ((change / data.open) * 100).toFixed(2);
+                  const changePercent = data.open ? ((change / data.open) * 100).toFixed(2) : '0.00';
                   const isPositive = change >= 0;
                   
                   return (
@@ -590,19 +596,19 @@ const GiftDetail = () => {
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">O:</span>
-                          <span className="font-mono">{data.open?.toFixed(2)}</span>
+                          <span className="font-mono">{data.open?.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">H:</span>
-                          <span className="font-mono text-green-400">{data.high?.toFixed(2)}</span>
+                          <span className="font-mono text-green-400">{data.high?.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">L:</span>
-                          <span className="font-mono text-red-400">{data.low?.toFixed(2)}</span>
+                          <span className="font-mono text-red-400">{data.low?.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">C:</span>
-                          <span className="font-mono font-bold">{data.close?.toFixed(2)}</span>
+                          <span className="font-mono font-bold">{data.close?.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className={`flex justify-between gap-4 pt-1 border-t border-white/10 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                           <span>Change:</span>
@@ -771,7 +777,7 @@ const GiftDetail = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground mb-0.5">{giftData.info.name}</h1>
-                <p className="text-sm text-muted-foreground">{(giftData.info.supply / 1000).toFixed(1)}K</p>
+                <p className="text-sm text-muted-foreground">{giftData.info.supply ? (giftData.info.supply / 1000).toFixed(1) : '0.0'}K</p>
               </div>
             </div>
 
@@ -782,22 +788,22 @@ const GiftDetail = () => {
                   // Show black floor price
                   <>
                     <TonIcon className="w-5 h-5" />
-                    {blackFloorData[0].black_price.toFixed(2)}
+                    {blackFloorData[0].black_price?.toFixed(2) || '0.00'}
                   </>
                 ) : (
                   // Show market price
                   currency === 'ton' ? (
                     <>
                       <TonIcon className="w-5 h-5" />
-                      {giftData.info.priceTon.toFixed(2)}
+                      {giftData.info.priceTon?.toFixed(2) || '0.00'}
                     </>
                   ) : (
-                    <>$ {giftData.info.priceUsd.toFixed(2)}</>
+                    <>$ {giftData.info.priceUsd?.toFixed(2) || '0.00'}</>
                   )
                 )}
               </div>
               <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+                {isPositive ? '+' : ''}{priceChange?.toFixed(2) || '0.00'}%
               </div>
             </div>
           </div>
@@ -1023,7 +1029,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_24h_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_24h_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_24h_percent!.toFixed(2)}%
+                    {blackFloorData[0].change_24h_percent?.toFixed(2) || '0.00'}%
                   </span>
                 </div>
               )}
@@ -1035,7 +1041,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1w_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1w_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1w_percent!.toFixed(2)}%
+                    {blackFloorData[0].change_1w_percent?.toFixed(2) || '0.00'}%
                   </span>
                 </div>
               )}
@@ -1047,7 +1053,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1m_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1m_percent!.toFixed(2)}%
+                    {blackFloorData[0].change_1m_percent?.toFixed(2) || '0.00'}%
                   </span>
                 </div>
               )}
@@ -1059,7 +1065,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_3m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_3m_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_3m_percent!.toFixed(2)}%
+                    {blackFloorData[0].change_3m_percent?.toFixed(2) || '0.00'}%
                   </span>
                 </div>
               )}
@@ -1071,7 +1077,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1y_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1y_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1y_percent!.toFixed(2)}%
+                    {blackFloorData[0].change_1y_percent?.toFixed(2) || '0.00'}%
                   </span>
                 </div>
               )}

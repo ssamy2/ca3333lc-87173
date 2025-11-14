@@ -762,7 +762,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         </div>
 
         {/* Chart */}
-        <div className="w-full min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
+        <div className="w-full h-[calc(100vh-200px)] min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
           <Chart
             ref={chartRef}
             type="treemap"

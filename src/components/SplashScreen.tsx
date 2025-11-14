@@ -70,27 +70,20 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
           {/* Progress Bar */}
           <div className="space-y-3">
-            <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              />
-              
-              {/* Shimmer effect */}
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{
-                  x: ['-100%', '200%'],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-                style={{ width: '50%' }}
-              />
+            <div role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
+              <div style={{ height: '5px', background: 'var(--secondary)', borderRadius: '50px', width: '100%', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    height: '5px', 
+                    width: `${progress}%`, 
+                    background: 'var(--primary)', 
+                    transition: 'width 0.5s ease-in-out', 
+                    borderRadius: 'inherit' 
+                  }}
+                >
+                  <span style={{ display: 'none' }}>{progress}%</span>
+                </div>
+              </div>
             </div>
 
             {/* Status Text */}
