@@ -536,6 +536,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             data: [],
             tree: transformedData,
             key: 'size',
+            spacing: 0.5,
+            borderWidth: 1,
             imageMap,
             backgroundColor: 'transparent'
           } as any]
@@ -544,6 +546,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           responsive: false,
           maintainAspectRatio: false,
           animation: false,
+          layout: {
+            padding: 0
+          },
           plugins: {
             legend: { display: false },
             tooltip: { enabled: false }
@@ -645,6 +650,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       data: [],
       tree: displayData,
       key: 'size',
+      spacing: 0.5,
+      borderWidth: 1,
       imageMap: preloadImages(displayData),
       backgroundColor: 'transparent'
     } as any]
@@ -653,6 +660,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartOptions: ChartOptions<'treemap'> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: 0
+    },
     plugins: {
       legend: { display: false },
       tooltip: { enabled: false },
