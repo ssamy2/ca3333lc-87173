@@ -338,30 +338,9 @@ const createImagePlugin = (
         ctx.stroke();
         ctx.closePath();
 
-        // Check if element is too small to draw content
+        // Always draw content - no minimum size check
+        // Even tiny elements will show info for zoom
         const minDimension = Math.min(width, height);
-        // Use scale-adjusted threshold for better small element rendering
-        if (!shouldDrawText(width, height, 25, scale)) {
-          // For very small elements, show minimal info instead of just a dot
-          if (minDimension > 8 * scale) {
-            // Draw a small colored square with initial letter
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = `bold ${Math.max(8, minDimension * 0.4)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Draw first letter of name if space allows
-            if (minDimension > 15 * scale) {
-              ctx.fillText(item.name.charAt(0), x + width/2, y + height/2);
-            } else {
-              // Just a dot for very tiny elements
-              ctx.beginPath();
-              ctx.arc(x + width/2, y + height/2, Math.min(3 * scale, minDimension/6), 0, 2 * Math.PI);
-              ctx.fill();
-            }
-          }
-          return;
-        }
 
         const image = imageMap.get(item.imageName);
         if (!image?.complete || image.naturalWidth === 0) return;
@@ -526,14 +505,23 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     }
   }, []);
 
+  const [isDownloading, setIsDownloading] = React.useState(false);
+
   const downloadImage = useCallback(async () => {
+    // Prevent multiple simultaneous downloads
+    if (isDownloading) {
+      console.log('Download already in progress');
+      return;
+    }
+    
     try {
+      setIsDownloading(true);
       handleHapticFeedback();
       
       const telegramWebApp = (window as any).Telegram?.WebApp;
       const isTelegram = !!telegramWebApp;
       
-      // Show dialog immediately for Telegram users
+      // Show dialog for Telegram users
       if (isTelegram) {
         setShowSendDialog(true);
       }
@@ -541,13 +529,14 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const chart = chartRef.current;
       if (!chart) {
         console.error('Chart reference not found');
+        setIsDownloading(false);
         return;
       }
 
-      // Create high-resolution canvas for export (2x for balanced quality/size)
+      // Create high-resolution canvas for export (2.5x for better quality)
       const canvas = document.createElement('canvas');
-      canvas.width = 1628;  // 814 * 2
-      canvas.height = 1500; // 750 * 2
+      canvas.width = 2035;  // 814 * 2.5
+      canvas.height = 1875; // 750 * 2.5
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Failed to get canvas context');
@@ -584,7 +573,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             tooltip: { enabled: false }
           }
         },
-        plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
+        plugins: [createImagePlugin(chartType, currency, 125, 2.5, 2.5, 2.5)]  // 2.5x scale for export
       });
 
       // Wait for chart to render then process
@@ -637,8 +626,14 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       }, 100); // Increased timeout for better rendering
     } catch (error) {
       console.error('Error in downloadImage:', error);
+      setIsDownloading(false);
+    } finally {
+      // Reset downloading state after a delay to allow completion
+      setTimeout(() => {
+        setIsDownloading(false);
+      }, 2000);
     }
-  }, [data, chartType, timeGap, currency, language, handleHapticFeedback]);
+  }, [data, chartType, timeGap, currency, language, handleHapticFeedback, isDownloading]);
 
   // Expose downloadImage to parent components
   React.useImperativeHandle(ref, () => ({
@@ -670,9 +665,13 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       imageCache.preloadUncachedImages(imageUrls).then(() => {
         setIsLoading(false);
         // Force chart update to show loaded images
-        const chart = chartRef.current;
-        if (chart && chart.update) {
-          chart.update('none');
+        try {
+          const chart = chartRef.current;
+          if (chart && typeof chart.update === 'function') {
+            chart.update('none');
+          }
+        } catch (error) {
+          console.error('Error updating chart after image load:', error);
         }
       }).catch((error) => {
         console.error('Error preloading images:', error);

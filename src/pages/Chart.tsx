@@ -372,17 +372,6 @@ const Chart = () => {
         }
       }} />
       <div className={`p-4 space-y-4 ${dataSource === 'black' ? 'font-inter' : ''}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className={`text-2xl font-bold ${dataSource === 'black' ? 'text-[#C9A14B]' : 'text-foreground'}`}>
-            {dataSource === 'black' ? t('blackGifts') : t('marketCharts')}
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className={`text-sm font-medium ${dataSource === 'black' ? 'text-white/70' : 'text-muted-foreground'}`}>{t('live')}</span>
-          </div>
-        </div>
-
         {/* View Mode Toggle - Circular Buttons */}
         <div className="flex gap-3 justify-center">
           <Button
