@@ -146,16 +146,16 @@ const GiftDetail = () => {
       const sortedData = data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
       // Transform to BlackFloorItem format
-      const transformedData: BlackFloorItem[] = sortedData.map(item => ({
+      const transformedData: BlackFloorItem[] = data.map((item: any) => ({
         gift_name: giftName,
         short_name: giftName.toLowerCase().replace(/\s+/g, ''),
-        black_price: item.price_ton,
+        black_price: item.price_ton || 0,
         recorded_at: item.timestamp,
       }));
       
       // Calculate percentage changes if we have enough data
       if (transformedData.length > 0) {
-        const latestPrice = transformedData[0].black_price;
+        const latestPrice = transformedData[0].black_price || 0;
         const currentTime = new Date(transformedData[0].recorded_at).getTime();
         
         const available_periods: string[] = [];
@@ -172,7 +172,7 @@ const GiftDetail = () => {
         
         // Helper to calculate change
         const calculateChange = (oldPrice: number) => {
-          if (oldPrice > 0) {
+          if (oldPrice && oldPrice > 0 && latestPrice && latestPrice > 0) {
             return ((latestPrice - oldPrice) / oldPrice) * 100;
           }
           return 0;
@@ -181,7 +181,7 @@ const GiftDetail = () => {
         // Calculate 24h change
         const dayAgo = currentTime - 24 * 60 * 60 * 1000;
         const record24h = findClosestRecord(dayAgo);
-        if (record24h && new Date(record24h.recorded_at).getTime() <= dayAgo) {
+        if (record24h && new Date(record24h.recorded_at).getTime() <= dayAgo && record24h.black_price) {
           transformedData[0].change_24h_percent = calculateChange(record24h.black_price);
           available_periods.push('24h');
         }
@@ -189,7 +189,7 @@ const GiftDetail = () => {
         // Calculate 1w change
         const weekAgo = currentTime - 7 * 24 * 60 * 60 * 1000;
         const record1w = findClosestRecord(weekAgo);
-        if (record1w && new Date(record1w.recorded_at).getTime() <= weekAgo) {
+        if (record1w && new Date(record1w.recorded_at).getTime() <= weekAgo && record1w.black_price) {
           transformedData[0].change_1w_percent = calculateChange(record1w.black_price);
           available_periods.push('1w');
         }
@@ -197,7 +197,7 @@ const GiftDetail = () => {
         // Calculate 1m change
         const monthAgo = currentTime - 30 * 24 * 60 * 60 * 1000;
         const record1m = findClosestRecord(monthAgo);
-        if (record1m && new Date(record1m.recorded_at).getTime() <= monthAgo) {
+        if (record1m && new Date(record1m.recorded_at).getTime() <= monthAgo && record1m.black_price) {
           transformedData[0].change_1m_percent = calculateChange(record1m.black_price);
           available_periods.push('1m');
         }
@@ -205,7 +205,7 @@ const GiftDetail = () => {
         // Calculate 3m change
         const threeMonthsAgo = currentTime - 90 * 24 * 60 * 60 * 1000;
         const record3m = findClosestRecord(threeMonthsAgo);
-        if (record3m && new Date(record3m.recorded_at).getTime() <= threeMonthsAgo) {
+        if (record3m && new Date(record3m.recorded_at).getTime() <= threeMonthsAgo && record3m.black_price) {
           transformedData[0].change_3m_percent = calculateChange(record3m.black_price);
           available_periods.push('3m');
         }
@@ -272,60 +272,60 @@ const GiftDetail = () => {
         // Last 48 entries (24 hours with half-hour intervals)
         const recentData = giftData.week_chart.slice(-48);
         return recentData.map((item, index, arr) => {
-          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
-          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
-          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          const price = currency === 'ton' ? (item.priceTon || 0) : (item.priceUsd || 0);
+          const prevPrice = index > 0 ? (currency === 'ton' ? (arr[index - 1].priceTon || 0) : (arr[index - 1].priceUsd || 0)) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? (arr[index + 1].priceTon || 0) : (arr[index + 1].priceUsd || 0)) : price;
           
           return {
-            date: item.date,
-            priceTon: item.priceTon,
-            priceUsd: item.priceUsd,
+            date: item.date || '',
+            priceTon: item.priceTon || 0,
+            priceUsd: item.priceUsd || 0,
             price: price,
             open: prevPrice,
             high: Math.max(price, prevPrice, nextPrice),
             low: Math.min(price, prevPrice, nextPrice),
             close: price,
-            label: item.time,
+            label: item.time || '',
           };
         });
       } else if (timeRange === '3d') {
         // Last 144 entries (3 days × 48 readings per day)
         const recentData = giftData.week_chart.slice(-144);
         return recentData.map((item, index, arr) => {
-          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
-          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
-          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          const price = currency === 'ton' ? (item.priceTon || 0) : (item.priceUsd || 0);
+          const prevPrice = index > 0 ? (currency === 'ton' ? (arr[index - 1].priceTon || 0) : (arr[index - 1].priceUsd || 0)) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? (arr[index + 1].priceTon || 0) : (arr[index + 1].priceUsd || 0)) : price;
           
           return {
-            date: item.date,
-            priceTon: item.priceTon,
-            priceUsd: item.priceUsd,
+            date: item.date || '',
+            priceTon: item.priceTon || 0,
+            priceUsd: item.priceUsd || 0,
             price: price,
             open: prevPrice,
             high: Math.max(price, prevPrice, nextPrice),
             low: Math.min(price, prevPrice, nextPrice),
             close: price,
-            label: item.time,
+            label: item.time || '',
           };
         });
       } else if (timeRange === '1w') {
         // Last 336 entries (7 days × 48 readings per day)
         const recentData = giftData.week_chart.slice(-336);
         return recentData.map((item, index, arr) => {
-          const price = currency === 'ton' ? item.priceTon : item.priceUsd;
-          const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
-          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+          const price = currency === 'ton' ? (item.priceTon || 0) : (item.priceUsd || 0);
+          const prevPrice = index > 0 ? (currency === 'ton' ? (arr[index - 1].priceTon || 0) : (arr[index - 1].priceUsd || 0)) : price;
+          const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? (arr[index + 1].priceTon || 0) : (arr[index + 1].priceUsd || 0)) : price;
           
           return {
-            date: item.date,
-            priceTon: item.priceTon,
-            priceUsd: item.priceUsd,
+            date: item.date || '',
+            priceTon: item.priceTon || 0,
+            priceUsd: item.priceUsd || 0,
             price: price,
             open: prevPrice,
             high: Math.max(price, prevPrice, nextPrice),
             low: Math.min(price, prevPrice, nextPrice),
             close: price,
-            label: item.time,
+            label: item.time || '',
           };
         });
       }
@@ -351,18 +351,20 @@ const GiftDetail = () => {
     }
     
     return data.map((item, index, arr) => {
-      const price = currency === 'ton' ? item.priceTon : item.priceUsd;
-      const prevPrice = index > 0 ? (currency === 'ton' ? arr[index - 1].priceTon : arr[index - 1].priceUsd) : price;
-      const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? arr[index + 1].priceTon : arr[index + 1].priceUsd) : price;
+      const price = currency === 'ton' ? (item.priceTon || 0) : (item.priceUsd || 0);
+      const prevPrice = index > 0 ? (currency === 'ton' ? (arr[index - 1].priceTon || 0) : (arr[index - 1].priceUsd || 0)) : price;
+      const nextPrice = index < arr.length - 1 ? (currency === 'ton' ? (arr[index + 1].priceTon || 0) : (arr[index + 1].priceUsd || 0)) : price;
       
       return {
-        ...item,
+        date: item.date || '',
+        priceTon: item.priceTon || 0,
+        priceUsd: item.priceUsd || 0,
         price: price,
         open: prevPrice,
         high: Math.max(price, prevPrice, nextPrice),
         low: Math.min(price, prevPrice, nextPrice),
         close: price,
-        label: item.date,
+        label: item.date || '',
       };
     });
   };
