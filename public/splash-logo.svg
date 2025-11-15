@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
-  <rect width="1024" height="1024" fill="#1a1d29"/>
-  <g transform="translate(237, 270)">
-    <path d="M75 330 L75 480 L125 480 L125 330 Z M150 380 L150 480 L200 480 L200 380 Z M225 430 L225 480 L275 480 L275 430 Z M300 330 L300 480 L350 480 L350 330 Z M375 230 L375 480 L425 480 L425 230 Z M450 180 L450 480 L500 480 L500 180 Z M525 130 L525 480 L575 480 L575 130 Z" fill="#c9a14b" stroke="#d4af37" stroke-width="8" stroke-linejoin="round"/>
-    <path d="M50 280 Q 200 180, 350 220 Q 500 260, 650 120" fill="none" stroke="#c9a14b" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M650 120 L600 170 M650 120 L700 170" fill="none" stroke="#c9a14b" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="50" y1="500" x2="750" y2="500" stroke="#c9a14b" stroke-width="12" stroke-linecap="round"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <rect x="100" y="250" width="60" height="200" rx="8" fill="#C9A14B"/>
+  <rect x="180" y="200" width="60" height="250" rx="8" fill="#C9A14B"/>
+  <rect x="260" y="230" width="60" height="220" rx="8" fill="#C9A14B"/>
+  <rect x="340" y="150" width="60" height="300" rx="8" fill="#C9A14B"/>
+  <rect x="420" y="100" width="60" height="350" rx="8" fill="#C9A14B"/>
+  <line x1="100" y1="460" x2="700" y2="460" stroke="#C9A14B" stroke-width="16" stroke-linecap="round"/>
+  <path d="M150 280 L230 220 L310 250 L390 170 L470 120 L600 60" stroke="#C9A14B" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M600 60 L560 80 M600 60 L580 100" stroke="#C9A14B" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M630 100 L670 60 L630 20" stroke="#C9A14B" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

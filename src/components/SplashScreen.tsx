@@ -194,7 +194,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               fontSize: '32px',
               fontWeight: 700,
               textAlign: 'center',
-              background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary)))',
+              background: 'linear-gradient(135deg, #D4AF37 0%, #C9A14B 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -208,7 +208,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           style={{
             width: '100%',
             height: '12px',
-            background: 'hsl(var(--secondary))',
+            background: 'rgba(201, 161, 75, 0.15)',
             borderRadius: '50px',
             overflow: 'hidden',
             position: 'relative',
@@ -218,7 +218,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             style={{
               height: '100%',
               width: `${progress}%`,
-              background: 'hsl(var(--primary))',
+              background: 'linear-gradient(90deg, #C9A14B 0%, #D4AF37 100%)',
               transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               borderRadius: 'inherit',
             }}
