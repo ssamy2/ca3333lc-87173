@@ -173,7 +173,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           }}
         >
           <img
-            src="/splash-logo.svg"
+            src="/nova-chart-logo.svg"
             alt="Logo"
             style={{
               width: '120px',
