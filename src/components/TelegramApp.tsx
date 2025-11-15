@@ -170,6 +170,13 @@ const TelegramApp: React.FC = () => {
       return;
     }
 
+    if (launchParams.startapp === 'admin_ads') {
+      console.log('[LaunchParams] Admin ads access, navigating to /admin/ads');
+      navigate('/admin/ads');
+      setAutoSearchTriggered(true);
+      return;
+    }
+
     if (launchParams.searchUser) {
       console.log('[LaunchParams] Auto-searching user:', launchParams.searchUser);
       setUsername(launchParams.searchUser);
