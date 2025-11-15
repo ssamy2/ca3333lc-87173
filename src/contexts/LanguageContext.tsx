@@ -43,19 +43,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
     
-    // Sync with backend
+    // Sync with backend using API client
     try {
-      const initData = window.Telegram?.WebApp?.initData;
-      if (initData) {
-        await fetch('https://www.channelsseller.site/api/user/preferences', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': initData
-          },
-          body: JSON.stringify({ language: lang })
-        });
-      }
+      await apiClient.updateUserPreferences({ language: lang });
     } catch (error) {
       console.error('Failed to sync language with backend:', error);
     }

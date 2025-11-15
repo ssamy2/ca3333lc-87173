@@ -32,7 +32,7 @@ class APIClient {
     const initData = window.Telegram?.WebApp?.initData;
     return {
       'Content-Type': 'application/json',
-      ...(initData && { 'X-Telegram-Init-Data': initData })
+      ...(initData && { 'Authorization': `Bearer ${initData}` })
     };
   }
 
