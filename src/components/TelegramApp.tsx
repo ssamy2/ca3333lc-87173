@@ -170,7 +170,7 @@ const TelegramApp: React.FC = () => {
       return;
     }
 
-    if (launchParams.startapp === 'admin_ads') {
+    if (launchParams.adminAds || launchParams.startapp === 'admin_ads') {
       console.log('[LaunchParams] Admin ads access, navigating to /admin/ads');
       navigate('/admin/ads');
       setAutoSearchTriggered(true);

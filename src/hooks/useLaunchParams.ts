@@ -4,7 +4,9 @@ export interface LaunchParams {
   searchUser?: string;
   searchGift?: string;
   adminAccess?: boolean;
+  adminAds?: boolean;
   startParam?: string;
+  startapp?: string;
 }
 
 export const useLaunchParams = (): LaunchParams => {
@@ -24,26 +26,41 @@ export const useLaunchParams = (): LaunchParams => {
       console.log('[LaunchParams] Start param:', startParam);
       console.log('[LaunchParams] Full initData:', initData);
 
-      if (!startParam) {
+      // Also check for tgWebAppStartParam in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const tgWebAppStartParam = urlParams.get('tgWebAppStartParam');
+      
+      console.log('[LaunchParams] tgWebAppStartParam:', tgWebAppStartParam);
+
+      const paramToUse = startParam || tgWebAppStartParam;
+
+      if (!paramToUse) {
         return;
       }
 
-      const parsedParams: LaunchParams = { startParam };
+      const parsedParams: LaunchParams = { 
+        startParam: paramToUse,
+        startapp: paramToUse 
+      };
 
-      if (startParam.startsWith('user_')) {
-        const username = startParam.replace('user_', '');
+      if (paramToUse.startsWith('user_')) {
+        const username = paramToUse.replace('user_', '');
         parsedParams.searchUser = username;
         console.log('[LaunchParams] Search user param:', username);
       }
-      else if (startParam.startsWith('gift_')) {
-        const giftId = startParam.replace('gift_', '');
+      else if (paramToUse.startsWith('gift_')) {
+        const giftId = paramToUse.replace('gift_', '');
         const giftUrl = `https://t.me/nft/${giftId}`;
         parsedParams.searchGift = giftUrl;
         console.log('[LaunchParams] Search gift param:', giftUrl);
       }
-      else if (startParam === 'admin_panel_2024') {
+      else if (paramToUse === 'admin_panel_2024' || paramToUse === 'admin') {
         parsedParams.adminAccess = true;
         console.log('[LaunchParams] Admin access granted');
+      }
+      else if (paramToUse === 'admin_ads') {
+        parsedParams.adminAds = true;
+        console.log('[LaunchParams] Admin ads access granted');
       }
 
       setParams(parsedParams);
