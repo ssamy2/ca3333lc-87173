@@ -22,6 +22,8 @@ import TelegramAuthError from './TelegramAuthError';
 import novaLogo from '@/assets/nova-logo-new.png';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
+import { useLaunchParams } from '@/hooks/useLaunchParams';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   name: string;
@@ -78,6 +80,8 @@ interface APIResponse {
 const TelegramApp: React.FC = () => {
   const { isAuthenticated, isSubscribed, isLoading: authLoading, authError, checkSubscription } = useAuth();
   const { language } = useLanguage();
+  const launchParams = useLaunchParams();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
   const [currentUserFullName, setCurrentUserFullName] = useState('');
@@ -98,6 +102,7 @@ const TelegramApp: React.FC = () => {
   const [singleGift, setSingleGift] = useState<any | null>(null);
   const [hasSkippedSubscribe, setHasSkippedSubscribe] = useState(false);
   const [showSubscribePopup, setShowSubscribePopup] = useState(false);
+  const [autoSearchTriggered, setAutoSearchTriggered] = useState(false);
   const { toast } = useToast();
   const { theme, setTheme, isLight, isDark } = useTheme();
   
@@ -151,6 +156,49 @@ const TelegramApp: React.FC = () => {
       setSearchHistory(JSON.parse(history));
     }
   }, []);
+
+  // Handle Launch Parameters from Telegram
+  useEffect(() => {
+    if (!isAuthenticated || autoSearchTriggered) return;
+
+    console.log('[LaunchParams] Processing params:', launchParams);
+
+    if (launchParams.adminAccess) {
+      console.log('[LaunchParams] Admin access, navigating to /admin');
+      navigate('/admin');
+      setAutoSearchTriggered(true);
+      return;
+    }
+
+    if (launchParams.searchUser) {
+      console.log('[LaunchParams] Auto-searching user:', launchParams.searchUser);
+      setUsername(launchParams.searchUser);
+      setSearchMode('user');
+      setTimeout(() => {
+        fetchNFTs(launchParams.searchUser!);
+        setAutoSearchTriggered(true);
+      }, 500);
+    } else if (launchParams.searchGift) {
+      console.log('[LaunchParams] Auto-searching gift:', launchParams.searchGift);
+      setGiftUrl(launchParams.searchGift);
+      setSearchMode('gift');
+      setTimeout(async () => {
+        try {
+          const result = await fetchSingleGiftPrice(launchParams.searchGift!);
+          setSingleGift(result.data);
+          setAutoSearchTriggered(true);
+          toast({
+            title: "Success!",
+            description: `Found gift: ${result.data.gift_name}`,
+          });
+        } catch (err) {
+          console.error('[LaunchParams] Gift search error:', err);
+          setError('Failed to fetch gift data');
+          setAutoSearchTriggered(true);
+        }
+      }, 500);
+    }
+  }, [isAuthenticated, launchParams, autoSearchTriggered, navigate, toast]);
 
   // Show subscription popup after authentication (optional)
   useEffect(() => {

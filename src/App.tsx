@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Chart from "./pages/Chart";
 import GiftDetail from "./pages/GiftDetail";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLoader from "@/components/AppLoader";
@@ -60,6 +61,7 @@ const App = () => {
                       <Route path="/chart" element={<Chart />} />
                       <Route path="/gift/:name" element={<GiftDetail />} />
                       <Route path="/settings" element={<ProfileSettingsPage />} />
+                      <Route path="/admin" element={<AdminPanel />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
