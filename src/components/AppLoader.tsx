@@ -171,7 +171,7 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--background)',
+        background: 'hsl(var(--background))',
         opacity: isVisible ? 1 : 0,
         transition: 'opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
@@ -217,7 +217,7 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
               fontSize: '32px',
               fontWeight: 700,
               textAlign: 'center',
-              background: 'linear-gradient(to right, var(--primary), var(--primary))',
+              background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary)))',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -231,7 +231,7 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
           style={{
             width: '100%',
             height: '12px',
-            background: 'var(--secondary)',
+            background: 'hsl(var(--secondary))',
             borderRadius: '50px',
             overflow: 'hidden',
             position: 'relative',
@@ -241,7 +241,7 @@ const AppLoader: React.FC<AppLoaderProps> = ({ onComplete }) => {
             style={{
               height: '100%',
               width: `${progress}%`,
-              background: 'var(--primary)',
+              background: 'hsl(var(--primary))',
               transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               borderRadius: 'inherit',
             }}
