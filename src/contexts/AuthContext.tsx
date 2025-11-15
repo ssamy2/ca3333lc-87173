@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 interface AuthContextType {
   userId: string | null;
+  authToken: string | null;
   isAuthenticated: boolean;
   isSubscribed: boolean;
   isLoading: boolean;
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,12 +67,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data.valid) {
         setUserId(data.user_id?.toString() || null);
+        setAuthToken(data.token || null);
         setIsAuthenticated(true);
         setIsSubscribed(data.is_subscribed || false);
         setAuthError(false);
 
-        // لا نحفظ بيانات المصادقة في localStorage
-        // الكاش للصور فقط - المصادقة تتم في كل مرة
+        // حفظ التوكن في localStorage
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
       } else {
         console.error('Invalid authentication response');
         setAuthError(true);
@@ -99,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         userId,
+        authToken,
         isAuthenticated,
         isSubscribed,
         isLoading,

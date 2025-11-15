@@ -29,10 +29,15 @@ interface UserStatistics {
 
 class APIClient {
   private getHeaders(): HeadersInit {
-    const initData = window.Telegram?.WebApp?.initData;
+    // محاولة الحصول على التوكن من localStorage أولاً
+    const token = localStorage.getItem('auth_token');
+    
+    // إذا لم يكن هناك توكن، استخدم initData كـ fallback
+    const authValue = token || window.Telegram?.WebApp?.initData;
+    
     return {
       'Content-Type': 'application/json',
-      ...(initData && { 'Authorization': `Bearer ${initData}` })
+      ...(authValue && { 'Authorization': `Bearer ${authValue}` })
     };
   }
 
