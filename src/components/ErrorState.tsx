@@ -265,12 +265,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry, canRetry }) => 
       case 'ACCESS_FORBIDDEN':
         return {
           icon: <TonIcon className="w-12 h-12 text-destructive" />,
-          title: 'Access Forbidden',
-          description: 'Access request was denied by the server. Please try again later.',
+          title: 'Access Denied',
+          description: 'This user\'s gift collection is restricted. Only authorized administrators can view this data.',
           action: canRetry ? (
             <Button onClick={onRetry} variant="outline" className="mt-4">
               <TonIcon className="w-4 h-4 mr-2" />
-              Try Again
+              Try Another User
             </Button>
           ) : null
         };
