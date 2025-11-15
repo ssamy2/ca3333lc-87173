@@ -10,11 +10,13 @@ import Chart from "./pages/Chart";
 import GiftDetail from "./pages/GiftDetail";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import AdminPanel from "./pages/AdminPanel";
+import AdminAdsPage from "./pages/AdminAdsPage";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLoader from "@/components/AppLoader";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 import { AuthProvider } from "@/contexts/AuthContext";
+import AdsBanner from "@/components/AdsBanner";
 
 // Configure React Query for optimal caching
 const queryClient = new QueryClient({
@@ -56,15 +58,21 @@ const App = () => {
               ) : (
                 <BrowserRouter>
                   <DataPrefetcher>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/chart" element={<Chart />} />
-                      <Route path="/gift/:name" element={<GiftDetail />} />
-                      <Route path="/settings" element={<ProfileSettingsPage />} />
-                      <Route path="/admin" element={<AdminPanel />} />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <div className="min-h-screen">
+                      {/* Ads Banner at the top of all pages */}
+                      <AdsBanner />
+                      
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/chart" element={<Chart />} />
+                        <Route path="/gift/:name" element={<GiftDetail />} />
+                        <Route path="/settings" element={<ProfileSettingsPage />} />
+                        <Route path="/admin" element={<AdminPanel />} />
+                        <Route path="/admin/ads" element={<AdminAdsPage />} />
+                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </div>
                   </DataPrefetcher>
                 </BrowserRouter>
               )}
