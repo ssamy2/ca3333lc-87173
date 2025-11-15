@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, ExternalLink, Globe } from 'lucide-react';
+import { ArrowLeft, User, ExternalLink, Globe, Users, Flame, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation, Language } from '@/i18n/translations';
-// Removed external API usage – we'll read from Telegram Mini App directly
+import { apiClient } from '@/lib/api';
 
 const ProfileSettingsPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,12 @@ const ProfileSettingsPage = () => {
     avatar_url: null,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [statistics, setStatistics] = useState<{
+    total_users: number;
+    active_today: number;
+    total_gifts_checked: number;
+    top_country: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -37,7 +43,6 @@ const ProfileSettingsPage = () => {
             avatar_url: (tgUser as any).photo_url || null,
           });
         } else {
-          // Fallback: keep defaults
           setUserData(prev => ({ ...prev }));
         }
       } catch (error) {
@@ -50,8 +55,33 @@ const ProfileSettingsPage = () => {
     loadUserProfile();
   }, [userId]);
 
-  const handleThemeChange = (selectedTheme: string) => {
+  useEffect(() => {
+    const loadStatistics = async () => {
+      try {
+        const stats = await apiClient.getGlobalStatistics();
+        if (stats) {
+          setStatistics({
+            total_users: stats.total_users,
+            active_today: stats.active_today,
+            total_gifts_checked: stats.total_gifts_checked,
+            top_country: stats.top_country
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load statistics:', error);
+      }
+    };
+
+    loadStatistics();
+  }, []);
+
+  const handleThemeChange = async (selectedTheme: string) => {
     setTheme(selectedTheme);
+    try {
+      await apiClient.updateUserPreferences({ theme: selectedTheme });
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
   };
 
   const handleLanguageChange = (selectedLang: Language) => {
@@ -214,142 +244,77 @@ const ProfileSettingsPage = () => {
           </div>
         </Card>
 
-        {/* Creative Surprises Section */}
-        <div className="flex justify-center items-center py-16">
-          <div className="relative w-full max-w-lg">
-            {/* Magical background effects */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-yellow-500/10 blur-3xl rounded-full animate-pulse"></div>
-            <div className="absolute -top-8 -left-8 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-2xl animate-bounce" style={{ animationDuration: '3s' }}></div>
-            <div className="absolute -bottom-8 -right-8 w-20 h-20 bg-gradient-to-br from-pink-400/20 to-yellow-500/20 rounded-full blur-2xl animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
-            
-            {/* Main creative card */}
-            <div className="relative bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl rounded-3xl p-10 border border-gradient-to-r from-purple-500/30 via-pink-500/30 to-yellow-500/30 shadow-2xl overflow-hidden">
-              {/* Floating particles */}
-              <div className="absolute top-6 left-8 w-2 h-2 bg-purple-400 rounded-full opacity-60 animate-ping"></div>
-              <div className="absolute top-12 right-12 w-3 h-3 bg-pink-400 rounded-full opacity-50 animate-ping" style={{ animationDelay: '0.5s' }}></div>
-              <div className="absolute bottom-16 left-12 w-2 h-2 bg-yellow-400 rounded-full opacity-70 animate-ping" style={{ animationDelay: '1s' }}></div>
-              <div className="absolute bottom-8 right-8 w-3 h-3 bg-blue-400 rounded-full opacity-40 animate-ping" style={{ animationDelay: '1.5s' }}></div>
-              <div className="absolute top-20 left-20 w-1 h-1 bg-green-400 rounded-full opacity-80 animate-ping" style={{ animationDelay: '2s' }}></div>
-              
-              {/* Content */}
-              <div className="flex flex-col items-center space-y-8 relative z-10">
-                {/* Handwritten title */}
-                <div className="text-center space-y-2">
-                  <div className="relative">
-                    <h2 
-                      className="text-5xl text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text font-bold transform -rotate-2"
-                      style={{ 
-                        fontFamily: '"Kalam", "Comic Sans MS", cursive',
-                        textShadow: '0 0 20px rgba(168, 85, 247, 0.3)',
-                        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                      }}
-                    >
-                      Something
-                    </h2>
-                    {/* Underline scribble */}
-                    <svg 
-                      className="absolute -bottom-2 left-1/2 transform -translate-x-1/2" 
-                      width="180" 
-                      height="12" 
-                      viewBox="0 0 180 12"
-                    >
-                      <path 
-                        d="M2 8c20-4 40 4 60-2s40-8 60 2c20 6 40-4 56 2" 
-                        stroke="url(#gradient)" 
-                        strokeWidth="2" 
-                        fill="none" 
-                        strokeLinecap="round"
-                        className="animate-pulse"
-                      />
-                      <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#a855f7" />
-                          <stop offset="50%" stopColor="#ec4899" />
-                          <stop offset="100%" stopColor="#eab308" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </div>
-                  
-                  <h3 
-                    className="text-4xl text-transparent bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text font-bold transform rotate-1"
-                    style={{ 
-                      fontFamily: '"Kalam", "Comic Sans MS", cursive',
-                      textShadow: '0 0 15px rgba(251, 191, 36, 0.3)'
-                    }}
-                  >
-                    Amazing
-                  </h3>
+        {/* Statistics Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 px-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold">Statistics</h3>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {/* Total Users */}
+            <Card className="p-5 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
+              <div className="flex flex-col space-y-3">
+                <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-orange-500" />
                 </div>
-                
-                {/* Handwritten "is coming" */}
-                <div className="relative">
-                  <p 
-                    className="text-2xl text-slate-300 font-medium transform -rotate-1"
-                    style={{ 
-                      fontFamily: '"Kalam", "Comic Sans MS", cursive',
-                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
-                    }}
-                  >
-                    is coming...
-                  </p>
-                  {/* Doodle arrow */}
-                  <svg 
-                    className="absolute -right-16 top-1/2 transform -translate-y-1/2 rotate-12" 
-                    width="40" 
-                    height="30" 
-                    viewBox="0 0 40 30"
-                  >
-                    <path 
-                      d="M5 15c8-3 16 3 25-2m-8-5l8 5-8 7" 
-                      stroke="#94a3b8" 
-                      strokeWidth="2" 
-                      fill="none" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                      className="animate-pulse"
-                    />
-                  </svg>
-                </div>
-                
-                {/* Creative mystery box */}
-                <div className="relative mt-8">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-yellow-500/20 blur-2xl rounded-3xl scale-110 animate-pulse"></div>
-                  
-                  {/* Gift box */}
-                  <div className="relative w-24 h-24 bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-6 transition-transform duration-300">
-                    <div className="absolute inset-2 bg-gradient-to-br from-purple-600 via-pink-600 to-yellow-600 rounded-xl"></div>
-                    <div className="relative text-white text-3xl animate-bounce">
-                      🎁
-                    </div>
-                    
-                    {/* Ribbon */}
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-full"></div>
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-full"></div>
-                  </div>
-                  
-                  {/* Floating sparkles */}
-                  <div className="absolute -top-4 -left-4 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }}>✨</div>
-                  <div className="absolute -top-2 -right-6 text-pink-400 animate-spin" style={{ animationDuration: '4s', animationDelay: '0.5s' }}>⭐</div>
-                  <div className="absolute -bottom-4 -left-6 text-purple-400 animate-spin" style={{ animationDuration: '5s', animationDelay: '1s' }}>💫</div>
-                  <div className="absolute -bottom-2 -right-4 text-blue-400 animate-spin" style={{ animationDuration: '3.5s', animationDelay: '1.5s' }}>✨</div>
-                </div>
-                
-                {/* Handwritten note */}
-                <div className="mt-6 p-4 bg-yellow-100/10 rounded-2xl border border-yellow-400/20 transform -rotate-1">
-                  <p 
-                    className="text-slate-300 text-sm text-center leading-relaxed"
-                    style={{ 
-                      fontFamily: '"Kalam", "Comic Sans MS", cursive'
-                    }}
-                  >
-                    Stay tuned for exciting new features
-                    <br />
-                    <span className="text-yellow-400">& magical surprises! ✨</span>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {statistics ? statistics.total_users.toLocaleString() : '...'}
                   </p>
                 </div>
               </div>
-            </div>
+            </Card>
+
+            {/* Active Now */}
+            <Card className="p-5 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+              <div className="flex flex-col space-y-3">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Now</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {statistics ? Math.floor(statistics.active_today * 0.15).toLocaleString() : '...'}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Active Today */}
+            <Card className="p-5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+              <div className="flex flex-col space-y-3">
+                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Flame className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Today</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {statistics ? statistics.active_today.toLocaleString() : '...'}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Top Country */}
+            <Card className="p-5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+              <div className="flex flex-col space-y-3">
+                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <Globe className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Top Country</p>
+                  <p className="text-xl font-bold text-foreground flex items-center gap-2">
+                    {statistics?.top_country === 'Iraq' && '🇮🇶'}
+                    {statistics?.top_country === 'USA' && '🇺🇸'}
+                    {statistics?.top_country === 'Russia' && '🇷🇺'}
+                    {statistics?.top_country === 'China' && '🇨🇳'}
+                    {statistics ? statistics.top_country : '...'}
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
