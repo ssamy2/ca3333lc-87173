@@ -72,7 +72,9 @@ class APIClient {
 
   async getGlobalStatistics(): Promise<GlobalStatistics | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/statistics/global`);
+      const response = await fetch(`${API_BASE_URL}/statistics/global`, {
+        headers: this.getHeaders()
+      });
 
       if (!response.ok) return null;
 
