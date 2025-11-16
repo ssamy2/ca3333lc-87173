@@ -21,6 +21,12 @@ import {
 } from 'lucide-react';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
+import { 
+  getCachedChartImages, 
+  setCachedChartImages, 
+  generateChartCacheKey, 
+  generateDataHash 
+} from '@/services/chartCache';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { sendHeatmapImage } from '@/utils/heatmapImageSender';
 import tonIconSrc from '@/assets/ton-icon.png';
@@ -252,15 +258,40 @@ const transformGiftData = (
   });
 };
 
-const preloadImages = (data: TreemapDataPoint[]): Map<string, HTMLImageElement> => {
+const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, HTMLImageElement> => {
+  // Check if we have cached images for this chart configuration
+  const cachedImages = getCachedChartImages(cacheKey);
+  if (cachedImages) {
+    console.log('✅ Using cached chart images');
+    return cachedImages;
+  }
+  
   const imageMap = new Map<string, HTMLImageElement>();
   
   data.forEach(item => {
+    // First try to get from image cache
+    const cachedBase64 = imageCache.getImageFromCache(item.imageName);
+    
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = item.imageName; // Use full URL
+    img.crossOrigin = "anonymous";
+    
+    if (cachedBase64) {
+      // Use cached base64 image
+      img.src = cachedBase64;
+    } else {
+      // Fallback to original URL and cache it
+      img.src = item.imageName;
+      img.onload = () => {
+        // Cache the image for future use
+        imageCache.preloadImage(item.imageName).catch(console.error);
+      };
+    }
+    
     imageMap.set(item.imageName, img);
   });
+  
+  // Cache the image map for this chart configuration
+  setCachedChartImages(cacheKey, imageMap);
   
   return imageMap;
 };
@@ -730,7 +761,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       key: 'size',
       spacing: 0.5,
       borderWidth: 1,
-      imageMap: preloadImages(displayData),
+      imageMap: preloadImages(displayData, generateChartCacheKey(chartType, timeGap, currency, generateDataHash(displayData))),
       backgroundColor: 'transparent'
     } as any]
   };

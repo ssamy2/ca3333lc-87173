@@ -50,6 +50,13 @@ const fetchMarketData = async (): Promise<MarketData> => {
   // Cache the data
   setCachedData('market-data', data);
   
+  // Immediately preload images after successful data fetch
+  setTimeout(() => {
+    import('@/services/imageCache').then(({ preloadImages }) => {
+      preloadImages().catch(console.error);
+    });
+  }, 100); // Small delay to not block the UI
+  
   return data;
 };
 

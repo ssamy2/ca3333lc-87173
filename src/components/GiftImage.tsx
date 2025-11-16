@@ -6,7 +6,7 @@ interface GiftImageProps {
   imageUrl: string;
   name: string;
   shortName?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'responsive';
   className?: string;
   style?: React.CSSProperties;
   isBlackMode?: boolean;
@@ -25,6 +25,7 @@ const GiftImage: React.FC<GiftImageProps> = ({
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
     lg: 'w-16 h-16',
+    responsive: 'w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14',
   };
 
   // Helper: convert gift name to API camelCase slug
@@ -64,9 +65,10 @@ const GiftImage: React.FC<GiftImageProps> = ({
     return null;
   };
 
-  // Check cache directly for the provided imageUrl
-  const cachedBase64 = imageCache.getImageFromCache(imageUrl);
-  const [currentSrc, setCurrentSrc] = useState(imageUrl);
+  // Check cache directly for the provided imageUrl or find any cached version
+  const cachedVersion = findCachedVersion();
+  const cachedBase64 = cachedVersion ? imageCache.getImageFromCache(cachedVersion) : null;
+  const [currentSrc, setCurrentSrc] = useState(cachedVersion || imageUrl);
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
 
@@ -129,7 +131,12 @@ const GiftImage: React.FC<GiftImageProps> = ({
         style={style}
       >
         <Gift
-          className={`${size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-6 h-6' : 'w-8 h-8'} ${
+          className={`${
+            size === 'sm' ? 'w-4 h-4' : 
+            size === 'md' ? 'w-6 h-6' : 
+            size === 'lg' ? 'w-8 h-8' :
+            'w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7'
+          } ${
             isBlackMode ? 'text-[#B87333]' : 'text-muted-foreground'
           }`}
         />

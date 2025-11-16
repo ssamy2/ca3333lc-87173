@@ -4,7 +4,7 @@ interface CachedImage {
 }
 
 const CACHE_KEY = 'nft-image-cache';
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days (longer cache for better performance)
 
 class ImageCacheService {
   private memoryCache: Map<string, string> = new Map();
@@ -251,20 +251,48 @@ export const imageCache = new ImageCacheService();
  */
 export const preloadImages = async () => {
   try {
+    // Try multiple cache sources
+    let data = null;
+    
+    // First try the market cache
     const marketDataCache = localStorage.getItem('market-cache-market-data');
-    if (!marketDataCache) return;
-
-    const { data } = JSON.parse(marketDataCache);
-    if (!data) return;
+    if (marketDataCache) {
+      const parsed = JSON.parse(marketDataCache);
+      data = parsed.data || parsed;
+    }
+    
+    // If no market cache, try React Query cache
+    if (!data) {
+      const queryCache = localStorage.getItem('REACT_QUERY_OFFLINE_CACHE');
+      if (queryCache) {
+        const parsed = JSON.parse(queryCache);
+        const marketQuery = parsed.clientState?.queries?.find((q: any) => 
+          q.queryKey?.includes('market-data')
+        );
+        if (marketQuery?.state?.data) {
+          data = marketQuery.state.data;
+        }
+      }
+    }
+    
+    if (!data) {
+      console.log('📭 No market data found for image preloading');
+      return;
+    }
 
     // Extract all image URLs from market data
     const imageUrls = Object.values(data)
       .map((item: any) => item.image_url)
       .filter((url: string) => url && url.startsWith('http'));
 
+    if (imageUrls.length === 0) {
+      console.log('📭 No image URLs found in market data');
+      return;
+    }
+
     console.log(`🖼️ Preloading ${imageUrls.length} images in background...`);
     
-    // Preload only uncached images
+    // Preload only uncached images with aggressive caching
     await imageCache.preloadUncachedImages(imageUrls);
     
     console.log('✅ Image preloading complete');

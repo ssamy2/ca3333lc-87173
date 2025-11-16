@@ -593,7 +593,7 @@ const Chart = () => {
         {/* Content */}
         {viewMode === 'grid' && (
           <div 
-            className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mx-1"
+            className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3 md:gap-4 mx-1"
             style={dataSource === 'black' ? {
               backgroundImage: `
                 radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
@@ -628,30 +628,30 @@ const Chart = () => {
                   className="no-underline"
                 >
                   <Card
-                    className={`p-2 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                    className={`p-1.5 sm:p-2 md:p-3 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
                   >
-                    <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-2">
+                    <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-1 sm:mb-2">
                       <GiftImage
                         imageUrl={data.image_url}
                         name={name}
                         shortName={(data as any).short_name}
-                        size="sm"
+                        size="responsive"
                         isBlackMode={dataSource === 'black'}
                         style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
                       />
                     </div>
-                    <div className="w-full flex flex-col items-center gap-1 mt-1">
-                      <div className="flex items-center gap-1 justify-center">
-                        <TonIcon className={`w-3 h-3 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
+                    <div className="w-full flex flex-col items-center gap-0.5 sm:gap-1 mt-0.5 sm:mt-1">
+                      <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
+                        <TonIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
                         <span 
-                          className={`font-semibold text-sm ${dataSource === 'black' ? 'text-[#B87333] font-[600]' : 'text-foreground'}`}
+                          className={`font-semibold text-[10px] sm:text-xs md:text-sm ${dataSource === 'black' ? 'text-[#B87333] font-[600]' : 'text-foreground'}`}
                         >
                           {price.toFixed(2)}
                         </span>
                       </div>
                       {!isNeutral && (
                         <span
-                          className={`text-xs font-medium ${
+                          className={`text-[9px] sm:text-[10px] md:text-xs font-medium ${
                             isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                           }`}
                         >

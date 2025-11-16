@@ -3,7 +3,7 @@ interface CachedData {
   timestamp: number;
 }
 
-const CACHE_DURATION = 10000; // 10 seconds
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes (longer cache for better performance)
 const cache = new Map<string, CachedData>();
 
 export const getCachedData = (key: string) => {

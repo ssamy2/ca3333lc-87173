@@ -79,18 +79,18 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
   return (
     <div 
-      className="telegram-card p-4 cursor-pointer group relative animate-fade-in hover-scale transition-all duration-300"
+      className="telegram-card p-2 sm:p-3 md:p-4 cursor-pointer group relative animate-fade-in hover-scale transition-all duration-300"
       onClick={handleCardClick}
     >
       {/* Quantity Badge */}
       {nft.count > 1 && (
-        <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-lg animate-bounce-in">
+        <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-accent text-accent-foreground text-[10px] sm:text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center z-10 shadow-lg animate-bounce-in">
           {nft.count}
         </div>
       )}
 
       {/* Single NFT Image Layout */}
-      <div className="mb-3">
+      <div className="mb-2 sm:mb-3">
         <div className="aspect-square bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl flex items-center justify-center border border-border/50 overflow-hidden relative">
           {nft.image && !imageError ? (
             <>
@@ -109,41 +109,41 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
               )}
             </>
           ) : (
-            <div className="text-center p-4">
-              <div className="w-12 h-12 mx-auto mb-2 bg-primary/10 rounded-full flex items-center justify-center">
-                <TonIcon className="w-6 h-6 text-primary" />
+            <div className="text-center p-2 sm:p-3 md:p-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-1 sm:mb-2 bg-primary/10 rounded-full flex items-center justify-center">
+                <TonIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground font-medium">NFT Gift</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">NFT Gift</p>
             </div>
           )}
         </div>
       </div>
 
       {/* NFT Info */}
-      <div className="space-y-2">
-        <h3 className="font-bold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">
+      <div className="space-y-1 sm:space-y-2">
+        <h3 className="font-bold text-xs sm:text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {nft.title || nft.name}
         </h3>
         
-        <div className="space-y-1">
+        <div className="space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md truncate flex-1 mr-2">
+            <p className="text-[10px] sm:text-xs text-muted-foreground bg-secondary/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md truncate flex-1 mr-1 sm:mr-2">
               {nft.model}
             </p>
             {nft.count > 1 && (
-              <span className="text-xs font-bold text-accent">×{nft.count}</span>
+              <span className="text-[10px] sm:text-xs font-bold text-accent">×{nft.count}</span>
             )}
           </div>
           
           {/* Additional info chips */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-0.5 sm:gap-1">
             {nft.backdrop && (
-              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+              <span className="text-[9px] sm:text-[10px] bg-primary/10 text-primary px-1 sm:px-1.5 py-0.5 rounded">
                 {nft.backdrop}
               </span>
             )}
             {nft.symbol && (
-              <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded">
+              <span className="text-[9px] sm:text-[10px] bg-accent/10 text-accent px-1 sm:px-1.5 py-0.5 rounded">
                 {nft.symbol}
               </span>
             )}
@@ -151,18 +151,18 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
 
         {/* Price Info */}
-        <div className="space-y-1">
+        <div className="space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Floor:</span>
-            <div className="flex items-center gap-1">
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Floor:</span>
+            <div className="flex items-center gap-0.5 sm:gap-1">
               {nft.floor_price === 0 ? (
-                <span className="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] sm:text-xs font-bold text-yellow-500 bg-yellow-500/10 px-1.5 sm:px-2 py-0.5 rounded-md">
                   Pre
                 </span>
               ) : (
                 <>
-                  <TonIcon className="w-3 h-3 text-[#0098EA]" />
-                  <span className="text-xs font-bold">{formatTON(nft.floor_price)}</span>
+                  <TonIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#0098EA]" />
+                  <span className="text-[10px] sm:text-xs font-bold">{formatTON(nft.floor_price)}</span>
                 </>
               )}
             </div>
@@ -171,9 +171,9 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
         {/* View in Store Indicator */}
         {(nft.tg_deeplink || (nft.details.links && nft.details.links.length > 0)) && (
-          <div className="flex items-center justify-center pt-2 border-t border-border/30">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary transition-colors">
-              <ExternalLink className="w-3 h-3" />
+          <div className="flex items-center justify-center pt-1 sm:pt-2 border-t border-border/30">
+            <div className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-muted-foreground group-hover:text-primary transition-colors">
+              <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               <span>View in Store</span>
             </div>
           </div>
@@ -181,8 +181,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         
         {/* Quantity info */}
         {nft.quantity_raw && (
-          <div className="pt-1">
-            <p className="text-[10px] text-muted-foreground text-center">
+          <div className="pt-0.5 sm:pt-1">
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center">
               {nft.quantity_raw}
             </p>
           </div>

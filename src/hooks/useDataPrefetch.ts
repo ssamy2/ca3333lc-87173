@@ -25,7 +25,13 @@ export const useDataPrefetch = () => {
 
         // Preload images after data is fetched
         // This is done in the background and doesn't block the UI
-        preloadImages();
+        setTimeout(() => {
+          preloadImages().then(() => {
+            console.log('🖼️ Background image preloading completed');
+          }).catch(error => {
+            console.error('❌ Background image preloading failed:', error);
+          });
+        }, 500); // Small delay to ensure data is fully cached
       } catch (error) {
         console.error('Error prefetching data:', error);
       }
