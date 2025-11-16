@@ -6,7 +6,7 @@ import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, TrendingDown, DollarS
 import TonIcon from '@/components/TonIcon';
 import { Link } from 'react-router-dom';
 import TreemapHeatmap from '@/components/TreemapHeatmap';
-import GiftImage from '@/components/GiftImage';
+import GiftCard from '@/components/GiftCard';
 import BottomNav from '@/components/BottomNav';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useBlackFloorData } from '@/hooks/useBlackFloorData';
@@ -593,7 +593,7 @@ const Chart = () => {
         {/* Content */}
         {viewMode === 'grid' && (
           <div 
-            className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3 md:gap-4 mx-1"
+            className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 2xl:grid-cols-11 gap-2 sm:gap-2.5 md:gap-3 mx-1"
             style={dataSource === 'black' ? {
               backgroundImage: `
                 radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
@@ -608,64 +608,17 @@ const Chart = () => {
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
-              const isPositive = change >= 0;
-              const isNeutral = change === 0;
-
-              const getCardStyle = () => {
-                if (dataSource === 'black') {
-                  return 'bg-[#0B0B0D] border border-white/[0.02] shadow-[0_6px_18px_rgba(91,46,221,0.12),0_4px_12px_rgba(0,0,0,0.45),inset_0_2px_6px_rgba(91,46,221,0.04)]';
-                }
-                if (isNeutral) {
-                  return 'bg-secondary/80 hover:shadow-lg hover:shadow-muted/20';
-                }
-                if (isPositive) {
-                  return 'bg-[hsl(var(--success))]/20 hover:shadow-lg hover:shadow-[hsl(var(--success))]/30 border-[hsl(var(--success))]/30';
-                }
-                return 'bg-[hsl(var(--destructive))]/20 hover:shadow-lg hover:shadow-[hsl(var(--destructive))]/30 border-[hsl(var(--destructive))]/30';
-              };
 
               return (
-                <Link 
+                <GiftCard
                   key={name}
-                  to={`/gift/${encodeURIComponent(name)}`}
-                  className="no-underline block"
-                  style={{ aspectRatio: '1 / 1' }}
-                >
-                  <Card
-                    className={`p-1.5 sm:p-2 md:p-3 flex flex-col items-center justify-between backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer h-full w-full ${getCardStyle()}`}
-                  >
-                    <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-1 sm:mb-2">
-                      <GiftImage
-                        imageUrl={data.image_url}
-                        name={name}
-                        shortName={(data as any).short_name}
-                        size="responsive"
-                        isBlackMode={dataSource === 'black'}
-                        style={dataSource === 'black' ? { filter: 'saturate(0.8)' } : undefined}
-                      />
-                    </div>
-                    <div className="w-full flex flex-col items-center gap-0.5 sm:gap-1 mt-0.5 sm:mt-1">
-                      <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
-                        <TonIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 ${dataSource === 'black' ? 'opacity-90' : ''}`} />
-                        <span 
-                          className={`font-semibold text-[10px] sm:text-xs md:text-sm ${dataSource === 'black' ? 'text-[#B87333] font-[600]' : 'text-foreground'}`}
-                        >
-                          {price.toFixed(2)}
-                        </span>
-                      </div>
-                      {!isNeutral && (
-                        <span
-                          className={`text-[9px] sm:text-[10px] md:text-xs font-medium ${
-                            isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
-                          }`}
-                        >
-                          {isPositive ? '+' : ''}
-                          {change.toFixed(2)}%
-                        </span>
-                      )}
-                    </div>
-                  </Card>
-                </Link>
+                  name={name}
+                  imageUrl={data.image_url}
+                  shortName={(data as any).short_name}
+                  price={price}
+                  change={change}
+                  isBlackMode={dataSource === 'black'}
+                />
               );
             })}
           </div>
