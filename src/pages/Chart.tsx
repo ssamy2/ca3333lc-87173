@@ -1,8 +1,8 @@
 // @ts-nocheck
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, TrendingDown, DollarSign, Download, RefreshCw, Search, X } from 'lucide-react';
+import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, TrendingDown, DollarSign, Download, RefreshCw } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import { Link } from 'react-router-dom';
 import TreemapHeatmap from '@/components/TreemapHeatmap';
@@ -89,8 +89,8 @@ interface GiftItem {
 const Chart = () => {
   const { language } = useLanguage();
   // Use React Query hooks for data fetching with caching
-  const { data: marketData = {}, isLoading: marketLoading, refetch: refetchMarket } = useMarketData();
-  const { data: blackFloorData = [], isLoading: blackLoading, refetch: refetchBlack } = useBlackFloorData();
+  const { data: marketData = {}, isLoading: marketLoading } = useMarketData();
+  const { data: blackFloorData = [], isLoading: blackLoading } = useBlackFloorData();
   
   const loading = marketLoading || blackLoading;
   
@@ -107,80 +107,9 @@ const Chart = () => {
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
   const [sortMode, setSortMode] = useState<'default' | 'priceUp' | 'priceDown'>('default');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Add ref for TreemapHeatmap
   const treemapRef = React.useRef<any>(null);
-
-  // Pull to refresh handler
-  const handleRefresh = async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    
-    try {
-      // Refetch data from React Query
-      await Promise.all([
-        refetchMarket(),
-        refetchBlack()
-      ]);
-    } catch (error) {
-      console.error('Refresh failed:', error);
-    } finally {
-      setTimeout(() => {
-        setIsRefreshing(false);
-        setPullDistance(0);
-      }, 500);
-    }
-  };
-
-  // Touch handlers for pull to refresh (Grid view only)
-  useEffect(() => {
-    if (viewMode !== 'grid') return;
-
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (container.scrollTop === 0) {
-        touchStartY.current = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (container.scrollTop === 0 && touchStartY.current > 0) {
-        const touchY = e.touches[0].clientY;
-        const distance = touchY - touchStartY.current;
-        
-        if (distance > 0 && distance < 120) {
-          setPullDistance(distance);
-          e.preventDefault();
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (pullDistance > 80) {
-        handleRefresh();
-      } else {
-        setPullDistance(0);
-      }
-      touchStartY.current = 0;
-    };
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [viewMode, pullDistance]);
 
   // Force TON currency when switching to Black mode
   React.useEffect(() => {
@@ -193,13 +122,6 @@ const Chart = () => {
   const getFilteredData = () => {
     // Determine which filter to use based on view mode
     const currentTopFilter = viewMode === 'heatmap' ? topFilterHeatmap : topFilterGrid;
-    
-    // Apply search filter for grid view
-    const applySearchFilter = (entries: any[]) => {
-      if (!searchQuery.trim() || viewMode !== 'grid') return entries;
-      const query = searchQuery.toLowerCase();
-      return entries.filter(([name]) => name.toLowerCase().includes(query));
-    };
     
     if (dataSource === 'black') {
       // Convert black floor data to market data format
@@ -372,11 +294,11 @@ const Chart = () => {
 
     // Apply top filter
     if (currentTopFilter === 'top50') {
-      return applySearchFilter(entries.slice(0, 50));
+      entries = entries.slice(0, 50);
     } else if (currentTopFilter === 'top35') {
       entries = entries.slice(0, 35);
     } else if (currentTopFilter === 'top25') {
-      return applySearchFilter(entries.slice(0, 25));
+      entries = entries.slice(0, 25);
     }
 
     return entries;
@@ -474,28 +396,6 @@ const Chart = () => {
             <BarChart3 className="w-5 h-5" />
           </Button>
         </div>
-
-        {/* Search Bar - Grid view only */}
-        {viewMode === 'grid' && (
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search gifts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-10 py-3 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded-full transition-colors"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Sort Mode - Price Up/Down & Data Source (for Grid and List only) */}
         {(viewMode === 'grid' || viewMode === 'list') && (
@@ -692,46 +592,18 @@ const Chart = () => {
 
         {/* Content */}
         {viewMode === 'grid' && (
-          <div ref={scrollContainerRef} className="relative">
-            {/* Pull to Refresh Indicator */}
-            {pullDistance > 0 && (
-              <div 
-                className="absolute top-0 left-0 right-0 flex items-center justify-center transition-all duration-200 z-10"
-                style={{ 
-                  height: `${pullDistance}px`,
-                  opacity: Math.min(pullDistance / 80, 1)
-                }}
-              >
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <RefreshCw 
-                    className={`w-5 h-5 text-primary ${isRefreshing || pullDistance > 80 ? 'animate-spin' : ''}`}
-                    style={{ 
-                      transform: `rotate(${pullDistance * 3}deg)`
-                    }}
-                  />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {isRefreshing ? 'Refreshing...' : pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            <div 
-              className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 2xl:grid-cols-11 gap-2 sm:gap-2.5 md:gap-3 mx-1"
-              style={dataSource === 'black' ? {
-                marginTop: pullDistance > 0 ? `${pullDistance}px` : '0',
-                transition: isRefreshing ? 'margin-top 0.3s ease' : 'none',
-                backgroundImage: `
-                  radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
-                  repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px),
-                  repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px)
-                `,
-                gridAutoRows: '1fr'
-              } : {
-                marginTop: pullDistance > 0 ? `${pullDistance}px` : '0',
-                transition: isRefreshing ? 'margin-top 0.3s ease' : 'none',
-                gridAutoRows: '1fr'
-              }}
+          <div 
+            className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 2xl:grid-cols-11 gap-2 sm:gap-2.5 md:gap-3 mx-1"
+            style={dataSource === 'black' ? {
+              backgroundImage: `
+                radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px)
+              `,
+              gridAutoRows: '1fr'
+            } : {
+              gridAutoRows: '1fr'
+            }}
           >
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
@@ -749,7 +621,6 @@ const Chart = () => {
                 />
               );
             })}
-            </div>
           </div>
         )}
 
