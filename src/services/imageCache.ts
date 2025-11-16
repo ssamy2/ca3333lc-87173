@@ -4,46 +4,62 @@ interface CachedImage {
 }
 
 const CACHE_KEY = 'nft-image-cache';
-const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days (longer cache for better performance)
+const CACHE_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days (permanent cache)
 
 class ImageCacheService {
   private memoryCache: Map<string, string> = new Map();
   private pendingRequests: Map<string, Promise<string>> = new Map();
+  private isInitialized: boolean = false;
+
+  constructor() {
+    // Load all cached images into memory on initialization
+    this.initializeMemoryCache();
+  }
 
   /**
-   * Get image from cache (checks memory first, then localStorage)
+   * Initialize memory cache from localStorage on startup
    */
-  getImageFromCache(url: string): string | null {
-    // Check memory cache first (faster)
-    if (this.memoryCache.has(url)) {
-      return this.memoryCache.get(url)!;
-    }
-
-    // Check localStorage
+  private initializeMemoryCache(): void {
+    if (this.isInitialized) return;
+    
     try {
       const cacheData = localStorage.getItem(CACHE_KEY);
-      if (!cacheData) return null;
-
-      const cache: Record<string, CachedImage> = JSON.parse(cacheData);
-      const cachedImage = cache[url];
-
-      if (!cachedImage) return null;
-
-      // Check if expired
-      const now = Date.now();
-      if (now - cachedImage.timestamp > CACHE_EXPIRY) {
-        delete cache[url];
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-        return null;
+      if (!cacheData) {
+        this.isInitialized = true;
+        return;
       }
 
-      // Store in memory cache for faster access
-      this.memoryCache.set(url, cachedImage.base64);
-      return cachedImage.base64;
+      const cache: Record<string, CachedImage> = JSON.parse(cacheData);
+      const now = Date.now();
+      let loadedCount = 0;
+
+      Object.entries(cache).forEach(([url, data]) => {
+        // Only load non-expired images
+        if (now - data.timestamp <= CACHE_EXPIRY) {
+          this.memoryCache.set(url, data.base64);
+          loadedCount++;
+        }
+      });
+
+      console.log(`🚀 Loaded ${loadedCount} images into memory cache`);
+      this.isInitialized = true;
     } catch (error) {
-      console.error('Error reading from image cache:', error);
-      return null;
+      console.error('Error initializing memory cache:', error);
+      this.isInitialized = true;
     }
+  }
+
+  /**
+   * Get image from cache (memory only for maximum speed)
+   */
+  getImageFromCache(url: string): string | null {
+    // Ensure cache is initialized
+    if (!this.isInitialized) {
+      this.initializeMemoryCache();
+    }
+
+    // Return from memory cache (instant access)
+    return this.memoryCache.get(url) || null;
   }
 
   /**
@@ -85,10 +101,10 @@ class ImageCacheService {
   }
 
   /**
-   * Preload and cache an image with request deduplication
+   * Preload and cache an image with request deduplication (stores in RAM permanently)
    */
   async preloadImage(url: string): Promise<string> {
-    // Check if already cached
+    // Check if already cached in memory
     const cached = this.getImageFromCache(url);
     if (cached) {
       return cached;
@@ -118,14 +134,16 @@ class ImageCacheService {
           }
 
           ctx.drawImage(img, 0, 0);
-          const base64 = canvas.toDataURL('image/png');
+          // Use WebP format for better compression if supported
+          const base64 = canvas.toDataURL('image/webp', 0.85);
           
+          // Save to both memory and localStorage
           this.saveImageToCache(url, base64);
           this.pendingRequests.delete(url);
           resolve(base64);
         } catch (error) {
           console.error('Failed to convert image to base64:', error);
-          // Fallback to original URL
+          // Fallback: save URL itself
           this.saveImageToCache(url, url);
           this.pendingRequests.delete(url);
           resolve(url);
@@ -135,7 +153,8 @@ class ImageCacheService {
       img.onerror = () => {
         console.error('Failed to load image:', url);
         this.pendingRequests.delete(url);
-        reject(new Error(`Failed to load image: ${url}`));
+        // Don't reject, just resolve with the URL
+        resolve(url);
       };
 
       img.src = url;
@@ -224,9 +243,15 @@ class ImageCacheService {
   /**
    * Get cache statistics
    */
-  getCacheStats(): { memoryCacheSize: number; localStorageSize: number } {
+  getCacheStats(): { memoryCacheSize: number; localStorageSize: number; memorySizeMB: number } {
     const memoryCacheSize = this.memoryCache.size;
     let localStorageSize = 0;
+    let totalBytes = 0;
+
+    // Calculate memory usage
+    this.memoryCache.forEach(value => {
+      totalBytes += value.length;
+    });
 
     try {
       const cacheData = localStorage.getItem(CACHE_KEY);
@@ -238,12 +263,39 @@ class ImageCacheService {
       console.error('Error getting cache stats:', error);
     }
 
-    return { memoryCacheSize, localStorageSize };
+    return { 
+      memoryCacheSize, 
+      localStorageSize,
+      memorySizeMB: Math.round(totalBytes / (1024 * 1024) * 100) / 100
+    };
+  }
+
+  /**
+   * Check if an image is cached in memory
+   */
+  isCached(url: string): boolean {
+    return this.memoryCache.has(url);
+  }
+
+  /**
+   * Preload image immediately and return cached version
+   */
+  async getCachedOrLoad(url: string): Promise<string> {
+    const cached = this.getImageFromCache(url);
+    if (cached) return cached;
+    
+    return await this.preloadImage(url);
   }
 }
 
 // Export singleton instance
 export const imageCache = new ImageCacheService();
+
+// Log cache stats on initialization (after a short delay)
+setTimeout(() => {
+  const stats = imageCache.getCacheStats();
+  console.log(`📊 Image Cache Stats: ${stats.memoryCacheSize} images in RAM (${stats.memorySizeMB} MB), ${stats.localStorageSize} in localStorage`);
+}, 2000);
 
 /**
  * Preload images from market data

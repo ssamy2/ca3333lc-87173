@@ -42,7 +42,7 @@ const GiftImage: React.FC<GiftImageProps> = ({
   };
 
   // Helper: find cached version of the image using all possible URL formats
-  const findCachedVersion = (): string | null => {
+  const findCachedVersion = (): { url: string; base64: string } | null => {
     const camelCase = toCamelFromName(name);
     const kebabCase = name.toLowerCase().replace(/\s+/g, '-');
     
@@ -58,7 +58,7 @@ const GiftImage: React.FC<GiftImageProps> = ({
     for (const url of possibleUrls) {
       const cached = imageCache.getImageFromCache(url);
       if (cached) {
-        return url;
+        return { url, base64: cached };
       }
     }
     
@@ -67,10 +67,25 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
   // Check cache directly for the provided imageUrl or find any cached version
   const cachedVersion = findCachedVersion();
-  const cachedBase64 = cachedVersion ? imageCache.getImageFromCache(cachedVersion) : null;
-  const [currentSrc, setCurrentSrc] = useState(cachedVersion || imageUrl);
+  const [currentSrc, setCurrentSrc] = useState(cachedVersion?.base64 || imageUrl);
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [isPreloading, setIsPreloading] = useState(false);
+
+  // Preload image if not cached
+  React.useEffect(() => {
+    if (!cachedVersion && !isPreloading && imageUrl) {
+      setIsPreloading(true);
+      imageCache.preloadImage(imageUrl)
+        .then(base64 => {
+          if (base64 && base64 !== imageUrl) {
+            setCurrentSrc(base64);
+          }
+        })
+        .catch(err => console.error('Failed to preload image:', err))
+        .finally(() => setIsPreloading(false));
+    }
+  }, [imageUrl, cachedVersion, isPreloading]);
 
   const getFallbackUrl = (level: number): string | null => {
     const camelCase = toCamelFromName(name);
@@ -113,8 +128,27 @@ const GiftImage: React.FC<GiftImageProps> = ({
     const nextUrl = getFallbackUrl(nextLevel);
 
     if (nextUrl && nextUrl !== currentSrc) {
-      setCurrentSrc(nextUrl);
-      setFallbackLevel(nextLevel);
+      // Check if next URL is cached
+      const cached = imageCache.getImageFromCache(nextUrl);
+      if (cached) {
+        setCurrentSrc(cached);
+        setFallbackLevel(nextLevel);
+      } else {
+        // Preload and use the next URL
+        imageCache.preloadImage(nextUrl)
+          .then(base64 => {
+            if (base64 && base64 !== nextUrl) {
+              setCurrentSrc(base64);
+            } else {
+              setCurrentSrc(nextUrl);
+            }
+            setFallbackLevel(nextLevel);
+          })
+          .catch(() => {
+            setCurrentSrc(nextUrl);
+            setFallbackLevel(nextLevel);
+          });
+      }
     } else {
       setImageError(true);
     }
@@ -144,12 +178,9 @@ const GiftImage: React.FC<GiftImageProps> = ({
     );
   }
 
-  // Use cached base64 if available, otherwise use current URL
-  const displaySrc = cachedBase64 || currentSrc;
-
   return (
     <img
-      src={displaySrc}
+      src={currentSrc}
       alt={name}
       loading="lazy"
       className={`${sizeClasses[size]} ${className} object-contain`}
