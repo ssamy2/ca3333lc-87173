@@ -312,28 +312,29 @@ const createImagePlugin = (
   return {
     id: 'treemapImages',
     afterDatasetDraw(chart) {
-      const { ctx, data } = chart;
-      const dataset = data.datasets[0] as any;
-      const imageMap = dataset.imageMap as Map<string, HTMLImageElement>;
-      const zoomLevel = (chart as any).getZoomLevel?.() || 1;
-      
-      const toncoinImage = imageMap.get('toncoin') || new Image();
-      if (!imageMap.has('toncoin')) {
-        toncoinImage.src = tonIconSrc;
-        imageMap.set('toncoin', toncoinImage);
-      }
+      try {
+        const { ctx, data } = chart;
+        const dataset = data.datasets[0] as any;
+        const imageMap = dataset.imageMap as Map<string, HTMLImageElement>;
+        // Removed zoomLevel - no longer using zoom plugin
+        
+        const toncoinImage = imageMap.get('toncoin') || new Image();
+        if (!imageMap.has('toncoin')) {
+          toncoinImage.src = tonIconSrc;
+          imageMap.set('toncoin', toncoinImage);
+        }
 
-      ctx.save();
-      ctx.scale(zoomLevel, zoomLevel);
-      
-      dataset.tree.forEach((item: TreemapDataPoint, index: number) => {
-        const element = chart.getDatasetMeta(0).data[index] as any;
-        if (!element) return;
+        ctx.save();
+        // Removed ctx.scale - no zoom
+        
+        dataset.tree.forEach((item: TreemapDataPoint, index: number) => {
+          const element = chart.getDatasetMeta(0).data[index] as any;
+          if (!element) return;
 
-        const x = element.x / zoomLevel;
-        const y = element.y / zoomLevel;
-        const width = element.width / zoomLevel;
-        const height = element.height / zoomLevel;
+          const x = element.x;
+          const y = element.y;
+          const width = element.width;
+          const height = element.height;
 
         if (width <= 0 || height <= 0) return;
 
@@ -345,7 +346,7 @@ const createImagePlugin = (
         // Draw rectangle with adaptive border
         ctx.fillStyle = color;
         ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = Math.max(borderWidth / zoomLevel, 0.5);
+        ctx.lineWidth = Math.max(borderWidth, 0.5);
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
         ctx.fill();
@@ -353,7 +354,6 @@ const createImagePlugin = (
         ctx.closePath();
 
         // Always draw content - no minimum size check
-        // Even tiny elements will show info for zoom
         const minDimension = Math.min(width, height);
 
         const image = imageMap.get(item.imageName);
@@ -503,7 +503,11 @@ const createImagePlugin = (
       }
 
       ctx.restore();
+    } catch (error) {
+      console.error('[Treemap Plugin] Error in afterDatasetDraw:', error);
+      // Don't throw - just log and continue
     }
+  }
   };
 };
 
