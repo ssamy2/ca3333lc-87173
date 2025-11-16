@@ -104,7 +104,7 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
           <Link 
             key={name}
             to={`/gift/${encodeURIComponent(name)}`}
-            className="flex items-center justify-between min-h-[68px] w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-3 py-2 transition-all border border-border/30 hover:border-border/60"
+            className="flex items-center justify-between w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-3 py-3 transition-all border border-border/30 hover:border-border/60"
           >
             {/* Left: Rank + Image + Name */}
             <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
