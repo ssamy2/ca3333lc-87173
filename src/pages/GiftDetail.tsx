@@ -826,19 +826,19 @@ const GiftDetail = () => {
 
         {/* Controls */}
         <div className="flex items-center justify-between gap-2">
-          {/* Data Source Toggle - White/Gray style */}
-          <div className="flex rounded-full bg-muted/80 p-1 gap-1">
+          {/* Data Source Toggle - Improved */}
+          <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
             <Button
               onClick={() => setDataSource('market')}
               variant="ghost"
               size="sm"
-              className={`px-5 h-9 rounded-full font-medium transition-all ${
+              className={`px-5 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
                 dataSource === 'market' 
-                  ? 'bg-white text-black shadow-sm hover:bg-white' 
-                  : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+                  ? 'bg-gradient-to-br from-white to-gray-100 text-black shadow-md hover:from-gray-50 hover:to-white scale-105' 
+                  : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
               }`}
             >
-              Normal
+              Market
             </Button>
             {/* Only show Black button if there's more than one record */}
             {hasBlackData && (
@@ -846,10 +846,10 @@ const GiftDetail = () => {
                 onClick={() => setDataSource('black')}
                 variant="ghost"
                 size="sm"
-                className={`px-5 h-9 rounded-full font-medium transition-all ${
+                className={`px-5 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
                   dataSource === 'black' 
-                    ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                    : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+                    ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white shadow-md hover:from-gray-600 hover:to-gray-700 scale-105' 
+                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                 }`}
               >
                 Black
@@ -857,66 +857,67 @@ const GiftDetail = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Chart Type Toggle */}
+          <div className="flex items-center gap-2.5">
+            {/* Chart Type Toggle - Improved */}
             <Button
               onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
               variant="ghost"
               size="icon"
-              className="rounded-full bg-gray-800 h-10 w-10 hover:bg-gray-700"
+              className="rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 h-11 w-11 hover:from-gray-700 hover:to-gray-800 shadow-lg transition-all hover:scale-105 active:scale-95"
             >
               {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
             </Button>
 
-            {/* Currency Toggle - Only for Market data */}
+            {/* Currency Toggle - Only for Market data - Fixed & Improved */}
             {dataSource === 'market' && (
-              <div className="flex rounded-full bg-gray-800/50 p-1 gap-1">
+              <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
                 <Button
                   onClick={() => setCurrency('ton')}
                   variant="ghost"
                   size="sm"
-                  className={`px-4 h-9 gap-1.5 rounded-full font-medium transition-all ${
+                  className={`px-3.5 h-9 gap-1.5 rounded-lg font-semibold text-xs uppercase transition-all ${
                     currency === 'ton' 
-                      ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                      : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
+                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                   }`}
                 >
                   <TonIcon className="w-4 h-4" />
-                  ton
+                  <span>TON</span>
                 </Button>
                 <Button
                   onClick={() => setCurrency('usd')}
                   variant="ghost"
                   size="sm"
-                  className={`px-4 h-9 rounded-full font-medium transition-all ${
+                  className={`px-3.5 h-9 gap-1.5 rounded-lg font-semibold text-xs uppercase transition-all ${
                     currency === 'usd' 
-                      ? 'bg-gray-700 text-white shadow-sm hover:bg-gray-700' 
-                      : 'text-gray-400 hover:bg-transparent hover:text-foreground'
+                      ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md hover:from-green-500 hover:to-green-600 scale-105' 
+                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                   }`}
                 >
-                  usd
+                  <span className="text-sm font-bold">$</span>
+                  <span>USD</span>
                 </Button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Time Range Toggle - Blue style */}
+        {/* Time Range Toggle - Improved */}
         {dataSource === 'market' ? (
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {(['24h', '3d', '1w', '1m', '3m', 'all'] as TimeRange[]).map((range) => (
               <Button
                 key={range}
                 onClick={() => setTimeRange(range)}
                 variant="ghost"
                 size="sm"
-                className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
+                className={`rounded-xl px-5 h-10 whitespace-nowrap font-bold text-xs uppercase transition-all ${
                   timeRange === range 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600 shadow-lg scale-105' 
+                    : 'bg-gradient-to-br from-gray-800/60 to-gray-900/60 text-gray-300 hover:from-gray-700/60 hover:to-gray-800/60 hover:text-white shadow-md'
                 }`}
               >
-                {range === 'all' ? 'All' : range.toUpperCase()}
+                {range === 'all' ? 'ALL' : range.toUpperCase()}
               </Button>
             ))}
           </div>
