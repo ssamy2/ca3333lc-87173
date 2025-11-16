@@ -98,7 +98,7 @@ const Chart = () => {
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
     getTranslation(language, key);
   
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilterGrid, setTopFilterGrid] = useState<TopFilter>('all'); // For grid/list - show all by default
   const [topFilterHeatmap, setTopFilterHeatmap] = useState<TopFilter>('top25'); // For heatmap - show top 25 by default
