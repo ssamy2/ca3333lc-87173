@@ -959,31 +959,6 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           </div>
         )}
         
-        {/* Control Buttons */}
-        <div className="w-full flex gap-2">
-          <button
-            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-card border border-border text-foreground font-medium"
-            onClick={handleResetZoom}
-          >
-            <RotateCcw size={18} />
-            Reset Zoom
-          </button>
-          
-          <button
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-            onClick={handleZoomOut}
-          >
-            <ZoomOut size={20} />
-          </button>
-          
-          <button
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-card border border-border"
-            onClick={handleZoomIn}
-          >
-            <ZoomIn size={20} />
-          </button>
-        </div>
-
         {/* Chart */}
         <div className="w-full h-[calc(100vh-200px)] min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
           <Chart
