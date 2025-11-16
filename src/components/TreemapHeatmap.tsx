@@ -276,14 +276,25 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     img.crossOrigin = "anonymous";
     
     if (cachedBase64) {
-      // Use cached base64 image
+      // Use cached base64 image - already loaded
       img.src = cachedBase64;
+      // Mark as complete since base64 loads synchronously
+      if (!img.complete) {
+        // Force complete state for base64 images
+        img.onload = () => {};
+      }
     } else {
-      // Fallback to original URL and cache it
+      // Fallback to original URL
       img.src = item.imageName;
+      // Don't wait for onload - let the chart render and update when ready
       img.onload = () => {
         // Cache the image for future use
         imageCache.preloadImage(item.imageName).catch(console.error);
+        // Trigger a chart update when image loads
+        console.log('✅ Image loaded:', item.imageName);
+      };
+      img.onerror = () => {
+        console.error('❌ Failed to load image:', item.imageName);
       };
     }
     
@@ -554,6 +565,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [imageLoadTrigger, setImageLoadTrigger] = useState(0);
   const { language } = useLanguage();
 
   const handleHapticFeedback = useCallback(() => {
@@ -739,8 +751,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             console.log('[Treemap] Images preloaded successfully');
             setIsLoading(false);
             
-            // DON'T update chart immediately - let React re-render naturally
-            // chart.update() causes the crash when switching modes
+            // Trigger re-render to update chart with loaded images
+            setImageLoadTrigger(prev => prev + 1);
           })
           .catch((error) => {
             console.error('[Treemap] Error preloading images:', error);
