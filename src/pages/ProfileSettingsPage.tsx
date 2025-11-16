@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, ExternalLink, Globe, Users, Flame, TrendingUp } from 'lucide-react';
+import { ArrowLeft, User, ExternalLink, Globe, Users, Flame, TrendingUp, Sun, Moon, Monitor, Languages, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/useTheme';
@@ -95,172 +95,168 @@ const ProfileSettingsPage = () => {
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
     getTranslation(language, key);
 
+  // Memoize theme icons
+  const themeIcons = useMemo(() => ({
+    light: <Sun className="w-4 h-4" />,
+    dark: <Moon className="w-4 h-4" />,
+    system: <Monitor className="w-4 h-4" />
+  }), []);
+
+  // Memoize language flags
+  const languageFlags = useMemo(() => ({
+    en: '🇬🇧',
+    ar: '🇸🇦',
+    ru: '🇷🇺',
+    zh: '🇨🇳'
+  }), []);
+
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-4 space-y-6 max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-20">
+      <div className="p-4 space-y-4 max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
-            className="rounded-full"
+            className="rounded-full hover:bg-primary/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-semibold">{t('settings')}</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            {t('settings')}
+          </h1>
         </div>
 
-        {/* User Profile Header */}
-        <Card className="p-6">
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              {isLoading ? (
-                <div className="w-12 h-12 animate-pulse bg-muted-foreground/20 rounded-full" />
-              ) : userData.avatar_url ? (
-                <img
-                  src={userData.avatar_url}
-                  alt={userData.name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <User className="w-12 h-12 text-muted-foreground" />
-              )}
+        {/* User Profile Header - Compact */}
+        <Card className="p-4 bg-gradient-to-br from-card to-card/50 border-primary/10 shadow-lg">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-2 ring-primary/20">
+                {isLoading ? (
+                  <div className="w-8 h-8 animate-pulse bg-primary/20 rounded-full" />
+                ) : userData.avatar_url ? (
+                  <img
+                    src={userData.avatar_url}
+                    alt={userData.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-primary" />
+                )}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-card" />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold">{userData.name}</h2>
-              <p className="text-sm text-muted-foreground">@{userData.username}</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-bold truncate">{userData.name}</h2>
+              <p className="text-xs text-muted-foreground truncate">@{userData.username}</p>
             </div>
           </div>
         </Card>
 
-        {/* Language Selector */}
-        <Card className="p-6 space-y-4">
+        {/* Language Selector - Compact */}
+        <Card className="p-4 space-y-3 bg-gradient-to-br from-card to-card/50 border-primary/10">
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            <h3 className="text-base font-medium">{t('language')}</h3>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Languages className="w-4 h-4 text-primary" />
+            </div>
+            <h3 className="text-sm font-semibold">{t('language')}</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleLanguageChange('en')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                language === 'en'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('english')}</div>
-            </button>
-            <button
-              onClick={() => handleLanguageChange('ar')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                language === 'ar'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('arabic')}</div>
-            </button>
-            <button
-              onClick={() => handleLanguageChange('ru')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                language === 'ru'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('russian')}</div>
-            </button>
-            <button
-              onClick={() => handleLanguageChange('zh')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                language === 'zh'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('chinese')}</div>
-            </button>
+          <div className="grid grid-cols-4 gap-2">
+            {(['en', 'ar', 'ru', 'zh'] as Language[]).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => handleLanguageChange(lang)}
+                className={`p-2.5 rounded-lg border transition-all duration-200 ${
+                  language === lang
+                    ? 'border-primary bg-primary/15 shadow-sm scale-105'
+                    : 'border-border/50 bg-card/50 hover:bg-muted hover:border-primary/30'
+                }`}
+              >
+                <div className="text-lg mb-0.5">{languageFlags[lang]}</div>
+                <div className="text-[10px] font-medium truncate">
+                  {t(lang === 'en' ? 'english' : lang === 'ar' ? 'arabic' : lang === 'ru' ? 'russian' : 'chinese')}
+                </div>
+              </button>
+            ))}
           </div>
         </Card>
 
-        {/* Theme Selector */}
-        <Card className="p-6 space-y-4">
-          <h3 className="text-base font-medium">{t('theme')}</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={() => handleThemeChange('light')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                theme === 'light'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('light')}</div>
-            </button>
-            <button
-              onClick={() => handleThemeChange('dark')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                theme === 'dark'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('dark')}</div>
-            </button>
-            <button
-              onClick={() => handleThemeChange('system')}
-              className={`p-3 rounded-lg border-2 transition-all ${
-                theme === 'system'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <div className="text-sm font-medium">{t('system')}</div>
-            </button>
+        {/* Theme Selector - Compact */}
+        <Card className="p-4 space-y-3 bg-gradient-to-br from-card to-card/50 border-primary/10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Palette className="w-4 h-4 text-primary" />
+            </div>
+            <h3 className="text-sm font-semibold">{t('theme')}</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {(['light', 'dark', 'system'] as const).map((themeOption) => (
+              <button
+                key={themeOption}
+                onClick={() => handleThemeChange(themeOption)}
+                className={`p-2.5 rounded-lg border transition-all duration-200 flex flex-col items-center gap-1 ${
+                  theme === themeOption
+                    ? 'border-primary bg-primary/15 shadow-sm scale-105'
+                    : 'border-border/50 bg-card/50 hover:bg-muted hover:border-primary/30'
+                }`}
+              >
+                {themeIcons[themeOption]}
+                <div className="text-[10px] font-medium">
+                  {t(themeOption)}
+                </div>
+              </button>
+            ))}
           </div>
         </Card>
 
-        {/* Community Section */}
-        <Card className="p-6 space-y-4">
-          <h3 className="text-base font-medium">{t('community')}</h3>
-          <div className="space-y-3">
+        {/* Community Section - Compact */}
+        <Card className="p-4 space-y-3 bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/20">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-blue-500" />
+            </div>
+            <h3 className="text-sm font-semibold">{t('community')}</h3>
+          </div>
+          <div className="space-y-2">
             <Button
               onClick={() => openTelegramLink('https://t.me/GT_Rolet')}
               variant="outline"
-              className="w-full justify-between rounded-xl h-12"
+              className="w-full justify-between rounded-lg h-10 text-sm hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
             >
               <span>{t('joinTelegramChannel')}</span>
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </Button>
             <Button
               onClick={() => openTelegramLink('https://t.me/Gifts_Super')}
               variant="outline"
-              className="w-full justify-between rounded-xl h-12"
+              className="w-full justify-between rounded-lg h-10 text-sm hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
             >
               <span>{t('joinTelegramGroup')}</span>
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
         </Card>
 
-        {/* Statistics Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">Statistics</h3>
+        {/* Statistics Section - Compact & Optimized */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            <h3 className="text-sm font-semibold">Statistics</h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {/* Total Users */}
-            <Card className="p-5 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
-              <div className="flex flex-col space-y-3">
-                <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-orange-500" />
+            <Card className="p-3.5 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-5 h-5 text-orange-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold text-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Total Users</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statistics ? statistics.total_users.toLocaleString() : '...'}
                   </p>
                 </div>
@@ -268,14 +264,15 @@ const ProfileSettingsPage = () => {
             </Card>
 
             {/* Active Now */}
-            <Card className="p-5 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-              <div className="flex flex-col space-y-3">
-                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+            <Card className="p-3.5 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0 relative">
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                  <div className="absolute w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Now</p>
-                  <p className="text-2xl font-bold text-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Active Now</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statistics ? Math.floor(statistics.active_today * 0.15).toLocaleString() : '...'}
                   </p>
                 </div>
@@ -283,14 +280,14 @@ const ProfileSettingsPage = () => {
             </Card>
 
             {/* Active Today */}
-            <Card className="p-5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
-              <div className="flex flex-col space-y-3">
-                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-amber-500" />
+            <Card className="p-3.5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <Flame className="w-5 h-5 text-amber-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Today</p>
-                  <p className="text-2xl font-bold text-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Active Today</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statistics ? statistics.active_today.toLocaleString() : '...'}
                   </p>
                 </div>
@@ -298,19 +295,21 @@ const ProfileSettingsPage = () => {
             </Card>
 
             {/* Top Country */}
-            <Card className="p-5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-              <div className="flex flex-col space-y-3">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Globe className="w-6 h-6 text-blue-500" />
+            <Card className="p-3.5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-5 h-5 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Top Country</p>
-                  <p className="text-xl font-bold text-foreground flex items-center gap-2">
-                    {statistics?.top_country === 'Iraq' && '🇮🇶'}
-                    {statistics?.top_country === 'USA' && '🇺🇸'}
-                    {statistics?.top_country === 'Russia' && '🇷🇺'}
-                    {statistics?.top_country === 'China' && '🇨🇳'}
-                    {statistics ? statistics.top_country : '...'}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Top Country</p>
+                  <p className="text-base font-bold text-foreground flex items-center gap-1.5 truncate">
+                    <span className="text-lg">
+                      {statistics?.top_country === 'Iraq' && '🇮🇶'}
+                      {statistics?.top_country === 'USA' && '🇺🇸'}
+                      {statistics?.top_country === 'Russia' && '🇷🇺'}
+                      {statistics?.top_country === 'China' && '🇨🇳'}
+                    </span>
+                    <span className="truncate">{statistics ? statistics.top_country : '...'}</span>
                   </p>
                 </div>
               </div>
