@@ -71,14 +71,14 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-secondary/30">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">#</span>
-          <span className="text-xs font-semibold text-muted-foreground">Gift</span>
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-secondary/30">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground min-w-[20px]">#</span>
+          <span className="text-xs font-semibold text-muted-foreground ml-8">Gift</span>
         </div>
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 sm:gap-6">
           <span className="text-xs font-semibold text-muted-foreground">Price</span>
-          <span className="text-xs font-semibold text-muted-foreground min-w-[50px] text-right">24h</span>
+          <span className="text-xs font-semibold text-muted-foreground min-w-[45px] text-right">24h</span>
         </div>
       </div>
 
@@ -104,11 +104,11 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
           <Link 
             key={name}
             to={`/gift/${encodeURIComponent(name)}`}
-            className="flex items-center justify-between h-16 w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-4 transition-all border border-border/30 hover:border-border/60"
+            className="flex items-center justify-between min-h-[68px] w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-3 py-2 transition-all border border-border/30 hover:border-border/60"
           >
             {/* Left: Rank + Image + Name */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <span className="text-muted-foreground text-sm font-semibold min-w-[24px] text-center">
+            <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+              <span className="text-muted-foreground text-xs font-semibold min-w-[20px] text-center flex-shrink-0">
                 {index + 1}
               </span>
               
@@ -117,32 +117,40 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                 name={name}
                 shortName={item.short_name}
                 size="sm"
-                className="w-10 h-10 rounded-lg flex-shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex-shrink-0"
                 isBlackMode={isBlackMode}
               />
               
               <div className="flex flex-col min-w-0 flex-1">
-                <span className={`font-semibold text-sm truncate ${isBlackMode ? 'text-white' : 'text-foreground'}`}>
+                <span className={`font-semibold text-xs sm:text-sm leading-tight ${isBlackMode ? 'text-white' : 'text-foreground'}`}
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    wordBreak: 'break-word'
+                  }}
+                >
                   {name}
                 </span>
-                <span className={`text-xs ${isBlackMode ? 'text-white/50' : 'text-muted-foreground'}`}>
+                <span className={`text-[10px] sm:text-xs ${isBlackMode ? 'text-white/50' : 'text-muted-foreground'}`}>
                   {formatSupply(item.upgradedSupply)}
                 </span>
               </div>
             </div>
 
             {/* Right: Price + Change */}
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-1.5">
-                <TonIcon className="w-4 h-4 flex-shrink-0" />
-                <span className={`font-bold text-sm ${isBlackMode ? 'text-[#B87333]' : 'text-foreground'}`}>
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+              <div className="flex items-center gap-1">
+                <TonIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className={`font-bold text-xs sm:text-sm ${isBlackMode ? 'text-[#B87333]' : 'text-foreground'}`}>
                   {currentPrice.toFixed(2)}
                 </span>
               </div>
               
-              <div className="min-w-[50px] text-right">
+              <div className="min-w-[45px] text-right">
                 {has24h && (
-                  <span className={`font-bold text-xs px-2 py-1 rounded ${
+                  <span className={`font-bold text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded whitespace-nowrap ${
                     change24h > 0 
                       ? 'text-green-500 bg-green-500/10' 
                       : change24h < 0 
