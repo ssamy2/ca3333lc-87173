@@ -26,7 +26,7 @@ const GiftImage: React.FC<GiftImageProps> = ({
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
     lg: 'w-16 h-16',
-    responsive: 'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20',
+    responsive: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-[4.625rem] lg:h-[4.625rem] xl:w-[5.75rem] xl:h-[5.75rem]',
   };
 
   // Helper: convert gift name to API camelCase slug
