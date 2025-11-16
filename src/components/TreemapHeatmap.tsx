@@ -13,7 +13,6 @@ import {
 } from 'chart.js';
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
-import zoomPlugin from 'chartjs-plugin-zoom';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
 import { 
@@ -28,8 +27,7 @@ import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
   TreemapController, 
-  TreemapElement, 
-  zoomPlugin,
+  TreemapElement,
   CategoryScale,
   LinearScale,
   TimeScale,
@@ -735,20 +733,19 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     },
     plugins: {
       legend: { display: false },
-      tooltip: { enabled: false },
-      zoom: {
-        zoom: {
-          wheel: { enabled: false },
-          pinch: { enabled: false },
-          mode: 'xy'
-        },
-        pan: {
-          enabled: false,
-          mode: 'xy'
-        }
-      }
+      tooltip: { enabled: false }
     },
-    events: ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend']
+    events: ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'],
+    // Wrap chart operations in try-catch for safety
+    onResize: (chart: any) => {
+      try {
+        if (chart && chart.update) {
+          chart.update('none');
+        }
+      } catch (error) {
+        console.error('[Treemap] Error in onResize:', error);
+      }
+    }
   };
 
   // Zoom functions removed - zoom is now disabled
@@ -766,15 +763,36 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           </div>
         )}
         
-        {/* Chart */}
+        {/* Chart - Wrapped in error boundary */}
         <div className="w-full h-[calc(100vh-200px)] min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
-          <Chart
-            ref={chartRef}
-            type="treemap"
-            data={chartData}
-            options={chartOptions}
-            plugins={[createImagePlugin(chartType, currency)]}
-          />
+          {(() => {
+            try {
+              return (
+                <Chart
+                  ref={chartRef}
+                  type="treemap"
+                  data={chartData}
+                  options={chartOptions}
+                  plugins={[createImagePlugin(chartType, currency)]}
+                />
+              );
+            } catch (error) {
+              console.error('[Treemap] Error rendering chart:', error);
+              return (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <p className="text-muted-foreground">Failed to render chart</p>
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="text-primary hover:underline text-sm"
+                    >
+                      Reload page
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+          })()}
         </div>
       </div>
     </>
