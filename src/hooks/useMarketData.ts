@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCachedData, setCachedData } from '@/services/marketCache';
 import { getAuthHeaders } from '@/lib/telegramAuth';
+import { normalizeImageUrl } from '@/utils/urlNormalizer';
 
 interface NFTMarketData {
   priceTon: number;
@@ -45,9 +46,18 @@ const fetchMarketData = async (): Promise<MarketData> => {
     }
     throw new Error('Failed to fetch market data');
   }
-  const data = await response.json();
+  const rawData = await response.json();
   
-  // Cache the data
+  // Normalize all image URLs in the data
+  const data: MarketData = {};
+  Object.entries(rawData).forEach(([key, value]: [string, any]) => {
+    data[key] = {
+      ...value,
+      image_url: normalizeImageUrl(value.image_url)
+    };
+  });
+  
+  // Cache the normalized data
   setCachedData('market-data', data);
   
   // Immediately preload images after successful data fetch

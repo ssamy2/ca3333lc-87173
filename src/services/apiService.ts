@@ -1,5 +1,6 @@
 import { mockNFTResponse, mockErrorResponses } from './mockData';
 import { getAuthHeaders } from '@/lib/telegramAuth';
+import { normalizeImageUrl } from '@/utils/urlNormalizer';
 
 export const USE_MOCK_DATA = false; // Always use real API
 
@@ -117,7 +118,7 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     // Normalize the response to match expected format
     const normalizedData = {
       ...responseData,
-      image: responseData.image_url || responseData.image, // Use image_url if available
+      image: normalizeImageUrl(responseData.image_url || responseData.image), // Use image_url if available
     };
     
     return {
@@ -239,7 +240,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
           floor_price: gift.price_ton || 0,
           avg_price: gift.price_ton || 0,
           price_change_percent: 0,
-          image: gift.image || '',
+          image: normalizeImageUrl(gift.image) || '',
           title: gift.gift_name || 'Unknown',
           backdrop: gift.backdrop || '',
           model_rarity: gift.rarity || 0,

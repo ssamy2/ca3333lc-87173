@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Gift } from 'lucide-react';
 import { imageCache } from '@/services/imageCache';
+import { normalizeImageUrl } from '@/utils/urlNormalizer';
 
 interface GiftImageProps {
   imageUrl: string;
@@ -46,9 +47,12 @@ const GiftImage: React.FC<GiftImageProps> = ({
     const camelCase = toCamelFromName(name);
     const kebabCase = name.toLowerCase().replace(/\s+/g, '-');
     
+    // Normalize the incoming imageUrl first
+    const normalizedImageUrl = normalizeImageUrl(imageUrl);
+    
     // Try all possible URL formats to find cached version
     const possibleUrls = [
-      imageUrl,
+      normalizedImageUrl,
       `https://www.channelsseller.site/api/image/${camelCase}`,
       shortName ? `https://www.channelsseller.site/api/image/${shortName}` : null,
       `https://www.channelsseller.site/api/image/${kebabCase}`,
@@ -67,7 +71,8 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
   // Check cache directly for the provided imageUrl or find any cached version
   const cachedVersion = findCachedVersion();
-  const [currentSrc, setCurrentSrc] = useState(cachedVersion?.base64 || imageUrl);
+  const normalizedUrl = normalizeImageUrl(imageUrl);
+  const [currentSrc, setCurrentSrc] = useState(cachedVersion?.base64 || normalizedUrl);
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isPreloading, setIsPreloading] = useState(false);
@@ -93,8 +98,8 @@ const GiftImage: React.FC<GiftImageProps> = ({
     
     switch (level) {
       case 0:
-        // Always try original imageUrl first
-        return imageUrl;
+        // Always try normalized imageUrl first
+        return normalizeImageUrl(imageUrl);
       case 1:
         // For black mode with short_name that's different from imageUrl, try it
         if (isBlackMode && shortName && !imageUrl.includes(shortName)) {
