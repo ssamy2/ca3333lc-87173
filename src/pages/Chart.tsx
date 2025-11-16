@@ -599,8 +599,11 @@ const Chart = () => {
                 radial-gradient(circle at 50% 0%, rgba(91,46,221,0.06) 0%, transparent 60%),
                 repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px),
                 repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(17,18,20,0.06) 40px, rgba(17,18,20,0.06) 41px)
-              `
-            } : undefined}
+              `,
+              gridAutoRows: '1fr'
+            } : {
+              gridAutoRows: '1fr'
+            }}
           >
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
@@ -625,10 +628,11 @@ const Chart = () => {
                 <Link 
                   key={name}
                   to={`/gift/${encodeURIComponent(name)}`}
-                  className="no-underline"
+                  className="no-underline block"
+                  style={{ aspectRatio: '1 / 1' }}
                 >
                   <Card
-                    className={`p-1.5 sm:p-2 md:p-3 flex flex-col items-center justify-between aspect-square backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer ${getCardStyle()}`}
+                    className={`p-1.5 sm:p-2 md:p-3 flex flex-col items-center justify-between backdrop-blur transition-all duration-300 hover:scale-105 cursor-pointer h-full w-full ${getCardStyle()}`}
                   >
                     <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-1 sm:mb-2">
                       <GiftImage
