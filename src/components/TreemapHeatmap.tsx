@@ -253,9 +253,10 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
 // Font cache for performance optimization
 const fontCache = new Map<string, { width: number; height: number }>();
 
-// Helper functions for dynamic sizing
+// Helper functions for dynamic sizing - more flexible
 const calculateFontSize = (minDimension: number, scale: number = 1) => {
-  const titleFontSize = Math.min(Math.max(minDimension / 10, 10), 18) * scale;
+  // More aggressive scaling - allow smaller fonts for tiny boxes
+  const titleFontSize = Math.min(Math.max(minDimension / 10, 6), 18) * scale;
   const valueFontSize = 0.8 * titleFontSize;
   const marketCapFontSize = 0.65 * titleFontSize;
   
@@ -356,23 +357,29 @@ const createImagePlugin = (
         const minDimension = Math.min(width, height);
 
         const image = imageMap.get(item.imageName);
-        if (!image?.complete || image.naturalWidth === 0) return;
+        // Don't skip if image not loaded - show text anyway
+        const hasImage = image?.complete && image.naturalWidth > 0;
 
-        // Dynamic font sizing based on element size
+        // Dynamic font sizing based on element size - more aggressive scaling
         const fontSizes = calculateFontSize(minDimension, scale);
         const spacing = calculateSpacing(minDimension, scale);
         
         // Adaptive image sizing - larger for bigger elements
         const imageRatio = Math.min(0.4, Math.max(0.15, minDimension / 200));
         const imageSize = minDimension * imageRatio * textScale;
-        const aspectRatio = image.width / image.height;
         
-        let imageWidth = imageSize;
-        let imageHeight = imageSize / aspectRatio;
+        let imageWidth = 0;
+        let imageHeight = 0;
         
-        if (imageHeight > imageSize) {
-          imageHeight = imageSize;
-          imageWidth = imageSize * aspectRatio;
+        if (hasImage) {
+          const aspectRatio = image.width / image.height;
+          imageWidth = imageSize;
+          imageHeight = imageSize / aspectRatio;
+          
+          if (imageHeight > imageSize) {
+            imageHeight = imageSize;
+            imageWidth = imageSize * aspectRatio;
+          }
         }
 
         // Calculate available space for text
@@ -394,11 +401,17 @@ const createImagePlugin = (
         const textStartY = y + (height - finalTotalHeight) / 2;
         const centerX = x + width / 2;
 
-        // Draw image with better centering
-        const imageX = x + (width - imageWidth) / 2;
-        const imageY = textStartY;
-        
-        ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+        // Draw image with better centering (only if image exists)
+        if (hasImage) {
+          const imageX = x + (width - imageWidth) / 2;
+          const imageY = textStartY;
+          
+          try {
+            ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+          } catch (error) {
+            console.error('[Treemap] Error drawing image:', error);
+          }
+        }
 
         // Enhanced text rendering with better contrast
         ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';

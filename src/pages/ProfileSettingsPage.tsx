@@ -105,7 +105,7 @@ const ProfileSettingsPage = () => {
   // Memoize language flags
   const languageFlags = useMemo(() => ({
     en: '🇬🇧',
-    ar: '🇸🇦',
+    ar: '🇮🇶',
     ru: '🇷🇺',
     zh: '🇨🇳'
   }), []);
