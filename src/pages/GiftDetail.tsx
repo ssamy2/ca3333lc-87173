@@ -836,7 +836,7 @@ const GiftDetail = () => {
                 size="sm"
                 className={`px-4 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
                   dataSource === 'market' 
-                    ? 'bg-gradient-to-br from-white to-gray-100 text-black shadow-md hover:from-gray-50 hover:to-white scale-105' 
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
                     : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                 }`}
               >
