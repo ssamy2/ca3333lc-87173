@@ -578,8 +578,29 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const transformedData = transformGiftData(data, chartType, timeGap, currency);
       const imageMap = await preloadImagesAsync(transformedData);
 
-      // Create temporary chart for export
-      const tempChart = new ChartJS(ctx, {
+      // Create temporary chart for export with safe configuration
+      let tempChart: ChartJS | null = null;
+      try {
+        // Disable all event handlers and interactions for temp chart
+        const tempChartOptions: ChartOptions<'treemap'> = {
+          responsive: false,
+          maintainAspectRatio: false,
+          animation: false,
+          layout: {
+            padding: 0
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          events: [], // Disable all events
+          interaction: {
+            mode: 'none' as any, // Disable all interactions
+            intersect: false
+          }
+        };
+
+        tempChart = new ChartJS(ctx, {
         type: 'treemap',
         data: {
           datasets: [{
@@ -592,20 +613,26 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             backgroundColor: 'transparent'
           } as any]
         },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          layout: {
-            padding: 0
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          }
-        },
+        options: tempChartOptions,
         plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
       });
+      } catch (chartError) {
+        console.error('[Treemap] Error creating temp chart:', chartError);
+        setIsDownloading(false);
+        return;
+      }
+
+      // Helper function to safely destroy chart
+      const safeDestroyChart = () => {
+        try {
+          if (tempChart && typeof tempChart.destroy === 'function') {
+            tempChart.destroy();
+            console.log('[Treemap] Temp chart destroyed successfully');
+          }
+        } catch (destroyError) {
+          console.error('[Treemap] Error destroying temp chart:', destroyError);
+        }
+      };
 
       // Wait for chart to render then process
       setTimeout(async () => {
@@ -619,7 +646,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            tempChart.destroy();
+            safeDestroyChart();
             return;
           }
 
@@ -627,7 +654,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           const userId = telegramWebApp?.initDataUnsafe?.user?.id;
           if (!userId) {
             console.error('No Telegram user ID found');
-            tempChart.destroy();
+            safeDestroyChart();
             return;
           }
 
@@ -639,20 +666,20 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               language,
               onSuccess: () => {
                 console.log('Image sent successfully');
-                tempChart.destroy();
+                safeDestroyChart();
               },
               onError: (error) => {
                 console.error('Error sending image:', error);
-                tempChart.destroy();
+                safeDestroyChart();
               }
             });
           } else {
             console.error('sendHeatmapImage function not available');
-            tempChart.destroy();
+            safeDestroyChart();
           }
         } catch (error) {
           console.error('Error in image processing:', error);
-          tempChart.destroy();
+          safeDestroyChart();
         }
       }, 100); // Increased timeout for better rendering
     } catch (error) {
