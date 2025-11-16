@@ -634,19 +634,34 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         }
       };
 
-      // Wait for chart to render then process
-      setTimeout(async () => {
+      // Force immediate render without animation
+      try {
+        if (tempChart && typeof tempChart.update === 'function') {
+          tempChart.update('none');
+        }
+      } catch (updateError) {
+        console.error('[Treemap] Error updating temp chart:', updateError);
+      }
+
+      // Process immediately after render
+      requestAnimationFrame(async () => {
         try {
           if (!isTelegram) {
             // Download directly for non-Telegram users
-            const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
-            const link = document.createElement('a');
-            link.download = `nova-heatmap-${Date.now()}.jpeg`;
-            link.href = imageUrl;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            safeDestroyChart();
+            try {
+              const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
+              const link = document.createElement('a');
+              link.download = `nova-heatmap-${Date.now()}.jpeg`;
+              link.href = imageUrl;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            } catch (downloadError) {
+              console.error('[Treemap] Error downloading image:', downloadError);
+            } finally {
+              // Destroy chart IMMEDIATELY after download
+              safeDestroyChart();
+            }
             return;
           }
 
@@ -681,7 +696,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           console.error('Error in image processing:', error);
           safeDestroyChart();
         }
-      }, 100); // Increased timeout for better rendering
+      });
     } catch (error) {
       console.error('Error in downloadImage:', error);
       setIsDownloading(false);
