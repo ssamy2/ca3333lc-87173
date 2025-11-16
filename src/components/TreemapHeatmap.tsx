@@ -581,7 +581,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       // Create temporary chart for export with safe configuration
       let tempChart: ChartJS | null = null;
       try {
-        // Disable all event handlers and interactions for temp chart
+        // CRITICAL: Completely disable ALL event handling to prevent _positionChanged errors
         const tempChartOptions: ChartOptions<'treemap'> = {
           responsive: false,
           maintainAspectRatio: false,
@@ -593,11 +593,15 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             legend: { display: false },
             tooltip: { enabled: false }
           },
-          events: [], // Disable all events
+          events: [], // NO DOM EVENTS
           interaction: {
-            mode: 'none' as any, // Disable all interactions
+            mode: undefined as any, // COMPLETELY disable interactions
             intersect: false
-          }
+          },
+          // Additional safety: disable all callbacks
+          onHover: undefined,
+          onClick: undefined,
+          onResize: undefined
         };
 
         tempChart = new ChartJS(ctx, {
