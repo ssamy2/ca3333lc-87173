@@ -83,7 +83,7 @@ const GiftDetail = () => {
   const [giftData, setGiftData] = useState<GiftDetailData | null>(null);
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
   const [dataSource, setDataSource] = useState<DataSource>('market');
-  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
+  const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [chartType, setChartType] = useState<ChartType>('line');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [showModels, setShowModels] = useState(false);
@@ -824,82 +824,83 @@ const GiftDetail = () => {
           {renderChart()}
         </Card>
 
-        {/* Controls */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Data Source Toggle - Improved */}
-          <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
-            <Button
-              onClick={() => setDataSource('market')}
-              variant="ghost"
-              size="sm"
-              className={`px-5 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
-                dataSource === 'market' 
-                  ? 'bg-gradient-to-br from-white to-gray-100 text-black shadow-md hover:from-gray-50 hover:to-white scale-105' 
-                  : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
-              }`}
-            >
-              Market
-            </Button>
-            {/* Only show Black button if there's more than one record */}
-            {hasBlackData && (
+        {/* Controls - Responsive Layout */}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Data Source + Chart Type */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Data Source Toggle - Improved */}
+            <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
               <Button
-                onClick={() => setDataSource('black')}
+                onClick={() => setDataSource('market')}
                 variant="ghost"
                 size="sm"
-                className={`px-5 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
-                  dataSource === 'black' 
-                    ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white shadow-md hover:from-gray-600 hover:to-gray-700 scale-105' 
+                className={`px-4 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
+                  dataSource === 'market' 
+                    ? 'bg-gradient-to-br from-white to-gray-100 text-black shadow-md hover:from-gray-50 hover:to-white scale-105' 
                     : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                 }`}
               >
-                Black
+                Market
               </Button>
-            )}
-          </div>
+              {/* Only show Black button if there's more than one record */}
+              {hasBlackData && (
+                <Button
+                  onClick={() => setDataSource('black')}
+                  variant="ghost"
+                  size="sm"
+                  className={`px-4 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
+                    dataSource === 'black' 
+                      ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white shadow-md hover:from-gray-600 hover:to-gray-700 scale-105' 
+                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                  }`}
+                >
+                  Black
+                </Button>
+              )}
+            </div>
 
-          <div className="flex items-center gap-2.5">
             {/* Chart Type Toggle - Improved */}
             <Button
               onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
               variant="ghost"
               size="icon"
-              className="rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 h-11 w-11 hover:from-gray-700 hover:to-gray-800 shadow-lg transition-all hover:scale-105 active:scale-95"
+              className="rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 h-10 w-10 hover:from-gray-700 hover:to-gray-800 shadow-lg transition-all hover:scale-105 active:scale-95"
             >
               {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
             </Button>
-
-            {/* Currency Toggle - Only for Market data - Fixed & Improved */}
-            {dataSource === 'market' && (
-              <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
-                <Button
-                  onClick={() => setCurrency('ton')}
-                  variant="ghost"
-                  size="sm"
-                  className={`px-3.5 h-9 gap-1.5 rounded-lg font-semibold text-xs uppercase transition-all ${
-                    currency === 'ton' 
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
-                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
-                  }`}
-                >
-                  <TonIcon className="w-4 h-4" />
-                  <span>TON</span>
-                </Button>
-                <Button
-                  onClick={() => setCurrency('usd')}
-                  variant="ghost"
-                  size="sm"
-                  className={`px-3.5 h-9 gap-1.5 rounded-lg font-semibold text-xs uppercase transition-all ${
-                    currency === 'usd' 
-                      ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md hover:from-green-500 hover:to-green-600 scale-105' 
-                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
-                  }`}
-                >
-                  <span className="text-sm font-bold">$</span>
-                  <span>USD</span>
-                </Button>
-              </div>
-            )}
           </div>
+
+          {/* Bottom Row: Currency Toggle - Only for Market data */}
+          {dataSource === 'market' && (
+            <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg w-full">
+              <Button
+                onClick={() => setCurrency('ton')}
+                variant="ghost"
+                size="sm"
+                className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
+                  currency === 'ton' 
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
+                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                }`}
+              >
+                <TonIcon className="w-4 h-4" />
+                <span>TON</span>
+              </Button>
+              <Button
+                onClick={() => setCurrency('usd')}
+                variant="ghost"
+                size="sm"
+                className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
+                  currency === 'usd' 
+                    ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md hover:from-green-500 hover:to-green-600 scale-105' 
+                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                }`}
+              >
+                <span className="text-sm font-bold">$</span>
+                <span>USD</span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Time Range Toggle - Improved */}
