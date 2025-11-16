@@ -205,11 +205,13 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
   // Check if we have cached images for this chart configuration
   const cachedImages = getCachedChartImages(cacheKey);
   if (cachedImages) {
-    console.log('✅ Using cached chart images');
+    console.log('✅ Using cached chart images from chartCache');
     return cachedImages;
   }
   
   const imageMap = new Map<string, HTMLImageElement>();
+  let cachedCount = 0;
+  let uncachedCount = 0;
   
   data.forEach(item => {
     // First try to get from image cache
@@ -221,20 +223,18 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     if (cachedBase64) {
       // Use cached base64 image - already loaded
       img.src = cachedBase64;
-      // Mark as complete since base64 loads synchronously
-      if (!img.complete) {
-        // Force complete state for base64 images
-        img.onload = () => {};
-      }
+      cachedCount++;
+      console.log('✅ Using cached image:', item.imageName);
     } else {
-      // Fallback to original URL
+      // Image not in cache - need to load from URL
       img.src = item.imageName;
-      // Don't wait for onload - let the chart render and update when ready
+      uncachedCount++;
+      console.log('⏳ Loading image from URL:', item.imageName);
+      
+      // Cache the image when it loads
       img.onload = () => {
-        // Cache the image for future use
         imageCache.preloadImage(item.imageName).catch(console.error);
-        // Trigger a chart update when image loads
-        console.log('✅ Image loaded:', item.imageName);
+        console.log('✅ Image loaded and cached:', item.imageName);
       };
       img.onerror = () => {
         console.error('❌ Failed to load image:', item.imageName);
@@ -243,6 +243,8 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     
     imageMap.set(item.imageName, img);
   });
+  
+  console.log(`📊 Treemap images: ${cachedCount} from cache, ${uncachedCount} loading from URL`);
   
   // Cache the image map for this chart configuration
   setCachedChartImages(cacheKey, imageMap);
@@ -670,14 +672,18 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const allImagesCached = transformed.every(item => {
         try {
           const cached = imageCache.getImageFromCache(item.imageName);
-          return cached !== null;
+          const isCached = cached !== null;
+          if (!isCached) {
+            console.log('[Treemap] Image NOT in cache:', item.imageName);
+          }
+          return isCached;
         } catch (error) {
           console.error('[Treemap] Error checking cache for:', item.imageName, error);
           return false;
         }
       });
       
-      console.log('[Treemap] All images cached:', allImagesCached);
+      console.log('[Treemap] All images cached:', allImagesCached, `(${transformed.length} total images)`);
       
       if (allImagesCached) {
         // All images are cached, no loading needed
