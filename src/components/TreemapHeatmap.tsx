@@ -13,7 +13,6 @@ import {
 } from 'chart.js';
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
-import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { imageCache } from '@/services/imageCache';
 import { 
   getCachedChartImages, 
@@ -524,7 +523,6 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
-  const [showSendDialog, setShowSendDialog] = useState(false);
   const [imageLoadTrigger, setImageLoadTrigger] = useState(0);
   const { language } = useLanguage();
 
@@ -539,47 +537,36 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   const downloadImage = useCallback(async () => {
-    // Prevent multiple simultaneous downloads
-    if (isDownloading) {
-      console.log('Download already in progress');
-      return;
-    }
+    if (isDownloading) return;
     
     try {
       setIsDownloading(true);
       handleHapticFeedback();
       
-      const telegramWebApp = (window as any).Telegram?.WebApp;
-      const isTelegram = !!telegramWebApp;
-      
-      // Show dialog for Telegram users
-      if (isTelegram) {
-        setShowSendDialog(true);
+      if (!chartRef.current) {
+        console.error('[TreemapHeatmap] Chart not found');
+        setIsDownloading(false);
+        return;
       }
       
-      const chart = chartRef.current;
-      if (!chart) {
-        console.error('Chart reference not found');
+      const telegramWebApp = (window as any).Telegram?.WebApp;
+      const isTelegram = !!telegramWebApp;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1628;
+      canvas.height = 1500;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
         setIsDownloading(false);
         return;
       }
 
-      // Create high-resolution canvas for export (2x for PNG compression)
-      const canvas = document.createElement('canvas');
-      canvas.width = 1628;  // 814 * 2
-      canvas.height = 1500; // 750 * 2
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        console.error('Failed to get canvas context');
-        return;
-      }
-
-      // Transform data and preload images
       const transformedData = transformGiftData(data, chartType, timeGap, currency);
       const imageMap = await preloadImagesAsync(transformedData);
 
-      // Create temporary chart for export with safe configuration
       let tempChart: ChartJS | null = null;
+      
       try {
         // CRITICAL: Completely disable ALL event handling to prevent _positionChanged errors
         const tempChartOptions: ChartOptions<'treemap'> = {
@@ -621,94 +608,56 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
       });
       } catch (chartError) {
-        console.error('[Treemap] Error creating temp chart:', chartError);
+        console.error('[TreemapHeatmap] Chart creation failed:', chartError);
         setIsDownloading(false);
         return;
       }
 
-      // Helper function to safely destroy chart
-      const safeDestroyChart = () => {
+      // Force render
+      if (tempChart?.update) {
         try {
-          if (tempChart && typeof tempChart.destroy === 'function') {
-            tempChart.destroy();
-            console.log('[Treemap] Temp chart destroyed successfully');
-          }
-        } catch (destroyError) {
-          console.error('[Treemap] Error destroying temp chart:', destroyError);
-        }
-      };
-
-      // Force immediate render without animation
-      try {
-        if (tempChart && typeof tempChart.update === 'function') {
           tempChart.update('none');
-        }
-      } catch (updateError) {
-        console.error('[Treemap] Error updating temp chart:', updateError);
+        } catch {}
       }
 
-      // Process immediately after render
-      requestAnimationFrame(async () => {
+      // SIMPLE: Download or send immediately
+      setTimeout(() => {
         try {
           if (!isTelegram) {
-            // Download directly for non-Telegram users
-            try {
-              const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
-              const link = document.createElement('a');
-              link.download = `nova-heatmap-${Date.now()}.jpeg`;
-              link.href = imageUrl;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            } catch (downloadError) {
-              console.error('[Treemap] Error downloading image:', downloadError);
-            } finally {
-              // Destroy chart IMMEDIATELY after download
-              safeDestroyChart();
-            }
-            return;
-          }
-
-          // Telegram user flow
-          const userId = telegramWebApp?.initDataUnsafe?.user?.id;
-          if (!userId) {
-            console.error('No Telegram user ID found');
-            safeDestroyChart();
-            return;
-          }
-
-          // Send image via Telegram
-          if (typeof sendHeatmapImage === 'function') {
-            await sendHeatmapImage({
-              canvas,
-              userId: userId.toString(),
-              language,
-              onSuccess: () => {
-                console.log('Image sent successfully');
-                safeDestroyChart();
-              },
-              onError: (error) => {
-                console.error('Error sending image:', error);
-                safeDestroyChart();
-              }
-            });
+            // PC: Direct download
+            const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
+            const link = document.createElement('a');
+            link.download = `nova-heatmap-${Date.now()}.jpeg`;
+            link.href = imageUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
           } else {
-            console.error('sendHeatmapImage function not available');
-            safeDestroyChart();
+            // Mobile: Send via Telegram
+            const userId = telegramWebApp?.initDataUnsafe?.user?.id;
+            if (userId && typeof sendHeatmapImage === 'function') {
+              sendHeatmapImage({
+                canvas,
+                userId: userId.toString(),
+                language,
+                onSuccess: () => console.log('[TreemapHeatmap] Sent'),
+                onError: (e) => console.error('[TreemapHeatmap] Send failed:', e)
+              });
+            }
           }
-        } catch (error) {
-          console.error('Error in image processing:', error);
-          safeDestroyChart();
+        } catch (e) {
+          console.error('[TreemapHeatmap] Process error:', e);
+        } finally {
+          // Destroy chart
+          try {
+            tempChart?.destroy();
+          } catch {}
         }
-      });
+      }, 50);
     } catch (error) {
-      console.error('Error in downloadImage:', error);
-      setIsDownloading(false);
+      console.error('[TreemapHeatmap] Download error:', error);
     } finally {
-      // Reset downloading state after a delay to allow completion
-      setTimeout(() => {
-        setIsDownloading(false);
-      }, 2000);
+      setTimeout(() => setIsDownloading(false), 1000);
     }
   }, [data, chartType, timeGap, currency, language, handleHapticFeedback, isDownloading]);
 
@@ -814,10 +763,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   // Zoom functions removed - zoom is now disabled
 
   return (
-    <>
-      <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
-      
-      <div className="w-full flex flex-col items-center gap-3 px-3">
+    <div className="w-full flex flex-col items-center gap-3 px-3">
         {/* Loading indicator - small and non-intrusive */}
         {isLoading && (
           <div className="w-full flex items-center justify-center gap-2 py-2 bg-secondary/50 rounded-lg animate-in fade-in">
@@ -857,8 +803,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             }
           })()}
         </div>
-      </div>
-    </>
+    </div>
   );
 });
 
