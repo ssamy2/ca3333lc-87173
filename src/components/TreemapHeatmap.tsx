@@ -14,6 +14,7 @@ import {
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
 import { imageCache } from '@/services/imageCache';
+import { toast } from '@/hooks/use-toast';
 import { 
   getCachedChartImages, 
   setCachedChartImages, 
@@ -524,6 +525,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
   const [imageLoadTrigger, setImageLoadTrigger] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const { language } = useLanguage();
 
   const handleHapticFeedback = useCallback(() => {
@@ -534,8 +536,6 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     }
   }, []);
 
-  const [isDownloading, setIsDownloading] = React.useState(false);
-
   const downloadImage = useCallback(async () => {
     if (isDownloading) return;
     
@@ -544,7 +544,6 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       handleHapticFeedback();
       
       if (!chartRef.current) {
-        console.error('[TreemapHeatmap] Chart not found');
         setIsDownloading(false);
         return;
       }
@@ -620,7 +619,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         } catch {}
       }
 
-      // SIMPLE: Download or send immediately
+      // ULTRA SIMPLE: Just download/send and destroy
       setTimeout(() => {
         try {
           if (!isTelegram) {
@@ -633,22 +632,28 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             link.click();
             document.body.removeChild(link);
           } else {
-            // Mobile: Send via Telegram
+            // Mobile: Fire and forget - NO WAITING
             const userId = telegramWebApp?.initDataUnsafe?.user?.id;
             if (userId && typeof sendHeatmapImage === 'function') {
+              // Show simple notification
+              toast({
+                title: "📤 جاري الإرسال",
+                description: "سيتم إرسال الصورة قريباً",
+                duration: 2000,
+              });
+              
+              // Send without waiting for result
               sendHeatmapImage({
                 canvas,
                 userId: userId.toString(),
                 language,
-                onSuccess: () => console.log('[TreemapHeatmap] Sent'),
-                onError: (e) => console.error('[TreemapHeatmap] Send failed:', e)
-              });
+                onSuccess: () => {},
+                onError: () => {}
+              }).catch(() => {});
             }
           }
-        } catch (e) {
-          console.error('[TreemapHeatmap] Process error:', e);
         } finally {
-          // Destroy chart
+          // ALWAYS destroy immediately
           try {
             tempChart?.destroy();
           } catch {}
