@@ -358,8 +358,8 @@ const createImagePlugin = (
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
           
-          // MANDATORY image sizing - always draw image, minimum 8px
-          const imageSize = Math.max(minDimension * 0.22, 8);
+          // MANDATORY image sizing - always draw image, minimum 2px
+          const imageSize = Math.max(minDimension * 0.22, 2);
           
           let imageWidth = imageSize;
           let imageHeight = imageSize;
