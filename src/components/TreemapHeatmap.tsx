@@ -292,6 +292,23 @@ const calculateTotalTextHeight = (
     : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
 };
 
+// ===== helper: safe rounded rect (fallback if ctx.roundRect not available) =====
+function safeRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(x, y, w, h, r);
+    return;
+  }
+  // fallback path drawing
+  const radius = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
 const createImagePlugin = (
   chartType: 'change' | 'marketcap',
   currency: 'ton' | 'usd',
@@ -305,8 +322,16 @@ const createImagePlugin = (
     afterDatasetDraw(chart) {
       try {
         const { ctx, data } = chart;
+        if (!data || !data.datasets || data.datasets.length === 0) {
+          // nothing to draw
+          return;
+        }
         const dataset = data.datasets[0] as any;
-        const imageMap = dataset.imageMap as Map<string, HTMLImageElement>;
+        if (!dataset || !dataset.tree || !Array.isArray(dataset.tree)) {
+          console.warn('[treemapImages] no tree data to draw');
+          return;
+        }
+        const imageMap = dataset.imageMap instanceof Map ? dataset.imageMap : new Map();
         
         const toncoinImage = imageMap.get('toncoin') || new Image();
         if (!imageMap.has('toncoin')) {
@@ -342,11 +367,9 @@ const createImagePlugin = (
           ctx.fillStyle = color;
           ctx.strokeStyle = '#1e293b';
           ctx.lineWidth = Math.max(borderWidth, 0.5);
-          ctx.beginPath();
-          ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
+          safeRoundRect(ctx, x, y, width, height, Math.min(width, height) * 0.02);
           ctx.fill();
           ctx.stroke();
-          ctx.closePath();
 
           // Always draw content - no minimum size check
           const minDimension = Math.min(width, height);
@@ -503,8 +526,8 @@ const createImagePlugin = (
           ctx.fillText('@Novachartbot', chartArea.right - 10, chartArea.bottom - 10);
         }
         ctx.restore();
-      } catch {
-        // ignore plugin errors to avoid breaking chart
+      } catch (err) {
+        console.error('[Treemap Plugin] error in afterDatasetDraw:', err);
       }
     }
   };
