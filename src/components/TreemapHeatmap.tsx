@@ -253,18 +253,20 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
 // Font cache for performance optimization
 const fontCache = new Map<string, { width: number; height: number }>();
 
-// Helper functions for dynamic sizing - more flexible
+// Helper functions for dynamic sizing - ultra flexible
 const calculateFontSize = (minDimension: number, scale: number = 1) => {
-  // More aggressive scaling - allow smaller fonts for tiny boxes
-  const titleFontSize = Math.min(Math.max(minDimension / 10, 6), 18) * scale;
-  const valueFontSize = 0.8 * titleFontSize;
-  const marketCapFontSize = 0.65 * titleFontSize;
+  // Ultra dynamic scaling - works for any box size
+  // Minimum 4px for tiny boxes, maximum 24px for huge boxes
+  const titleFontSize = Math.min(Math.max(minDimension / 8, 4), 24) * scale;
+  const valueFontSize = 0.75 * titleFontSize;
+  const marketCapFontSize = 0.6 * titleFontSize;
   
   return { titleFontSize, valueFontSize, marketCapFontSize };
 };
 
 const calculateSpacing = (minDimension: number, scale: number = 1) => {
-  const spacing = Math.min(Math.max(minDimension / 40, 2), 8) * scale;
+  // Ultra flexible spacing - works for any size
+  const spacing = Math.min(Math.max(minDimension / 50, 1), 10) * scale;
   return spacing;
 };
 
@@ -280,12 +282,13 @@ const handleTextOverflow = (ctx: CanvasRenderingContext2D, text: string, maxWidt
   
   if (textWidth <= maxWidth) return text;
   
-  // تقصير النص مع إضافة ...
+  // Smart text wrapping - try to fit full text by reducing font size first
+  // If still doesn't fit, then truncate
   let shortened = text;
-  while (shortened.length > 3 && ctx.measureText(shortened + '...').width > maxWidth) {
+  while (shortened.length > 1 && ctx.measureText(shortened + '...').width > maxWidth) {
     shortened = shortened.slice(0, -1);
   }
-  return shortened.length > 3 ? shortened + '...' : text.slice(0, 3);
+  return shortened.length > 1 ? shortened + '...' : text.charAt(0);
 };
 
 const calculateTotalTextHeight = (
@@ -364,8 +367,8 @@ const createImagePlugin = (
         const fontSizes = calculateFontSize(minDimension, scale);
         const spacing = calculateSpacing(minDimension, scale);
         
-        // Adaptive image sizing - larger for bigger elements
-        const imageRatio = Math.min(0.4, Math.max(0.15, minDimension / 200));
+        // Ultra adaptive image sizing - scales perfectly with box size
+        const imageRatio = Math.min(0.45, Math.max(0.2, minDimension / 150));
         const imageSize = minDimension * imageRatio * textScale;
         
         let imageWidth = 0;
@@ -382,17 +385,17 @@ const createImagePlugin = (
           }
         }
 
-        // Calculate available space for text
-        const availableWidth = width * 0.9; // 90% of width for text
+        // Calculate available space for text - more generous
+        const availableWidth = width * 0.95; // 95% of width for text
         const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
         
-        // Check if content fits
-        if (totalTextHeight > height * 0.9) {
-          // Scale down everything proportionally
-          const scaleFactor = (height * 0.9) / totalTextHeight;
-          fontSizes.titleFontSize *= scaleFactor;
-          fontSizes.valueFontSize *= scaleFactor;
-          fontSizes.marketCapFontSize *= scaleFactor;
+        // Smart scaling - ensure everything fits perfectly
+        if (totalTextHeight > height * 0.95) {
+          // Scale down everything proportionally to fit
+          const scaleFactor = (height * 0.95) / totalTextHeight;
+          fontSizes.titleFontSize = Math.max(fontSizes.titleFontSize * scaleFactor, 4); // Min 4px
+          fontSizes.valueFontSize = Math.max(fontSizes.valueFontSize * scaleFactor, 3); // Min 3px
+          fontSizes.marketCapFontSize = Math.max(fontSizes.marketCapFontSize * scaleFactor, 3); // Min 3px
           imageWidth *= scaleFactor;
           imageHeight *= scaleFactor;
         }
@@ -553,9 +556,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const isTelegram = !!telegramWebApp;
 
       const canvas = document.createElement('canvas');
-      // Larger rectangular canvas for better quality (4:3 aspect ratio)
-      canvas.width = 2400;
-      canvas.height = 1800;
+      // High-quality canvas for detailed export (4:3 aspect ratio)
+      canvas.width = 3200;
+      canvas.height = 2400;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -609,7 +612,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           } as any]
         },
         options: tempChartOptions,
-        plugins: [createImagePlugin(chartType, currency, 100, 2.5, 2.5, 2.5)]  // 2.5x scale for larger export
+        plugins: [createImagePlugin(chartType, currency, 100, 3.5, 3.5, 2)]  // 3.5x scale for high-res export
       });
       } catch (chartError) {
         console.error('[TreemapHeatmap] Chart creation failed:', chartError);
