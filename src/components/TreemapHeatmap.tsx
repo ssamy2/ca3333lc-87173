@@ -352,19 +352,17 @@ const createImagePlugin = (
           const minDimension = Math.min(width, height);
 
           const image = imageMap.get(item.imageName);
-          // Don't skip if image not loaded - show text anyway
           const hasImage = image?.complete && image.naturalWidth > 0;
 
           // Dynamic font sizing based on element size
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
           
-          // Adaptive image sizing - based only on block size
-          const imageRatio = Math.min(0.45, Math.max(0.2, minDimension / 150));
-          const imageSize = minDimension * imageRatio * textScale;
+          // MANDATORY image sizing - always draw image, minimum 8px
+          const imageSize = Math.max(minDimension * 0.22, 8);
           
-          let imageWidth = 0;
-          let imageHeight = 0;
+          let imageWidth = imageSize;
+          let imageHeight = imageSize;
           
           if (hasImage) {
             const aspectRatio = image.width / image.height;
@@ -378,7 +376,7 @@ const createImagePlugin = (
           }
 
           // Calculate available space for text
-          const availableWidth = width * 0.95; // 95% of width for text
+          const availableWidth = width * 0.95;
           const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
           
           // Smart scaling - ensure everything fits perfectly
@@ -399,11 +397,11 @@ const createImagePlugin = (
           const imagePaddingOffset = minDimension * 0.02;
           const textPaddingOffset = minDimension * 0.05;
 
-          // Draw image with better centering (only if image exists)
+          // ALWAYS draw image - mandatory in every block
+          const imageX = x + (width - imageWidth) / 2;
+          const imageY = textStartY + imagePaddingOffset;
+          
           if (hasImage) {
-            const imageX = x + (width - imageWidth) / 2;
-            const imageY = textStartY + imagePaddingOffset;
-            
             try {
               ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
             } catch {
@@ -427,11 +425,13 @@ const createImagePlugin = (
           ctx.fillText(truncatedName, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize / 2 + spacing);
 
           if (chartType === 'change') {
-            // Show percentage change
-            ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
-            const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
-            const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
-            ctx.fillText(truncatedValue, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 1.5 + 2 * spacing);
+            // Show percentage change ONLY if not zero
+            if (item.percentChange !== 0) {
+              ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
+              const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
+              const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
+              ctx.fillText(truncatedValue, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 1.5 + 2 * spacing);
+            }
 
             // Price with currency
             ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
@@ -466,25 +466,23 @@ const createImagePlugin = (
               ctx.fillText(bottomText, centerX, priceY);
             }
 
-            // Market Cap with better visibility
+            // Market Cap - moved inside from edge
             if (minDimension > 60) {
               ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
               ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
               const marketCapText = `MC: ${item.marketCap}`;
               const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
-              ctx.fillText(
-                truncatedMC,
-                centerX,
-                textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize / 2 + 4 * spacing
-              );
+              const mcY = y + height - (fontSizes.marketCapFontSize * 1.4 + spacing * 1.8);
+              ctx.fillText(truncatedMC, centerX, mcY);
             }
           } else {
-            // Market Cap mode - show market cap prominently
+            // Market Cap mode - moved inside from edge
             ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
             ctx.fillStyle = 'white';
             const marketCapText = `MC: ${item.marketCap}`;
             const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.titleFontSize);
-            ctx.fillText(truncatedMC, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize + 2 * spacing);
+            const mcY = y + height - (fontSizes.titleFontSize * 1.4 + spacing * 1.8);
+            ctx.fillText(truncatedMC, centerX, mcY);
           }
 
           ctx.restore();
