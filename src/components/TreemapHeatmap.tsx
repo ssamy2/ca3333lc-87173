@@ -553,8 +553,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const isTelegram = !!telegramWebApp;
 
       const canvas = document.createElement('canvas');
-      canvas.width = 1628;
-      canvas.height = 1500;
+      // Larger rectangular canvas for better quality (4:3 aspect ratio)
+      canvas.width = 2400;
+      canvas.height = 1800;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -608,7 +609,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           } as any]
         },
         options: tempChartOptions,
-        plugins: [createImagePlugin(chartType, currency, 100, 2, 2, 2)]  // 2x scale for export
+        plugins: [createImagePlugin(chartType, currency, 100, 2.5, 2.5, 2.5)]  // 2.5x scale for larger export
       });
       } catch (chartError) {
         console.error('[TreemapHeatmap] Chart creation failed:', chartError);
@@ -627,8 +628,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       setTimeout(() => {
         try {
           if (!isTelegram) {
-            // PC: Direct download
-            const imageUrl = canvas.toDataURL('image/jpeg', 1.0);
+            // PC: Direct download with JPEG compression
+            const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
             const link = document.createElement('a');
             link.download = `nova-heatmap-${Date.now()}.jpeg`;
             link.href = imageUrl;

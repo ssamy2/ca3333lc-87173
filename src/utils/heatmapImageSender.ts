@@ -28,9 +28,9 @@ export const sendHeatmapImage = async ({
     }
 
     console.log('[HeatmapSender] Converting canvas to image...');
-    // Convert canvas to base64 image (PNG format as backend expects)
-    // Backend sends as image/png to Telegram
-    const imageDataUrl = canvas.toDataURL('image/png');
+    // Convert canvas to base64 image (JPEG format with 95% quality for smaller size)
+    // Much smaller than PNG while maintaining excellent quality
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
     
     // Validate image format
     if (!imageDataUrl.startsWith('data:image/')) {
