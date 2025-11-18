@@ -752,17 +752,16 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       legend: { display: false },
       tooltip: { enabled: false }
     },
-    events: ['mousemove', 'click', 'touchstart', 'touchmove', 'touchend'],
-    // Wrap chart operations in try-catch for safety
-    onResize: (chart: any) => {
-      try {
-        if (chart && chart.update) {
-          chart.update('none');
-        }
-      } catch (error) {
-        console.error('[Treemap] Error in onResize:', error);
-      }
-    }
+    // CRITICAL: Disable ALL events to prevent _positionChanged errors
+    events: [],
+    interaction: {
+      mode: undefined as any,
+      intersect: false
+    },
+    // Disable all callbacks
+    onHover: undefined,
+    onClick: undefined,
+    onResize: undefined
   };
 
   // Zoom functions removed - zoom is now disabled
