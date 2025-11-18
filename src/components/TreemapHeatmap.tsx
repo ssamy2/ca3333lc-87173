@@ -203,13 +203,10 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
   // Check if we have cached images for this chart configuration
   const cachedImages = getCachedChartImages(cacheKey);
   if (cachedImages) {
-    console.log('✅ Using cached chart images from chartCache');
     return cachedImages;
   }
   
   const imageMap = new Map<string, HTMLImageElement>();
-  let cachedCount = 0;
-  let uncachedCount = 0;
   
   data.forEach(item => {
     // First try to get from image cache
@@ -221,28 +218,19 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     if (cachedBase64) {
       // Use cached base64 image - already loaded
       img.src = cachedBase64;
-      cachedCount++;
-      console.log('✅ Using cached image:', item.imageName);
     } else {
       // Image not in cache - need to load from URL
       img.src = item.imageName;
-      uncachedCount++;
-      console.log('⏳ Loading image from URL:', item.imageName);
       
       // Cache the image when it loads
       img.onload = () => {
-        imageCache.preloadImage(item.imageName).catch(console.error);
-        console.log('✅ Image loaded and cached:', item.imageName);
+        imageCache.preloadImage(item.imageName).catch(() => {});
       };
-      img.onerror = () => {
-        console.error('❌ Failed to load image:', item.imageName);
-      };
+      img.onerror = () => {};
     }
     
     imageMap.set(item.imageName, img);
   });
-  
-  console.log(`📊 Treemap images: ${cachedCount} from cache, ${uncachedCount} loading from URL`);
   
   // Cache the image map for this chart configuration
   setCachedChartImages(cacheKey, imageMap);
@@ -319,198 +307,204 @@ const createImagePlugin = (
         const { ctx, data } = chart;
         const dataset = data.datasets[0] as any;
         const imageMap = dataset.imageMap as Map<string, HTMLImageElement>;
-        // Removed zoomLevel - no longer using zoom plugin
         
         const toncoinImage = imageMap.get('toncoin') || new Image();
         if (!imageMap.has('toncoin')) {
           toncoinImage.src = tonIconSrc;
           imageMap.set('toncoin', toncoinImage);
         }
-
-        ctx.save();
-        // Removed ctx.scale - no zoom
         
         dataset.tree.forEach((item: TreemapDataPoint, index: number) => {
+          ctx.save();
+
           const element = chart.getDatasetMeta(0).data[index] as any;
-          if (!element) return;
+          if (!element) {
+            ctx.restore();
+            return;
+          }
 
           const x = element.x;
           const y = element.y;
           const width = element.width;
           const height = element.height;
 
-        if (width <= 0 || height <= 0) return;
-
-        // Colors based on percent change
-        const color = item.percentChange > 0 ? '#018f35' 
-          : item.percentChange < 0 ? '#dc2626' 
-          : '#8F9779';
-
-        // Draw rectangle with adaptive border
-        ctx.fillStyle = color;
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = Math.max(borderWidth, 0.5);
-        ctx.beginPath();
-        ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
-        ctx.fill();
-        ctx.stroke();
-        ctx.closePath();
-
-        // Always draw content - no minimum size check
-        const minDimension = Math.min(width, height);
-
-        const image = imageMap.get(item.imageName);
-        // Don't skip if image not loaded - show text anyway
-        const hasImage = image?.complete && image.naturalWidth > 0;
-
-        // Dynamic font sizing based on element size - more aggressive scaling
-        const fontSizes = calculateFontSize(minDimension, scale);
-        const spacing = calculateSpacing(minDimension, scale);
-        
-        // Ultra adaptive image sizing - scales perfectly with box size
-        const imageRatio = Math.min(0.45, Math.max(0.2, minDimension / 150));
-        const imageSize = minDimension * imageRatio * textScale;
-        
-        let imageWidth = 0;
-        let imageHeight = 0;
-        
-        if (hasImage) {
-          const aspectRatio = image.width / image.height;
-          imageWidth = imageSize;
-          imageHeight = imageSize / aspectRatio;
-          
-          if (imageHeight > imageSize) {
-            imageHeight = imageSize;
-            imageWidth = imageSize * aspectRatio;
+          if (width <= 0 || height <= 0) {
+            ctx.restore();
+            return;
           }
-        }
 
-        // Calculate available space for text - more generous
-        const availableWidth = width * 0.95; // 95% of width for text
-        const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
-        
-        // Smart scaling - ensure everything fits perfectly
-        if (totalTextHeight > height * 0.95) {
-          // Scale down everything proportionally to fit
-          const scaleFactor = (height * 0.95) / totalTextHeight;
-          fontSizes.titleFontSize = Math.max(fontSizes.titleFontSize * scaleFactor, 4); // Min 4px
-          fontSizes.valueFontSize = Math.max(fontSizes.valueFontSize * scaleFactor, 3); // Min 3px
-          fontSizes.marketCapFontSize = Math.max(fontSizes.marketCapFontSize * scaleFactor, 3); // Min 3px
-          imageWidth *= scaleFactor;
-          imageHeight *= scaleFactor;
-        }
-        
-        const finalTotalHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
-        const textStartY = y + (height - finalTotalHeight) / 2;
-        const centerX = x + width / 2;
+          // Colors based on percent change
+          const color = item.percentChange > 0 ? '#018f35' 
+            : item.percentChange < 0 ? '#dc2626' 
+            : '#8F9779';
 
-        // Draw image with better centering (only if image exists)
-        if (hasImage) {
-          const imageX = x + (width - imageWidth) / 2;
-          const imageY = textStartY;
+          // Draw rectangle with adaptive border
+          ctx.fillStyle = color;
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = Math.max(borderWidth, 0.5);
+          ctx.beginPath();
+          ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
+          ctx.fill();
+          ctx.stroke();
+          ctx.closePath();
+
+          // Always draw content - no minimum size check
+          const minDimension = Math.min(width, height);
+
+          const image = imageMap.get(item.imageName);
+          // Don't skip if image not loaded - show text anyway
+          const hasImage = image?.complete && image.naturalWidth > 0;
+
+          // Dynamic font sizing based on element size
+          const fontSizes = calculateFontSize(minDimension, scale);
+          const spacing = calculateSpacing(minDimension, scale);
           
-          try {
-            ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
-          } catch (error) {
-            console.error('[Treemap] Error drawing image:', error);
-          }
-        }
-
-        // Enhanced text rendering with better contrast
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // Title with overflow handling
-        ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
-        const truncatedName = handleTextOverflow(ctx, item.name, availableWidth, fontSizes.titleFontSize);
-        ctx.fillText(truncatedName, centerX, textStartY + imageHeight + fontSizes.titleFontSize/2 + spacing);
-
-        if (chartType === 'change') {
-          // Show percentage change
-          ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
-          const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
-          const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
-          ctx.fillText(truncatedValue, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 1.5 + 2 * spacing);
-
-          // Price with currency
-          ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
-          const bottomText = `${item.price.toFixed(2)}`;
-          const priceY = textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize/2 + 3 * spacing;
-
-          if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
-            try {
-              const coinSize = fontSizes.valueFontSize * 0.8;
-              const textWidth = ctx.measureText(bottomText).width;
-              const totalWidth = coinSize + textWidth + 2;
-              
-              // Draw coin icon
-              ctx.drawImage(
-                toncoinImage,
-                centerX - totalWidth/2,
-                priceY - coinSize/2,
-                coinSize,
-                coinSize
-              );
-              
-              // Draw price text
-              ctx.fillText(bottomText, centerX + coinSize/2 + 2, priceY);
-            } catch (error) {
-              console.error('Error drawing toncoin image:', error);
-              ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
+          // Adaptive image sizing - based only on block size
+          const imageRatio = Math.min(0.45, Math.max(0.2, minDimension / 150));
+          const imageSize = minDimension * imageRatio * textScale;
+          
+          let imageWidth = 0;
+          let imageHeight = 0;
+          
+          if (hasImage) {
+            const aspectRatio = image.width / image.height;
+            imageWidth = imageSize;
+            imageHeight = imageSize / aspectRatio;
+            
+            if (imageHeight > imageSize) {
+              imageHeight = imageSize;
+              imageWidth = imageSize * aspectRatio;
             }
-          } else if (currency === 'ton') {
-            ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
-          } else if (currency === 'usd') {
-            ctx.fillText(`$${bottomText}`, centerX, priceY);
-          } else {
-            ctx.fillText(bottomText, centerX, priceY);
           }
 
-          // Market Cap with better visibility
-          if (minDimension > 60) { // Only show for larger elements
-            ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            const marketCapText = `MC: ${item.marketCap}`;
-            const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
-            ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize/2 + 4 * spacing);
+          // Calculate available space for text
+          const availableWidth = width * 0.95; // 95% of width for text
+          const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
+          
+          // Smart scaling - ensure everything fits perfectly
+          if (totalTextHeight > height * 0.95) {
+            const scaleFactor = (height * 0.95) / totalTextHeight;
+            fontSizes.titleFontSize = Math.max(fontSizes.titleFontSize * scaleFactor, 4);
+            fontSizes.valueFontSize = Math.max(fontSizes.valueFontSize * scaleFactor, 3);
+            fontSizes.marketCapFontSize = Math.max(fontSizes.marketCapFontSize * scaleFactor, 3);
+            imageWidth *= scaleFactor;
+            imageHeight *= scaleFactor;
           }
-        } else {
-          // Market Cap mode - show market cap prominently
-          ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
+          
+          const finalTotalHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
+          const textStartY = y + (height - finalTotalHeight) / 2;
+          const centerX = x + width / 2;
+
+          // Draw image with better centering (only if image exists)
+          if (hasImage) {
+            const imageX = x + (width - imageWidth) / 2;
+            const imageY = textStartY;
+            
+            try {
+              ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+            } catch {
+              // ignore drawing errors for individual images
+            }
+          }
+
+          // Enhanced text rendering with better contrast
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 3;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 1;
+          
           ctx.fillStyle = 'white';
-          const marketCapText = `MC: ${item.marketCap}`;
-          const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.titleFontSize);
-          ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize + 2 * spacing);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Title with overflow handling
+          ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
+          const truncatedName = handleTextOverflow(ctx, item.name, availableWidth, fontSizes.titleFontSize);
+          ctx.fillText(truncatedName, centerX, textStartY + imageHeight + fontSizes.titleFontSize / 2 + spacing);
+
+          if (chartType === 'change') {
+            // Show percentage change
+            ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
+            const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
+            const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
+            ctx.fillText(truncatedValue, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 1.5 + 2 * spacing);
+
+            // Price with currency
+            ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
+            const bottomText = `${item.price.toFixed(2)}`;
+            const priceY = textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize / 2 + 3 * spacing;
+
+            if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
+              try {
+                const coinSize = fontSizes.valueFontSize * 0.8;
+                const textWidth = ctx.measureText(bottomText).width;
+                const totalWidth = coinSize + textWidth + 2;
+                
+                // Draw coin icon
+                ctx.drawImage(
+                  toncoinImage,
+                  centerX - totalWidth / 2,
+                  priceY - coinSize / 2,
+                  coinSize,
+                  coinSize
+                );
+                
+                // Draw price text
+                ctx.fillText(bottomText, centerX + coinSize / 2 + 2, priceY);
+              } catch {
+                ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
+              }
+            } else if (currency === 'ton') {
+              ctx.fillText(`💎 ${bottomText}`, centerX, priceY);
+            } else if (currency === 'usd') {
+              ctx.fillText(`$${bottomText}`, centerX, priceY);
+            } else {
+              ctx.fillText(bottomText, centerX, priceY);
+            }
+
+            // Market Cap with better visibility
+            if (minDimension > 60) {
+              ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+              const marketCapText = `MC: ${item.marketCap}`;
+              const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
+              ctx.fillText(
+                truncatedMC,
+                centerX,
+                textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize / 2 + 4 * spacing
+              );
+            }
+          } else {
+            // Market Cap mode - show market cap prominently
+            ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
+            ctx.fillStyle = 'white';
+            const marketCapText = `MC: ${item.marketCap}`;
+            const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.titleFontSize);
+            ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize + 2 * spacing);
+          }
+
+          ctx.restore();
+        });
+
+        // Enhanced watermark positioning - always visible, isolated context
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.font = `${Math.max(fontSize, 12)}px sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        
+        const chartArea = chart.chartArea;
+        if (chartArea) {
+          ctx.fillText('@Novachartbot', chartArea.right - 10, chartArea.bottom - 10);
         }
-      });
-
-      // Enhanced watermark positioning - always visible
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      ctx.font = `${Math.max(fontSize, 12)}px sans-serif`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'bottom';
-      
-      // Position watermark at bottom-right of chart area
-      const chartArea = chart.chartArea;
-      if (chartArea) {
-        ctx.fillText('@Novachartbot', chartArea.right - 10, chartArea.bottom - 10);
+        ctx.restore();
+      } catch {
+        // ignore plugin errors to avoid breaking chart
       }
-
-      ctx.restore();
-    } catch (error) {
-      console.error('[Treemap Plugin] Error in afterDatasetDraw:', error);
-      // Don't throw - just log and continue
     }
-  }
   };
 };
 
@@ -609,23 +603,22 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         };
 
         tempChart = new ChartJS(ctx, {
-        type: 'treemap',
-        data: {
-          datasets: [{
-            data: [],
-            tree: transformedData,
-            key: 'size',
-            spacing: 0.5,
-            borderWidth: 1,
-            imageMap,
-            backgroundColor: 'transparent'
-          } as any]
-        },
-        options: tempChartOptions,
-        plugins: [createImagePlugin(chartType, currency, 100, exportWidth >= 3200 ? 1.5 : 1, 1, 2)]  // NO double scaling
-      });
-      } catch (chartError) {
-        console.error('[TreemapHeatmap] Chart creation failed:', chartError);
+          type: 'treemap',
+          data: {
+            datasets: [{
+              data: [],
+              tree: transformedData,
+              key: 'size',
+              spacing: 0.5,
+              borderWidth: 1,
+              imageMap,
+              backgroundColor: 'transparent'
+            } as any]
+          },
+          options: tempChartOptions,
+          plugins: [createImagePlugin(chartType, currency, 100, 1, 1, 2)]
+        });
+      } catch {
         setIsDownloading(false);
         return;
       }
@@ -673,8 +666,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           } catch {}
         }
       }, 50);
-    } catch (error) {
-      console.error('[TreemapHeatmap] Download error:', error);
+    } catch {
+      // ignore download errors to avoid breaking UI
     } finally {
       setTimeout(() => setIsDownloading(false), 1000);
     }
@@ -687,12 +680,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   useEffect(() => {
     try {
-      console.log('[Treemap] useEffect triggered - chartType:', chartType, 'timeGap:', timeGap, 'currency:', currency);
-      
       const filteredData = data.filter(item => !item.preSale);
       const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
-      
-      console.log('[Treemap] Transformed data count:', transformed.length);
       
       // Always display data immediately - don't wait for images
       setDisplayData(transformed);
@@ -701,18 +690,11 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const allImagesCached = transformed.every(item => {
         try {
           const cached = imageCache.getImageFromCache(item.imageName);
-          const isCached = cached !== null;
-          if (!isCached) {
-            console.log('[Treemap] Image NOT in cache:', item.imageName);
-          }
-          return isCached;
-        } catch (error) {
-          console.error('[Treemap] Error checking cache for:', item.imageName, error);
+          return cached !== null;
+        } catch {
           return false;
         }
       });
-      
-      console.log('[Treemap] All images cached:', allImagesCached, `(${transformed.length} total images)`);
       
       if (allImagesCached) {
         // All images are cached, no loading needed
@@ -726,21 +708,17 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         
         imageCache.preloadUncachedImages(imageUrls)
           .then(() => {
-            console.log('[Treemap] Images preloaded successfully');
             setIsLoading(false);
             
             // Trigger re-render to update chart with loaded images
             setImageLoadTrigger(prev => prev + 1);
           })
-          .catch((error) => {
-            console.error('[Treemap] Error preloading images:', error);
+          .catch(() => {
             setIsLoading(false);
           });
       }
-    } catch (error) {
-      console.error('[Treemap] Critical error in useEffect:', error);
+    } catch {
       setIsLoading(false);
-      // Don't crash - just log and continue
     }
   }, [data, chartType, timeGap, currency]);
 
