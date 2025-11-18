@@ -14,7 +14,7 @@ import {
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
 import { imageCache } from '@/services/imageCache';
-import { toast } from '@/hooks/use-toast';
+import { ImageSendDialog } from '@/components/ImageSendDialog';
 import { 
   getCachedChartImages, 
   setCachedChartImages, 
@@ -526,6 +526,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
   const [imageLoadTrigger, setImageLoadTrigger] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
   const { language } = useLanguage();
 
   const handleHapticFeedback = useCallback(() => {
@@ -562,7 +563,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       }
 
       const transformedData = transformGiftData(data, chartType, timeGap, currency);
-      const imageMap = await preloadImagesAsync(transformedData);
+      
+      // Use EXISTING images from display chart (already in cache)
+      const displayDataset = chartRef.current?.data?.datasets?.[0] as any;
+      const imageMap = displayDataset?.imageMap || await preloadImagesAsync(transformedData);
 
       let tempChart: ChartJS | null = null;
       
@@ -632,17 +636,13 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             link.click();
             document.body.removeChild(link);
           } else {
-            // Mobile: Fire and forget - NO WAITING
+            // Mobile: Show dialog and send
             const userId = telegramWebApp?.initDataUnsafe?.user?.id;
             if (userId && typeof sendHeatmapImage === 'function') {
-              // Show simple notification
-              toast({
-                title: "📤 جاري الإرسال",
-                description: "سيتم إرسال الصورة قريباً",
-                duration: 2000,
-              });
+              // Show dialog
+              setShowSendDialog(true);
               
-              // Send without waiting for result
+              // Send without waiting
               sendHeatmapImage({
                 canvas,
                 userId: userId.toString(),
@@ -653,7 +653,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             }
           }
         } finally {
-          // ALWAYS destroy immediately
+          // Destroy temp chart only
           try {
             tempChart?.destroy();
           } catch {}
@@ -767,7 +767,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   // Zoom functions removed - zoom is now disabled
 
   return (
-    <div className="w-full flex flex-col items-center gap-3 px-3">
+    <>
+      <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
+      
+      <div className="w-full flex flex-col items-center gap-3 px-3">
         {/* Loading indicator - small and non-intrusive */}
         {isLoading && (
           <div className="w-full flex items-center justify-center gap-2 py-2 bg-secondary/50 rounded-lg animate-in fade-in">
@@ -807,7 +810,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             }
           })()}
         </div>
-    </div>
+      </div>
+    </>
   );
 });
 
