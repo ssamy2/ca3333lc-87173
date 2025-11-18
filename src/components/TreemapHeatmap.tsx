@@ -395,10 +395,14 @@ const createImagePlugin = (
           const textStartY = y + (height - finalTotalHeight) / 2;
           const centerX = x + width / 2;
 
+          // Add vertical padding offsets
+          const imagePaddingOffset = minDimension * 0.02;
+          const textPaddingOffset = minDimension * 0.05;
+
           // Draw image with better centering (only if image exists)
           if (hasImage) {
             const imageX = x + (width - imageWidth) / 2;
-            const imageY = textStartY;
+            const imageY = textStartY + imagePaddingOffset;
             
             try {
               ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
@@ -420,19 +424,19 @@ const createImagePlugin = (
           // Title with overflow handling
           ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
           const truncatedName = handleTextOverflow(ctx, item.name, availableWidth, fontSizes.titleFontSize);
-          ctx.fillText(truncatedName, centerX, textStartY + imageHeight + fontSizes.titleFontSize / 2 + spacing);
+          ctx.fillText(truncatedName, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize / 2 + spacing);
 
           if (chartType === 'change') {
             // Show percentage change
             ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
             const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
             const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
-            ctx.fillText(truncatedValue, centerX, textStartY + imageHeight + fontSizes.titleFontSize * 1.5 + 2 * spacing);
+            ctx.fillText(truncatedValue, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 1.5 + 2 * spacing);
 
             // Price with currency
             ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
             const bottomText = `${item.price.toFixed(2)}`;
-            const priceY = textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize / 2 + 3 * spacing;
+            const priceY = textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize / 2 + 3 * spacing;
 
             if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
               try {
@@ -471,7 +475,7 @@ const createImagePlugin = (
               ctx.fillText(
                 truncatedMC,
                 centerX,
-                textStartY + imageHeight + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize / 2 + 4 * spacing
+                textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize + fontSizes.marketCapFontSize / 2 + 4 * spacing
               );
             }
           } else {
@@ -480,7 +484,7 @@ const createImagePlugin = (
             ctx.fillStyle = 'white';
             const marketCapText = `MC: ${item.marketCap}`;
             const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.titleFontSize);
-            ctx.fillText(truncatedMC, centerX, textStartY + imageHeight + fontSizes.titleFontSize + 2 * spacing);
+            ctx.fillText(truncatedMC, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize + 2 * spacing);
           }
 
           ctx.restore();
