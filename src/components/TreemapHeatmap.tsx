@@ -343,7 +343,7 @@ const createImagePlugin = (
           ctx.strokeStyle = '#1e293b';
           ctx.lineWidth = Math.max(borderWidth, 0.5);
           ctx.beginPath();
-          ctx.roundRect(x, y, width, height, Math.min(width, height) * 0.02);
+          ctx.roundRect(x, y, width, height, 6);
           ctx.fill();
           ctx.stroke();
           ctx.closePath();
@@ -358,8 +358,8 @@ const createImagePlugin = (
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
           
-          // MANDATORY image sizing - always draw image, minimum 2px
-          const imageSize = Math.max(minDimension * 0.22, 2);
+          // MANDATORY image sizing - always draw image, minimum 8px
+          const imageSize = Math.max(minDimension * 0.22, 8);
           
           let imageWidth = imageSize;
           let imageHeight = imageSize;
@@ -552,15 +552,15 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const isTelegram = !!telegramWebApp;
 
       const canvas = document.createElement('canvas');
-      // Determine canvas size based on platform
-      let exportWidth = 1600;
-      let exportHeight = 1200;
+      // Fixed export dimensions with ideal aspect ratio 2.8:1
+      let exportWidth = 3000;
+      let exportHeight = 1080;
       
-      // Only use higher resolution on PC without Telegram
+      // Use lower resolution for mobile/Telegram
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (!isTelegram && !isMobile) {
-        exportWidth = 3200;
-        exportHeight = 2400;
+      if (isTelegram || isMobile) {
+        exportWidth = 2100;
+        exportHeight = 750;
       }
       
       canvas.width = exportWidth;
@@ -611,7 +611,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               data: [],
               tree: transformedData,
               key: 'size',
-              spacing: 0.5,
+              spacing: 0.3,
               borderWidth: 1,
               imageMap,
               backgroundColor: 'transparent'
@@ -729,7 +729,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       data: [],
       tree: displayData,
       key: 'size',
-      spacing: 0.5,
+      spacing: 0,
       borderWidth: 1,
       imageMap: preloadImages(displayData, generateChartCacheKey(chartType, timeGap, currency, generateDataHash(displayData))),
       backgroundColor: 'transparent'
@@ -773,8 +773,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           </div>
         )}
         
-        {/* Chart - Wrapped in error boundary */}
-        <div className="w-full h-[calc(100vh-200px)] min-h-[600px] rounded-xl overflow-hidden bg-card border border-border">
+        {/* Chart - Full height container */}
+        <div className="w-full h-[calc(100vh-140px)] rounded-xl overflow-hidden bg-card border border-border">
           {(() => {
             try {
               return (
