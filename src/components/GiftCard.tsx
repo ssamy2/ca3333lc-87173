@@ -21,8 +21,18 @@ const GiftCard = React.memo(({
   change, 
   isBlackMode 
 }: GiftCardProps) => {
-  const isPositive = change >= 0;
+  const isPositive = change > 0;
   const isNeutral = change === 0;
+
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(price);
+
+  const formattedChange = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Math.abs(change));
 
   const getCardStyle = () => {
     if (isBlackMode) {
@@ -40,13 +50,13 @@ const GiftCard = React.memo(({
   return (
     <Link 
       to={`/gift/${encodeURIComponent(name)}`}
-      className="no-underline block min-w-[120px]"
+      className="no-underline block w-full"
       style={{ aspectRatio: '1 / 1' }}
     >
       <Card
-        className={`p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
+        className={`p-1.5 sm:p-2 md:p-2.5 lg:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
       >
-        <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-2">
+        <div className="w-full flex-1 flex items-center justify-center overflow-hidden mb-1">
           <GiftImage
             imageUrl={imageUrl}
             name={name}
@@ -57,23 +67,23 @@ const GiftCard = React.memo(({
             style={isBlackMode ? { filter: 'saturate(0.8)' } : undefined}
           />
         </div>
-        <div className="w-full flex flex-col items-center gap-0.5 mt-1">
-          <div className="flex items-center gap-1 justify-center">
-            <TonIcon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0 ${isBlackMode ? 'opacity-90' : ''}`} />
+        <div className="w-full flex flex-col items-center gap-0.5 mt-auto pt-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
+            <TonIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 flex-shrink-0 ${isBlackMode ? 'opacity-90' : ''}`} />
             <span 
-              className={`font-semibold text-xs sm:text-sm md:text-base leading-tight ${isBlackMode ? 'text-[#B87333] font-[600]' : 'text-foreground'}`}
+              className={`font-semibold text-[10px] sm:text-xs md:text-sm lg:text-base leading-tight ${isBlackMode ? 'text-[#B87333]' : 'text-foreground'}`}
             >
-              {price.toFixed(2)}
+              {formattedPrice}
             </span>
           </div>
           {!isNeutral && (
             <span
-              className={`text-[10px] sm:text-xs md:text-sm font-medium leading-tight ${
+              className={`text-[8px] sm:text-[10px] md:text-xs lg:text-sm font-medium leading-tight ${
                 isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
               }`}
             >
-              {isPositive ? '+' : ''}
-              {change.toFixed(2)}%
+              {isPositive ? '+' : '-'}
+              {formattedChange}%
             </span>
           )}
         </div>
