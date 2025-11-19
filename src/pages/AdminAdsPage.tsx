@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -76,7 +76,7 @@ const AdminAdsPage: React.FC = () => {
   }, [user, navigate]);
 
   // جلب البيانات
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
@@ -110,11 +110,11 @@ const AdminAdsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   // رفع الإعلان
   const handleSubmit = async (e: React.FormEvent) => {
