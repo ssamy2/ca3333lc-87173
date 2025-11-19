@@ -518,20 +518,51 @@ const TelegramApp: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-md mx-auto p-4 space-y-6">
+      {/* Animated Background Gradient */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-glow-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="max-w-md mx-auto p-4 space-y-6 relative">
         {/* Hero Section */}
         {!nftData && !singleGift && !loading && !error && (
-          <div className="telegram-card p-6 animate-slide-up border border-border/50 shadow-[var(--shadow-card)] text-center space-y-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
-              {t('heroTitle')}
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('heroDescription')}
-            </p>
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-              <p className="text-xs text-primary font-medium">
-                💡 {t('heroExample')}
-              </p>
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-3xl blur-xl"></div>
+            
+            <div className="relative telegram-card p-8 animate-slide-up border border-border/30 backdrop-blur-xl bg-card/80 shadow-2xl text-center space-y-6 rounded-3xl hover-glow">
+              <div className="relative inline-block animate-float">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-2xl opacity-30 animate-pulse"></div>
+                <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-primary/30 shadow-lg">
+                  <Search className="w-10 h-10 text-primary" />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold gradient-text-animated">
+                  {t('heroTitle')}
+                </h1>
+                <p className="text-sm text-muted-foreground/80 leading-relaxed max-w-sm mx-auto">
+                  {t('heroDescription')}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 justify-center">
+                <div className="px-4 py-2 glass-effect rounded-full text-xs font-medium text-primary">
+                  ⚡ Instant Search
+                </div>
+                <div className="px-4 py-2 glass-effect rounded-full text-xs font-medium text-accent">
+                  🎁 Gift Tracking
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-primary/20 rounded-2xl p-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <p className="relative text-xs text-primary/90 font-medium flex items-center justify-center gap-2">
+                  <span className="text-base">💡</span>
+                  {t('heroExample')}
+                </p>
+              </div>
             </div>
           </div>
         )}
