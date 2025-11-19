@@ -204,12 +204,12 @@ const transformGiftData = (
       ? (item.marketCapTon || '0')
       : (item.marketCapUsd || '0');
     
-    // Size calculation: zero change = minimum size, actual change = larger
-    // If percentChange is 0, size = 1 (minimum)
-    // If percentChange > 0, size increases with the change
-    const size = Math.abs(percentChange) === 0 
-      ? 1  // Minimum size for zero change
-      : 2 * Math.pow(Math.abs(percentChange) + 1, 1.5);
+    const size = Math.max(
+      6,
+      Math.abs(percentChange) < 4
+        ? 12
+        : 3 * Math.pow(Math.abs(percentChange) + 1, 1.4)
+    );
 
     return {
       name: item.name,
@@ -378,12 +378,23 @@ const createImagePlugin = (
             } catch {}
           }
 
+          console.log('[TREEMAP BLOCK]', {
+            name: item.name,
+            size: item.size,
+            percentChange: item.percentChange,
+            width,
+            height,
+            minDimension,
+            imageReady: rawImage?.naturalWidth > 0 && rawImage?.naturalHeight > 0,
+            naturalWidth: rawImage?.naturalWidth,
+            naturalHeight: rawImage?.naturalHeight
+          });
+
           // Dynamic font sizing based on element size
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
           
-          // MANDATORY image sizing - always draw image, minimum 16px
-          const imageSize = Math.max(minDimension * 0.3, 16);
+          const imageSize = Math.max(minDimension * 0.3, 22);
           
           const aspectRatio = (hasImage && drawImage && drawImage.width && drawImage.height) 
             ? (drawImage.width / drawImage.height) 
@@ -424,11 +435,19 @@ const createImagePlugin = (
           const imagePaddingOffset = minDimension * 0.02;
           const textPaddingOffset = minDimension * 0.05;
 
-          // ALWAYS draw image - mandatory in every block
           const imageX = x + (width - imageWidth) / 2;
           const imageY = textStartY + imagePaddingOffset;
           
-          if (hasImage && drawImage) {
+          console.log('[TREEMAP BLOCK] Image dimensions:', {
+            name: item.name,
+            finalImageWidth: imageWidth,
+            finalImageHeight: imageHeight,
+            willDraw: hasImage && drawImage && width >= 20 && height >= 20
+          });
+          
+          if (width < 20 || height < 20) {
+            console.warn('BLOCK TOO SMALL TO DRAW IMAGE', item.name, width, height);
+          } else if (hasImage && drawImage) {
             try {
               if ((drawImage as ImageBitmap).close) {
                 ctx.drawImage(drawImage as ImageBitmap, imageX, imageY, imageWidth, imageHeight);
@@ -436,7 +455,7 @@ const createImagePlugin = (
                 ctx.drawImage(drawImage as HTMLImageElement, imageX, imageY, imageWidth, imageHeight);
               }
             } catch {
-              // ignore drawing errors for individual images
+              console.error('[TREEMAP] Failed to draw image for', item.name);
             }
           }
 
