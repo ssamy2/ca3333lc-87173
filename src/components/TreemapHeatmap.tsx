@@ -70,22 +70,45 @@ interface TreemapHeatmapProps {
 }
 
 
-const preloadImagesAsync = async (data: TreemapDataPoint[]): Promise<Map<string, HTMLImageElement>> => {
+const normalizeUrl = (u: string) => {
+  try { return new URL(u, window.location.href).href; } catch { return u; }
+};
+
+const awaitCreateImageBitmapSafe = async (img: HTMLImageElement): Promise<ImageBitmap | null> => {
+  try {
+    if (img.naturalWidth === 0 || img.naturalHeight === 0) return null;
+    const bitmap = await createImageBitmap(img);
+    return bitmap;
+  } catch {
+    return null;
+  }
+};
+
+const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 8000): Promise<Map<string, HTMLImageElement>> => {
   const imageMap = new Map<string, HTMLImageElement>();
-  
-  await Promise.all(
-    data.map(item => {
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.crossOrigin = 'anonymous';
-        img.src = item.imageName; // Use full URL
-        imageMap.set(item.imageName, img);
-      });
-    })
-  );
-  
+  const promises = data.map(async item => {
+    const url = normalizeUrl(item.imageName);
+    if (imageMap.has(url)) return;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const loadPromise = new Promise<void>(async (resolve) => {
+      let settled = false;
+      const safeResolve = () => { if (!settled) { settled = true; resolve(); } };
+      img.onload = () => safeResolve();
+      img.onerror = () => safeResolve();
+      img.src = url;
+      try {
+        // try modern decode to ensure dimensions available
+        if ('decode' in img) await (img as any).decode();
+      } catch {}
+      safeResolve();
+    });
+    const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
+    await Promise.race([loadPromise, timer]);
+    imageMap.set(url, img);
+  });
+
+  await Promise.all(promises);
   return imageMap;
 };
 
@@ -200,41 +223,32 @@ const transformGiftData = (
 };
 
 const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, HTMLImageElement> => {
-  // Check if we have cached images for this chart configuration
-  const cachedImages = getCachedChartImages(cacheKey);
-  if (cachedImages) {
-    return cachedImages;
-  }
-  
+  const cached = getCachedChartImages(cacheKey);
+  if (cached) return cached;
+
   const imageMap = new Map<string, HTMLImageElement>();
-  
   data.forEach(item => {
-    // First try to get from image cache
-    const cachedBase64 = imageCache.getImageFromCache(item.imageName);
-    
+    const url = normalizeUrl(item.imageName);
+    if (imageMap.has(url)) return;
+
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    
+    img.crossOrigin = 'anonymous';
+
+    const cachedBase64 = imageCache.getImageFromCache(url);
     if (cachedBase64) {
-      // Use cached base64 image - already loaded
       img.src = cachedBase64;
+      try { (img as any).decode?.(); } catch {}
     } else {
-      // Image not in cache - need to load from URL
-      img.src = item.imageName;
-      
-      // Cache the image when it loads
+      img.src = url;
       img.onload = () => {
-        imageCache.preloadImage(item.imageName).catch(() => {});
+        imageCache.preloadImage(url).catch(() => {});
       };
-      img.onerror = () => {};
     }
-    
-    imageMap.set(item.imageName, img);
+
+    imageMap.set(url, img);
   });
-  
-  // Cache the image map for this chart configuration
+
   setCachedChartImages(cacheKey, imageMap);
-  
   return imageMap;
 };
 
@@ -351,16 +365,18 @@ const createImagePlugin = (
           // Always draw content - no minimum size check
           const minDimension = Math.min(width, height);
 
-          const image = imageMap.get(item.imageName);
-          // Ensure chart re-renders when the image finishes loading
-          if (image && !image.complete) {
-            image.onload = () => {
-              try {
-                chart.draw();
-              } catch {}
-            };
+          const rawImage = imageMap.get(normalizeUrl(item.imageName)) || imageMap.get(item.imageName);
+          let drawImage: HTMLImageElement | ImageBitmap | null = null;
+          let hasImage = false;
+          
+          if (rawImage) {
+            try {
+              if (rawImage.naturalWidth > 0 && rawImage.naturalHeight > 0) {
+                drawImage = rawImage;
+                hasImage = true;
+              }
+            } catch {}
           }
-          const hasImage = image && image.naturalWidth > 0;
 
           // Dynamic font sizing based on element size
           const fontSizes = calculateFontSize(minDimension, scale);
@@ -369,18 +385,21 @@ const createImagePlugin = (
           // MANDATORY image sizing - always draw image, minimum 16px
           const imageSize = Math.max(minDimension * 0.3, 16);
           
-          let imageWidth = imageSize;
-          let imageHeight = imageSize;
+          const aspectRatio = (hasImage && drawImage && drawImage.width && drawImage.height) 
+            ? (drawImage.width / drawImage.height) 
+            : 1;
           
-          if (hasImage) {
-            const aspectRatio = image.width / image.height;
+          let imageWidth = imageSize;
+          let imageHeight = imageSize / aspectRatio;
+          
+          if (!isFinite(imageWidth) || !isFinite(imageHeight) || imageWidth <= 0 || imageHeight <= 0) {
             imageWidth = imageSize;
-            imageHeight = imageSize / aspectRatio;
-            
-            if (imageHeight > imageSize) {
-              imageHeight = imageSize;
-              imageWidth = imageSize * aspectRatio;
-            }
+            imageHeight = imageSize;
+          }
+          
+          if (imageHeight > imageSize) {
+            imageHeight = imageSize;
+            imageWidth = imageSize * aspectRatio;
           }
 
           // Calculate available space for text
@@ -409,9 +428,13 @@ const createImagePlugin = (
           const imageX = x + (width - imageWidth) / 2;
           const imageY = textStartY + imagePaddingOffset;
           
-          if (hasImage) {
+          if (hasImage && drawImage) {
             try {
-              ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+              if ((drawImage as ImageBitmap).close) {
+                ctx.drawImage(drawImage as ImageBitmap, imageX, imageY, imageWidth, imageHeight);
+              } else {
+                ctx.drawImage(drawImage as HTMLImageElement, imageX, imageY, imageWidth, imageHeight);
+              }
             } catch {
               // ignore drawing errors for individual images
             }
@@ -582,9 +605,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
       const transformedData = transformGiftData(data, chartType, timeGap, currency);
       
-      // Use EXISTING images from display chart (already in cache)
-      const displayDataset = chartRef.current?.data?.datasets?.[0] as any;
-      const imageMap = displayDataset?.imageMap || await preloadImagesAsync(transformedData);
+      // Preload all images with timeout protection
+      const imageMap = await preloadImagesAsync(transformedData, 10000);
 
       let tempChart: ChartJS | null = null;
       
