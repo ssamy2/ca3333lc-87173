@@ -48,7 +48,7 @@ interface Statistics {
 
 const AdminAdsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { userId } = useAuth();
   const [ads, setAds] = useState<Ad[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,10 +70,10 @@ const AdminAdsPage: React.FC = () => {
   // التحقق من الأدمن
   useEffect(() => {
     const ADMIN_IDS = [6213708507, 1437352242];
-    if (!user || !ADMIN_IDS.includes(Number(user.id))) {
+    if (!userId || !ADMIN_IDS.includes(Number(userId))) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [userId, navigate]);
 
   // جلب البيانات
   const fetchData = async () => {
