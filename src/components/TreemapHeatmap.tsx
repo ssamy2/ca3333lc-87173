@@ -352,7 +352,15 @@ const createImagePlugin = (
           const minDimension = Math.min(width, height);
 
           const image = imageMap.get(item.imageName);
-          const hasImage = image?.complete && image.naturalWidth > 0;
+          // Ensure chart re-renders when the image finishes loading
+          if (image && !image.complete) {
+            image.onload = () => {
+              try {
+                chart.draw();
+              } catch {}
+            };
+          }
+          const hasImage = image && image.naturalWidth > 0;
 
           // Dynamic font sizing based on element size
           const fontSizes = calculateFontSize(minDimension, scale);
