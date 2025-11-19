@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+interface Ad {
+  id: number;
+  title: string;
+  image_url: string;
+  target_url: string;
+  priority?: number;
+}
+
 interface AuthContextType {
   userId: string | null;
   authToken: string | null;
@@ -7,6 +15,7 @@ interface AuthContextType {
   isSubscribed: boolean;
   isLoading: boolean;
   authError: boolean;
+  ads: Ad[];
   authenticate: () => Promise<void>;
   checkSubscription: () => Promise<void>;
 }
@@ -20,13 +29,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
+  const [ads, setAds] = useState<Ad[]>([]);
 
   useEffect(() => {
     // دائماً نصادق للحصول على توكن جديد
     // لأن Telegram ينتج initData جديد في كل مرة
     // والباك اند يحتاج توكن جديد لكل جلسة
     authenticate();
+    fetchAds();
   }, []);
+
+  const fetchAds = async () => {
+    try {
+      const response = await fetch('https://www.channelsseller.site/api/ads');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.ads) {
+          setAds(data.ads);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch ads:', error);
+    }
+  };
 
   const authenticate = async () => {
     try {
@@ -109,6 +134,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isSubscribed,
         isLoading,
         authError,
+        ads,
         authenticate,
         checkSubscription,
       }}

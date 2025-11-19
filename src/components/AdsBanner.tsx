@@ -23,14 +23,14 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout>();
-  const { authData } = useAuth();
+  const { ads: contextAds } = useAuth();
 
-  // جلب الإعلانات من authData
+  // جلب الإعلانات من context
   useEffect(() => {
-    if (!propAds && authData?.ads) {
-      setAds(authData.ads);
+    if (!propAds && contextAds && contextAds.length > 0) {
+      setAds(contextAds);
     }
-  }, [authData, propAds]);
+  }, [contextAds, propAds]);
 
   // Auto-play
   useEffect(() => {
