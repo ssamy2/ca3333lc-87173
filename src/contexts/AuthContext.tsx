@@ -35,33 +35,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // دائماً نصادق للحصول على توكن جديد
     // لأن Telegram ينتج initData جديد في كل مرة
     // والباك اند يحتاج توكن جديد لكل جلسة
+    // الإعلانات ستأتي مع response الـ authenticate
     authenticate();
-    fetchAds();
   }, []);
-
-  const fetchAds = async () => {
-    try {
-      console.log('[Ads] Fetching ads from API...');
-      const response = await fetch('https://www.channelsseller.site/api/ads');
-      console.log('[Ads] Response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[Ads] Received data:', data);
-        
-        if (data.success && data.ads) {
-          console.log('[Ads] Setting ads:', data.ads.length, 'ads');
-          setAds(data.ads);
-        } else {
-          console.log('[Ads] No ads in response or success=false');
-        }
-      } else {
-        console.error('[Ads] Failed to fetch ads, status:', response.status);
-      }
-    } catch (error) {
-      console.error('[Ads] Failed to fetch ads:', error);
-    }
-  };
 
   const authenticate = async () => {
     try {
@@ -106,6 +82,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsAuthenticated(true);
         setIsSubscribed(data.is_subscribed || false);
         setAuthError(false);
+
+        // حفظ الإعلانات من response
+        if (data.ads && Array.isArray(data.ads)) {
+          console.log('[Auth] Setting ads from verify-auth:', data.ads.length, 'ads');
+          setAds(data.ads);
+        }
 
         // حفظ التوكن في localStorage
         if (data.token) {
