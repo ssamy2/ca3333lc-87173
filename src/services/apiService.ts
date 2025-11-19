@@ -115,10 +115,16 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
     
     const responseData = await response.json();
     
+    // Handle new API response format with success/data wrapper
+    let actualData = responseData;
+    if (responseData.success && responseData.data) {
+      actualData = responseData.data;
+    }
+    
     // Normalize the response to match expected format
     const normalizedData = {
-      ...responseData,
-      image: normalizeImageUrl(responseData.image_url || responseData.image), // Use image_url if available
+      ...actualData,
+      image: normalizeImageUrl(actualData.image_url || actualData.image), // Use image_url if available
     };
     
     return {
