@@ -83,7 +83,7 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 z-10 pointer-events-none" />
           
           {/* Image */}
-          <div className="relative h-[110px] w-full">
+          <div className="relative h-[80px] w-full">
             <img
               src={currentAd.image_url.startsWith('/api/') 
                 ? `https://www.channelsseller.site${currentAd.image_url}`
