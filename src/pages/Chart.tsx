@@ -101,7 +101,7 @@ const Chart = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilterGrid, setTopFilterGrid] = useState<TopFilter>('all'); // For grid/list - show all by default
-  const [topFilterHeatmap, setTopFilterHeatmap] = useState<TopFilter>('top25'); // For heatmap - show top 25 by default
+  const [topFilterHeatmap, setTopFilterHeatmap] = useState<TopFilter>('all'); // For heatmap - show all by default
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
