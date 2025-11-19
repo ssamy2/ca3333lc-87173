@@ -227,6 +227,7 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
   if (cached) return cached;
 
   const imageMap = new Map<string, HTMLImageElement>();
+  
   data.forEach(item => {
     const url = normalizeUrl(item.imageName);
     if (imageMap.has(url)) return;
@@ -237,10 +238,18 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     const cachedBase64 = imageCache.getImageFromCache(url);
     if (cachedBase64) {
       img.src = cachedBase64;
-      try { (img as any).decode?.(); } catch {}
+      
+      (async () => {
+        try {
+          await img.decode();
+        } catch {}
+      })();
     } else {
       img.src = url;
-      img.onload = () => {
+      img.onload = async () => {
+        try {
+          await img.decode();
+        } catch {}
         imageCache.preloadImage(url).catch(() => {});
       };
     }
@@ -761,8 +770,13 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           .then(() => {
             setIsLoading(false);
             
-            // Trigger re-render to update chart with loaded images
             setImageLoadTrigger(prev => prev + 1);
+            
+            if (chartRef.current) {
+              try {
+                chartRef.current.update();
+              } catch {}
+            }
           })
           .catch(() => {
             setIsLoading(false);
