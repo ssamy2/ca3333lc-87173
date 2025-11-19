@@ -735,13 +735,13 @@ const TelegramApp: React.FC = () => {
                       <TonIcon className="w-5 h-5 text-primary" />
                       <p className="text-sm text-muted-foreground font-medium">{t('priceTon')}</p>
                     </div>
-                    <p className="text-3xl font-bold text-primary text-center">{singleGift.price_ton.toFixed(2)}</p>
+                    <p className="text-3xl font-bold text-primary text-center">{typeof singleGift.price_ton === 'number' ? singleGift.price_ton.toFixed(2) : '0.00'}</p>
                   </div>
                   <div className="bg-gradient-to-br from-accent/10 via-background to-accent/5 rounded-2xl p-5 border border-accent/20 shadow-lg">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <span className="text-sm text-muted-foreground font-medium">{t('priceUsd')}</span>
                     </div>
-                    <p className="text-3xl font-bold text-accent text-center">${singleGift.price_usd.toFixed(2)}</p>
+                    <p className="text-3xl font-bold text-accent text-center">${typeof singleGift.price_usd === 'number' ? singleGift.price_usd.toFixed(2) : '0.00'}</p>
                   </div>
                 </div>
 
