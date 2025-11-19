@@ -41,15 +41,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchAds = async () => {
     try {
+      console.log('[Ads] Fetching ads from API...');
       const response = await fetch('https://www.channelsseller.site/api/ads');
+      console.log('[Ads] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[Ads] Received data:', data);
+        
         if (data.success && data.ads) {
+          console.log('[Ads] Setting ads:', data.ads.length, 'ads');
           setAds(data.ads);
+        } else {
+          console.log('[Ads] No ads in response or success=false');
         }
+      } else {
+        console.error('[Ads] Failed to fetch ads, status:', response.status);
       }
     } catch (error) {
-      console.error('Failed to fetch ads:', error);
+      console.error('[Ads] Failed to fetch ads:', error);
     }
   };
 

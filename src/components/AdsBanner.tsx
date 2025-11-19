@@ -27,7 +27,11 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({
 
   // جلب الإعلانات من context
   useEffect(() => {
+    console.log('[AdsBanner] contextAds:', contextAds?.length || 0, 'ads');
+    console.log('[AdsBanner] propAds:', propAds?.length || 0, 'ads');
+    
     if (!propAds && contextAds && contextAds.length > 0) {
+      console.log('[AdsBanner] Setting ads from context');
       setAds(contextAds);
     }
   }, [contextAds, propAds]);
