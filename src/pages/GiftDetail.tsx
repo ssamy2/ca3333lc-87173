@@ -117,8 +117,30 @@ const GiftDetail = () => {
         throw new Error('Failed to fetch gift data');
       }
       
-      const data = await response.json();
-      setGiftData(data);
+      const rawData = await response.json();
+      
+      // Handle new API response format with success/data wrapper
+      if (rawData.success && rawData.data) {
+        // Transform new format to expected format
+        const transformedData: GiftDetailData = {
+          info: {
+            name: rawData.data.gift_name || giftName,
+            image: rawData.data.image_url || '',
+            image_url: rawData.data.image_url,
+            supply: 0, // Not provided in new format
+            upgradedSupply: 0, // Not provided in new format
+            priceTon: rawData.data.price_ton || 0,
+            priceUsd: rawData.data.price_usd || 0
+          },
+          life_chart: [], // Not provided in single gift endpoint
+          week_chart: undefined,
+          models: undefined
+        };
+        setGiftData(transformedData);
+      } else {
+        // Old format or already transformed
+        setGiftData(rawData);
+      }
     } catch (error) {
       toast.error('Failed to load gift details');
     } finally {
@@ -772,14 +794,14 @@ const GiftDetail = () => {
               <div className="w-16 h-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
                 <GiftImage
                   imageUrl={imageUrl}
-                  name={giftData.info.name}
+                  name={giftData.info?.name || ''}
                   size="lg"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground mb-0.5">{giftData.info.name}</h1>
-                <p className="text-sm text-muted-foreground">{giftData.info.supply ? (giftData.info.supply / 1000).toFixed(1) : '0.0'}K</p>
+                <h1 className="text-xl font-bold text-foreground mb-0.5">{giftData.info?.name || 'Unknown Gift'}</h1>
+                <p className="text-sm text-muted-foreground">{typeof giftData.info?.supply === 'number' ? (giftData.info.supply / 1000).toFixed(1) : '0.0'}K</p>
               </div>
             </div>
 
@@ -790,22 +812,22 @@ const GiftDetail = () => {
                   // Show black floor price
                   <>
                     <TonIcon className="w-5 h-5" />
-                    {blackFloorData[0].black_price?.toFixed(2) || '0.00'}
+                    {typeof blackFloorData[0]?.black_price === 'number' ? blackFloorData[0].black_price.toFixed(2) : '0.00'}
                   </>
                 ) : (
                   // Show market price
                   currency === 'ton' ? (
                     <>
                       <TonIcon className="w-5 h-5" />
-                      {giftData.info.priceTon?.toFixed(2) || '0.00'}
+                      {typeof giftData.info?.priceTon === 'number' ? giftData.info.priceTon.toFixed(2) : '0.00'}
                     </>
                   ) : (
-                    <>$ {giftData.info.priceUsd?.toFixed(2) || '0.00'}</>
+                    <>$ {typeof giftData.info?.priceUsd === 'number' ? giftData.info.priceUsd.toFixed(2) : '0.00'}</>
                   )
                 )}
               </div>
               <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? '+' : ''}{priceChange?.toFixed(2) || '0.00'}%
+                {isPositive ? '+' : ''}{typeof priceChange === 'number' ? priceChange.toFixed(2) : '0.00'}%
               </div>
             </div>
           </div>
