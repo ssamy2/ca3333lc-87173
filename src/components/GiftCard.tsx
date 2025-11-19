@@ -40,11 +40,11 @@ const GiftCard = React.memo(({
   return (
     <Link 
       to={`/gift/${encodeURIComponent(name)}`}
-      className="no-underline block"
+      className="no-underline block min-w-[120px]"
       style={{ aspectRatio: '1 / 1' }}
     >
       <Card
-        className={`p-2 sm:p-2.5 md:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
+        className={`p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
       >
         <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-2">
           <GiftImage
