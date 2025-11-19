@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Ad {
@@ -17,11 +17,11 @@ interface AdsBannerProps {
 
 export const AdsBanner: React.FC<AdsBannerProps> = ({ 
   ads: propAds, 
-  autoPlayInterval = 5000 
+  autoPlayInterval = 4000 
 }) => {
   const [ads, setAds] = useState<Ad[]>(propAds || []);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout>();
   const { ads: contextAds } = useAuth();
 
@@ -83,7 +83,7 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 z-10 pointer-events-none" />
           
           {/* Image */}
-          <div className="relative aspect-[21/9] sm:aspect-[25/9] md:aspect-[30/9]">
+          <div className="relative h-[110px] w-full">
             <img
               src={currentAd.image_url.startsWith('/api/') 
                 ? `https://www.channelsseller.site${currentAd.image_url}`
@@ -97,18 +97,6 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({
             {/* Hover Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
           </div>
-
-          {/* Close Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsVisible(false);
-            }}
-            className="absolute top-3 right-3 z-30 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white rounded-full p-1.5 transition-all duration-200 hover:scale-110"
-            aria-label="Close banner"
-          >
-            <X className="w-4 h-4" />
-          </button>
 
           {/* Navigation Buttons */}
           {ads.length > 1 && (
