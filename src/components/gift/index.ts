@@ -1,1 +1,0 @@
-export { GiftDetailsView } from './GiftDetailsView';
