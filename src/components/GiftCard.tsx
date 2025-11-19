@@ -46,7 +46,7 @@ const GiftCard = React.memo(({
       <Card
         className={`p-2 sm:p-2.5 md:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
       >
-        <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-1">
+        <div className="w-full flex-1 flex items-center justify-center min-h-0 mb-2">
           <GiftImage
             imageUrl={imageUrl}
             name={name}
@@ -57,7 +57,7 @@ const GiftCard = React.memo(({
             style={isBlackMode ? { filter: 'saturate(0.8)' } : undefined}
           />
         </div>
-        <div className="w-full flex flex-col items-center gap-0.5 mt-auto pb-0.5">
+        <div className="w-full flex flex-col items-center gap-0.5 mt-1">
           <div className="flex items-center gap-1 justify-center">
             <TonIcon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0 ${isBlackMode ? 'opacity-90' : ''}`} />
             <span 
