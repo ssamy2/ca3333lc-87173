@@ -620,19 +620,19 @@ const GiftDetail = () => {
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">O:</span>
-                          <span className="font-mono">{data.open?.toFixed(2) || '0.00'}</span>
+                          <span className="font-mono">{typeof data.open === 'number' ? data.open.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">H:</span>
-                          <span className="font-mono text-green-400">{data.high?.toFixed(2) || '0.00'}</span>
+                          <span className="font-mono text-green-400">{typeof data.high === 'number' ? data.high.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">L:</span>
-                          <span className="font-mono text-red-400">{data.low?.toFixed(2) || '0.00'}</span>
+                          <span className="font-mono text-red-400">{typeof data.low === 'number' ? data.low.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">C:</span>
-                          <span className="font-mono font-bold">{data.close?.toFixed(2) || '0.00'}</span>
+                          <span className="font-mono font-bold">{typeof data.close === 'number' ? data.close.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className={`flex justify-between gap-4 pt-1 border-t border-white/10 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                           <span>Change:</span>
@@ -1061,7 +1061,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_24h_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_24h_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_24h_percent?.toFixed(2) || '0.00'}%
+                    {typeof blackFloorData[0].change_24h_percent === 'number' ? blackFloorData[0].change_24h_percent.toFixed(2) : '0.00'}%
                   </span>
                 </div>
               )}
@@ -1073,7 +1073,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1w_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1w_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1w_percent?.toFixed(2) || '0.00'}%
+                    {typeof blackFloorData[0].change_1w_percent === 'number' ? blackFloorData[0].change_1w_percent.toFixed(2) : '0.00'}%
                   </span>
                 </div>
               )}
@@ -1085,7 +1085,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1m_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1m_percent?.toFixed(2) || '0.00'}%
+                    {typeof blackFloorData[0].change_1m_percent === 'number' ? blackFloorData[0].change_1m_percent.toFixed(2) : '0.00'}%
                   </span>
                 </div>
               )}
@@ -1097,7 +1097,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_3m_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_3m_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_3m_percent?.toFixed(2) || '0.00'}%
+                    {typeof blackFloorData[0].change_3m_percent === 'number' ? blackFloorData[0].change_3m_percent.toFixed(2) : '0.00'}%
                   </span>
                 </div>
               )}
@@ -1109,7 +1109,7 @@ const GiftDetail = () => {
                     blackFloorData[0].change_1y_percent! < 0 ? 'text-red-500' : 'text-muted-foreground'
                   }`}>
                     {blackFloorData[0].change_1y_percent! > 0 ? '+' : ''}
-                    {blackFloorData[0].change_1y_percent?.toFixed(2) || '0.00'}%
+                    {typeof blackFloorData[0].change_1y_percent === 'number' ? blackFloorData[0].change_1y_percent.toFixed(2) : '0.00'}%
                   </span>
                 </div>
               )}
