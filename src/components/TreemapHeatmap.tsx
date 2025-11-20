@@ -611,15 +611,15 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       const isTelegram = !!telegramWebApp;
 
       const canvas = document.createElement('canvas');
-      // Fixed export dimensions with ideal aspect ratio 2.8:1
-      let exportWidth = 3000;
-      let exportHeight = 1080;
+      // High quality export dimensions
+      let exportWidth = 4800;
+      let exportHeight = 2700;
       
       // Use lower resolution for mobile/Telegram
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       if (isTelegram || isMobile) {
-        exportWidth = 2100;
-        exportHeight = 750;
+        exportWidth = 3000;
+        exportHeight = 1688;
       }
       
       canvas.width = exportWidth;
@@ -670,13 +670,13 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               tree: transformedData,
               key: 'size',
               spacing: 0.3,
-              borderWidth: 1,
+              borderWidth: 2,
               imageMap,
               backgroundColor: 'transparent'
             } as any]
           },
           options: tempChartOptions,
-          plugins: [createImagePlugin(chartType, currency, 100, 1, 1, 2)]
+          plugins: [createImagePlugin(chartType, currency, 100, 1.5, 1.5, 3)]
         });
       } catch {
         setIsDownloading(false);
@@ -802,6 +802,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartOptions: ChartOptions<'treemap'> = {
     responsive: true,
     maintainAspectRatio: false,
+    devicePixelRatio: 2,
     layout: {
       padding: 0
     },
