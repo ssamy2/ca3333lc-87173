@@ -156,7 +156,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
   return (
     <div 
-      className="group relative flex flex-col w-full bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.02] animate-fade-in"
+      className="group relative flex flex-col w-full h-full bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.02] animate-fade-in"
       onClick={handleCardClick}
     >
       {/* Quantity Badge */}
@@ -201,17 +201,17 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       {/* Content Section */}
       <div className="flex flex-col p-4 gap-3 flex-1">
         {/* Title with ID */}
-        <h3 className="font-bold text-base leading-tight text-white group-hover:text-[#0098EA] transition-colors">
+        <h3 className="font-bold text-sm leading-tight text-white group-hover:text-[#0098EA] transition-colors truncate" title={nft.title || nft.name}>
           {nft.title || nft.name}
         </h3>
         
         {/* Model and Rarity */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-gray-400 font-medium">Model:</span>
-            <span className="text-sm font-semibold text-white">{nft.model}</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-xs text-gray-400 font-medium flex-shrink-0">Model:</span>
+            <span className="text-xs font-semibold text-white truncate" title={nft.model}>{nft.model}</span>
             {nft.model_rarity && (
-              <span className="text-xs text-purple-400 font-medium">
+              <span className="text-xs text-purple-400 font-medium flex-shrink-0">
                 ({nft.model_rarity})
               </span>
             )}
@@ -219,19 +219,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           
           {/* Backdrop */}
           {nft.backdrop && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-400 font-medium">Background:</span>
-              <span className="text-sm font-semibold text-amber-300">{nft.backdrop}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs text-gray-400 font-medium flex-shrink-0">BG:</span>
+              <span className="text-xs font-semibold text-amber-300 truncate" title={nft.backdrop}>{nft.backdrop}</span>
             </div>
           )}
           
           {/* Symbol */}
           {nft.symbol && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Symbol:</span>
-              <span className="text-sm font-semibold text-[#0098EA]">{nft.symbol}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs text-gray-400 flex-shrink-0">Symbol:</span>
+              <span className="text-xs font-semibold text-[#0098EA] truncate" title={nft.symbol}>{nft.symbol}</span>
               {nft.symbol_rarity && (
-                <span className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                <span className="text-xs text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 flex-shrink-0">
                   {nft.symbol_rarity}
                 </span>
               )}
@@ -258,7 +258,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
         {/* Quantity Info */}
         {nft.quantity_raw && (
-          <div className="text-[10px] text-gray-500 text-center">
+          <div className="text-[10px] text-gray-500 text-center truncate" title={nft.quantity_raw}>
             {nft.quantity_raw}
           </div>
         )}

@@ -170,8 +170,19 @@ export const fetchUserProfile = async (username: string) => {
     
     const responseData = await response.json();
     
+    // Clean the name to remove "None" and extra spaces
+    let cleanName = responseData.name || cleanUsername;
+    if (cleanName) {
+      // Remove "None" from the name and clean up spaces
+      cleanName = cleanName.replace(/\bNone\b/g, '').replace(/\s+/g, ' ').trim();
+      // If name becomes empty after cleaning, use username
+      if (!cleanName) {
+        cleanName = cleanUsername;
+      }
+    }
+    
     return {
-      name: responseData.name || cleanUsername,
+      name: cleanName,
       photo_base64: responseData.photo_base64 || null
     };
     
