@@ -35,19 +35,34 @@ class APIClient {
     // إذا لم يكن هناك توكن، استخدم initData كـ fallback
     const authValue = token || window.Telegram?.WebApp?.initData;
     
-    return {
+    const headers: HeadersInit = {
+      'Accept': '*/*',
       'Content-Type': 'application/json',
-      ...(authValue && { 'Authorization': `Bearer ${authValue}` })
+      'Origin': window.location.origin,
+      'Referer': window.location.href
     };
+    
+    // إضافة Authorization header فقط إذا كان هناك token
+    if (authValue) {
+      headers['Authorization'] = `Bearer ${authValue}`;
+    }
+    
+    return headers;
   }
 
   async getUserPreferences(): Promise<UserPreferences | null> {
     try {
+      const headers = this.getHeaders();
+      console.log('[API] getUserPreferences headers:', headers);
+      
       const response = await fetch(`${API_BASE_URL}/user/preferences`, {
-        headers: this.getHeaders()
+        headers
       });
 
-      if (!response.ok) return null;
+      if (!response.ok) {
+        console.error('[API] getUserPreferences failed:', response.status, response.statusText);
+        return null;
+      }
 
       const data = await response.json();
       return data.success ? data.data : null;
