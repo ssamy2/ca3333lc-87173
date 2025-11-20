@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Chart as ChartJS,
   ChartData,
@@ -590,10 +590,16 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayData, setDisplayData] = useState<TreemapDataPoint[]>([]);
-  const [imageLoadTrigger, setImageLoadTrigger] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const { language } = useLanguage();
+  
+  // Memoize preloaded images to prevent re-fetching on every render
+  const preloadedImages = useMemo(() => {
+    if (displayData.length === 0) return new Map<string, HTMLImageElement>();
+    const cacheKey = generateChartCacheKey(chartType, timeGap, currency, generateDataHash(displayData));
+    return preloadImages(displayData, cacheKey);
+  }, [displayData, chartType, timeGap, currency]);
 
   const handleHapticFeedback = useCallback(() => {
     if ((window as any).Telegram?.WebApp) {
@@ -778,11 +784,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           .then(() => {
             setIsLoading(false);
             
-            setImageLoadTrigger(prev => prev + 1);
-            
+            // Force chart update without triggering re-render
             if (chartRef.current) {
               try {
-                chartRef.current.update();
+                chartRef.current.update('none'); // 'none' mode prevents animation and is faster
               } catch {}
             }
           })
@@ -795,17 +800,17 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     }
   }, [data, chartType, timeGap, currency]);
 
-  const chartData: ChartData<'treemap'> = {
+  const chartData: ChartData<'treemap'> = useMemo(() => ({
     datasets: [{
       data: [],
       tree: displayData,
       key: 'size',
       spacing: 0,
       borderWidth: 1,
-      imageMap: preloadImages(displayData, generateChartCacheKey(chartType, timeGap, currency, generateDataHash(displayData))),
+      imageMap: preloadedImages,
       backgroundColor: 'transparent'
     } as any]
-  };
+  }), [displayData, preloadedImages]);
 
   const chartOptions: ChartOptions<'treemap'> = {
     responsive: true,
