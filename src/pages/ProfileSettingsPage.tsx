@@ -9,7 +9,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation, Language } from '@/i18n/translations';
 import { apiClient } from '@/lib/api';
 
-const ProfileSettingsPage = () => {
+interface ProfileSettingsPageProps {
+  onBack?: () => void;
+}
+
+const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { userId } = useAuth();
@@ -118,7 +122,7 @@ const ProfileSettingsPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/')}
+            onClick={() => onBack ? onBack() : navigate('/')}
             className="rounded-full hover:bg-primary/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

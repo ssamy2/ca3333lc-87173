@@ -438,7 +438,7 @@ const TelegramApp: React.FC = () => {
   if (activeTab === 'settings') {
     return (
       <>
-        <ProfileSettingsPage />
+        <ProfileSettingsPage onBack={() => setActiveTab('home')} />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
