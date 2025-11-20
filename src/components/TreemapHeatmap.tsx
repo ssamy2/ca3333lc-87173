@@ -485,17 +485,20 @@ const createImagePlugin = (
 
           if (chartType === 'change') {
             // Show percentage change ONLY if not zero
+            let percentChangeHeight = 0;
             if (item.percentChange !== 0) {
               ctx.font = `${fontSizes.titleFontSize}px sans-serif`;
               const valueText = `${item.percentChange >= 0 ? '+' : ''}${item.percentChange}%`;
               const truncatedValue = handleTextOverflow(ctx, valueText, availableWidth, fontSizes.titleFontSize);
-              ctx.fillText(truncatedValue, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 1.5 + 2 * spacing);
+              const percentY = textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 1.5 + 2 * spacing;
+              ctx.fillText(truncatedValue, centerX, percentY);
+              percentChangeHeight = fontSizes.titleFontSize + spacing;
             }
 
             // Price with currency
             ctx.font = `${fontSizes.valueFontSize}px sans-serif`;
             const bottomText = `${item.price.toFixed(2)}`;
-            const priceY = textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize * 2 + fontSizes.valueFontSize / 2 + 3 * spacing;
+            const priceY = textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize + percentChangeHeight + fontSizes.valueFontSize / 2 + 3 * spacing;
 
             if (currency === 'ton' && toncoinImage.complete && toncoinImage.naturalWidth > 0) {
               try {
@@ -525,14 +528,19 @@ const createImagePlugin = (
               ctx.fillText(bottomText, centerX, priceY);
             }
 
-            // Market Cap - moved inside from edge
+            // Market Cap - positioned below price with safe spacing
             if (minDimension > 60) {
-              ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-              const marketCapText = `MC: ${item.marketCap}`;
-              const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
-              const mcY = y + height - (fontSizes.marketCapFontSize * 1.4 + spacing * 1.8);
-              ctx.fillText(truncatedMC, centerX, mcY);
+              const mcSpacing = fontSizes.valueFontSize + spacing * 2;
+              const mcY = priceY + mcSpacing;
+              
+              // Only draw if there's enough space (not overlapping bottom edge)
+              if (mcY + fontSizes.marketCapFontSize < y + height - spacing * 2) {
+                ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                const marketCapText = `MC: ${item.marketCap}`;
+                const truncatedMC = handleTextOverflow(ctx, marketCapText, availableWidth, fontSizes.marketCapFontSize);
+                ctx.fillText(truncatedMC, centerX, mcY);
+              }
             }
           } else {
             // Market Cap mode - moved inside from edge
