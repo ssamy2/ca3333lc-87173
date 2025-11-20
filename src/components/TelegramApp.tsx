@@ -93,9 +93,6 @@ const TelegramApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullStartY, setPullStartY] = useState(0);
-  const [pullDistance, setPullDistance] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'settings'>('home');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
@@ -226,46 +223,6 @@ const TelegramApp: React.FC = () => {
     }
     return () => clearTimeout(timer);
   }, [countdown]);
-
-  // Pull-to-refresh functionality
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (window.scrollY === 0) {
-      setPullStartY(e.touches[0].clientY);
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (pullStartY > 0 && window.scrollY === 0) {
-      const currentY = e.touches[0].clientY;
-      const distance = Math.max(0, currentY - pullStartY);
-      setPullDistance(distance);
-      
-      if (distance > 80) {
-        setIsRefreshing(true);
-      }
-    }
-  }, [pullStartY]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (isRefreshing && countdown === 0) {
-      handleRefresh();
-    }
-    setPullStartY(0);
-    setPullDistance(0);
-    setIsRefreshing(false);
-  }, [isRefreshing, countdown]);
-
-  useEffect(() => {
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   const saveToHistory = (searchTerm: string) => {
     const newHistory = [searchTerm, ...searchHistory.filter(h => h !== searchTerm)].slice(0, 8);
@@ -503,21 +460,6 @@ const TelegramApp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
-      {/* Pull-to-refresh indicator */}
-      {pullDistance > 0 && (
-        <div 
-          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-primary/10 text-primary transition-all duration-200"
-          style={{ height: `${Math.min(pullDistance, 80)}px` }}
-        >
-          <div className={`flex items-center gap-2 ${pullDistance > 80 ? 'animate-spin' : ''}`}>
-            <img src={novaLogo} alt="Nova" className="w-6 h-6 rounded-full" />
-            <span className="text-sm font-medium">
-              {pullDistance > 80 ? 'Release to refresh' : 'Pull down to refresh'}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-md mx-auto p-4 space-y-6">
         {/* Hero Section */}
         {!nftData && !singleGift && !loading && !error && (
