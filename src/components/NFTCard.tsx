@@ -2,6 +2,7 @@ import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import TonIcon from './TonIcon';
 import { proxyImageUrl } from '@/lib/imageProxy';
+import GiftImageWithBackdrop from './GiftImageWithBackdrop';
 
 interface NFTGift {
   count: number;
@@ -89,26 +90,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
       )}
 
-      {/* NFT Image - Square 1:1 with no excess space */}
-      <div className="relative w-full aspect-square bg-gradient-to-br from-[#0098EA]/5 to-[#8B5CF6]/5 overflow-hidden">
+      {/* NFT Image - Square 1:1 with backdrop */}
+      <div className="relative w-full aspect-square overflow-hidden">
         {nft.image && !imageError ? (
-          <>
-            <img 
-              src={proxyImageUrl(nft.image)}
-              alt={`${nft.name} NFT`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-            />
-            {imageLoading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center backdrop-blur-sm">
-                <div className="animate-spin w-8 h-8 border-3 border-[#0098EA]/20 border-t-[#0098EA] rounded-full"></div>
-              </div>
-            )}
-          </>
+          <GiftImageWithBackdrop
+            imageUrl={proxyImageUrl(nft.image)}
+            backdropName={nft.backdrop}
+            alt={`${nft.name} NFT`}
+            className="w-full h-full"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0098EA]/5 to-[#8B5CF6]/5">
             <div className="w-12 h-12 bg-[#0098EA]/10 rounded-full flex items-center justify-center mb-2">
               <TonIcon className="w-6 h-6 text-[#0098EA]" />
             </div>
