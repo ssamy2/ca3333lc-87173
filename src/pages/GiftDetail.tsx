@@ -851,15 +851,15 @@ const GiftDetail = () => {
           {/* Top Row: Data Source + Chart Type */}
           <div className="flex items-center justify-between gap-2">
             {/* Data Source Toggle - Improved */}
-            <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg">
+            <div className="flex rounded-xl bg-muted/50 p-1 gap-1 shadow-lg">
               <Button
                 onClick={() => setDataSource('market')}
                 variant="ghost"
                 size="sm"
                 className={`px-4 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
                   dataSource === 'market' 
-                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
-                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90 scale-105' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 Market
@@ -872,8 +872,8 @@ const GiftDetail = () => {
                   size="sm"
                   className={`px-4 h-9 rounded-lg font-semibold text-xs uppercase transition-all ${
                     dataSource === 'black' 
-                      ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white shadow-md hover:from-gray-600 hover:to-gray-700 scale-105' 
-                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                      ? 'bg-secondary text-secondary-foreground shadow-md hover:bg-secondary/90 scale-105' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
                   Black
@@ -886,7 +886,7 @@ const GiftDetail = () => {
               onClick={() => setChartType(chartType === 'candlestick' ? 'line' : 'candlestick')}
               variant="ghost"
               size="icon"
-              className="rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 h-10 w-10 hover:from-gray-700 hover:to-gray-800 shadow-lg transition-all hover:scale-105 active:scale-95"
+              className="rounded-xl bg-muted h-10 w-10 hover:bg-accent shadow-lg transition-all hover:scale-105 active:scale-95"
             >
               {chartType === 'candlestick' ? <LineChart className="w-5 h-5" /> : <CandlestickChart className="w-5 h-5" />}
             </Button>
@@ -894,15 +894,15 @@ const GiftDetail = () => {
 
           {/* Bottom Row: Currency Toggle - Only for Market data */}
           {dataSource === 'market' && (
-            <div className="flex rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-1 gap-1 shadow-lg w-full">
+            <div className="flex rounded-xl bg-muted/50 p-1 gap-1 shadow-lg w-full">
               <Button
                 onClick={() => setCurrency('ton')}
                 variant="ghost"
                 size="sm"
                 className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
                   currency === 'ton' 
-                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-500 hover:to-blue-600 scale-105' 
-                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90 scale-105' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <TonIcon className="w-4 h-4" />
@@ -914,8 +914,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
                   currency === 'usd' 
-                    ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-md hover:from-green-500 hover:to-green-600 scale-105' 
-                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90 scale-105' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <span className="text-sm font-bold">$</span>
@@ -936,8 +936,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-xl px-5 h-10 whitespace-nowrap font-bold text-xs uppercase transition-all ${
                   timeRange === range 
-                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600 shadow-lg scale-105' 
-                    : 'bg-gradient-to-br from-gray-800/60 to-gray-900/60 text-gray-300 hover:from-gray-700/60 hover:to-gray-800/60 hover:text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg scale-105' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground shadow-md'
                 }`}
               >
                 {range === 'all' ? 'ALL' : range.toUpperCase()}
@@ -953,8 +953,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                   timeRange === '24h' 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 24H
@@ -967,8 +967,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                   timeRange === '3d' 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 3D
@@ -981,8 +981,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                   timeRange === '1w' 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 1W
@@ -995,8 +995,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                   timeRange === '1m' 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 1M
@@ -1009,8 +1009,8 @@ const GiftDetail = () => {
                 size="sm"
                 className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                   timeRange === '3m' 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 3M
@@ -1022,8 +1022,8 @@ const GiftDetail = () => {
               size="sm"
               className={`rounded-full px-5 h-10 whitespace-nowrap font-semibold transition-all ${
                 timeRange === 'all' 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' 
-                  : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' 
+                  : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
             >
               All
