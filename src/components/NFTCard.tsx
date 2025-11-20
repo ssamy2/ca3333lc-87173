@@ -113,7 +113,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
     // Load and draw image
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     
     img.onload = () => {
       const scale = Math.min(size / img.width, size / img.height) * 0.85;
@@ -123,13 +122,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       const y = (size - scaledHeight) / 2;
 
       ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-      console.log('🖼️ Image drawn on canvas');
+      console.log('🖼️ Image drawn on canvas:', {
+        imageUrl: nft.image,
+        scale,
+        position: { x, y },
+        size: { width: scaledWidth, height: scaledHeight }
+      });
     };
 
-    img.onerror = () => {
-      console.error('❌ Failed to draw image on canvas');
+    img.onerror = (e) => {
+      console.error('❌ Failed to draw image on canvas:', nft.image, e);
     };
 
+    // Try without crossOrigin first for better compatibility
     img.src = proxyImageUrl(nft.image);
   }, [nft.image, nft.backdrop, imageError]);
 
@@ -151,7 +156,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
   return (
     <div 
-      className="group relative flex flex-col min-w-[160px] max-w-[220px] w-full bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.02] animate-fade-in"
+      className="group relative flex flex-col w-full bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.02] animate-fade-in"
       onClick={handleCardClick}
     >
       {/* Quantity Badge */}
@@ -194,38 +199,43 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col p-3 gap-2 flex-1">
-        {/* Title - Line clamp 2 only */}
-        <h3 className="font-bold text-sm leading-snug text-white group-hover:text-[#0098EA] transition-colors line-clamp-2 min-h-[2.5rem]">
+      <div className="flex flex-col p-4 gap-3 flex-1">
+        {/* Title with ID */}
+        <h3 className="font-bold text-base leading-tight text-white group-hover:text-[#0098EA] transition-colors">
           {nft.title || nft.name}
         </h3>
         
-        {/* Badges Section - Model, Rarity, Symbol, Backdrop */}
-        <div className="flex flex-wrap gap-1.5 min-h-[2rem] items-start">
-          {/* Model Badge */}
-          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[#1a1f2e] border border-white/5 text-[10px] font-medium text-gray-300 leading-none">
-            {nft.model}
-          </span>
+        {/* Model and Rarity */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Model:</span>
+            <span className="text-sm font-semibold text-white">{nft.model}</span>
+            {nft.model_rarity && (
+              <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                {nft.model_rarity}
+              </span>
+            )}
+          </div>
           
-          {/* Model Rarity Badge */}
-          {nft.model_rarity && (
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 text-[10px] font-medium text-purple-300 leading-none">
-              {nft.model_rarity}
-            </span>
-          )}
-          
-          {/* Symbol Badge */}
-          {nft.symbol && (
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gradient-to-r from-[#0098EA]/10 to-cyan-500/10 border border-[#0098EA]/20 text-[10px] font-medium text-[#0098EA] leading-none">
-              {nft.symbol}
-            </span>
-          )}
-          
-          {/* Backdrop Badge */}
+          {/* Backdrop */}
           {nft.backdrop && (
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-[10px] font-medium text-amber-300 leading-none">
-              {nft.backdrop}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Background:</span>
+              <span className="text-sm font-semibold text-amber-300">{nft.backdrop}</span>
+            </div>
+          )}
+          
+          {/* Symbol */}
+          {nft.symbol && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Symbol:</span>
+              <span className="text-sm font-semibold text-[#0098EA]">{nft.symbol}</span>
+              {nft.symbol_rarity && (
+                <span className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                  {nft.symbol_rarity}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
