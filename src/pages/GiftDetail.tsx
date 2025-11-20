@@ -10,6 +10,7 @@ import GiftModelsDialog from '@/components/GiftModelsDialog';
 import GiftImage from '@/components/GiftImage';
 import { getCachedData } from '@/services/marketCache';
 import { getAuthHeaders } from '@/lib/telegramAuth';
+import { useTheme } from '@/hooks/useTheme';
 
 interface GiftInfo {
   name: string;
@@ -76,9 +77,10 @@ type ChartType = 'candlestick' | 'line';
 type Currency = 'usd' | 'ton';
 type DataSource = 'market' | 'black';
 
-const GiftDetail = () => {
+const GiftDetail: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
+  const { isLight } = useTheme();
   const [loading, setLoading] = useState(true);
   const [giftData, setGiftData] = useState<GiftDetailData | null>(null);
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
@@ -528,15 +530,15 @@ const GiftDetail = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 10 }}
+              stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+              tick={{ fontSize: 10, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
               interval="preserveStartEnd"
               axisLine={false}
               tickLine={false}
             />
             <YAxis 
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 11 }}
+              stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+              tick={{ fontSize: 11, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
               domain={['auto', 'auto']}
               axisLine={false}
               tickLine={false}
@@ -591,16 +593,16 @@ const GiftDetail = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="label" 
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 10 }}
+              stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+              tick={{ fontSize: 10, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
               interval="preserveStartEnd"
               axisLine={false}
               tickLine={false}
             />
             <YAxis 
               domain={['dataMin - 0.5', 'dataMax + 0.5']}
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 11 }}
+              stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+              tick={{ fontSize: 11, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
               axisLine={false}
               tickLine={false}
               orientation="right"
@@ -669,15 +671,15 @@ const GiftDetail = () => {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis 
             dataKey="label" 
-            stroke="rgba(255,255,255,0.3)"
-            tick={{ fontSize: 10 }}
+            stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+            tick={{ fontSize: 10, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
             interval="preserveStartEnd"
             axisLine={false}
             tickLine={false}
           />
           <YAxis 
-            stroke="rgba(255,255,255,0.3)"
-            tick={{ fontSize: 11 }}
+            stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
+            tick={{ fontSize: 11, fill: isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)" }}
             domain={['auto', 'auto']}
             axisLine={false}
             tickLine={false}
