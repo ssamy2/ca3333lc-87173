@@ -35,4 +35,55 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // تحسين حجم البندل
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // UI Components
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-select',
+          ],
+          // Charts - فصل Chart.js عن Recharts
+          'vendor-charts-main': ['chart.js', 'chartjs-chart-treemap', 'react-chartjs-2'],
+          'vendor-charts-detail': ['recharts'],
+          // Utils
+          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge', '@tanstack/react-query'],
+          // Icons
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+    // حجم التحذير
+    chunkSizeWarningLimit: 600,
+    // تصغير الكود
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // إزالة console.logs في production
+        drop_console: mode === 'production',
+        drop_debugger: mode === 'production',
+        pure_funcs: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
+      },
+    },
+    // تحسين الصور
+    assetsInlineLimit: 4096, // 4KB - الصور الأصغر تصبح inline
+    cssCodeSplit: true,
+  },
+  // تحسين الأداء
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+    ],
+    exclude: ['@lovable-tagger'],
+  },
 }));

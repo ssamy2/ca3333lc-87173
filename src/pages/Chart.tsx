@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, LayoutGrid, List, BarChart3, TrendingUp, TrendingDown, DollarSign, Download, RefreshCw } from 'lucide-react';
@@ -118,8 +118,9 @@ const Chart = () => {
     }
   }, [dataSource]);
 
-
-  const getFilteredData = () => {
+  // Memoize filtered data to prevent recalculation on every render
+  const filteredData = useMemo(() => {
+    const getFilteredData = () => {
     // Determine which filter to use based on view mode
     const currentTopFilter = viewMode === 'heatmap' ? topFilterHeatmap : topFilterGrid;
     
@@ -303,9 +304,12 @@ const Chart = () => {
 
     return entries;
   };
+    return getFilteredData();
+  }, [viewMode, topFilterHeatmap, topFilterGrid, dataSource, marketData, blackFloorData, sortMode, chartType, currency]);
 
-  const getGiftItems = (): GiftItem[] => {
-    const entries = getFilteredData();
+  // Memoize gift items
+  const giftItems = useMemo((): GiftItem[] => {
+    const entries = filteredData;
     
     return entries.map(([name, data]) => {
         // Use historical prices directly from market data API
@@ -337,7 +341,7 @@ const Chart = () => {
           preSale: false
         };
       });
-  };
+  }, [filteredData]);
 
 
 

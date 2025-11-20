@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -104,7 +104,7 @@ const GiftDetail: React.FC = () => {
     }
   }, [blackFloorData, dataSource]);
 
-  const fetchGiftData = async (giftName: string) => {
+  const fetchGiftData = useCallback(async (giftName: string) => {
     try {
       setLoading(true);
       const authHeaders = await getAuthHeaders();
@@ -148,9 +148,9 @@ const GiftDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchBlackFloorData = async (giftName: string) => {
+  const fetchBlackFloorData = useCallback(async (giftName: string) => {
     try {
       const authHeaders = await getAuthHeaders();
       const response = await fetch(`https://www.channelsseller.site/api/black/${encodeURIComponent(giftName)}`, {
@@ -241,9 +241,11 @@ const GiftDetail: React.FC = () => {
     } catch (error) {
       // Silently fail if black market data is not available
     }
-  };
+  }, []);
 
-  const getChartData = () => {
+  // Memoize chart data to prevent recalculation on every render
+  const chartData = useMemo(() => {
+    const getChartData = () => {
     // If Black mode is selected, show black floor data
     if (dataSource === 'black') {
       if (blackFloorData.length === 0) return [];
@@ -392,8 +394,12 @@ const GiftDetail: React.FC = () => {
       };
     });
   };
+    return getChartData();
+  }, [dataSource, blackFloorData, timeRange, giftData, chartType, currency]);
 
-  const calculatePriceChange = () => {
+  // Memoize price change calculation
+  const priceChange = useMemo(() => {
+    const calculatePriceChange = () => {
     try {
       // If Black mode is selected, calculate from black floor data based on time range
       if (dataSource === 'black' && blackFloorData.length > 0) {
@@ -435,9 +441,12 @@ const GiftDetail: React.FC = () => {
       return 0;
     }
   };
+    return calculatePriceChange();
+  }, [dataSource, blackFloorData, timeRange, giftData, currency, chartData]);
 
 
-  // Custom candlestick component
+  // Custom candlestick component - مع مemoization
+  const Candlestick = useMemo(() => (props: any) => {
   const Candlestick = (props: any) => {
     const { x, y, width, payload } = props;
     
