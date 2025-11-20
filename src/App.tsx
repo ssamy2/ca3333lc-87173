@@ -39,6 +39,12 @@ const DataPrefetcher = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
+  // Force dark theme on mount
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('nova-theme', 'dark');
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
