@@ -207,20 +207,20 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         
         {/* Model and Rarity */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Model:</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-gray-400 font-medium">Model:</span>
             <span className="text-sm font-semibold text-white">{nft.model}</span>
             {nft.model_rarity && (
-              <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                {nft.model_rarity}
+              <span className="text-xs text-purple-400 font-medium">
+                ({nft.model_rarity})
               </span>
             )}
           </div>
           
           {/* Backdrop */}
           {nft.backdrop && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Background:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-400 font-medium">Background:</span>
               <span className="text-sm font-semibold text-amber-300">{nft.backdrop}</span>
             </div>
           )}
