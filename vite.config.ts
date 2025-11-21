@@ -63,15 +63,7 @@ export default defineConfig(({ mode }) => ({
     // حجم التحذير
     chunkSizeWarningLimit: 600,
     // تصغير الكود
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        // إزالة console.logs في production
-        drop_console: mode === 'production',
-        drop_debugger: mode === 'production',
-        pure_funcs: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
-      },
-    },
+    minify: 'esbuild',
     // تحسين الصور
     assetsInlineLimit: 4096, // 4KB - الصور الأصغر تصبح inline
     cssCodeSplit: true,

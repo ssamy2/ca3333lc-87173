@@ -220,7 +220,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
   }
   
   // Transform new API response format to expected format
-  if (responseData && responseData.nft_gifts) {
+  if (responseData && responseData.nft_gifts && Array.isArray(responseData.nft_gifts)) {
     // Calculate minimum floor price from all NFTs
     const minFloorPrice = responseData.nft_gifts.length > 0 
       ? Math.min(...responseData.nft_gifts.map((gift: any) => gift.price_ton || 0))
