@@ -178,7 +178,12 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
             <canvas
               ref={canvasRef}
               className="w-full h-full"
-              style={{ imageRendering: 'high-quality' }}
+              style={{ 
+                imageRendering: '-webkit-optimize-contrast',
+                WebkitFontSmoothing: 'antialiased',
+                backfaceVisibility: 'hidden',
+                transform: 'translateZ(0)'
+              }}
             />
             {imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center backdrop-blur-sm">
