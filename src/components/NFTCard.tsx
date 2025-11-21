@@ -177,12 +177,13 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           <>
             <canvas
               ref={canvasRef}
-              className="w-full h-full"
+              className="w-full h-full object-contain"
               style={{ 
-                imageRendering: '-webkit-optimize-contrast',
+                imageRendering: 'crisp-edges',
                 WebkitFontSmoothing: 'antialiased',
                 backfaceVisibility: 'hidden',
-                transform: 'translateZ(0)'
+                transform: 'translateZ(0)',
+                willChange: 'transform'
               }}
             />
             {imageLoading && (
