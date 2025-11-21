@@ -636,7 +636,7 @@ const Chart = () => {
         {viewMode === 'heatmap' && (
           <TreemapHeatmap 
             ref={treemapRef}
-            data={getGiftItems()} 
+            data={giftItems} 
             chartType={chartType}
             timeGap={timeGap}
             currency={currency}
