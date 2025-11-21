@@ -371,7 +371,7 @@ const TelegramApp: React.FC = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Home Content */}
       {activeTab === 'home' && (
-        <div className="max-w-md mx-auto p-4 space-y-6">
+        <div className="w-full p-4 space-y-6">
           {/* Hero Section */}
           {!nftData && !singleGift && !loading && !error && (
             <HeroSection t={t} />
