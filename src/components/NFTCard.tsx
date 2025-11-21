@@ -255,8 +255,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
               </span>
             ) : (
               <>
-                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(12px, 2.5vw, 16px)', height: 'clamp(12px, 2.5vw, 16px)' }} />
                 <span className="font-bold text-white" style={{ fontSize: 'clamp(8px, 2.2vw, 14px)' }}>{formatTON(nft.floor_price)}</span>
+                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(12px, 2.5vw, 16px)', height: 'clamp(12px, 2.5vw, 16px)' }} />
               </>
             )}
           </div>
