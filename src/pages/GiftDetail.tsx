@@ -414,10 +414,10 @@ const GiftDetail: React.FC = () => {
         }
         
         // Fallback: calculate from chart data
-        const chartData = getChartData();
-        if (chartData && chartData.length > 1) {
-          const firstPrice = chartData[0]?.price;
-          const lastPrice = chartData[chartData.length - 1]?.price;
+        const currentChartData = chartData;
+        if (currentChartData && currentChartData.length > 1) {
+          const firstPrice = currentChartData[0]?.price;
+          const lastPrice = currentChartData[currentChartData.length - 1]?.price;
           if (firstPrice && lastPrice && firstPrice !== 0) {
             return ((lastPrice - firstPrice) / firstPrice) * 100;
           }
@@ -426,13 +426,13 @@ const GiftDetail: React.FC = () => {
       }
       
       // Market data (original logic)
-      const chartData = getChartData();
+      const currentChartData = chartData;
       
-      if (!chartData || chartData.length === 0) return 0;
+      if (!currentChartData || currentChartData.length === 0) return 0;
       
       // Use first and last prices from the current chart view
-      const firstPrice = chartData[0]?.price;
-      const lastPrice = chartData[chartData.length - 1]?.price;
+      const firstPrice = currentChartData[0]?.price;
+      const lastPrice = currentChartData[currentChartData.length - 1]?.price;
       
       if (!firstPrice || !lastPrice || firstPrice === 0) return 0;
       return ((lastPrice - firstPrice) / firstPrice) * 100;
@@ -445,8 +445,7 @@ const GiftDetail: React.FC = () => {
   }, [dataSource, blackFloorData, timeRange, giftData, currency, chartData]);
 
 
-  // Custom candlestick component - مع مemoization
-  const Candlestick = useMemo(() => (props: any) => {
+  // Custom candlestick component
   const Candlestick = (props: any) => {
     const { x, y, width, payload } = props;
     
@@ -514,7 +513,7 @@ const GiftDetail: React.FC = () => {
   };
 
   const renderChart = () => {
-    const data = getChartData();
+    const data = chartData;
     
     if (!data || data.length === 0) {
       return (
@@ -524,7 +523,7 @@ const GiftDetail: React.FC = () => {
       );
     }
     
-    const color = calculatePriceChange() >= 0 ? '#10b981' : '#ef4444';
+    const color = priceChange >= 0 ? '#10b981' : '#ef4444';
     
     if (chartType === 'line') {
       return (
@@ -749,7 +748,6 @@ const GiftDetail: React.FC = () => {
     );
   }
 
-  const priceChange = calculatePriceChange();
   const isPositive = priceChange >= 0;
   
   // Check if black market data has only one record (no price changes)
