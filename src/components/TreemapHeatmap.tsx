@@ -23,6 +23,7 @@ import {
 } from '@/services/chartCache';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { sendHeatmapImage } from '@/utils/heatmapImageSender';
+import { useToast } from '@/hooks/use-toast';
 import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
@@ -630,6 +631,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [isDownloading, setIsDownloading] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const { language } = useLanguage();
+  const { toast } = useToast();
   
   // Memoize preloaded images to prevent re-fetching on every render
   const preloadedImages = useMemo(() => {
@@ -754,39 +756,129 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       // Wait a bit more before download to ensure everything is rendered
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Download/send
+      // Download/send with comprehensive error handling
       try {
+        console.log('📥 [EXPORT] Starting download/send process...');
+        
         if (!isTelegram) {
           // PC: Direct download with JPEG compression
-          const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
-          const link = document.createElement('a');
-          link.download = `nova-heatmap-${Date.now()}.jpeg`;
-          link.href = imageUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          console.log('💻 [EXPORT] PC mode - downloading...');
+          try {
+            const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
+            const link = document.createElement('a');
+            link.download = `nova-heatmap-${Date.now()}.jpeg`;
+            link.href = imageUrl;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+              try {
+                document.body.removeChild(link);
+              } catch {}
+            }, 100);
+            console.log('✅ [EXPORT] Download triggered successfully');
+          } catch (downloadError) {
+            console.error('❌ [EXPORT] Download failed:', downloadError);
+            throw downloadError;
+          }
         } else {
-          // Mobile: Show dialog and send
+          // Mobile/Telegram: Send to API
+          console.log('📱 [EXPORT] Telegram mode - sending to API...');
           const userId = telegramWebApp?.initDataUnsafe?.user?.id;
-          if (userId && typeof sendHeatmapImage === 'function') {
-            // Show dialog
+          
+          if (!userId) {
+            console.error('❌ [EXPORT] User ID not found');
+            throw new Error('User ID not available');
+          }
+          
+          if (typeof sendHeatmapImage !== 'function') {
+            console.error('❌ [EXPORT] sendHeatmapImage function not available');
+            throw new Error('Send function not available');
+          }
+          
+          console.log('📤 [EXPORT] Sending image for user:', userId);
+          
+          // Show dialog immediately
+          try {
             setShowSendDialog(true);
-            
-            // Send without waiting
-            sendHeatmapImage({
+            console.log('✅ [EXPORT] Dialog shown');
+          } catch (dialogError) {
+            console.warn('⚠️ [EXPORT] Failed to show dialog:', dialogError);
+          }
+          
+          // Send image with proper error handling
+          try {
+            await sendHeatmapImage({
               canvas,
               userId: userId.toString(),
               language,
-              onSuccess: () => {},
-              onError: () => {}
-            }).catch(() => {});
+              onSuccess: () => {
+                console.log('🎉 [EXPORT] Image sent successfully!');
+                try {
+                  // Show success toast
+                  if (typeof toast === 'function') {
+                    toast({
+                      title: "Success!",
+                      description: "Heatmap image sent successfully",
+                    });
+                  }
+                } catch (toastError) {
+                  console.warn('⚠️ [EXPORT] Toast error:', toastError);
+                }
+              },
+              onError: (error: Error) => {
+                console.error('❌ [EXPORT] Send error:', error);
+                try {
+                  // Show error toast
+                  if (typeof toast === 'function') {
+                    toast({
+                      title: "Error",
+                      description: "Failed to send image. Downloaded locally instead.",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (toastError) {
+                  console.warn('⚠️ [EXPORT] Toast error:', toastError);
+                }
+              }
+            });
+            console.log('✅ [EXPORT] Send process completed');
+          } catch (sendError) {
+            console.error('❌ [EXPORT] Send failed, attempting fallback download...', sendError);
+            
+            // Fallback: Download locally
+            try {
+              const fallbackUrl = canvas.toDataURL('image/jpeg', 0.8);
+              const link = document.createElement('a');
+              link.download = `nova-heatmap-fallback-${Date.now()}.jpeg`;
+              link.href = fallbackUrl;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              setTimeout(() => {
+                try {
+                  document.body.removeChild(link);
+                } catch {}
+              }, 100);
+              console.log('✅ [EXPORT] Fallback download triggered');
+            } catch (fallbackError) {
+              console.error('❌ [EXPORT] Fallback download also failed:', fallbackError);
+            }
           }
         }
+      } catch (exportError) {
+        console.error('❌ [EXPORT] Critical error in export process:', exportError);
       } finally {
-        // Destroy temp chart only
+        // Always destroy temp chart
+        console.log('🧹 [EXPORT] Cleaning up...');
         try {
-          tempChart?.destroy();
-        } catch {}
+          if (tempChart) {
+            tempChart.destroy();
+            console.log('✅ [EXPORT] Temp chart destroyed');
+          }
+        } catch (destroyError) {
+          console.warn('⚠️ [EXPORT] Failed to destroy chart:', destroyError);
+        }
       }
     } catch {
       // ignore download errors to avoid breaking UI
