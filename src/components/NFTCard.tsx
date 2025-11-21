@@ -246,7 +246,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
 
         {/* Floor Price Section */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+        <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
           <span className="text-gray-400 font-medium" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Floor Price</span>
           <div className="flex items-center gap-1.5">
             {nft.floor_price === 0 ? (
@@ -256,7 +256,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
             ) : (
               <>
                 <span className="font-bold text-white" style={{ fontSize: 'clamp(8px, 2.2vw, 14px)' }}>{formatTON(nft.floor_price)}</span>
-                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(12px, 2.5vw, 16px)', height: 'clamp(12px, 2.5vw, 16px)' }} />
+                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(10.2px, 2.125vw, 13.6px)', height: 'clamp(10.2px, 2.125vw, 13.6px)' }} />
               </>
             )}
           </div>
