@@ -202,22 +202,22 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col p-4 gap-3 flex-1">
+      <div className="flex flex-col p-3 gap-2 flex-1 overflow-hidden">
         {/* Title with ID */}
         <h3 
-          className="font-bold text-sm leading-tight text-white group-hover:text-[#0098EA] transition-colors whitespace-nowrap overflow-hidden text-ellipsis" 
-          title={`${nft.title || nft.name} ${nft.quantity_raw || ''}`}
+          className="font-bold leading-tight text-white group-hover:text-[#0098EA] transition-colors"
+          style={{ fontSize: 'clamp(9px, 2.5vw, 14px)' }}
         >
           {nft.title || nft.name} <span className="text-gray-400 font-normal">{nft.quantity_raw}</span>
         </h3>
         
         {/* Model and Rarity */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-xs text-gray-400 font-medium flex-shrink-0">Model:</span>
-            <span className="text-xs font-semibold text-white truncate" title={nft.model}>{nft.model}</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-gray-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Model:</span>
+            <span className="font-semibold text-white" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.model}</span>
             {nft.model_rarity && (
-              <span className="text-xs text-purple-400 font-medium flex-shrink-0">
+              <span className="text-purple-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(6px, 1.5vw, 10px)' }}>
                 ({nft.model_rarity})
               </span>
             )}
@@ -225,19 +225,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           
           {/* Backdrop */}
           {nft.backdrop && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs text-gray-400 font-medium flex-shrink-0">BG:</span>
-              <span className="text-xs font-semibold text-amber-300 truncate" title={nft.backdrop}>{nft.backdrop}</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-gray-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>BG:</span>
+              <span className="font-semibold text-amber-300" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.backdrop}</span>
             </div>
           )}
           
           {/* Symbol */}
           {nft.symbol && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs text-gray-400 flex-shrink-0">Symbol:</span>
-              <span className="text-xs font-semibold text-[#0098EA] truncate" title={nft.symbol}>{nft.symbol}</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-gray-400 flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Symbol:</span>
+              <span className="font-semibold text-[#0098EA]" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.symbol}</span>
               {nft.symbol_rarity && (
-                <span className="text-xs text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 flex-shrink-0">
+                <span className="text-cyan-400 bg-cyan-500/10 px-1 py-0.5 rounded border border-cyan-500/20 flex-shrink-0" style={{ fontSize: 'clamp(6px, 1.5vw, 9px)' }}>
                   {nft.symbol_rarity}
                 </span>
               )}
@@ -246,17 +246,17 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
 
         {/* Floor Price Section */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <span className="text-xs text-gray-400 font-medium">Floor Price</span>
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-auto">
+          <span className="text-gray-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Floor Price</span>
+          <div className="flex items-center gap-1">
             {nft.floor_price === 0 ? (
-              <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-md border border-yellow-400/20">
+              <span className="font-bold text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded-md border border-yellow-400/20" style={{ fontSize: 'clamp(6px, 1.5vw, 10px)' }}>
                 Presale
               </span>
             ) : (
               <>
-                <TonIcon className="w-3.5 h-3.5 text-[#0098EA] flex-shrink-0" />
-                <span className="text-sm font-bold text-white">{formatTON(nft.floor_price)}</span>
+                <TonIcon className="flex-shrink-0 text-[#0098EA]" style={{ width: 'clamp(10px, 2vw, 14px)', height: 'clamp(10px, 2vw, 14px)' }} />
+                <span className="font-bold text-white" style={{ fontSize: 'clamp(8px, 2vw, 13px)' }}>{formatTON(nft.floor_price)}</span>
               </>
             )}
           </div>
@@ -266,9 +266,9 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
       {/* View in Store - Very Small Footer */}
       {(nft.tg_deeplink || (nft.details.links && nft.details.links.length > 0)) && (
-        <div className="flex items-center justify-center py-1.5 px-3 border-t border-white/5 bg-black/20">
-          <div className="flex items-center gap-1 text-[10px] text-gray-500 group-hover:text-[#0098EA] transition-colors">
-            <ExternalLink className="w-2.5 h-2.5" />
+        <div className="flex items-center justify-center py-1 px-2 border-t border-white/5 bg-black/20">
+          <div className="flex items-center gap-0.5 text-gray-500 group-hover:text-[#0098EA] transition-colors" style={{ fontSize: 'clamp(6px, 1.5vw, 9px)' }}>
+            <ExternalLink style={{ width: 'clamp(8px, 1.5vw, 11px)', height: 'clamp(8px, 1.5vw, 11px)' }} />
             <span className="font-medium">View in Store</span>
           </div>
         </div>
