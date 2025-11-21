@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import NFTCard from '@/components/NFTCard';
-import ScaledNFTCard from '@/components/ScaledNFTCard';
 
 interface NFTGift {
   count: number;
@@ -55,13 +54,12 @@ const NFTGrid: React.FC<NFTGridProps> = ({ nfts }) => {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 md:gap-4 px-2 justify-items-center">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 md:gap-4 px-2">
         {sortedNFTs.map((nft, index) => (
-          <div key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`}>
-            <ScaledNFTCard>
-              <NFTCard nft={nft} />
-            </ScaledNFTCard>
-          </div>
+          <NFTCard 
+            key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} 
+            nft={nft} 
+          />
         ))}
       </div>
     </div>
