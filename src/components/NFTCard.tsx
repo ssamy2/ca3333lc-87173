@@ -71,9 +71,14 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const size = 512;
+    // Use higher resolution for better quality on desktop
+    const size = 1024;
     canvas.width = size;
     canvas.height = size;
+    
+    // Enable image smoothing for better quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Find backdrop colors
     let backdropColors: any = null;
@@ -172,7 +177,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           <>
             <canvas
               ref={canvasRef}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
+              style={{ imageRendering: 'high-quality' }}
             />
             {imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center backdrop-blur-sm">
