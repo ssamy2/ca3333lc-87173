@@ -47,16 +47,16 @@ const NFTGrid: React.FC<NFTGridProps> = ({ nfts }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-2">
         <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
         <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
           {nfts.length} items
         </div>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 px-2">
         {sortedNFTs.map((nft, index) => (
-          <div key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} className="h-[230px]">
+          <div key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`}>
             <NFTCard nft={nft} />
           </div>
         ))}
