@@ -84,31 +84,54 @@ const awaitCreateImageBitmapSafe = async (img: HTMLImageElement): Promise<ImageB
   }
 };
 
-const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 8000): Promise<Map<string, HTMLImageElement>> => {
+const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): Promise<Map<string, HTMLImageElement>> => {
   const imageMap = new Map<string, HTMLImageElement>();
-  const promises = data.map(async item => {
-    const url = normalizeUrl(item.imageName);
-    if (imageMap.has(url)) return;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    const loadPromise = new Promise<void>(async (resolve) => {
-      let settled = false;
-      const safeResolve = () => { if (!settled) { settled = true; resolve(); } };
-      img.onload = () => safeResolve();
-      img.onerror = () => safeResolve();
-      img.src = url;
-      try {
-        // try modern decode to ensure dimensions available
-        if ('decode' in img) await (img as any).decode();
-      } catch {}
-      safeResolve();
+  
+  // Process images in batches to avoid overwhelming the browser
+  const batchSize = 10;
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
+    const promises = batch.map(async item => {
+      const url = normalizeUrl(item.imageName);
+      if (imageMap.has(url)) return;
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      const loadPromise = new Promise<void>((resolve) => {
+        let settled = false;
+        const safeResolve = () => { 
+          if (!settled) { 
+            settled = true; 
+            resolve(); 
+          } 
+        };
+        
+        img.onload = () => {
+          // Wait a bit to ensure image is fully decoded
+          setTimeout(() => safeResolve(), 50);
+        };
+        img.onerror = () => safeResolve();
+        
+        img.src = url;
+      });
+      
+      const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
+      await Promise.race([loadPromise, timer]);
+      
+      // Verify image loaded successfully
+      if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        imageMap.set(url, img);
+        console.log('✅ Image loaded for export:', item.name, img.naturalWidth, 'x', img.naturalHeight);
+      } else {
+        console.warn('⚠️ Image failed to load:', item.name, url);
+      }
     });
-    const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
-    await Promise.race([loadPromise, timer]);
-    imageMap.set(url, img);
-  });
-
-  await Promise.all(promises);
+    
+    await Promise.all(promises);
+  }
+  
+  console.log(`📊 Loaded ${imageMap.size}/${data.length} images for export`);
   return imageMap;
 };
 
@@ -399,9 +422,16 @@ const createImagePlugin = (
             naturalHeight: rawImage?.naturalHeight
           });
 
-          // Dynamic font sizing based on element size
+          // Dynamic font sizing based on element size with export scaling
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
+          
+          // Reduce text size for export to prevent overflow
+          if (scale > 1) {
+            fontSizes.titleFontSize = Math.max(fontSizes.titleFontSize * 0.85, 8);
+            fontSizes.valueFontSize = Math.max(fontSizes.valueFontSize * 0.85, 6);
+            fontSizes.marketCapFontSize = Math.max(fontSizes.marketCapFontSize * 0.85, 5);
+          }
           
           const imageSize = Math.max(minDimension * 0.3, 22);
           
@@ -454,17 +484,23 @@ const createImagePlugin = (
             willDraw: hasImage && drawImage && width >= 20 && height >= 20
           });
           
-          if (width < 20 || height < 20) {
-            console.warn('BLOCK TOO SMALL TO DRAW IMAGE', item.name, width, height);
-          } else if (hasImage && drawImage) {
+          // Draw image with better error handling
+          if (hasImage && drawImage && width >= 20 && height >= 20) {
             try {
+              // Ensure image is within bounds
+              const safeImageX = Math.max(x, Math.min(imageX, x + width - imageWidth));
+              const safeImageY = Math.max(y, Math.min(imageY, y + height - imageHeight));
+              const safeImageWidth = Math.min(imageWidth, width * 0.9);
+              const safeImageHeight = Math.min(imageHeight, height * 0.4);
+              
               if ((drawImage as ImageBitmap).close) {
-                ctx.drawImage(drawImage as ImageBitmap, imageX, imageY, imageWidth, imageHeight);
+                ctx.drawImage(drawImage as ImageBitmap, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
               } else {
-                ctx.drawImage(drawImage as HTMLImageElement, imageX, imageY, imageWidth, imageHeight);
+                ctx.drawImage(drawImage as HTMLImageElement, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
               }
-            } catch {
-              console.error('[TREEMAP] Failed to draw image for', item.name);
+              console.log('✅ Drew image:', item.name);
+            } catch (err) {
+              console.error('[TREEMAP] Failed to draw image for', item.name, err);
             }
           }
 
@@ -478,9 +514,10 @@ const createImagePlugin = (
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          // Title with overflow handling
+          // Title with overflow handling - more aggressive truncation
           ctx.font = `bold ${fontSizes.titleFontSize}px sans-serif`;
-          const truncatedName = handleTextOverflow(ctx, item.name, availableWidth, fontSizes.titleFontSize);
+          const maxTitleWidth = availableWidth * 0.9; // Use 90% of available width
+          const truncatedName = handleTextOverflow(ctx, item.name, maxTitleWidth, fontSizes.titleFontSize);
           ctx.fillText(truncatedName, centerX, textStartY + imagePaddingOffset + imageHeight + textPaddingOffset + fontSizes.titleFontSize / 2 + spacing);
 
           if (chartType === 'change') {
@@ -647,8 +684,12 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
       const transformedData = transformGiftData(data, chartType, timeGap, currency);
       
-      // Preload all images with timeout protection
-      const imageMap = await preloadImagesAsync(transformedData, 10000);
+      console.log('🎨 Starting image preload for export...', transformedData.length, 'items');
+      
+      // Preload all images with extended timeout for export quality
+      const imageMap = await preloadImagesAsync(transformedData, 20000);
+      
+      console.log('✅ Image preload complete:', imageMap.size, 'images loaded');
 
       let tempChart: ChartJS | null = null;
       
@@ -697,49 +738,56 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      // Force render
+      // Force render with multiple update cycles to ensure all images are drawn
       if (tempChart?.update) {
         try {
           tempChart.update('none');
+          // Give browser time to process all images
+          await new Promise(resolve => setTimeout(resolve, 500));
+          tempChart.update('none');
+          await new Promise(resolve => setTimeout(resolve, 300));
         } catch {}
       }
 
-      // ULTRA SIMPLE: Just download/send and destroy
-      setTimeout(() => {
-        try {
-          if (!isTelegram) {
-            // PC: Direct download with JPEG compression
-            const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
-            const link = document.createElement('a');
-            link.download = `nova-heatmap-${Date.now()}.jpeg`;
-            link.href = imageUrl;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } else {
-            // Mobile: Show dialog and send
-            const userId = telegramWebApp?.initDataUnsafe?.user?.id;
-            if (userId && typeof sendHeatmapImage === 'function') {
-              // Show dialog
-              setShowSendDialog(true);
-              
-              // Send without waiting
-              sendHeatmapImage({
-                canvas,
-                userId: userId.toString(),
-                language,
-                onSuccess: () => {},
-                onError: () => {}
-              }).catch(() => {});
-            }
+      console.log('🎨 Chart rendering complete, preparing download...');
+
+      // Wait a bit more before download to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Download/send
+      try {
+        if (!isTelegram) {
+          // PC: Direct download with JPEG compression
+          const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const link = document.createElement('a');
+          link.download = `nova-heatmap-${Date.now()}.jpeg`;
+          link.href = imageUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          // Mobile: Show dialog and send
+          const userId = telegramWebApp?.initDataUnsafe?.user?.id;
+          if (userId && typeof sendHeatmapImage === 'function') {
+            // Show dialog
+            setShowSendDialog(true);
+            
+            // Send without waiting
+            sendHeatmapImage({
+              canvas,
+              userId: userId.toString(),
+              language,
+              onSuccess: () => {},
+              onError: () => {}
+            }).catch(() => {});
           }
-        } finally {
-          // Destroy temp chart only
-          try {
-            tempChart?.destroy();
-          } catch {}
         }
-      }, 50);
+      } finally {
+        // Destroy temp chart only
+        try {
+          tempChart?.destroy();
+        } catch {}
+      }
     } catch {
       // ignore download errors to avoid breaking UI
     } finally {
