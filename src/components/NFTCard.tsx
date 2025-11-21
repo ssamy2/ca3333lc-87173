@@ -179,7 +179,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
               ref={canvasRef}
               className="w-full h-full object-contain"
               style={{ 
-                imageRendering: 'crisp-edges',
+                imageRendering: 'auto',
                 WebkitFontSmoothing: 'antialiased',
                 backfaceVisibility: 'hidden',
                 transform: 'translateZ(0)',
@@ -214,7 +214,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       <div className="flex flex-col p-4 gap-3 flex-1">
         {/* Title with ID */}
         <h3 className="font-bold text-sm leading-tight text-white group-hover:text-[#0098EA] transition-colors truncate" title={nft.title || nft.name}>
-          {nft.title || nft.name}
+          {nft.title || nft.name} <span className="text-gray-400 font-normal">{nft.quantity_raw}</span>
         </h3>
         
         {/* Model and Rarity */}
@@ -268,12 +268,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           </div>
         </div>
 
-        {/* Quantity Info */}
-        {nft.quantity_raw && (
-          <div className="text-[10px] text-gray-500 text-center truncate" title={nft.quantity_raw}>
-            {nft.quantity_raw}
-          </div>
-        )}
       </div>
 
       {/* View in Store - Very Small Footer */}

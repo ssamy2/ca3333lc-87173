@@ -536,7 +536,7 @@ const GiftDetail: React.FC = () => {
                 <stop offset="95%" stopColor={color} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.05)"} vertical={false} />
             <XAxis 
               dataKey="label" 
               stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
@@ -599,7 +599,7 @@ const GiftDetail: React.FC = () => {
       return (
         <ResponsiveContainer width="100%" height={250}>
           <ComposedChart data={processedData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.05)"} vertical={false} />
             <XAxis 
               dataKey="label" 
               stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
@@ -677,7 +677,7 @@ const GiftDetail: React.FC = () => {
               <stop offset="100%" stopColor={color} stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.05)"} vertical={false} />
           <XAxis 
             dataKey="label" 
             stroke={isLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.3)"}
