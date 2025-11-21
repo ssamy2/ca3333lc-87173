@@ -9,8 +9,6 @@ export default function ScaledNFTCard({ children }: ScaledNFTCardProps) {
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    console.log('ScaledNFTCard v1.0 - Fixed aspect ratio scaling system initialized');
-    
     const resize = () => {
       if (!ref.current) return;
       const w = ref.current.offsetWidth;

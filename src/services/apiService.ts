@@ -250,11 +250,10 @@ const processAPIResponse = (responseData: any, username?: string) => {
           }
         },
         nfts: responseData.nft_gifts.map((gift: any) => {
-          // Extract gift number from link if mint is not available
-          let giftNumber = gift.mint;
-          if (!giftNumber && gift.link) {
-            const match = gift.link.match(/\/nft\/[^/]+_(\d+)/);
-            if (match) giftNumber = match[1];
+          let mint = gift.mint;
+          if (!mint && gift.link) {
+            const match = gift.link.match(/-([0-9]+)$/);
+            if (match) mint = match[1];
           }
           
           return {
@@ -269,9 +268,9 @@ const processAPIResponse = (responseData: any, username?: string) => {
             title: gift.gift_name || 'Unknown',
             backdrop: gift.backdrop || '',
             model_rarity: gift.rarity || 0,
-            quantity_issued: giftNumber || 0,
+            quantity_issued: mint || 0,
             quantity_total: 0,
-            quantity_raw: giftNumber ? `#${giftNumber}` : '',
+            quantity_raw: mint ? `#${mint}` : '',
             description: '',
             tg_deeplink: gift.link || '',
             details: {

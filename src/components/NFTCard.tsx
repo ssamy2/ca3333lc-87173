@@ -53,13 +53,11 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   };
 
   const handleImageError = (e: any) => {
-    console.error('❌ Image failed to load:', nft.image, 'Error:', e);
     setImageError(true);
     setImageLoading(false);
   };
 
   const handleImageLoad = () => {
-    console.log('✅ Image loaded successfully:', nft.image);
     setImageLoading(false);
   };
 
@@ -102,7 +100,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       gradient.addColorStop(1, backdropColors.patternColor);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, size, size);
-      console.log('🎨 Backdrop drawn:', nft.backdrop, backdropColors);
     } else {
       // Default gradient
       const gradient = ctx.createRadialGradient(
@@ -113,7 +110,6 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       gradient.addColorStop(1, '#0f1419');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, size, size);
-      console.log('🎨 Default backdrop drawn');
     }
 
     // Load and draw image
@@ -127,16 +123,10 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       const y = (size - scaledHeight) / 2;
 
       ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-      console.log('🖼️ Image drawn on canvas:', {
-        imageUrl: nft.image,
-        scale,
-        position: { x, y },
-        size: { width: scaledWidth, height: scaledHeight }
-      });
     };
 
-    img.onerror = (e) => {
-      console.error('❌ Failed to draw image on canvas:', nft.image, e);
+    img.onerror = () => {
+      setImageError(true);
     };
 
     // Try without crossOrigin first for better compatibility
@@ -215,8 +205,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       <div className="flex flex-col p-4 gap-3 flex-1">
         {/* Title with ID */}
         <h3 
-          className="font-bold leading-tight text-white group-hover:text-[#0098EA] transition-colors whitespace-nowrap overflow-hidden text-ellipsis" 
-          style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}
+          className="font-bold text-sm leading-tight text-white group-hover:text-[#0098EA] transition-colors whitespace-nowrap overflow-hidden text-ellipsis" 
           title={`${nft.title || nft.name} ${nft.quantity_raw || ''}`}
         >
           {nft.title || nft.name} <span className="text-gray-400 font-normal">{nft.quantity_raw}</span>
