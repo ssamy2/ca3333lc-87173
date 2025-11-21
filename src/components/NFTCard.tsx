@@ -246,17 +246,17 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
 
         {/* Floor Price Section */}
-        <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+        <div className="flex items-center justify-between pt-1 border-t border-white/5">
           <span className="text-gray-400 font-medium" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Floor Price</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5 bg-black/30 px-2 py-1 rounded-md border border-white/10">
             {nft.floor_price === 0 ? (
-              <span className="font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-md border border-yellow-400/20" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
+              <span className="font-bold text-yellow-400" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
                 Presale
               </span>
             ) : (
               <>
                 <span className="font-bold text-white" style={{ fontSize: 'clamp(8px, 2.2vw, 14px)' }}>{formatTON(nft.floor_price)}</span>
-                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(10.2px, 2.125vw, 13.6px)', height: 'clamp(10.2px, 2.125vw, 13.6px)' }} />
+                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(8px, 1.8vw, 11px)', height: 'clamp(8px, 1.8vw, 11px)' }} />
               </>
             )}
           </div>
