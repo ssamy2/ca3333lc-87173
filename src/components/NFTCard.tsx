@@ -213,7 +213,11 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       {/* Content Section */}
       <div className="flex flex-col p-4 gap-3 flex-1">
         {/* Title with ID */}
-        <h3 className="font-bold text-sm leading-tight text-white group-hover:text-[#0098EA] transition-colors truncate" title={nft.title || nft.name}>
+        <h3 
+          className="font-bold leading-tight text-white group-hover:text-[#0098EA] transition-colors whitespace-nowrap overflow-hidden text-ellipsis" 
+          style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}
+          title={`${nft.title || nft.name} ${nft.quantity_raw || ''}`}
+        >
           {nft.title || nft.name} <span className="text-gray-400 font-normal">{nft.quantity_raw}</span>
         </h3>
         
