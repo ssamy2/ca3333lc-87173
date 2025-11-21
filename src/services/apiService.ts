@@ -249,27 +249,36 @@ const processAPIResponse = (responseData: any, username?: string) => {
             STAR: 0 
           }
         },
-        nfts: responseData.nft_gifts.map((gift: any) => ({
-          count: 1,
-          name: gift.gift_name || 'Unknown',
-          model: gift.model || 'Unknown',
-          pattern: gift.pattern || '',
-          floor_price: gift.price_ton || 0,
-          avg_price: gift.price_ton || 0,
-          price_change_percent: 0,
-          image: normalizeImageUrl(gift.image) || '',
-          title: gift.gift_name || 'Unknown',
-          backdrop: gift.backdrop || '',
-          model_rarity: gift.rarity || 0,
-          quantity_issued: gift.mint || 0,
-          quantity_total: 0,
-          quantity_raw: gift.mint ? `#${gift.mint}` : '',
-          description: '',
-          tg_deeplink: gift.link || '',
-          details: {
-            links: gift.link ? [gift.link] : []
+        nfts: responseData.nft_gifts.map((gift: any) => {
+          // Extract gift number from link if mint is not available
+          let giftNumber = gift.mint;
+          if (!giftNumber && gift.link) {
+            const match = gift.link.match(/\/nft\/[^/]+_(\d+)/);
+            if (match) giftNumber = match[1];
           }
-        })),
+          
+          return {
+            count: 1,
+            name: gift.gift_name || 'Unknown',
+            model: gift.model || 'Unknown',
+            pattern: gift.pattern || '',
+            floor_price: gift.price_ton || 0,
+            avg_price: gift.price_ton || 0,
+            price_change_percent: 0,
+            image: normalizeImageUrl(gift.image) || '',
+            title: gift.gift_name || 'Unknown',
+            backdrop: gift.backdrop || '',
+            model_rarity: gift.rarity || 0,
+            quantity_issued: giftNumber || 0,
+            quantity_total: 0,
+            quantity_raw: giftNumber ? `#${giftNumber}` : '',
+            description: '',
+            tg_deeplink: gift.link || '',
+            details: {
+              links: gift.link ? [gift.link] : []
+            }
+          };
+        }),
         total_saved_gifts: responseData.total_nfts
       },
       stats: {
