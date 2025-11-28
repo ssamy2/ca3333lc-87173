@@ -23,8 +23,8 @@ interface NFTGift {
   quantity_raw?: string;
   description?: string;
   tg_deeplink?: string;
-  details: {
-    links: string[];
+  details?: {
+    links?: string[];
   };
 }
 

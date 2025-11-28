@@ -180,6 +180,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
 
       nfts: upgraded.map((g: any) => {
         const img = g.image ? normalizeImageUrl(g.image) : ''
+        const link = g.link || ''
         return {
           count: 1,
           name: g.gift_name || g.name || 'Unknown',
@@ -194,9 +195,9 @@ const processAPIResponse = (responseData: any, username?: string) => {
           quantity_issued: g.mint || 0,
           quantity_total: 0,
           quantity_raw: g.mint ? `#${g.mint}` : '',
-          tg_deeplink: g.link || '',
+          tg_deeplink: link,
           details: {
-            links: g.link ? [g.link] : []
+            links: link ? [link] : []
           }
         }
       }),
