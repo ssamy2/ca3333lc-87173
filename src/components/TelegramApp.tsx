@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
+import NFTCard from './NFTCard';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
+import TonIcon from './TonIcon';
+import StatsCard from './StatsCard';
+import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
-import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
+import { fetchNFTGifts, fetchSingleGiftPrice } from '@/services/apiService';
+import { proxyImageUrl } from '@/lib/imageProxy';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLoader from './AppLoader';
 import SubscribePrompt from './SubscribePrompt';
 import TelegramAuthError from './TelegramAuthError';
+import novaLogo from '@/assets/nova-logo-new.png';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
 import { useLaunchParams } from '@/hooks/useLaunchParams';
 import { useNavigate } from 'react-router-dom';
-
-// Import new modular components
-import HeroSection from './home/HeroSection';
-import SearchBox from './home/SearchBox';
-import UserInfoHeader from './home/UserInfoHeader';
-import NFTGrid from './home/NFTGrid';
-import GiftView from './home/GiftView';
 
 interface UserProfile {
   name: string;
@@ -61,16 +64,29 @@ interface NFTData {
   nfts: NFTGift[];
 }
 
+interface APIResponse {
+  success: boolean;
+  data?: NFTData;
+  stats?: {
+    items: number;
+    total_gifts: number;
+    enriched: number;
+  };
+  message?: string;
+  error?: string;
+  wait_time?: number;
+}
+
 const TelegramApp: React.FC = () => {
-  const { isAuthenticated, isSubscribed, isLoading: authLoading, authError } = useAuth();
+  const { isAuthenticated, isSubscribed, isLoading: authLoading, authError, checkSubscription } = useAuth();
   const { language } = useLanguage();
   const launchParams = useLaunchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  // State
   const [username, setUsername] = useState('');
   const [currentUser, setCurrentUser] = useState('');
+  const [currentUserFullName, setCurrentUserFullName] = useState('');
+  const [currentUserPhotoUrl, setCurrentUserPhotoUrl] = useState('');
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [searchedUserProfile, setSearchedUserProfile] = useState<UserProfile | null>(null);
   const [nftData, setNftData] = useState<NFTData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,34 +100,51 @@ const TelegramApp: React.FC = () => {
   const [hasSkippedSubscribe, setHasSkippedSubscribe] = useState(false);
   const [showSubscribePopup, setShowSubscribePopup] = useState(false);
   const [autoSearchTriggered, setAutoSearchTriggered] = useState(false);
+  const { toast } = useToast();
+  const { theme, setTheme, isLight, isDark } = useTheme();
   
   // Translation helper
-  const t = useCallback((key: keyof typeof import('@/i18n/translations').translations.en) => 
-    getTranslation(language, key), [language]);
+  const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
+    getTranslation(language, key);
 
-  // Initialize Telegram WebApp - ONCE
+  // Initialize Telegram WebApp
   useEffect(() => {
+    // Configure Telegram WebApp
     if (window.Telegram?.WebApp) {
-      const webApp = window.Telegram.WebApp;
-      webApp.ready();
-      webApp.expand();
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
       
-      // Additional configuration
-      const webAppAny = webApp as any;
-      if (webAppAny.disableVerticalSwipes) webAppAny.disableVerticalSwipes();
-      if (webAppAny.setHeaderColor) webAppAny.setHeaderColor('#2481cc');
-      if (webAppAny.setBackgroundColor) webAppAny.setBackgroundColor('#f0f8ff');
+      // Additional configuration if methods are available
+      const webApp = window.Telegram.WebApp as any;
+      if (webApp.disableVerticalSwipes) webApp.disableVerticalSwipes();
+      if (webApp.setHeaderColor) webApp.setHeaderColor('#2481cc');
+      if (webApp.setBackgroundColor) webApp.setBackgroundColor('#f0f8ff');
     }
 
-    // Detect Telegram user
+    // Detect Telegram user and get data directly from Telegram
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (telegramUser) {
+      // Username للبحث
       const detectedUsername = telegramUser.username || 'user';
       setCurrentUser(detectedUsername);
       setUsername(detectedUsername);
+      
+      // الاسم الكامل للعرض
+      const fullName = [telegramUser.first_name, telegramUser.last_name]
+        .filter(Boolean)
+        .join(' ') || 'User';
+      setCurrentUserFullName(fullName);
+      
+      // الصورة مباشرة من Telegram
+      const photoUrl = (telegramUser as any).photo_url;
+      if (photoUrl) {
+        setCurrentUserPhotoUrl(photoUrl);
+      }
     } else {
+      // Fallback for testing
       setCurrentUser('demo_user');
       setUsername('demo_user');
+      setCurrentUserFullName('Demo User');
     }
 
     // Load search history
@@ -119,25 +152,30 @@ const TelegramApp: React.FC = () => {
     if (history) {
       setSearchHistory(JSON.parse(history));
     }
-  }, []); // Empty dependency - run ONCE
+  }, []);
 
-  // Handle Launch Parameters - with guard
+  // Handle Launch Parameters from Telegram
   useEffect(() => {
     if (!isAuthenticated || autoSearchTriggered) return;
 
+    console.log('[LaunchParams] Processing params:', launchParams);
+
     if (launchParams.adminAccess) {
+      console.log('[LaunchParams] Admin access, navigating to /admin');
       navigate('/admin');
       setAutoSearchTriggered(true);
       return;
     }
 
     if (launchParams.adminAds || launchParams.startapp === 'admin_ads') {
+      console.log('[LaunchParams] Admin ads access, navigating to /admin/ads');
       navigate('/admin/ads');
       setAutoSearchTriggered(true);
       return;
     }
 
     if (launchParams.searchUser) {
+      console.log('[LaunchParams] Auto-searching user:', launchParams.searchUser);
       setUsername(launchParams.searchUser);
       setSearchMode('user');
       setTimeout(() => {
@@ -145,6 +183,7 @@ const TelegramApp: React.FC = () => {
         setAutoSearchTriggered(true);
       }, 500);
     } else if (launchParams.searchGift) {
+      console.log('[LaunchParams] Auto-searching gift:', launchParams.searchGift);
       setGiftUrl(launchParams.searchGift);
       setSearchMode('gift');
       setTimeout(async () => {
@@ -157,6 +196,7 @@ const TelegramApp: React.FC = () => {
             description: `Found gift: ${result.data.gift_name}`,
           });
         } catch (err) {
+          console.error('[LaunchParams] Gift search error:', err);
           setError('Failed to fetch gift data');
           setAutoSearchTriggered(true);
         }
@@ -164,9 +204,10 @@ const TelegramApp: React.FC = () => {
     }
   }, [isAuthenticated, launchParams, autoSearchTriggered, navigate, toast]);
 
-  // Show subscription popup
+  // Show subscription popup after authentication (optional)
   useEffect(() => {
     if (isAuthenticated && !isSubscribed && !hasSkippedSubscribe) {
+      // Show popup after a short delay to let the main app load
       const timer = setTimeout(() => {
         setShowSubscribePopup(true);
       }, 1500);
@@ -176,36 +217,102 @@ const TelegramApp: React.FC = () => {
 
   // Countdown timer
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
     if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     }
+    return () => clearTimeout(timer);
   }, [countdown]);
 
-  // History management
-  const saveToHistory = useCallback((searchTerm: string) => {
+  const saveToHistory = (searchTerm: string) => {
     const newHistory = [searchTerm, ...searchHistory.filter(h => h !== searchTerm)].slice(0, 8);
     setSearchHistory(newHistory);
     localStorage.setItem('nft_search_history', JSON.stringify(newHistory));
-  }, [searchHistory]);
+  };
 
-  const removeFromHistory = useCallback((searchTerm: string) => {
+  const removeFromHistory = (searchTerm: string) => {
     const newHistory = searchHistory.filter(h => h !== searchTerm);
     setSearchHistory(newHistory);
     localStorage.setItem('nft_search_history', JSON.stringify(newHistory));
-  }, [searchHistory]);
+  };
 
-  const clearHistory = useCallback(() => {
+  const clearHistory = () => {
     setSearchHistory([]);
     localStorage.removeItem('nft_search_history');
     toast({
       title: "History Cleared",
       description: "Search history has been deleted",
     });
-  }, [toast]);
+  };
 
-  // API Error Handler
-  const handleAPIMessage = useCallback((message: string, waitTime?: number) => {
+  const fetchNFTs = async (searchUsername: string) => {
+    if (!searchUsername.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setNftData(null);
+    setSearchedUserProfile(null);
+
+    try {
+      // Fetch NFT data (includes user profile information)
+      const data = await fetchNFTGifts(searchUsername);
+
+      if (data.success && data.data) {
+        setNftData(data.data);
+        // Extract user profile from the response
+        setSearchedUserProfile({
+          name: data.data.name,
+          photo_base64: null
+        });
+        saveToHistory(searchUsername);
+        const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
+        toast({
+          title: "Success!",
+          description: `Found ${giftCount} NFT gifts for ${data.data.owner}`,
+        });
+      }
+    } catch (err) {
+      // Handle different error types
+      if (err instanceof Error) {
+        console.log('Error type:', err.message);
+        
+        if (err.message === 'NETWORK_ERROR') {
+          setError('NETWORK_ERROR');
+        } else if (err.message === 'CORS_ERROR') {
+          setError('CORS_ERROR');
+        } else if (err.message === 'TIMEOUT_ERROR') {
+          setError('TIMEOUT_ERROR');
+        } else if (err.message === 'SERVER_ERROR') {
+          setError('SERVER_ERROR');
+        } else if (err.message.startsWith('RATE_LIMIT_EXCEEDED')) {
+          setError('RATE_LIMIT_EXCEEDED');
+          setCountdown(60);
+        } else if (err.message === 'USER_NOT_FOUND') {
+          setError('user_not_found');
+        } else if (err.message === 'ACCESS_FORBIDDEN') {
+          setError('ACCESS_FORBIDDEN');
+        } else if (err.message === 'PARSE_ERROR') {
+          setError('PARSE_ERROR');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('NETWORK_ERROR');
+      }
+      console.error("API Error:", err);
+      
+      // Show toast notification for better UX
+      toast({
+        title: "Request Error",
+        description: "An error occurred while fetching data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAPIMessage = (message: string, waitTime?: number) => {
     const lowerMessage = message.toLowerCase();
     
     if (lowerMessage.includes("no open nft gifts") || lowerMessage.includes("no nft data found")) {
@@ -225,66 +332,19 @@ const TelegramApp: React.FC = () => {
     } else {
       setError(message);
     }
-  }, []);
+  };
 
-  // Fetch NFTs
-  const fetchNFTs = useCallback(async (searchUsername: string) => {
-    if (!searchUsername.trim()) return;
-
-    setLoading(true);
-    setError(null);
-    setNftData(null);
-    setSearchedUserProfile(null);
-
-    try {
-      // Fetch NFT data first
-      const data = await fetchNFTGifts(searchUsername);
-
-      if (data.success && data.data) {
-        // Extract profile from NFT response data (no separate request needed)
-        const profile = await fetchUserProfile(searchUsername, data.data);
-        
-        setNftData(data.data);
-        setSearchedUserProfile(profile);
-        saveToHistory(searchUsername);
-        const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
-        toast({
-          title: "Success!",
-          description: `Found ${giftCount} NFT gifts for ${data.data.owner}`,
-        });
-      } else if (data.message) {
-        handleAPIMessage(data.message, data.wait_time);
-      } else {
-        setError(data.error || "Failed to fetch NFT data");
+  const handleSearch = () => {
+    if (searchMode === 'user') {
+      if (username.trim() && countdown === 0) {
+        fetchNFTs(username.trim());
       }
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message === 'NETWORK_ERROR') {
-          setError('NETWORK_ERROR');
-        } else if (err.message === 'RATE_LIMIT_EXCEEDED') {
-          setError('RATE_LIMIT_EXCEEDED');
-          setCountdown(60);
-        } else if (err.message === 'USER_NOT_FOUND') {
-          setError('user_not_found');
-        } else {
-          setError(err.message);
-        }
-      } else {
-        setError('NETWORK_ERROR');
-      }
-      
-      toast({
-        title: "Request Error",
-        description: "An error occurred while fetching data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    } else {
+      handleGiftSearch();
     }
-  }, [toast, handleAPIMessage, saveToHistory]);
+  };
 
-  // Handle Gift Search
-  const handleGiftSearch = useCallback(async () => {
+  const handleGiftSearch = async () => {
     if (!giftUrl.trim()) {
       setError('Please enter a valid gift URL');
       return;
@@ -305,6 +365,7 @@ const TelegramApp: React.FC = () => {
         description: `Found gift: ${result.data.gift_name}`,
       });
     } catch (err) {
+      console.error('Gift search error:', err);
       if (err instanceof Error) {
         if (err.message === 'GIFT_NOT_FOUND') {
           setError('Gift not found. Please check the URL.');
@@ -322,43 +383,70 @@ const TelegramApp: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [giftUrl, countdown, toast]);
+  };
 
-  // Handle Search
-  const handleSearch = useCallback(() => {
-    if (searchMode === 'user') {
-      if (username.trim() && countdown === 0) {
-        fetchNFTs(username.trim());
+  const handleRefresh = () => {
+    if (currentUser && countdown === 0) {
+      fetchNFTs(currentUser);
+      // Haptic feedback if available
+      const webApp = window.Telegram?.WebApp as any;
+      if (webApp?.HapticFeedback?.impactOccurred) {
+        webApp.HapticFeedback.impactOccurred('light');
       }
-    } else {
-      handleGiftSearch();
     }
-  }, [searchMode, username, countdown, fetchNFTs, handleGiftSearch]);
+  };
 
-  // Format TON
-  const formatTON = useCallback((amount: number) => {
+  const formatTON = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
-  }, []);
+  };
 
-  // Handle search mode change
-  const handleSearchModeChange = useCallback((mode: 'user' | 'gift') => {
-    setSearchMode(mode);
-    setError(null);
-    if (mode === 'user') {
-      setSingleGift(null);
-    } else {
-      setNftData(null);
-    }
-  }, []);
+  const calculateTotalValue = () => {
+    if (!nftData?.nfts || !Array.isArray(nftData.nfts)) return 0;
+    return nftData.nfts.reduce((total, nft) => total + (nft.floor_price * nft.count), 0);
+  };
 
-  // Check authentication
+  const sortNFTsByPrice = (nfts: NFTGift[]) => {
+    return [...nfts].sort((a, b) => {
+      const priceA = a.floor_price * a.count;
+      const priceB = b.floor_price * b.count;
+      
+      // الهدايا اللي سعرها 0 تروح للآخر
+      if (priceA === 0 && priceB !== 0) return 1;
+      if (priceA !== 0 && priceB === 0) return -1;
+      if (priceA === 0 && priceB === 0) return 0;
+      
+      // الترتيب من الأغلى للأرخص
+      return priceB - priceA;
+    });
+  };
+
+  if (activeTab === 'chart') {
+    return (
+      <>
+        <Chart />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
+  if (activeTab === 'settings') {
+    return (
+      <>
+        <ProfileSettingsPage onBack={() => setActiveTab('home')} />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
+  // Check authentication and subscription
   if (authLoading) {
     return <AppLoader onComplete={() => {}} />;
   }
 
+  // إذا كان هناك خطأ في المصادقة، اعرض واجهة الخطأ
   if (authError) {
     return <TelegramAuthError />;
   }
@@ -367,91 +455,350 @@ const TelegramApp: React.FC = () => {
     return <AppLoader onComplete={() => {}} />;
   }
 
-  // Main render - NO early returns for tabs
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Home Content */}
-      {activeTab === 'home' && (
-        <div className="w-full p-4 space-y-6">
-          {/* Hero Section */}
-          {!nftData && !singleGift && !loading && !error && (
-            <HeroSection t={t} />
-          )}
+    <div className="min-h-screen bg-background relative overflow-hidden pb-20">
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        {/* Hero Section */}
+        {!nftData && !singleGift && !loading && !error && (
+          <section className="telegram-card p-5 border border-border/50 shadow-[var(--shadow-card)] space-y-4">
+            <div className="flex items-center gap-2">
+              <Search className="w-5 h-5 text-primary" />
+              <h1 className="text-lg font-semibold">
+                {t('heroTitle')}
+              </h1>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t('heroDescription')}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t('heroExample')}
+            </p>
+          </section>
+        )}
 
-          {/* Search Section */}
-          <SearchBox
-            searchMode={searchMode}
-            username={username}
-            giftUrl={giftUrl}
-            currentUser={currentUser}
-            loading={loading}
-            countdown={countdown}
-            searchHistory={searchHistory}
-            onSearchModeChange={handleSearchModeChange}
-            onUsernameChange={setUsername}
-            onGiftUrlChange={setGiftUrl}
-            onSearch={handleSearch}
-            onHistorySelect={setUsername}
-            onHistoryRemove={removeFromHistory}
-            onHistoryClear={clearHistory}
-            t={t}
-          />
+        {/* Search Section */}
+        <div className="telegram-card p-5 animate-slide-up border border-border/50 shadow-[var(--shadow-card)]">
+          {/* Search Mode Toggle */}
+          <div className="mb-4">
+            <div className="flex gap-2 bg-background/50 p-1.5 rounded-xl border border-border">
+              <button
+                onClick={() => {
+                  setSearchMode('user');
+                  setError(null);
+                  setSingleGift(null);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
+                  searchMode === 'user'
+                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <User className="w-4 h-4 inline-block mr-2" />
+                {t('userProfile')}
+              </button>
+              <button
+                onClick={() => {
+                  setSearchMode('gift');
+                  setError(null);
+                  setNftData(null);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
+                  searchMode === 'gift'
+                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Gift className="w-4 h-4 inline-block mr-2" />
+                {t('singleGift')}
+              </button>
+            </div>
+          </div>
 
-          {/* Loading State */}
-          {loading && <LoadingState />}
-          
-          {/* Error State */}
-          {error && !loading && (
-            <ErrorState 
-              error={error} 
-              onRetry={handleSearch} 
-              canRetry={countdown === 0}
-            />
-          )}
-
-          {/* Single Gift Display */}
-          {singleGift && !loading && !error && (
-            <GiftView gift={singleGift} t={t} />
-          )}
-
-          {/* NFT Data Display */}
-          {nftData && !loading && !error && (
-            <div className="space-y-5 animate-bounce-in">
-              <UserInfoHeader
-                nftData={nftData}
-                searchedUserProfile={searchedUserProfile}
-                formatTON={formatTON}
+          <div className="flex gap-2 mb-4">
+            {searchMode === 'user' ? (
+              <Input
+                type="text"
+                placeholder={currentUser ? `@${currentUser}` : t('enterUsername')}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
+                disabled={loading || countdown > 0}
               />
-              
-              {nftData.nfts && Array.isArray(nftData.nfts) && (
-                <NFTGrid nfts={nftData.nfts} />
-              )}
+            ) : (
+              <Input
+                type="text"
+                placeholder={t('enterGiftUrl')}
+                value={giftUrl}
+                onChange={(e) => setGiftUrl(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
+                disabled={loading || countdown > 0}
+              />
+            )}
+            <Button 
+              onClick={handleSearch}
+              disabled={loading || countdown > 0 || (searchMode === 'user' ? !username.trim() : !giftUrl.trim())}
+              className="h-12 px-5 rounded-xl bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Search History - Only for user mode */}
+          {searchMode === 'user' && searchHistory.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground font-medium">{t('recentSearches')}</p>
+                <button
+                  onClick={clearHistory}
+                  className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  {t('clearAll')}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {searchHistory.map((term, index) => (
+                  <div
+                    key={index}
+                    className="relative group"
+                  >
+                    <button
+                      onClick={() => setUsername(term)}
+                      className="pl-3 pr-7 py-1.5 bg-secondary/70 text-secondary-foreground rounded-full text-xs hover:bg-secondary transition-colors border border-border/30"
+                    >
+                      @{term}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromHistory(term);
+                      }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm"
+                      aria-label="Remove"
+                    >
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Footer Note */}
-          {(nftData || singleGift) && !loading && (
-            <div className="telegram-card p-4 border border-border/30 bg-muted/30">
-              <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                ℹ️ {t('footerNote')}
+          {/* Countdown Timer */}
+          {countdown > 0 && (
+            <div className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <TonIcon className="w-5 h-5 text-warning animate-pulse" />
+                <span className="text-sm font-medium text-warning">{t('rateLimited')}</span>
+              </div>
+              <p className="text-xs text-warning/80">
+                {t('pleaseWait').replace('{seconds}', countdown.toString())}
               </p>
+              <div className="mt-2 w-full bg-warning/20 rounded-full h-1">
+                <div 
+                  className="bg-warning h-1 rounded-full transition-all duration-1000"
+                  style={{ width: `${100 - (countdown / 60) * 100}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
-      )}
 
-      {/* Chart Tab */}
-      {activeTab === 'chart' && <Chart />}
+        {/* Content */}
+        {loading && <LoadingState />}
+        
+        {error && !loading && (
+          <ErrorState 
+            error={error} 
+            onRetry={() => handleSearch()} 
+            canRetry={countdown === 0}
+          />
+        )}
 
-      {/* Settings Tab */}
-      {activeTab === 'settings' && (
-        <ProfileSettingsPage onBack={() => setActiveTab('home')} />
-      )}
+        {/* Single Gift Display */}
+        {singleGift && !loading && !error && (
+          <div className="space-y-5 animate-bounce-in pb-6">
+            <div className="telegram-card p-6 border border-border/50 shadow-[var(--shadow-card)]">
+              <div className="flex flex-col items-center">
+                {/* Gift Image */}
+                <div className="relative w-56 h-56 mb-6 rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src={proxyImageUrl(singleGift.image)}
+                    alt={singleGift.gift_name}
+                    className="w-full h-full object-contain bg-gradient-to-br from-primary/5 via-background to-accent/5"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
 
-      {/* Bottom Navigation */}
+                {/* Gift Info */}
+                <div className="text-center mb-6 space-y-3">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+                    {singleGift.gift_name}
+                  </h2>
+                  
+                  {/* Model and Backdrop */}
+                  <div className="flex flex-col gap-2 items-center">
+                    {singleGift.model && (
+                      <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-xl border border-primary/30">
+                        <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                        <span className="text-sm font-semibold text-primary">{t('model')}:</span>
+                        <span className="text-sm font-medium text-foreground">{singleGift.model}</span>
+                      </div>
+                    )}
+                    {singleGift.backdrop && (
+                      <div className="flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-xl border border-accent/30">
+                        <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-accent">{t('backdrop')}:</span>
+                        <span className="text-sm font-medium text-foreground">{singleGift.backdrop}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Price Cards */}
+                <div className="grid grid-cols-2 gap-4 w-full mb-6">
+                  <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <TonIcon className="w-5 h-5 text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">{t('priceTon')}</p>
+                    </div>
+                    <p className="text-3xl font-bold text-primary text-center">{typeof singleGift.price_ton === 'number' ? singleGift.price_ton.toFixed(2) : '0.00'}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-accent/10 via-background to-accent/5 rounded-2xl p-5 border border-accent/20 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-sm text-muted-foreground font-medium">{t('priceUsd')}</span>
+                    </div>
+                    <p className="text-3xl font-bold text-accent text-center">${typeof singleGift.price_usd === 'number' ? singleGift.price_usd.toFixed(2) : '0.00'}</p>
+                  </div>
+                </div>
+
+                {/* Rarity */}
+                {singleGift.rarity !== undefined && (
+                  <div className="w-full bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-5 border border-border shadow-lg">
+                    <p className="text-sm text-muted-foreground mb-2 text-center font-medium">{t('rarity')}</p>
+                    <p className="text-2xl font-bold text-foreground text-center">
+                      {singleGift.rarity}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {nftData && !loading && !error && (
+          <div className="space-y-5 animate-bounce-in">
+            {/* Owner Info with Photo */}
+            <div className="telegram-card p-6 border border-border/50 shadow-[var(--shadow-card)]">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 border border-primary/20">
+                    {searchedUserProfile?.photo_base64 ? (
+                      <img 
+                        src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
+                        alt={searchedUserProfile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-white" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm">
+                    <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5 animate-pulse"></div>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    {searchedUserProfile?.name || nftData.owner}
+                  </h2>
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {nftData.owner.startsWith('@') ? nftData.owner : `@${nftData.owner}`} • {nftData.nfts?.length || nftData.visible_nfts || 0} Visible NFT Gifts
+                  </p>
+                  {nftData.total_saved_gifts && nftData.total_saved_gifts > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                      <p className="text-xs text-primary font-semibold">
+                        Total Saved: {nftData.total_saved_gifts}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Total Value Card */}
+              {nftData.prices?.avg_price && (
+                <div className="flex justify-center">
+                  <div className="w-full">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20 p-5 shadow-lg shadow-primary/5">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl"></div>
+                      <div className="relative flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calculator className="w-5 h-5 text-primary" />
+                            <span className="text-sm font-semibold text-muted-foreground">Total Value</span>
+                          </div>
+                          <div className="text-3xl font-bold text-gradient">
+                            {formatTON(nftData.prices.avg_price.TON)} TON
+                          </div>
+                          <div className="text-base text-muted-foreground font-medium mt-0.5">
+                            ${formatTON(nftData.prices.avg_price.USD)}
+                          </div>
+                        </div>
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                          <TonIcon className="w-10 h-10 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* NFT Grid */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
+                <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
+                  {nftData.nfts?.length || 0} items
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
+                {nftData.nfts && Array.isArray(nftData.nfts) && sortNFTsByPrice(nftData.nfts).map((nft, index) => (
+                  <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} nft={nft} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer Note - shown only when data is loaded */}
+        {(nftData || singleGift) && !loading && (
+          <div className="telegram-card p-4 border border-border/30 bg-muted/30">
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              ℹ️ {t('footerNote')}
+            </p>
+          </div>
+        )}
+
+      </div>
+
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       
-      {/* Subscription Popup */}
+      {/* Optional Subscription Popup */}
       <SubscribePrompt 
         isOpen={showSubscribePopup}
         onClose={() => {
