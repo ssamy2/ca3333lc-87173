@@ -9,19 +9,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      '/api/proxy': {
-        target: 'http://207.180.203.9:5000',
+      '/api': {
+        target: 'http://localhost:5002',
         changeOrigin: true,
-        rewrite: (path) => {
-          // Extract the target URL from query parameter
-          const url = new URL(path, 'http://localhost');
-          const targetUrl = url.searchParams.get('url');
-          if (targetUrl) {
-            // Remove the base URL and return just the path
-            return targetUrl.replace('http://207.180.203.9:5000', '');
-          }
-          return path;
-        },
+        secure: false,
       },
     },
   },

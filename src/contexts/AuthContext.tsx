@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Get initData from Telegram WebApp
       const initData = window.Telegram?.WebApp?.initData;
-      
+
       if (!initData) {
         console.error('Telegram WebApp not available');
         setAuthError(true);
@@ -55,8 +55,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // Send to backend for verification
-      const apiUrl = 'https://www.channelsseller.site/api/verify-auth';
-      
+      const baseUrl = import.meta.env.VITE_API_URL || '/api';
+      const apiUrl = `${baseUrl}/verify-auth`;
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {

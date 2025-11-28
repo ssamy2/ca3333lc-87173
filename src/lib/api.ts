@@ -1,5 +1,6 @@
 // API Client for Backend Integration
-const API_BASE_URL = 'https://www.channelsseller.site/api';
+// API Client for Backend Integration
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface UserPreferences {
   language: string;
@@ -31,22 +32,22 @@ class APIClient {
   private getHeaders(): HeadersInit {
     // محاولة الحصول على التوكن من localStorage أولاً
     const token = localStorage.getItem('auth_token');
-    
+
     // إذا لم يكن هناك توكن، استخدم initData كـ fallback
     const authValue = token || window.Telegram?.WebApp?.initData;
-    
+
     const headers: HeadersInit = {
       'Accept': '*/*',
       'Content-Type': 'application/json',
       'Origin': window.location.origin,
       'Referer': window.location.href
     };
-    
+
     // إضافة Authorization header فقط إذا كان هناك token
     if (authValue) {
       headers['Authorization'] = `Bearer ${authValue}`;
     }
-    
+
     return headers;
   }
 
@@ -54,7 +55,7 @@ class APIClient {
     try {
       const headers = this.getHeaders();
       console.log('[API] getUserPreferences headers:', headers);
-      
+
       const response = await fetch(`${API_BASE_URL}/user/preferences`, {
         headers
       });
