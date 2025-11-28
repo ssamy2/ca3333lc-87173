@@ -47,8 +47,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   const handleCardClick = () => {
     if (nft.tg_deeplink) {
       window.open(nft.tg_deeplink, '_blank');
-    } else if (nft.details.links && nft.details.links.length > 0) {
-      window.open(nft.details.links[0], '_blank');
+    } else if (nft.details?.links && nft.details?.links.length > 0) {
+      window.open(nft.details?.links[0], '_blank');
     }
   };
 
@@ -265,7 +265,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       </div>
 
       {/* View in Store - Very Small Footer */}
-      {(nft.tg_deeplink || (nft.details.links && nft.details.links.length > 0)) && (
+      {(nft.tg_deeplink || (nft.details?.links && nft.details?.links.length > 0)) && (
         <div className="flex items-center justify-center py-1 px-2 border-t border-white/5 bg-black/20">
           <div className="flex items-center gap-0.5 text-gray-500 group-hover:text-[#0098EA] transition-colors" style={{ fontSize: 'clamp(6px, 1.5vw, 9px)' }}>
             <ExternalLink style={{ width: 'clamp(8px, 1.5vw, 11px)', height: 'clamp(8px, 1.5vw, 11px)' }} />
