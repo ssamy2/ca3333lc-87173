@@ -92,12 +92,17 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
 
     const responseData = await response.json()
     const actual = responseData.success ? responseData.data : responseData
+    const link = actual.link || ''
 
     return {
       success: true,
       data: {
         ...actual,
-        image: normalizeImageUrl(actual.image_url || actual.image)
+        image: normalizeImageUrl(actual.image_url || actual.image),
+        tg_deeplink: link,
+        details: {
+          links: link ? [link] : []
+        }
       }
     }
   } catch (error) {
