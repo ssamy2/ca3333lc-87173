@@ -270,50 +270,16 @@ const processAPIResponse = (responseData: any, username?: string) => {
           avg_price: {
             TON: parseFloat(avgPrice.toFixed(2)),
             USD: parseFloat(avgPriceUSD.toFixed(2)),
-            STAR: 0
-          }
+          }),
+          total_saved_gifts: upgradedGifts.length
         },
-        nfts: upgradedGifts.map((gift: any) => {
-          // Build image URL using GET request to backend
-          const imageUrl = gift.image_url
-            ? buildApiUrl(`/api/image/${encodeURIComponent(gift.image_url)}`)
-            : '';
+        stats: {
+          items: upgradedGifts.length,
+          total_gifts: responseData.total_nfts || 0,
+          enriched: upgradedGifts.length
+        }
+      };
+    }
 
-          // Ensure details object exists with safe defaults
-          const details = gift.details || {};
-          const links = Array.isArray(details.links) ? details.links : (gift.link ? [gift.link] : []);
-
-          return {
-            count: 1,
-            name: gift.title || gift.name || 'Unknown',
-            model: gift.model || 'Unknown',
-            pattern: gift.backdrop || '',
-            floor_price: gift.price_ton || gift.rarity_per_mille || 0,
-            avg_price: gift.price_ton || gift.rarity_per_mille || 0,
-            price_change_percent: 0,
-            image: normalizeImageUrl(imageUrl),
-            title: gift.title || gift.name || 'Unknown',
-            backdrop: gift.backdrop || '',
-            model_rarity: gift.rarity_per_mille || 0,
-            quantity_issued: gift.number || 0,
-            quantity_total: 0,
-            quantity_raw: gift.number ? `#${gift.number}` : '',
-            description: '',
-            tg_deeplink: gift.link || '',
-            details: {
-              links: links
-            }
-          };
-        }),
-        total_saved_gifts: upgradedGifts.length
-      },
-      stats: {
-        items: upgradedGifts.length,
-        total_gifts: responseData.total_nfts || 0,
-        enriched: upgradedGifts.length
-      }
-    };
-  }
-
-  return responseData;
-};
+    return responseData;
+  };
