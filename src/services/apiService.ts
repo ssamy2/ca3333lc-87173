@@ -141,7 +141,7 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   }
 };
 
-// Fetch User Profile (photo and name)
+// Fetch User Profile (photo and name) - Now integrated with gifts data
 export const fetchUserProfile = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
@@ -170,8 +170,11 @@ export const fetchUserProfile = async (username: string) => {
     
     const responseData = await response.json();
     
-    // Clean the name to remove "None" and extra spaces
-    let cleanName = responseData.name || cleanUsername;
+    // Extract profile information from the new integrated response
+    const profileInfo = responseData.profile_information || {};
+    
+    // Get name from profile_information.full_name
+    let cleanName = profileInfo.full_name || responseData.username || cleanUsername;
     if (cleanName) {
       // Remove "None" from the name and clean up spaces
       cleanName = cleanName.replace(/\bNone\b/g, '').replace(/\s+/g, ' ').trim();
@@ -181,17 +184,51 @@ export const fetchUserProfile = async (username: string) => {
       }
     }
     
+    // Get photo from profile_information.profile_image and fetch it as base64
+    let photo_base64 = null;
+    if (profileInfo.profile_image) {
+      try {
+        photo_base64 = await fetchImageAsBase64(profileInfo.profile_image);
+      } catch (imgError) {
+        console.warn('Failed to fetch profile image:', imgError);
+        photo_base64 = null;
+      }
+    }
+    
     return {
       name: cleanName,
-      photo_base64: responseData.photo_base64 || null
+      photo_base64: photo_base64,
+      user_id: responseData.user_id,
+      total_nfts: responseData.total_nfts
     };
     
   } catch (error) {
     // Return fallback data for errors
     return {
       name: cleanUsername,
-      photo_base64: null
+      photo_base64: null,
+      user_id: null,
+      total_nfts: 0
     };
+  }
+};
+
+// Helper function to fetch image as base64
+const fetchImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
+    
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error fetching image as base64:', error);
+    return null;
   }
 };
 
@@ -220,10 +257,19 @@ const processAPIResponse = (responseData: any, username?: string) => {
   }
   
   // Transform new API response format to expected format
-  if (responseData && responseData.nft_gifts && Array.isArray(responseData.nft_gifts)) {
-    // Calculate minimum floor price from all NFTs
-    const minFloorPrice = responseData.nft_gifts.length > 0 
-      ? Math.min(...responseData.nft_gifts.map((gift: any) => gift.price_ton || 0))
+  // Backend now returns: nfts (upgraded), regular_gifts (unupgraded), total_value_ton, total_value_usd
+  if (responseData && responseData.nfts && Array.isArray(responseData.nfts)) {
+    // Filter only upgraded/unique gifts (not regular gifts)
+    const upgradedGifts = responseData.nfts || [];
+    
+    // Calculate minimum floor price from upgraded NFTs only
+    const minFloorPrice = upgradedGifts.length > 0 
+      ? Math.min(...upgradedGifts.map((gift: any) => gift.price_ton || gift.rarity_per_mille || 0))
+      : 0;
+    
+    // Calculate average price from upgraded NFTs
+    const avgPrice = upgradedGifts.length > 0
+      ? upgradedGifts.reduce((sum: number, gift: any) => sum + (gift.price_ton || gift.rarity_per_mille || 0), 0) / upgradedGifts.length
       : 0;
     
     // Calculate minimum floor price in USD
@@ -231,46 +277,46 @@ const processAPIResponse = (responseData: any, username?: string) => {
       ? responseData.total_value_usd / responseData.total_value_ton 
       : 2.12; // fallback ratio
     const minFloorPriceUSD = minFloorPrice * tonToUsdRatio;
+    const avgPriceUSD = avgPrice * tonToUsdRatio;
     
     return {
       success: true,
       data: {
         owner: username || 'user',
-        visible_nfts: responseData.total_nfts || 0,
+        visible_nfts: upgradedGifts.length,
         prices: {
           floor_price: { 
-            TON: minFloorPrice, 
-            USD: minFloorPriceUSD, 
+            TON: parseFloat(minFloorPrice.toFixed(2)), 
+            USD: parseFloat(minFloorPriceUSD.toFixed(2)), 
             STAR: 0 
           },
           avg_price: { 
-            TON: responseData.total_value_ton || 0, 
-            USD: responseData.total_value_usd || 0, 
+            TON: parseFloat(avgPrice.toFixed(2)), 
+            USD: parseFloat(avgPriceUSD.toFixed(2)), 
             STAR: 0 
           }
         },
-        nfts: responseData.nft_gifts.map((gift: any) => {
-          let mint = gift.mint;
-          if (!mint && gift.link) {
-            const match = gift.link.match(/-([0-9]+)$/);
-            if (match) mint = match[1];
-          }
+        nfts: upgradedGifts.map((gift: any) => {
+          // Build image URL using GET request to backend
+          const imageUrl = gift.image_url 
+            ? buildApiUrl(`/api/image/${encodeURIComponent(gift.image_url)}`)
+            : '';
           
           return {
             count: 1,
-            name: gift.gift_name || 'Unknown',
+            name: gift.title || gift.name || 'Unknown',
             model: gift.model || 'Unknown',
-            pattern: gift.pattern || '',
-            floor_price: gift.price_ton || 0,
-            avg_price: gift.price_ton || 0,
+            pattern: gift.backdrop || '',
+            floor_price: gift.price_ton || gift.rarity_per_mille || 0,
+            avg_price: gift.price_ton || gift.rarity_per_mille || 0,
             price_change_percent: 0,
-            image: normalizeImageUrl(gift.image) || '',
-            title: gift.gift_name || 'Unknown',
+            image: normalizeImageUrl(imageUrl),
+            title: gift.title || gift.name || 'Unknown',
             backdrop: gift.backdrop || '',
-            model_rarity: gift.rarity || 0,
-            quantity_issued: mint || 0,
+            model_rarity: gift.rarity_per_mille || 0,
+            quantity_issued: gift.number || 0,
             quantity_total: 0,
-            quantity_raw: mint ? `#${mint}` : '',
+            quantity_raw: gift.number ? `#${gift.number}` : '',
             description: '',
             tg_deeplink: gift.link || '',
             details: {
@@ -278,12 +324,12 @@ const processAPIResponse = (responseData: any, username?: string) => {
             }
           };
         }),
-        total_saved_gifts: responseData.total_nfts
+        total_saved_gifts: upgradedGifts.length
       },
       stats: {
-        items: responseData.total_nfts || 0,
+        items: upgradedGifts.length,
         total_gifts: responseData.total_nfts || 0,
-        enriched: responseData.total_nfts || 0
+        enriched: upgradedGifts.length
       }
     };
   }
