@@ -1,95 +1,73 @@
-# 🚀 Nova Calculator Backend - الملفات الأساسية
+........................# Welcome to your Lovable project
 
-## ✅ الملفات الضرورية للتشغيل
+## Project info
 
-### **الملفات الرئيسية:**
-```
-core.py                 - منطق التطبيق الأساسي
-server.py              - API endpoints (FastAPI)
-ads_manager.py         - نظام الإعلانات
-tokens_db.py           - نظام التوكنات والمصادقة
-user_preferences.py    - تفضيلات المستخدمين
-production_start.py    - تشغيل السيرفر في الإنتاج
-requirements.txt       - المكتبات المطلوبة
-```
+**URL**: https://lovable.dev/projects/74decd27-4e29-44fd-8e78-b24f9bce23c3
 
-### **قواعد البيانات:**
-```
-gifts_data.db          - بيانات الهدايا
-user_tokens.db         - توكنات المستخدمين
-ads_database.db        - بيانات الإعلانات
-black_token.json       - توكن API الخارجي
-```
+## How can I edit this code?
 
-### **المجلدات:**
-```
-ads_images/            - صور الإعلانات
-cached_images/         - كاش الصور
-__pycache__/          - Python cache
-```
+There are several ways of editing your application.
 
----
+**Use Lovable**
 
-## ⚠️ ملفات اختيارية (يمكن حذفها يدوياً إذا أردت):
+Simply visit the [Lovable Project](https://lovable.dev/projects/74decd27-4e29-44fd-8e78-b24f9bce23c3) and start prompting.
 
-```
-auto.py               - سكريبت قديم (غير مستخدم)
-cache_warmer.py       - تسخين الكاش (اختياري)
-migrate_tokens_db.py  - migration script (تم استخدامه)
+Changes made via Lovable will be committed automatically to this repo.
+
+**Use your preferred IDE**
+
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
----
+**Edit a file directly in GitHub**
 
-## 🚀 تشغيل السيرفر
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-### **Development:**
-```bash
-uvicorn server:app --reload --host 0.0.0.0 --port 8000
-```
+**Use GitHub Codespaces**
 
-### **Production:**
-```bash
-python production_start.py
-```
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
----
+## What technologies are used for this project?
 
-## 📋 المكتبات المطلوبة
+This project is built with:
 
-```bash
-pip install -r requirements.txt
-```
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+...........
+## How can I deploy this project?
 
-**المحتوى:**
-- FastAPI
-- Uvicorn
-- Telethon (Telegram client)
-- Pyrogram (Telegram client)
-- aiohttp
-- BeautifulSoup4
-- Pillow (للصور)
-- ujson (اختياري - أسرع من json)
+Simply open [Lovable](https://lovable.dev/projects/74decd27-4e29-44fd-8e78-b24f9bce23c3) and click on Share -> Publish.
 
----
+## Can I connect a custom domain to my Lovable project?
 
-## 👑 الأدمنز
+Yes, you can!
 
-```python
-ADMIN_IDS = [6213708507, 1437352242]
-```
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
----
-
-## 🔧 التعديلات الأخيرة
-
-✅ نظام الكاش - تم الإصلاح والتحسين
-✅ نظام الإعلانات - كامل وجاهز
-✅ أسعار الهدايا - تحديث تلقائي كل 5 دقائق
-✅ دالة get_single_gift_price - تم إصلاح 3 أخطاء
-✅ ADMIN_IDS - مركزي وموحد
-
----
-
-## 📞 الاتصال
-
-للإبلاغ عن مشاكل أو اقتراحات، تواصل مع الأدمن.
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
