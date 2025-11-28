@@ -2,12 +2,14 @@ import React from 'react';
 
 interface TonIconProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-const TonIcon: React.FC<TonIconProps> = ({ className = "w-5 h-5" }) => {
+const TonIcon: React.FC<TonIconProps> = ({ className = "w-5 h-5", style }) => {
   return (
     <svg
       className={className}
+      style={style}
       viewBox="0 0 56 56"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

@@ -5,7 +5,7 @@ import ErrorState from './ErrorState';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
-import { fetchNFTGifts, fetchUserProfile, fetchSingleGiftPrice } from '@/services/apiService';
+import { fetchNFTGifts, fetchSingleGiftPrice } from '@/services/apiService';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLoader from './AppLoader';
 import SubscribePrompt from './SubscribePrompt';
@@ -237,12 +237,15 @@ const TelegramApp: React.FC = () => {
     setSearchedUserProfile(null);
 
     try {
-      // Fetch NFT data first
+      // Fetch NFT data
       const data = await fetchNFTGifts(searchUsername);
 
       if (data.success && data.data) {
-        // Extract profile from NFT response data (no separate request needed)
-        const profile = await fetchUserProfile(searchUsername, data.data);
+        // Extract profile from NFT response data
+        const profile: UserProfile = {
+          name: data.data.name || data.data.owner || searchUsername,
+          photo_base64: data.data.profile_image || null
+        };
         
         setNftData(data.data);
         setSearchedUserProfile(profile);
@@ -252,10 +255,8 @@ const TelegramApp: React.FC = () => {
           title: "Success!",
           description: `Found ${giftCount} NFT gifts for ${data.data.owner}`,
         });
-      } else if (data.message) {
-        handleAPIMessage(data.message, data.wait_time);
       } else {
-        setError(data.error || "Failed to fetch NFT data");
+        setError("Failed to fetch NFT data");
       }
     } catch (err) {
       if (err instanceof Error) {
