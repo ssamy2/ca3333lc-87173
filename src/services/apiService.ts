@@ -141,40 +141,16 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   }
 };
 
-// Fetch User Profile (photo and name) - Now integrated with gifts data
-export const fetchUserProfile = async (username: string) => {
+// Fetch User Profile from NFTs response (no separate request needed)
+export const fetchUserProfile = async (username: string, nftResponseData?: any) => {
   const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
   
-  const apiUrl = buildApiUrl(`/api/user-profile?username=@${encodeURIComponent(cleanUsername)}`);
-  const authHeaders = await getAuthHeaders();
-  
-  try {
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        ...authHeaders
-      },
-      signal: getTimeoutSignal(10000)
-    });
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.log('Access Denied S2170');
-        throw new Error('ACCESS_DENIED');
-      } else if (response.status === 404) {
-        throw new Error('USER_NOT_FOUND');
-      }
-      throw new Error('NETWORK_ERROR');
-    }
-    
-    const responseData = await response.json();
-    
-    // Extract profile information from the new integrated response
-    const profileInfo = responseData.profile_information || {};
+  // If we have NFT response data, use it directly (no separate request)
+  if (nftResponseData && nftResponseData.profile_information) {
+    const profileInfo = nftResponseData.profile_information || {};
     
     // Get name from profile_information.full_name
-    let cleanName = profileInfo.full_name || responseData.username || cleanUsername;
+    let cleanName = profileInfo.full_name || nftResponseData.username || cleanUsername;
     if (cleanName) {
       // Remove "None" from the name and clean up spaces
       cleanName = cleanName.replace(/\bNone\b/g, '').replace(/\s+/g, ' ').trim();
@@ -198,19 +174,18 @@ export const fetchUserProfile = async (username: string) => {
     return {
       name: cleanName,
       photo_base64: photo_base64,
-      user_id: responseData.user_id,
-      total_nfts: responseData.total_nfts
-    };
-    
-  } catch (error) {
-    // Return fallback data for errors
-    return {
-      name: cleanUsername,
-      photo_base64: null,
-      user_id: null,
-      total_nfts: 0
+      user_id: nftResponseData.user_id,
+      total_nfts: nftResponseData.total_nfts
     };
   }
+  
+  // Fallback: return default data
+  return {
+    name: cleanUsername,
+    photo_base64: null,
+    user_id: null,
+    total_nfts: 0
+  };
 };
 
 // Helper function to fetch image as base64
@@ -302,6 +277,10 @@ const processAPIResponse = (responseData: any, username?: string) => {
             ? buildApiUrl(`/api/image/${encodeURIComponent(gift.image_url)}`)
             : '';
           
+          // Ensure details object exists with safe defaults
+          const details = gift.details || {};
+          const links = Array.isArray(details.links) ? details.links : (gift.link ? [gift.link] : []);
+          
           return {
             count: 1,
             name: gift.title || gift.name || 'Unknown',
@@ -320,7 +299,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
             description: '',
             tg_deeplink: gift.link || '',
             details: {
-              links: gift.link ? [gift.link] : []
+              links: links
             }
           };
         }),

@@ -237,12 +237,13 @@ const TelegramApp: React.FC = () => {
     setSearchedUserProfile(null);
 
     try {
-      const [data, profile] = await Promise.all([
-        fetchNFTGifts(searchUsername),
-        fetchUserProfile(searchUsername)
-      ]);
+      // Fetch NFT data first
+      const data = await fetchNFTGifts(searchUsername);
 
       if (data.success && data.data) {
+        // Extract profile from NFT response data (no separate request needed)
+        const profile = await fetchUserProfile(searchUsername, data.data);
+        
         setNftData(data.data);
         setSearchedUserProfile(profile);
         saveToHistory(searchUsername);
