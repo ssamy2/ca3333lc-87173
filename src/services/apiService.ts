@@ -142,18 +142,17 @@ const processAPIResponse = (responseData: any, username?: string) => {
 
   const upgraded = Array.isArray(d.nfts) ? d.nfts : []
 
+  // Use total_value from API response (correct total value)
+  const totalValueTON = d.total_value_ton || 0
+  const totalValueUSD = d.total_value_usd || 0
+
+  // Calculate floor price (minimum price among all NFTs)
   const minPrice = upgraded.length
-    ? Math.min(...upgraded.map((g: any) => g.price_ton || 0))
+    ? Math.min(...upgraded.filter((g: any) => g.price_ton > 0).map((g: any) => g.price_ton))
     : 0
 
-  const avgPrice = upgraded.length
-    ? upgraded.reduce((s: number, g: any) => s + (g.price_ton || 0), 0) / upgraded.length
-    : 0
-
-  const ratio = d.total_value_ton > 0 ? d.total_value_usd / d.total_value_ton : 2.12
-
+  const ratio = totalValueTON > 0 ? totalValueUSD / totalValueTON : 2.12
   const minUSD = minPrice * ratio
-  const avgUSD = avgPrice * ratio
 
   return {
     success: true,
@@ -176,9 +175,10 @@ const processAPIResponse = (responseData: any, username?: string) => {
           USD: parseFloat(minUSD.toFixed(2)),
           STAR: 0
         },
+        // Use total_value from API (not average)
         avg_price: {
-          TON: parseFloat(avgPrice.toFixed(2)),
-          USD: parseFloat(avgUSD.toFixed(2)),
+          TON: parseFloat(totalValueTON.toFixed(2)),
+          USD: parseFloat(totalValueUSD.toFixed(2)),
           STAR: 0
         }
       },

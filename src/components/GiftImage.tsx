@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Gift } from 'lucide-react';
 import { imageCache } from '@/services/imageCache';
 import { normalizeImageUrl } from '@/utils/urlNormalizer';
@@ -76,21 +76,44 @@ const GiftImage: React.FC<GiftImageProps> = ({
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isPreloading, setIsPreloading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Preload image if not cached
-  React.useEffect(() => {
-    if (!cachedVersion && !isPreloading && imageUrl) {
-      setIsPreloading(true);
-      imageCache.preloadImage(imageUrl)
-        .then(base64 => {
-          if (base64 && base64 !== imageUrl) {
-            setCurrentSrc(base64);
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
           }
-        })
-        .catch(err => console.error('Failed to preload image:', err))
-        .finally(() => setIsPreloading(false));
+        });
+      },
+      { rootMargin: '50px', threshold: 0.1 }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
     }
-  }, [imageUrl, cachedVersion, isPreloading]);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Preload image only when visible and not cached
+  useEffect(() => {
+    if (!isVisible || cachedVersion || isPreloading || !imageUrl) return;
+    
+    setIsPreloading(true);
+    imageCache.preloadImage(imageUrl)
+      .then(base64 => {
+        if (base64 && base64 !== imageUrl) {
+          setCurrentSrc(base64);
+        }
+      })
+      .catch(err => console.error('Failed to preload image:', err))
+      .finally(() => setIsPreloading(false));
+  }, [isVisible, imageUrl, cachedVersion, isPreloading]);
 
   const getFallbackUrl = (level: number): string | null => {
     const camelCase = toCamelFromName(name);
@@ -185,10 +208,11 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
   return (
     <img
-      src={currentSrc}
+      ref={imgRef}
+      src={isVisible ? currentSrc : undefined}
       alt={name}
       loading="lazy"
-      className={`${sizeClasses[size]} ${className} object-contain`}
+      className={`${sizeClasses[size]} ${className} object-contain transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={style}
       onError={handleImageError}
     />

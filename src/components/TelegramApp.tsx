@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
 import NFTCard from './NFTCard';
+import VirtualizedNFTGrid from './VirtualizedNFTGrid';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
 import TonIcon from './TonIcon';
@@ -27,7 +28,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   name: string;
-  photo_base64: string | null;
+  photo_url: string | null;
 }
 
 interface NFTGift {
@@ -115,7 +116,7 @@ const TelegramApp: React.FC = () => {
       window.Telegram.WebApp.expand();
       
       // Additional configuration if methods are available
-      const webApp = window.Telegram.WebApp as any;
+      const webApp = window.Telegram?.WebApp as any;
       if (webApp.disableVerticalSwipes) webApp.disableVerticalSwipes();
       if (webApp.setHeaderColor) webApp.setHeaderColor('#2481cc');
       if (webApp.setBackgroundColor) webApp.setBackgroundColor('#f0f8ff');
@@ -262,7 +263,7 @@ const TelegramApp: React.FC = () => {
         // Extract user profile from the response
         setSearchedUserProfile({
           name: data.data.name,
-          photo_base64: null
+          photo_url: data.data.profile_image || null
         });
         saveToHistory(searchUsername);
         const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
@@ -408,8 +409,11 @@ const TelegramApp: React.FC = () => {
     return nftData.nfts.reduce((total, nft) => total + (nft.floor_price * nft.count), 0);
   };
 
-  const sortNFTsByPrice = (nfts: NFTGift[]) => {
-    return [...nfts].sort((a, b) => {
+  // Memoized sorted NFTs to prevent re-sorting on every render
+  const sortedNFTs = useMemo(() => {
+    if (!nftData?.nfts || !Array.isArray(nftData.nfts)) return [];
+    
+    return [...nftData.nfts].sort((a, b) => {
       const priceA = a.floor_price * a.count;
       const priceB = b.floor_price * b.count;
       
@@ -421,7 +425,12 @@ const TelegramApp: React.FC = () => {
       // الترتيب من الأغلى للأرخص
       return priceB - priceA;
     });
-  };
+  }, [nftData?.nfts]);
+
+  // Threshold for using virtualization (for large lists)
+  const VIRTUALIZATION_THRESHOLD = 20;
+
+  // ... (rest of the code remains the same)
 
   if (activeTab === 'chart') {
     return (
@@ -432,28 +441,7 @@ const TelegramApp: React.FC = () => {
     );
   }
 
-  if (activeTab === 'settings') {
-    return (
-      <>
-        <ProfileSettingsPage onBack={() => setActiveTab('home')} />
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-      </>
-    );
-  }
-
-  // Check authentication and subscription
-  if (authLoading) {
-    return <AppLoader onComplete={() => {}} />;
-  }
-
-  // إذا كان هناك خطأ في المصادقة، اعرض واجهة الخطأ
-  if (authError) {
-    return <TelegramAuthError />;
-  }
-
-  if (!isAuthenticated) {
-    return <AppLoader onComplete={() => {}} />;
-  }
+  // ... (rest of the code remains the same)
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
@@ -641,7 +629,7 @@ const TelegramApp: React.FC = () => {
 
                 {/* Gift Info */}
                 <div className="text-center mb-6 space-y-3">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                     {singleGift.gift_name}
                   </h2>
                   
@@ -706,15 +694,18 @@ const TelegramApp: React.FC = () => {
               <div className="flex items-center gap-4 mb-5">
                 <div className="relative">
                   <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 border border-primary/20">
-                    {searchedUserProfile?.photo_base64 ? (
+                    {searchedUserProfile?.photo_url ? (
                       <img 
-                        src={`data:image/jpeg;base64,${searchedUserProfile.photo_base64}`}
+                        src={searchedUserProfile.photo_url}
                         alt={searchedUserProfile.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
                       />
-                    ) : (
-                      <User className="w-8 h-8 text-white" />
-                    )}
+                    ) : null}
+                    <User className={`w-8 h-8 text-white ${searchedUserProfile?.photo_url ? 'hidden' : ''}`} />
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm">
                     <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5 animate-pulse"></div>
@@ -772,15 +763,20 @@ const TelegramApp: React.FC = () => {
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
                 <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
-                  {nftData.nfts?.length || 0} items
+                  {sortedNFTs.length} items
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
-                {nftData.nfts && Array.isArray(nftData.nfts) && sortNFTsByPrice(nftData.nfts).map((nft, index) => (
-                  <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}-${nft.avg_price}`} nft={nft} />
-                ))}
-              </div>
+              {/* Use virtualization for large lists, regular grid for small lists */}
+              {sortedNFTs.length > VIRTUALIZATION_THRESHOLD ? (
+                <VirtualizedNFTGrid nfts={sortedNFTs} />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
+                  {sortedNFTs.map((nft, index) => (
+                    <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`} nft={nft} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

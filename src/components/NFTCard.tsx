@@ -34,8 +34,32 @@ interface NFTCardProps {
 
 const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   const [imageError, setImageError] = React.useState(false);
-  const [imageLoading, setImageLoading] = React.useState(true);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const imageRef = React.useRef<HTMLImageElement | null>(null);
+
+  // Intersection Observer for lazy loading
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: '100px', threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const formatTON = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -52,86 +76,97 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     }
   };
 
-  const handleImageError = (e: any) => {
+  const handleImageError = () => {
     setImageError(true);
-    setImageLoading(false);
+    setImageLoaded(false);
   };
 
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
-
-  // Draw backdrop and image on canvas
+  // Draw backdrop and image on canvas - optimized for mobile
   React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !nft.image || imageError) return;
+    // Only load when visible
+    if (!isVisible || !nft.image || imageError) return;
 
-    const ctx = canvas.getContext('2d');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    // Use higher resolution for better quality on desktop
-    const size = 1024;
-    canvas.width = size;
-    canvas.height = size;
+    // Use smaller size for mobile devices (saves ~16x memory vs 1024)
+    const isMobile = window.innerWidth < 768;
+    const size = isMobile ? 256 : 384;
     
-    // Enable image smoothing for better quality
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    // Only resize if needed
+    if (canvas.width !== size) {
+      canvas.width = size;
+      canvas.height = size;
+    }
 
-    // Find backdrop colors
+    // Find backdrop colors (cached lookup)
     let backdropColors: any = null;
     if (nft.backdrop) {
       const backdrop = (backdropData as any[]).find(
         (b: any) => b.name.toLowerCase() === nft.backdrop?.toLowerCase()
       );
-      if (backdrop && backdrop.hex) {
+      if (backdrop?.hex) {
         backdropColors = backdrop.hex;
       }
     }
 
     // Draw backdrop gradient
+    const gradient = ctx.createRadialGradient(
+      size / 2, size / 2, 0,
+      size / 2, size / 2, size / 2
+    );
+    
     if (backdropColors) {
-      const gradient = ctx.createRadialGradient(
-        size / 2, size / 2, 0,
-        size / 2, size / 2, size / 2
-      );
       gradient.addColorStop(0, backdropColors.centerColor);
       gradient.addColorStop(0.7, backdropColors.edgeColor);
       gradient.addColorStop(1, backdropColors.patternColor);
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, size, size);
     } else {
-      // Default gradient
-      const gradient = ctx.createRadialGradient(
-        size / 2, size / 2, 0,
-        size / 2, size / 2, size / 2
-      );
       gradient.addColorStop(0, '#1a2332');
       gradient.addColorStop(1, '#0f1419');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, size, size);
+    }
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    // Load and draw image (only once)
+    if (imageRef.current) {
+      // Image already loaded, just draw it
+      drawImageOnCanvas(ctx, imageRef.current, size);
+      return;
     }
 
-    // Load and draw image
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     
     img.onload = () => {
-      const scale = Math.min(size / img.width, size / img.height) * 0.85;
-      const scaledWidth = img.width * scale;
-      const scaledHeight = img.height * scale;
-      const x = (size - scaledWidth) / 2;
-      const y = (size - scaledHeight) / 2;
-
-      ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+      imageRef.current = img;
+      setImageLoaded(true);
+      drawImageOnCanvas(ctx, img, size);
     };
 
     img.onerror = () => {
       setImageError(true);
     };
 
-    // Try without crossOrigin first for better compatibility
     img.src = proxyImageUrl(nft.image);
-  }, [nft.image, nft.backdrop, imageError]);
+
+    // Cleanup on unmount
+    return () => {
+      imageRef.current = null;
+    };
+  }, [isVisible, nft.image, nft.backdrop, imageError]);
+
+  // Helper function to draw image on canvas
+  const drawImageOnCanvas = (ctx: CanvasRenderingContext2D, img: HTMLImageElement, size: number) => {
+    const scale = Math.min(size / img.width, size / img.height) * 0.85;
+    const scaledWidth = img.width * scale;
+    const scaledHeight = img.height * scale;
+    const x = (size - scaledWidth) / 2;
+    const y = (size - scaledHeight) / 2;
+    ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+  };
 
   // Get background color based on price change
   const getBackgroundColor = () => {
@@ -151,7 +186,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
   return (
     <div 
-      className="group relative flex flex-col bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 animate-fade-in w-full"
+      ref={cardRef}
+      className="group relative flex flex-col bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-colors duration-200 w-full"
       style={{ aspectRatio: '1/1.99' }}
       onClick={handleCardClick}
     >
@@ -164,37 +200,22 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
 
       {/* NFT Image - Square 1:1 with backdrop */}
       <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-[#0098EA]/5 to-[#8B5CF6]/5">
-        {nft.image && !imageError ? (
+        {isVisible && nft.image && !imageError ? (
           <>
             <canvas
               ref={canvasRef}
               className="w-full h-full object-contain"
-              style={{ 
-                imageRendering: 'auto',
-                WebkitFontSmoothing: 'antialiased',
-                backfaceVisibility: 'hidden',
-                transform: 'translateZ(0)',
-                willChange: 'transform'
-              }}
             />
-            {imageLoading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center backdrop-blur-sm">
-                <div className="animate-spin w-8 h-8 border-3 border-[#0098EA]/20 border-t-[#0098EA] rounded-full"></div>
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center">
+                <div className="animate-spin w-6 h-6 border-2 border-[#0098EA]/20 border-t-[#0098EA] rounded-full"></div>
               </div>
             )}
-            <img
-              src={proxyImageUrl(nft.image)}
-              alt={`${nft.name} NFT`}
-              className="hidden"
-              loading="lazy"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-            />
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 bg-[#0098EA]/10 rounded-full flex items-center justify-center mb-2">
-              <TonIcon className="w-6 h-6 text-[#0098EA]" />
+            <div className="w-10 h-10 bg-[#0098EA]/10 rounded-full flex items-center justify-center mb-1">
+              <TonIcon className="w-5 h-5 text-[#0098EA]" />
             </div>
             <p className="text-xs text-gray-400 font-medium">NFT Gift</p>
           </div>
