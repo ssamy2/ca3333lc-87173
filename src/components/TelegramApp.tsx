@@ -437,8 +437,6 @@ const TelegramApp: React.FC = () => {
   // Threshold for using virtualization (for large lists)
   const VIRTUALIZATION_THRESHOLD = 20;
 
-  // ... (rest of the code remains the same)
-
   if (activeTab === 'chart') {
     return (
       <>
@@ -448,7 +446,14 @@ const TelegramApp: React.FC = () => {
     );
   }
 
-  // ... (rest of the code remains the same)
+  if (activeTab === 'settings') {
+    return (
+      <>
+        <ProfileSettingsPage />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
