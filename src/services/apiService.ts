@@ -111,9 +111,16 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   }
 }
 
-const fetchImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
+// Fetch profile image with authentication token
+export const fetchProfileImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
   try {
-    const response = await fetch(imageUrl)
+    const authHeaders = await getAuthHeaders()
+    const response = await fetch(imageUrl, {
+      method: 'GET',
+      headers: {
+        ...authHeaders
+      }
+    })
     if (!response.ok) return null
     const blob = await response.blob()
     return new Promise((resolve, reject) => {
@@ -184,8 +191,18 @@ const processAPIResponse = (responseData: any, username?: string) => {
       },
 
       nfts: upgraded.map((g: any) => {
-        const img = g.image ? normalizeImageUrl(g.image) : ''
+        // Use image URL directly from API (Google Storage)
+        const img = g.image || ''
         const link = g.link || ''
+        
+        // Convert API colors (integer) to hex format
+        const colors = g.colors ? {
+          center: `#${(g.colors.center >>> 0).toString(16).padStart(6, '0')}`,
+          edge: `#${(g.colors.edge >>> 0).toString(16).padStart(6, '0')}`,
+          symbol: `#${(g.colors.symbol >>> 0).toString(16).padStart(6, '0')}`,
+          text: `#${(g.colors.text >>> 0).toString(16).padStart(6, '0')}`
+        } : null
+        
         return {
           count: 1,
           name: g.gift_name || g.name || 'Unknown',
@@ -196,6 +213,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
           image: img,
           title: g.gift_name || g.name || 'Unknown',
           backdrop: g.backdrop || '',
+          colors: colors,  // Add colors from API
           model_rarity: g.rarity || 0,
           quantity_issued: g.mint || 0,
           quantity_total: 0,

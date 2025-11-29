@@ -13,7 +13,7 @@ import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
-import { fetchNFTGifts, fetchSingleGiftPrice } from '@/services/apiService';
+import { fetchNFTGifts, fetchSingleGiftPrice, fetchProfileImageAsBase64 } from '@/services/apiService';
 import { proxyImageUrl } from '@/lib/imageProxy';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,7 +28,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   name: string;
-  photo_url: string | null;
+  photo_base64: string | null;
 }
 
 interface NFTGift {
@@ -260,10 +260,17 @@ const TelegramApp: React.FC = () => {
 
       if (data.success && data.data) {
         setNftData(data.data);
+        
+        // Fetch profile image with auth token and convert to base64
+        let photoBase64: string | null = null;
+        if (data.data.profile_image) {
+          photoBase64 = await fetchProfileImageAsBase64(data.data.profile_image);
+        }
+        
         // Extract user profile from the response
         setSearchedUserProfile({
           name: data.data.name,
-          photo_url: data.data.profile_image || null
+          photo_base64: photoBase64
         });
         saveToHistory(searchUsername);
         const giftCount = data.data.nfts?.length || data.data.visible_nfts || 0;
@@ -694,9 +701,9 @@ const TelegramApp: React.FC = () => {
               <div className="flex items-center gap-4 mb-5">
                 <div className="relative">
                   <div className="w-16 h-16 bg-gradient-to-br from-primary via-primary/90 to-accent rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 border border-primary/20">
-                    {searchedUserProfile?.photo_url ? (
+                    {searchedUserProfile?.photo_base64 ? (
                       <img 
-                        src={searchedUserProfile.photo_url}
+                        src={searchedUserProfile.photo_base64}
                         alt={searchedUserProfile.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -705,7 +712,7 @@ const TelegramApp: React.FC = () => {
                         }}
                       />
                     ) : null}
-                    <User className={`w-8 h-8 text-white ${searchedUserProfile?.photo_url ? 'hidden' : ''}`} />
+                    <User className={`w-8 h-8 text-white ${searchedUserProfile?.photo_base64 ? 'hidden' : ''}`} />
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-sm">
                     <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5 animate-pulse"></div>
@@ -728,7 +735,6 @@ const TelegramApp: React.FC = () => {
                   )}
                 </div>
               </div>
-
               {/* Total Value Card */}
               {nftData.prices?.avg_price && (
                 <div className="flex justify-center">

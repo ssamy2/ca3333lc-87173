@@ -1,8 +1,6 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import TonIcon from './TonIcon';
-import { proxyImageUrl } from '@/lib/imageProxy';
-import backdropData from '@/assets/backdrobd.json';
 
 interface NFTGift {
   count: number;
@@ -23,6 +21,12 @@ interface NFTGift {
   quantity_raw?: string;
   description?: string;
   tg_deeplink?: string;
+  colors?: {
+    center: string;
+    edge: string;
+    symbol: string;
+    text: string;
+  } | null;
   details?: {
     links?: string[];
   };
@@ -102,28 +106,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       canvas.height = size;
     }
 
-    // Find backdrop colors (cached lookup)
-    let backdropColors: any = null;
-    if (nft.backdrop) {
-      const backdrop = (backdropData as any[]).find(
-        (b: any) => b.name.toLowerCase() === nft.backdrop?.toLowerCase()
-      );
-      if (backdrop?.hex) {
-        backdropColors = backdrop.hex;
-      }
-    }
-
-    // Draw backdrop gradient
+    // Draw backdrop gradient using colors from API
     const gradient = ctx.createRadialGradient(
       size / 2, size / 2, 0,
       size / 2, size / 2, size / 2
     );
     
-    if (backdropColors) {
-      gradient.addColorStop(0, backdropColors.centerColor);
-      gradient.addColorStop(0.7, backdropColors.edgeColor);
-      gradient.addColorStop(1, backdropColors.patternColor);
+    if (nft.colors) {
+      // Use colors from API response
+      gradient.addColorStop(0, nft.colors.center);
+      gradient.addColorStop(0.7, nft.colors.edge);
+      gradient.addColorStop(1, nft.colors.symbol);
     } else {
+      // Fallback colors
       gradient.addColorStop(0, '#1a2332');
       gradient.addColorStop(1, '#0f1419');
     }
@@ -150,7 +145,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
       setImageError(true);
     };
 
-    img.src = proxyImageUrl(nft.image);
+    // Use image URL directly from API (Google Storage)
+    img.src = nft.image;
 
     // Cleanup on unmount
     return () => {
