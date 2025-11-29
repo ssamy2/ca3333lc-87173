@@ -133,15 +133,40 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     }
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Don't set crossOrigin for Google Storage images to avoid CORS issues
+    // The canvas will be "tainted" but we only need to display, not export
     
     img.onload = () => {
       imageRef.current = img;
       setImageLoaded(true);
-      drawImageOnCanvas(ctx, img, size);
+      // Redraw canvas with image
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d', { alpha: false });
+        if (ctx) {
+          // Redraw gradient first
+          const gradient = ctx.createRadialGradient(
+            size / 2, size / 2, 0,
+            size / 2, size / 2, size / 2
+          );
+          if (nft.colors) {
+            gradient.addColorStop(0, nft.colors.center);
+            gradient.addColorStop(0.7, nft.colors.edge);
+            gradient.addColorStop(1, nft.colors.symbol);
+          } else {
+            gradient.addColorStop(0, '#1a2332');
+            gradient.addColorStop(1, '#0f1419');
+          }
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, size, size);
+          // Draw image
+          drawImageOnCanvas(ctx, img, size);
+        }
+      }
     };
 
     img.onerror = () => {
+      console.error('Failed to load image:', nft.image);
       setImageError(true);
     };
 
