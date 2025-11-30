@@ -782,7 +782,7 @@ const TelegramApp: React.FC = () => {
               {sortedNFTs.length > VIRTUALIZATION_THRESHOLD ? (
                 <VirtualizedNFTGrid nfts={sortedNFTs} />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
+                <div className="grid grid-cols-2 gap-3">
                   {sortedNFTs.map((nft, index) => (
                     <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`} nft={nft} />
                   ))}

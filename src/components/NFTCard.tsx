@@ -208,8 +208,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   return (
     <div 
       ref={cardRef}
-      className="group relative flex flex-col bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-colors duration-200 w-full"
-      style={{ aspectRatio: '1/1.99' }}
+      className="group relative flex flex-col bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-colors duration-200 w-full h-full"
       onClick={handleCardClick}
     >
       {/* Quantity Badge */}
