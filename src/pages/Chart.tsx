@@ -102,11 +102,16 @@ const Chart = () => {
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilterGrid, setTopFilterGrid] = useState<TopFilter>('all'); // For grid/list - show all by default
   const [topFilterHeatmap, setTopFilterHeatmap] = useState<TopFilter>('all'); // For heatmap - show all by default
-  const [dataSource, setDataSource] = useState<DataSource>('market');
+  const [dataSourceGrid, setDataSourceGrid] = useState<DataSource>('market'); // For grid/list
+  const [dataSourceHeatmap, setDataSourceHeatmap] = useState<DataSource>('market'); // For heatmap - separate state
   const [zoomLevel, setZoomLevel] = useState(1);
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
   const [sortMode, setSortMode] = useState<'default' | 'priceUp' | 'priceDown'>('default');
+  
+  // Get current dataSource based on view mode
+  const dataSource = viewMode === 'heatmap' ? dataSourceHeatmap : dataSourceGrid;
+  const setDataSource = viewMode === 'heatmap' ? setDataSourceHeatmap : setDataSourceGrid;
   
   // Add ref for TreemapHeatmap
   const treemapRef = React.useRef<any>(null);
@@ -662,6 +667,7 @@ const Chart = () => {
             chartType={chartType}
             timeGap={timeGap}
             currency={currency}
+            isRegularMode={dataSourceHeatmap === 'regular'}
           />
         )}
       </div>

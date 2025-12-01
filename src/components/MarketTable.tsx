@@ -142,7 +142,7 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                     {displayName}
                   </span>
                   {isRegular && (
-                    <span className="text-[8px] px-1 py-0.5 bg-amber-500/20 text-amber-400/70 rounded border border-amber-500/20">
+                    <span className="text-[8px] px-1 py-0.5 bg-amber-500/10 text-amber-400/30 rounded border border-amber-500/10">
                       Regular
                     </span>
                   )}

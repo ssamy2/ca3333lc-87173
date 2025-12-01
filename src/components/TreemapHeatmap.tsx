@@ -68,6 +68,7 @@ interface TreemapHeatmapProps {
   chartType: 'change' | 'marketcap';
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
+  isRegularMode?: boolean;
 }
 
 
@@ -142,10 +143,52 @@ const transformGiftData = (
   data: GiftItem[], 
   chartType: 'change' | 'marketcap', 
   timeGap: '24h' | '1w' | '1m',
-  currency: 'ton' | 'usd'
+  currency: 'ton' | 'usd',
+  isRegularMode: boolean = false
 ): TreemapDataPoint[] => {
   return data.map(item => {
     const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
+    // Remove [Regular] prefix from name for display
+    const displayName = item.name.replace('[Regular] ', '');
+
+    // Regular mode - size based on price (no market cap for regular gifts)
+    if (isRegularMode) {
+      let previousPrice = currentPrice;
+      
+      switch (timeGap) {
+        case '24h':
+          previousPrice = currency === 'ton'
+            ? (item.tonPrice24hAgo || currentPrice)
+            : (item.usdPrice24hAgo || currentPrice);
+          break;
+        case '1w':
+          previousPrice = currency === 'ton'
+            ? (item.tonPriceWeekAgo || currentPrice)
+            : (item.usdPriceWeekAgo || currentPrice);
+          break;
+        case '1m':
+          previousPrice = currency === 'ton'
+            ? (item.tonPriceMonthAgo || currentPrice)
+            : (item.usdPriceMonthAgo || currentPrice);
+          break;
+        default:
+          previousPrice = currentPrice;
+      }
+
+      const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
+      
+      // Size based on price for regular gifts
+      const size = Math.max(10, Math.sqrt(currentPrice) * 5);
+
+      return {
+        name: displayName,
+        percentChange: Number(percentChange.toFixed(2)),
+        size,
+        imageName: item.image,
+        price: currentPrice,
+        marketCap: '-'
+      };
+    }
 
     if (chartType === 'marketcap') {
       // Market Cap mode - size based on market cap value
@@ -623,7 +666,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   data,
   chartType,
   timeGap,
-  currency
+  currency,
+  isRegularMode = false
 }, ref) => {
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -684,7 +728,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      const transformedData = transformGiftData(data, chartType, timeGap, currency);
+      const transformedData = transformGiftData(data, chartType, timeGap, currency, isRegularMode);
       
       console.log('🎨 Starting image preload for export...', transformedData.length, 'items');
       
@@ -895,7 +939,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   useEffect(() => {
     try {
       const filteredData = data.filter(item => !item.preSale);
-      const transformed = transformGiftData(filteredData, chartType, timeGap, currency);
+      const transformed = transformGiftData(filteredData, chartType, timeGap, currency, isRegularMode);
       
       // Always display data immediately - don't wait for images
       setDisplayData(transformed);
@@ -938,7 +982,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     } catch {
       setIsLoading(false);
     }
-  }, [data, chartType, timeGap, currency]);
+  }, [data, chartType, timeGap, currency, isRegularMode]);
 
   const chartData: ChartData<'treemap'> = useMemo(() => ({
     datasets: [{
