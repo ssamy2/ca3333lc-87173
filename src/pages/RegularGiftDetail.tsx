@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Star, Share2, Download, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Star, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import { getAuthHeaders } from '@/lib/telegramAuth';
-import { useTheme } from '@/hooks/useTheme';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RegularGiftData {
   gift_id: string;
@@ -28,12 +28,14 @@ interface RegularGiftData {
 const RegularGiftDetail: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
-  const { isLight } = useTheme();
   const { language } = useLanguage();
+  const { userId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [giftData, setGiftData] = useState<RegularGiftData | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [selectedGifts, setSelectedGifts] = useState<string[]>([]);
+  const [sending, setSending] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const giftImageRef = useRef<HTMLImageElement | null>(null);
 
   const t = {
     ar: {
@@ -45,15 +47,14 @@ const RegularGiftDetail: React.FC = () => {
       supply: 'الكمية',
       multiplier: 'المضاعف',
       stars: 'نجوم',
-      shareToTelegram: 'مشاركة عبر تيليجرام',
-      saveImage: 'حفظ الصورة',
+      sendToTelegram: 'إرسال للخاص',
+      sending: 'جاري الإرسال...',
+      sent: 'تم الإرسال!',
+      sendError: 'فشل الإرسال',
       loading: 'جاري التحميل...',
       notFound: 'الهدية غير موجودة',
       lastUpdated: 'آخر تحديث',
-      confidence: 'دقة المطابقة',
-      selectToShare: 'اختر هدايا للمشاركة',
-      selected: 'مختارة',
-      shareSelected: 'مشاركة المختارة'
+      confidence: 'دقة المطابقة'
     },
     en: {
       back: 'Back',
@@ -64,15 +65,14 @@ const RegularGiftDetail: React.FC = () => {
       supply: 'Supply',
       multiplier: 'Multiplier',
       stars: 'Stars',
-      shareToTelegram: 'Share to Telegram',
-      saveImage: 'Save Image',
+      sendToTelegram: 'Send to DM',
+      sending: 'Sending...',
+      sent: 'Sent!',
+      sendError: 'Failed to send',
       loading: 'Loading...',
       notFound: 'Gift not found',
       lastUpdated: 'Last Updated',
-      confidence: 'Match Confidence',
-      selectToShare: 'Select gifts to share',
-      selected: 'selected',
-      shareSelected: 'Share Selected'
+      confidence: 'Match Confidence'
     }
   };
 
@@ -134,41 +134,185 @@ const RegularGiftDetail: React.FC = () => {
     return supply.toLocaleString();
   };
 
-  const handleShareToTelegram = async () => {
-    if (!giftData) return;
+  // Create professional canvas image
+  const createGiftCanvas = useCallback(async (): Promise<HTMLCanvasElement | null> => {
+    if (!giftData || !giftImageRef.current) return null;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Canvas size - compact and professional
+    const width = 400;
+    const height = 320;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(0.5, '#16213e');
+    gradient.addColorStop(1, '#0f0f23');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Decorative border
+    ctx.strokeStyle = '#f59e0b40';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(8, 8, width - 16, height - 16);
+
+    // Inner glow effect
+    const innerGlow = ctx.createRadialGradient(width/2, 100, 0, width/2, 100, 150);
+    innerGlow.addColorStop(0, '#f59e0b15');
+    innerGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = innerGlow;
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw gift image (centered, smaller)
+    const img = giftImageRef.current;
+    const imgSize = 100;
+    const imgX = (width - imgSize) / 2;
+    const imgY = 25;
     
-    const message = language === 'ar' 
-      ? `🎁 ${giftData.gift_name}\n💰 السعر: ${formatNumber(giftData.price_ton)} TON ($${formatNumber(giftData.price_usd)})\n⭐ ${giftData.price_stars} نجمة\n📊 التغير: ${giftData.change_24h >= 0 ? '+' : ''}${giftData.change_24h.toFixed(2)}%\n📦 الكمية: ${giftData.supply_text || formatSupply(giftData.supply)}\n\n🔗 via @NovaGiftsBot`
-      : `🎁 ${giftData.gift_name}\n💰 Price: ${formatNumber(giftData.price_ton)} TON ($${formatNumber(giftData.price_usd)})\n⭐ ${giftData.price_stars} Stars\n📊 Change: ${giftData.change_24h >= 0 ? '+' : ''}${giftData.change_24h.toFixed(2)}%\n📦 Supply: ${giftData.supply_text || formatSupply(giftData.supply)}\n\n🔗 via @NovaGiftsBot`;
+    // Image shadow
+    ctx.shadowColor = '#f59e0b40';
+    ctx.shadowBlur = 20;
+    ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
+    ctx.shadowBlur = 0;
+
+    // Gift name
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(giftData.gift_name, width / 2, 150);
+
+    // "Regular Gift" badge
+    ctx.fillStyle = '#f59e0b30';
+    const badgeText = language === 'ar' ? 'هدية عادية' : 'Regular Gift';
+    const badgeWidth = ctx.measureText(badgeText).width + 20;
+    ctx.fillRect((width - badgeWidth) / 2, 158, badgeWidth, 22);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '12px Arial, sans-serif';
+    ctx.fillText(badgeText, width / 2, 173);
+
+    // Price section - horizontal layout
+    const priceY = 200;
     
-    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(giftData.image_url)}&text=${encodeURIComponent(message)}`;
+    // TON Price
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 24px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${formatNumber(giftData.price_ton)} TON`, width / 2, priceY);
+
+    // USD Price
+    ctx.fillStyle = '#22c55e';
+    ctx.font = '16px Arial, sans-serif';
+    ctx.fillText(`$${formatNumber(giftData.price_usd)}`, width / 2, priceY + 25);
+
+    // Stats row
+    const statsY = 255;
+    const isPositive = giftData.change_24h >= 0;
     
-    if (window.Telegram?.WebApp) {
-      (window.Telegram.WebApp as any).openTelegramLink?.(telegramUrl) || window.open(telegramUrl, '_blank');
-    } else {
-      window.open(telegramUrl, '_blank');
+    // 24h Change
+    ctx.fillStyle = isPositive ? '#22c55e' : '#ef4444';
+    ctx.font = 'bold 14px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    const changeText = `${isPositive ? '▲' : '▼'} ${Math.abs(giftData.change_24h).toFixed(2)}%`;
+    ctx.fillText(changeText, 30, statsY);
+
+    // Stars
+    ctx.fillStyle = '#eab308';
+    ctx.textAlign = 'center';
+    ctx.fillText(`⭐ ${giftData.price_stars.toLocaleString()}`, width / 2, statsY);
+
+    // Supply
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'right';
+    const supplyText = giftData.supply_text || formatSupply(giftData.supply);
+    ctx.fillText(`📦 ${supplyText}`, width - 30, statsY);
+
+    // Footer - Nova branding
+    ctx.fillStyle = '#64748b50';
+    ctx.fillRect(0, height - 35, width, 35);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Powered by Nova Calculator • @NovaGiftsBot', width / 2, height - 14);
+
+    return canvas;
+  }, [giftData, language, formatNumber, formatSupply]);
+
+  // Send image to Telegram DM
+  const handleSendToTelegram = async () => {
+    if (!giftData || !userId) {
+      toast.error(text.sendError);
+      return;
+    }
+
+    setSending(true);
+    
+    try {
+      // Wait for image to load if not already
+      if (!giftImageRef.current) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            giftImageRef.current = img;
+            resolve();
+          };
+          img.onerror = reject;
+          img.src = giftData.image_url;
+        });
+      }
+
+      const canvas = await createGiftCanvas();
+      if (!canvas) {
+        throw new Error('Failed to create canvas');
+      }
+
+      // Convert to base64
+      const imageDataUrl = canvas.toDataURL('image/png');
+      const base64Data = imageDataUrl.split(',')[1];
+
+      // Send to API
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch('https://www.channelsseller.site/api/send-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        body: JSON.stringify({
+          id: userId,
+          image: base64Data
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send');
+      }
+
+      toast.success(text.sent);
+    } catch (error) {
+      console.error('Send error:', error);
+      toast.error(text.sendError);
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleSaveImage = async () => {
-    if (!giftData) return;
-    
-    try {
-      const response = await fetch(giftData.image_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${giftData.gift_name}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success(language === 'ar' ? 'تم حفظ الصورة' : 'Image saved');
-    } catch (error) {
-      toast.error(language === 'ar' ? 'فشل حفظ الصورة' : 'Failed to save image');
+  // Preload gift image when data is available
+  useEffect(() => {
+    if (giftData?.image_url) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        giftImageRef.current = img;
+      };
+      img.src = giftData.image_url;
     }
-  };
+  }, [giftData?.image_url]);
 
   if (loading) {
     return (
@@ -331,25 +475,24 @@ const RegularGiftDetail: React.FC = () => {
           )}
         </Card>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={handleShareToTelegram}
-            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white h-12"
-          >
-            <Send className="w-5 h-5 mr-2" />
-            {text.shareToTelegram}
-          </Button>
-          
-          <Button
-            onClick={handleSaveImage}
-            variant="outline"
-            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 h-12"
-          >
-            <Download className="w-5 h-5 mr-2" />
-            {text.saveImage}
-          </Button>
-        </div>
+        {/* Send to Telegram Button */}
+        <Button
+          onClick={handleSendToTelegram}
+          disabled={sending || !userId}
+          className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white h-14 text-lg font-semibold shadow-lg shadow-amber-500/20"
+        >
+          {sending ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              {text.sending}
+            </>
+          ) : (
+            <>
+              <Send className="w-5 h-5 mr-2" />
+              {text.sendToTelegram}
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
