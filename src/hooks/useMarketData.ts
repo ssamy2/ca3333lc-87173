@@ -48,14 +48,48 @@ const fetchMarketData = async (): Promise<MarketData> => {
   }
   const rawData = await response.json();
   
-  // Normalize all image URLs in the data
+  // Handle new format with upgraded/unupgraded sections
   const data: MarketData = {};
-  Object.entries(rawData).forEach(([key, value]: [string, any]) => {
-    data[key] = {
-      ...value,
-      image_url: normalizeImageUrl(value.image_url)
-    };
-  });
+  
+  // Check if response has the new format (upgraded/unupgraded)
+  if (rawData.upgraded && typeof rawData.upgraded === 'object') {
+    // Process upgraded gifts
+    Object.entries(rawData.upgraded).forEach(([key, value]: [string, any]) => {
+      data[key] = {
+        ...value,
+        image_url: normalizeImageUrl(value.image_url),
+        is_upgraded: true
+      };
+    });
+    
+    // Process unupgraded gifts
+    if (rawData.unupgraded && typeof rawData.unupgraded === 'object') {
+      Object.entries(rawData.unupgraded).forEach(([key, value]: [string, any]) => {
+        // Add unupgraded gifts with a special marker
+        data[`[Regular] ${key}`] = {
+          ...value,
+          priceTon: value.price_ton || 0,
+          priceUsd: value.price_usd || 0,
+          price_ton: value.price_ton || 0,
+          price_usd: value.price_usd || 0,
+          'change_24h_ton_%': value.change_24h || 0,
+          'change_24h_usd_%': value.change_24h || 0,
+          image_url: normalizeImageUrl(value.image_url),
+          is_upgraded: false,
+          is_unupgraded: true,
+          multiplier: value.multiplier || ''
+        };
+      });
+    }
+  } else {
+    // Old format - process as before
+    Object.entries(rawData).forEach(([key, value]: [string, any]) => {
+      data[key] = {
+        ...value,
+        image_url: normalizeImageUrl(value.image_url)
+      };
+    });
+  }
   
   // Cache the normalized data
   setCachedData('market-data', data);

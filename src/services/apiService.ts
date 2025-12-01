@@ -148,10 +148,15 @@ const processAPIResponse = (responseData: any, username?: string) => {
     .trim()
 
   const upgraded = Array.isArray(d.nfts) ? d.nfts : []
+  const regularGifts = Array.isArray(d.regular_gifts) ? d.regular_gifts : []
 
   // Use total_value from API response (correct total value)
   const totalValueTON = d.total_value_ton || 0
   const totalValueUSD = d.total_value_usd || 0
+  const upgradedValueTON = d.upgraded_value_ton || 0
+  const upgradedValueUSD = d.upgraded_value_usd || 0
+  const regularValueTON = d.regular_value_ton || 0
+  const regularValueUSD = d.regular_value_usd || 0
 
   // Calculate floor price (minimum price among all NFTs)
   const minPrice = upgraded.length
@@ -160,6 +165,23 @@ const processAPIResponse = (responseData: any, username?: string) => {
 
   const ratio = totalValueTON > 0 ? totalValueUSD / totalValueTON : 2.12
   const minUSD = minPrice * ratio
+
+  // Process regular gifts
+  const processedRegularGifts = regularGifts.map((g: any) => ({
+    id: g.id || '',
+    name: g.full_name || g.short_name || 'Unknown',
+    short_name: g.short_name || '',
+    image: g.image_url || '',
+    count: g.count || 1,
+    price_ton: g.price_ton || 0,
+    price_usd: g.price_usd || 0,
+    total_ton: g.total_ton || 0,
+    total_usd: g.total_usd || 0,
+    supply: g.supply || 0,
+    multiplier: g.multiplier || '',
+    change_24h: g.change_24h || 0,
+    is_unupgraded: true
+  }))
 
   return {
     success: true,
@@ -173,7 +195,9 @@ const processAPIResponse = (responseData: any, username?: string) => {
         username: d.username || username || null,
         full_name: cleanName,
         user_id: d.user_id || null,
-        total_nfts: d.total_nfts || upgraded.length
+        total_nfts: d.total_nfts || upgraded.length,
+        total_upgraded: d.total_upgraded || upgraded.length,
+        total_unupgraded: d.total_unupgraded || regularGifts.length
       },
 
       prices: {
@@ -187,6 +211,14 @@ const processAPIResponse = (responseData: any, username?: string) => {
           TON: parseFloat(totalValueTON.toFixed(2)),
           USD: parseFloat(totalValueUSD.toFixed(2)),
           STAR: 0
+        },
+        upgraded_value: {
+          TON: parseFloat(upgradedValueTON.toFixed(2)),
+          USD: parseFloat(upgradedValueUSD.toFixed(2))
+        },
+        regular_value: {
+          TON: parseFloat(regularValueTON.toFixed(2)),
+          USD: parseFloat(regularValueUSD.toFixed(2))
         }
       },
 
@@ -225,11 +257,14 @@ const processAPIResponse = (responseData: any, username?: string) => {
         }
       }),
 
-      total_saved_gifts: upgraded.length
+      regular_gifts: processedRegularGifts,
+
+      total_saved_gifts: upgraded.length + regularGifts.length
     },
 
     stats: {
       items: upgraded.length,
+      regular_items: regularGifts.length,
       total_gifts: d.total_nfts || upgraded.length,
       enriched: upgraded.length
     }

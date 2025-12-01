@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import GiftImage from '@/components/GiftImage';
 import TonIcon from '@/components/TonIcon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface GiftCardProps {
   name: string;
@@ -11,6 +12,7 @@ interface GiftCardProps {
   price: number;
   change: number;
   isBlackMode: boolean;
+  isUnupgraded?: boolean;
 }
 
 const GiftCard = React.memo(({ 
@@ -19,10 +21,16 @@ const GiftCard = React.memo(({
   shortName, 
   price, 
   change, 
-  isBlackMode 
+  isBlackMode,
+  isUnupgraded = false
 }: GiftCardProps) => {
+  const { language } = useLanguage();
   const isPositive = change > 0;
   const isNeutral = change === 0;
+  
+  // Check if name starts with [Regular] marker
+  const isRegularGift = isUnupgraded || name.startsWith('[Regular]');
+  const displayName = name.replace('[Regular] ', '');
 
   const formattedPrice = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
@@ -49,17 +57,24 @@ const GiftCard = React.memo(({
 
   return (
     <Link 
-      to={`/gift/${encodeURIComponent(name)}`}
+      to={`/gift/${encodeURIComponent(displayName)}`}
       className="no-underline block w-full"
       style={{ aspectRatio: '1 / 1' }}
     >
       <Card
-        className={`p-1.5 sm:p-2 md:p-2.5 lg:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()}`}
+        className={`relative p-1.5 sm:p-2 md:p-2.5 lg:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()} ${isRegularGift ? 'border-amber-500/30' : ''}`}
       >
+        {/* Regular Gift Badge */}
+        {isRegularGift && (
+          <div className="absolute top-1 left-1 z-10 bg-amber-500/20 text-amber-400 text-[6px] sm:text-[7px] font-medium rounded px-1 py-0.5 border border-amber-500/30">
+            {language === 'ar' ? 'عادية' : 'Regular'}
+          </div>
+        )}
+        
         <div className="w-full flex-1 flex items-center justify-center overflow-hidden mb-1">
           <GiftImage
             imageUrl={imageUrl}
-            name={name}
+            name={displayName}
             shortName={shortName}
             size="responsive"
             isBlackMode={isBlackMode}
@@ -69,9 +84,9 @@ const GiftCard = React.memo(({
         </div>
         <div className="w-full flex flex-col items-center gap-0.5 mt-auto pt-1">
           <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
-            <TonIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 flex-shrink-0 ${isBlackMode ? 'opacity-90' : ''}`} />
+            <TonIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 flex-shrink-0 ${isBlackMode ? 'opacity-90' : ''} ${isRegularGift ? 'text-amber-500' : ''}`} />
             <span 
-              className={`font-semibold text-[10px] sm:text-xs md:text-sm lg:text-base leading-tight ${isBlackMode ? 'text-[#B87333]' : 'text-foreground'}`}
+              className={`font-semibold text-[10px] sm:text-xs md:text-sm lg:text-base leading-tight ${isBlackMode ? 'text-[#B87333]' : isRegularGift ? 'text-amber-400' : 'text-foreground'}`}
             >
               {formattedPrice}
             </span>

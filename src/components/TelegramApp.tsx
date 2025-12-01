@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
 import NFTCard from './NFTCard';
+import RegularGiftCard from './RegularGiftCard';
 import VirtualizedNFTGrid from './VirtualizedNFTGrid';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
@@ -54,6 +55,22 @@ interface NFTGift {
   };
 }
 
+interface RegularGift {
+  id: string;
+  name: string;
+  short_name?: string;
+  image: string;
+  count: number;
+  price_ton: number;
+  price_usd: number;
+  total_ton: number;
+  total_usd: number;
+  supply: number;
+  multiplier?: string;
+  change_24h?: number;
+  is_unupgraded: boolean;
+}
+
 interface NFTData {
   owner: string;
   visible_nfts?: number;
@@ -61,8 +78,11 @@ interface NFTData {
   prices: {
     floor_price: { TON: number; USD: number; STAR: number };
     avg_price: { TON: number; USD: number; STAR: number };
+    upgraded_value?: { TON: number; USD: number };
+    regular_value?: { TON: number; USD: number };
   };
   nfts: NFTGift[];
+  regular_gifts?: RegularGift[];
 }
 
 interface APIResponse {
@@ -770,25 +790,56 @@ const TelegramApp: React.FC = () => {
             </div>
 
             {/* NFT Grid */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
-                <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
-                  {sortedNFTs.length} items
+            {sortedNFTs.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-lg font-bold text-foreground">NFT Collection</h3>
+                  <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
+                    {sortedNFTs.length} items
+                  </div>
+                </div>
+                
+                {/* Use virtualization for large lists, regular grid for small lists */}
+                {sortedNFTs.length > VIRTUALIZATION_THRESHOLD ? (
+                  <VirtualizedNFTGrid nfts={sortedNFTs} />
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {sortedNFTs.map((nft, index) => (
+                      <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`} nft={nft} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Regular Gifts Section */}
+            {nftData?.regular_gifts && nftData.regular_gifts.length > 0 && (
+              <div className="space-y-4">
+                {/* Separator */}
+                <div className="flex items-center gap-3 px-1">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+                  <span className="text-amber-400 text-sm font-medium px-3 py-1 bg-amber-500/10 rounded-full border border-amber-500/20">
+                    {language === 'ar' ? 'غير مطورة' : 'Not Upgraded'}
+                  </span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+                </div>
+
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-lg font-bold text-amber-400">{language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}</h3>
+                  <div className="px-3 py-1 bg-amber-500/10 text-amber-400 text-sm font-semibold rounded-full border border-amber-500/20">
+                    {nftData.regular_gifts.reduce((sum, g) => sum + g.count, 0)} items
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {nftData.regular_gifts
+                    .sort((a, b) => b.total_ton - a.total_ton)
+                    .map((gift, index) => (
+                      <RegularGiftCard key={`regular-${gift.id}-${index}`} gift={gift} />
+                    ))}
                 </div>
               </div>
-              
-              {/* Use virtualization for large lists, regular grid for small lists */}
-              {sortedNFTs.length > VIRTUALIZATION_THRESHOLD ? (
-                <VirtualizedNFTGrid nfts={sortedNFTs} />
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {sortedNFTs.map((nft, index) => (
-                    <NFTCard key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`} nft={nft} />
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 
