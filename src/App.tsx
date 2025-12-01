@@ -14,6 +14,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const Index = lazy(() => import("./pages/Index"));
 const Chart = lazy(() => import("./pages/Chart"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
+const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
@@ -87,6 +88,7 @@ const App = () => {
                           <Route path="/" element={<Index />} />
                           <Route path="/chart" element={<Chart />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
+                          <Route path="/regular-gift/:name" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />
                           <Route path="/admin" element={<AdminPanel />} />
                           <Route path="/admin/ads" element={<AdminAdsPage />} />

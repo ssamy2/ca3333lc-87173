@@ -55,9 +55,14 @@ const GiftCard = React.memo(({
     return 'bg-[hsl(var(--destructive))]/20 hover:shadow-lg hover:shadow-[hsl(var(--destructive))]/30 border-[hsl(var(--destructive))]/30';
   };
 
+  // Use different route for regular gifts
+  const giftRoute = isRegularGift 
+    ? `/regular-gift/${encodeURIComponent(displayName)}`
+    : `/gift/${encodeURIComponent(displayName)}`;
+
   return (
     <Link 
-      to={`/gift/${encodeURIComponent(displayName)}`}
+      to={giftRoute}
       className="no-underline block w-full"
       style={{ aspectRatio: '1 / 1' }}
     >

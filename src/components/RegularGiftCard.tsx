@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import TonIcon from './TonIcon';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -27,7 +28,7 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
   const [imageError, setImageError] = React.useState(false);
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
-  const cardRef = React.useRef<HTMLDivElement>(null);
+  const cardRef = React.useRef<HTMLAnchorElement>(null);
 
   // Intersection Observer for lazy loading
   React.useEffect(() => {
@@ -64,9 +65,10 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
   };
 
   return (
-    <div 
+    <Link 
+      to={`/regular-gift/${encodeURIComponent(gift.name)}`}
       ref={cardRef}
-      className="group relative flex flex-col bg-gradient-to-br from-amber-950/20 to-amber-900/10 rounded-xl border border-amber-500/20 hover:border-amber-500/40 overflow-hidden transition-colors duration-200 w-full h-full"
+      className="group relative flex flex-col bg-gradient-to-br from-amber-950/20 to-amber-900/10 rounded-xl border border-amber-500/20 hover:border-amber-500/40 overflow-hidden transition-colors duration-200 w-full h-full cursor-pointer no-underline"
     >
       {/* Count Badge */}
       {gift.count > 1 && (
@@ -171,7 +173,7 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 };
 
