@@ -222,20 +222,14 @@ const Chart = () => {
     if (!marketData) return [];
     let entries = Object.entries(marketData);
     
-    // Filter for regular (unupgraded) gifts only
-    if (dataSource === 'regular') {
+    // For heatmap regular mode only, filter to show only regular gifts
+    if (viewMode === 'heatmap' && dataSource === 'regular') {
       entries = entries.filter(([name, data]) => {
         const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
         return isRegular;
       });
-    } else if (dataSource === 'market') {
-      // For market mode, exclude regular gifts (show only upgraded)
-      entries = entries.filter(([name, data]) => {
-        const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
-        return !isRegular;
-      });
     }
-    // If dataSource is 'black', no filtering needed here (handled above)
+    // For grid/list, show all gifts (upgraded + regular) together by default
 
     // Sort based on chart type
     if (chartType === 'marketcap') {
@@ -451,15 +445,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                {language === 'ar' ? 'مطور' : 'Upgraded'}
-              </Button>
-              <Button
-                onClick={() => setDataSourceGrid('regular')}
-                variant={dataSourceGrid === 'regular' ? 'glass' : 'glassDark'}
-                size="pill"
-                className="flex-1 font-medium text-amber-400"
-              >
-                {language === 'ar' ? 'عادي' : 'Regular'}
+                {t('all')}
               </Button>
               <Button
                 onClick={() => setDataSourceGrid('black')}

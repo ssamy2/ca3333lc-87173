@@ -69,9 +69,9 @@ const GiftCard = React.memo(({
       <Card
         className={`relative p-1.5 sm:p-2 md:p-2.5 lg:p-3 flex flex-col items-center justify-between backdrop-blur transition-shadow duration-200 cursor-pointer h-full w-full ${getCardStyle()} ${isRegularGift ? 'border-amber-500/30' : ''}`}
       >
-        {/* Regular Gift Badge */}
+        {/* Regular Gift Badge - more transparent */}
         {isRegularGift && (
-          <div className="absolute top-1 left-1 z-10 bg-amber-500/20 text-amber-400 text-[6px] sm:text-[7px] font-medium rounded px-1 py-0.5 border border-amber-500/30">
+          <div className="absolute top-1 left-1 z-10 bg-amber-500/10 text-amber-400/40 text-[6px] sm:text-[7px] font-medium rounded px-1 py-0.5 border border-amber-500/15">
             {language === 'ar' ? 'عادية' : 'Regular'}
           </div>
         )}
