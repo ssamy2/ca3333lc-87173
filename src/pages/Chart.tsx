@@ -224,15 +224,18 @@ const Chart = () => {
     
     // Filter for regular (unupgraded) gifts only
     if (dataSource === 'regular') {
-      entries = entries.filter(([name, data]) => 
-        name.startsWith('[Regular]') || (data as any).is_unupgraded === true
-      );
+      entries = entries.filter(([name, data]) => {
+        const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
+        return isRegular;
+      });
     } else if (dataSource === 'market') {
       // For market mode, exclude regular gifts (show only upgraded)
-      entries = entries.filter(([name, data]) => 
-        !name.startsWith('[Regular]') && (data as any).is_unupgraded !== true
-      );
+      entries = entries.filter(([name, data]) => {
+        const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
+        return !isRegular;
+      });
     }
+    // If dataSource is 'black', no filtering needed here (handled above)
 
     // Sort based on chart type
     if (chartType === 'marketcap') {
@@ -322,7 +325,7 @@ const Chart = () => {
     return entries;
   };
     return getFilteredData();
-  }, [viewMode, topFilterHeatmap, topFilterGrid, dataSource, marketData, blackFloorData, sortMode, chartType, currency]);
+  }, [viewMode, topFilterHeatmap, topFilterGrid, dataSource, dataSourceGrid, dataSourceHeatmap, marketData, blackFloorData, sortMode, chartType, currency]);
 
   // Memoize gift items
   const giftItems = useMemo((): GiftItem[] => {
@@ -443,16 +446,24 @@ const Chart = () => {
             {/* Data Source Toggle */}
             <div className="flex gap-2 justify-center">
               <Button
-                onClick={() => setDataSource('market')}
-                variant={dataSource === 'market' ? 'glass' : 'glassDark'}
+                onClick={() => setDataSourceGrid('market')}
+                variant={dataSourceGrid === 'market' ? 'glass' : 'glassDark'}
                 size="pill"
                 className="flex-1 font-medium"
               >
-                {t('all')}
+                {language === 'ar' ? 'مطور' : 'Upgraded'}
               </Button>
               <Button
-                onClick={() => setDataSource('black')}
-                variant={dataSource === 'black' ? 'glass' : 'glassDark'}
+                onClick={() => setDataSourceGrid('regular')}
+                variant={dataSourceGrid === 'regular' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium text-amber-400"
+              >
+                {language === 'ar' ? 'عادي' : 'Regular'}
+              </Button>
+              <Button
+                onClick={() => setDataSourceGrid('black')}
+                variant={dataSourceGrid === 'black' ? 'glass' : 'glassDark'}
                 size="pill"
                 className="flex-1 font-medium"
               >
