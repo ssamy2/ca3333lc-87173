@@ -99,12 +99,19 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
         
         // Check if data is available
         const has24h = isBlackMode ? (item.available_periods?.includes('24h') ?? false) : true;
+        
+        // Check if this is a regular (unupgraded) gift
+        const isRegular = name.startsWith('[Regular]') || (item as any).is_unupgraded === true;
+        const displayName = name.replace('[Regular] ', '');
+        const giftRoute = isRegular 
+          ? `/regular-gift/${encodeURIComponent(displayName)}`
+          : `/gift/${encodeURIComponent(name)}`;
 
         return (
           <Link 
             key={name}
-            to={`/gift/${encodeURIComponent(name)}`}
-            className="flex items-center justify-between w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-3 py-3 transition-all border border-border/30 hover:border-border/60"
+            to={giftRoute}
+            className={`flex items-center justify-between w-full rounded-lg bg-secondary/20 hover:bg-secondary/40 px-3 py-3 transition-all border ${isRegular ? 'border-amber-500/30 hover:border-amber-500/50' : 'border-border/30 hover:border-border/60'}`}
           >
             {/* Left: Rank + Image + Name */}
             <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
@@ -122,17 +129,24 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
               />
               
               <div className="flex flex-col min-w-0 flex-1">
-                <span className={`font-semibold text-xs sm:text-sm leading-tight ${isBlackMode ? 'text-white' : 'text-foreground'}`}
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  {name}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`font-semibold text-xs sm:text-sm leading-tight ${isBlackMode ? 'text-white' : isRegular ? 'text-amber-400' : 'text-foreground'}`}
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      wordBreak: 'break-word'
+                    }}
+                  >
+                    {displayName}
+                  </span>
+                  {isRegular && (
+                    <span className="text-[8px] px-1 py-0.5 bg-amber-500/20 text-amber-400/70 rounded border border-amber-500/20">
+                      Regular
+                    </span>
+                  )}
+                </div>
                 <span className={`text-[10px] sm:text-xs ${isBlackMode ? 'text-white/50' : 'text-muted-foreground'}`}>
                   {formatSupply(item.upgradedSupply)}
                 </span>

@@ -65,7 +65,7 @@ interface GiftHistoricalData {
 type ViewMode = 'grid' | 'list' | 'heatmap';
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
-type DataSource = 'market' | 'black';
+type DataSource = 'market' | 'black' | 'regular';
 type ChartType = 'change' | 'marketcap';
 type TimeGap = '24h' | '1w' | '1m';
 
@@ -111,9 +111,9 @@ const Chart = () => {
   // Add ref for TreemapHeatmap
   const treemapRef = React.useRef<any>(null);
 
-  // Force TON currency when switching to Black mode
+  // Force TON currency when switching to Black or Regular mode
   React.useEffect(() => {
-    if (dataSource === 'black') {
+    if (dataSource === 'black' || dataSource === 'regular') {
       setCurrency('ton');
     }
   }, [dataSource]);
@@ -216,6 +216,18 @@ const Chart = () => {
 
     if (!marketData) return [];
     let entries = Object.entries(marketData);
+    
+    // Filter for regular (unupgraded) gifts only
+    if (dataSource === 'regular') {
+      entries = entries.filter(([name, data]) => 
+        name.startsWith('[Regular]') || (data as any).is_unupgraded === true
+      );
+    } else if (dataSource === 'market') {
+      // For market mode, exclude regular gifts (show only upgraded)
+      entries = entries.filter(([name, data]) => 
+        !name.startsWith('[Regular]') && (data as any).is_unupgraded !== true
+      );
+    }
 
     // Sort based on chart type
     if (chartType === 'marketcap') {
@@ -542,7 +554,15 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                All
+                {language === 'ar' ? 'مطور' : 'Upgraded'}
+              </Button>
+              <Button
+                onClick={() => setDataSource('regular')}
+                variant={dataSource === 'regular' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium text-amber-400"
+              >
+                {language === 'ar' ? 'عادي' : 'Regular'}
               </Button>
               <Button
                 onClick={() => setDataSource('black')}
@@ -554,8 +574,8 @@ const Chart = () => {
               </Button>
             </div>
 
-            {/* Currency - Only show if not Black mode */}
-            {dataSource !== 'black' && (
+            {/* Currency - Only show if not Black or Regular mode */}
+            {dataSource === 'market' && (
               <div className="flex gap-2">
                 <Button
                   onClick={() => setCurrency('ton')}
@@ -610,6 +630,7 @@ const Chart = () => {
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
+              const isUnupgraded = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
 
               return (
                 <GiftCard
@@ -620,6 +641,7 @@ const Chart = () => {
                   price={price}
                   change={change}
                   isBlackMode={dataSource === 'black'}
+                  isUnupgraded={isUnupgraded}
                 />
               );
             })}

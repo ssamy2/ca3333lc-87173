@@ -186,12 +186,12 @@ const RegularGiftDetail: React.FC = () => {
     ctx.textAlign = 'center';
     ctx.fillText(giftData.gift_name, width / 2, 150);
 
-    // "Regular Gift" badge
-    ctx.fillStyle = '#f59e0b30';
+    // "Regular Gift" badge - more transparent
+    ctx.fillStyle = '#f59e0b15';
     const badgeText = language === 'ar' ? 'هدية عادية' : 'Regular Gift';
     const badgeWidth = ctx.measureText(badgeText).width + 20;
     ctx.fillRect((width - badgeWidth) / 2, 158, badgeWidth, 22);
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = '#fbbf2480'; // More transparent text
     ctx.font = '12px Arial, sans-serif';
     ctx.fillText(badgeText, width / 2, 173);
 
