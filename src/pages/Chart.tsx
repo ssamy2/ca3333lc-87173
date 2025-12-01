@@ -222,14 +222,18 @@ const Chart = () => {
     if (!marketData) return [];
     let entries = Object.entries(marketData);
     
-    // For heatmap regular mode only, filter to show only regular gifts
-    if (viewMode === 'heatmap' && dataSource === 'regular') {
+    // Filter based on dataSource
+    if (dataSource === 'regular') {
+      // Show only non-upgraded gifts
       entries = entries.filter(([name, data]) => {
         const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
         return isRegular;
       });
+    } else if (dataSource === 'market') {
+      // Show all gifts (upgraded + regular) together
+      // No filtering needed
     }
-    // For grid/list, show all gifts (upgraded + regular) together by default
+    // For 'black' mode, it's handled above
 
     // Sort based on chart type
     if (chartType === 'marketcap') {
@@ -445,7 +449,7 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                {t('all')}
+                {language === 'ar' ? 'الكل' : 'All'}
               </Button>
               <Button
                 onClick={() => setDataSourceGrid('black')}
@@ -453,7 +457,15 @@ const Chart = () => {
                 size="pill"
                 className="flex-1 font-medium"
               >
-                {t('black')}
+                {language === 'ar' ? 'السوق السوداء' : 'BG: Black'}
+              </Button>
+              <Button
+                onClick={() => setDataSourceGrid('regular')}
+                variant={dataSourceGrid === 'regular' ? 'glass' : 'glassDark'}
+                size="pill"
+                className="flex-1 font-medium text-amber-400"
+              >
+                {language === 'ar' ? 'غير مطور' : 'NON-UPGRADE'}
               </Button>
             </div>
           </div>
