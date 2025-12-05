@@ -609,8 +609,8 @@ const createImagePlugin = (
               ctx.fillText(bottomText, centerX, priceY);
             }
 
-            // Market Cap - positioned below price with safe spacing
-            if (minDimension > 60) {
+            // Market Cap - positioned below price with safe spacing (only for upgraded gifts)
+            if (minDimension > 60 && item.marketCap !== '-') {
               const mcSpacing = fontSizes.valueFontSize + spacing * 2;
               const mcY = priceY + mcSpacing;
               
