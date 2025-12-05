@@ -322,7 +322,7 @@ const MarketStatsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
           <p className="text-slate-400 text-sm">{text.loading}</p>
@@ -333,7 +333,7 @@ const MarketStatsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="text-red-400">{error}</p>
           <button
@@ -348,13 +348,13 @@ const MarketStatsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-lg border-b border-white/10">
+      <div className="sticky top-0 z-40 bg-[#1a1410]/90 backdrop-blur-lg border-b border-amber-900/20">
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-amber-100/50 hover:text-amber-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -369,10 +369,10 @@ const MarketStatsPage: React.FC = () => {
       <div className="p-4 space-y-4">
         {/* Current Value Card */}
         {stats && (
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-5 border border-white/10">
+          <div className="bg-gradient-to-br from-[#2a2018]/80 to-[#1a1410]/80 rounded-2xl p-5 border border-amber-900/20">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-slate-400 text-sm mb-1">{text.totalMarketCap}</p>
+                <p className="text-amber-100/50 text-sm mb-1">{text.totalMarketCap}</p>
                 <p className="text-3xl font-bold text-white">
                   {currency === 'ton' ? '◎ ' : '$ '}{formatNumber(stats.current)}
                 </p>
@@ -389,16 +389,16 @@ const MarketStatsPage: React.FC = () => {
             
             {/* Mini Stats */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.high}</p>
+              <div className="bg-[#2a2018]/50 rounded-xl p-3 text-center">
+                <p className="text-amber-100/40 text-[10px] uppercase tracking-wider mb-1">{text.high}</p>
                 <p className="text-white font-semibold text-sm">{formatNumber(stats.high)}</p>
               </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.low}</p>
+              <div className="bg-[#2a2018]/50 rounded-xl p-3 text-center">
+                <p className="text-amber-100/40 text-[10px] uppercase tracking-wider mb-1">{text.low}</p>
                 <p className="text-white font-semibold text-sm">{formatNumber(stats.low)}</p>
               </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.avg}</p>
+              <div className="bg-[#2a2018]/50 rounded-xl p-3 text-center">
+                <p className="text-amber-100/40 text-[10px] uppercase tracking-wider mb-1">{text.avg}</p>
                 <p className="text-white font-semibold text-sm">{formatNumber(stats.avg)}</p>
               </div>
             </div>
@@ -408,7 +408,7 @@ const MarketStatsPage: React.FC = () => {
         {/* Time Range & Currency Toggle */}
         <div className="flex gap-2">
           {/* Time Range */}
-          <div className="flex-1 flex bg-slate-800/50 rounded-xl p-1 border border-white/10">
+          <div className="flex-1 flex bg-[#2a2018]/50 rounded-xl p-1 border border-amber-900/20">
             {(['24h', '7d', '30d', 'all'] as TimeRange[]).map((range) => (
               <button
                 key={range}
@@ -416,7 +416,7 @@ const MarketStatsPage: React.FC = () => {
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                   timeRange === range
                     ? 'bg-blue-500 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-amber-100/50 hover:text-amber-100'
                 }`}
               >
                 {range === '24h' ? text.day : range === '7d' ? text.week : range === '30d' ? text.month : text.all}
@@ -425,13 +425,13 @@ const MarketStatsPage: React.FC = () => {
           </div>
           
           {/* Currency Toggle */}
-          <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/10">
+          <div className="flex bg-[#2a2018]/50 rounded-xl p-1 border border-amber-900/20">
             <button
               onClick={() => setCurrency('ton')}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 currency === 'ton'
                   ? 'bg-blue-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-amber-100/50 hover:text-amber-100'
               }`}
             >
               TON
@@ -441,7 +441,7 @@ const MarketStatsPage: React.FC = () => {
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 currency === 'usd'
                   ? 'bg-green-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-amber-100/50 hover:text-amber-100'
               }`}
             >
               USD
@@ -451,7 +451,7 @@ const MarketStatsPage: React.FC = () => {
 
         {/* Chart */}
         {chartData && (
-          <div className="bg-slate-800/30 rounded-2xl p-4 border border-white/10">
+          <div className="bg-[#2a2018]/30 rounded-2xl p-4 border border-amber-900/20">
             <div className="h-64">
               <Line data={chartData} options={chartOptions} />
             </div>
@@ -461,24 +461,24 @@ const MarketStatsPage: React.FC = () => {
         {/* Change Cards */}
         {stats && (
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/10">
-              <p className="text-slate-400 text-xs mb-2">{text.change24h}</p>
+            <div className="bg-[#2a2018]/50 rounded-2xl p-4 border border-amber-900/20">
+              <p className="text-amber-100/50 text-xs mb-2">{text.change24h}</p>
               <div className={`flex items-center gap-1 ${stats.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {stats.change24h >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change24h)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/10">
-              <p className="text-slate-400 text-xs mb-2">{text.change7d}</p>
+            <div className="bg-[#2a2018]/50 rounded-2xl p-4 border border-amber-900/20">
+              <p className="text-amber-100/50 text-xs mb-2">{text.change7d}</p>
               <div className={`flex items-center gap-1 ${stats.change7d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {stats.change7d >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change7d)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/10">
-              <p className="text-slate-400 text-xs mb-2">{text.change30d}</p>
+            <div className="bg-[#2a2018]/50 rounded-2xl p-4 border border-amber-900/20">
+              <p className="text-amber-100/50 text-xs mb-2">{text.change30d}</p>
               <div className={`flex items-center gap-1 ${stats.change30d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {stats.change30d >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change30d)}</span>
@@ -488,7 +488,7 @@ const MarketStatsPage: React.FC = () => {
         )}
 
         {/* Data Info */}
-        <div className="flex items-center justify-center gap-2 text-slate-500 text-xs">
+        <div className="flex items-center justify-center gap-2 text-amber-100/40 text-xs">
           <Calendar className="w-3 h-3" />
           <span>{filteredData.length} {language === 'ar' ? 'نقطة بيانات' : 'data points'}</span>
         </div>

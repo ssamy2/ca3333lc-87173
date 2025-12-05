@@ -8,7 +8,7 @@ const CryptoPage: React.FC = () => {
   const text = language === 'ar' ? 'قريباً' : 'Coming Soon';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 pb-24 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] pb-24 flex items-center justify-center">
       <div className="text-center space-y-6">
         {/* Icon */}
         <div className="relative mx-auto w-20 h-20">
