@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, ArrowLeft, TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface MarketCapData {
   date: string;
@@ -56,7 +57,14 @@ const MarketStatsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('https://www.channelsseller.site/api/market-cap-changes');
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch('https://www.channelsseller.site/api/market-cap-changes', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch');
       const result = await response.json();
       setData(result);

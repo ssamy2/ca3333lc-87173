@@ -23,7 +23,7 @@ const Chart = () => {
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
     getTranslation(language, key);
   
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [dataSource, setDataSource] = useState<DataSource>('market');
   const [sortMode, setSortMode] = useState<'default' | 'priceUp' | 'priceDown'>('default');
