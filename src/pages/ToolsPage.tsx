@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench } from 'lucide-react';
+import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,8 @@ const ToolsPage: React.FC = () => {
       toolsDesc: 'أدوات تحليل وتتبع الهدايا',
       heatmap: 'خريطة الحرارة',
       heatmapDesc: 'عرض تغيرات أسعار الهدايا بشكل مرئي',
+      marketStats: 'إحصائيات السوق',
+      marketStatsDesc: 'تتبع القيمة السوقية الإجمالية',
       calculator: 'حاسبة الأرباح',
       calculatorDesc: 'احسب أرباحك المتوقعة',
       analytics: 'تحليلات متقدمة',
@@ -26,6 +28,8 @@ const ToolsPage: React.FC = () => {
       toolsDesc: 'Gift analysis and tracking tools',
       heatmap: 'Heatmap',
       heatmapDesc: 'Visualize gift price changes',
+      marketStats: 'Market Stats',
+      marketStatsDesc: 'Track total market capitalization',
       calculator: 'Profit Calculator',
       calculatorDesc: 'Calculate your expected profits',
       analytics: 'Advanced Analytics',
@@ -43,20 +47,28 @@ const ToolsPage: React.FC = () => {
       name: text.heatmap,
       description: text.heatmapDesc,
       icon: Grid3X3,
-      color: 'from-green-500 to-emerald-600',
       iconBg: 'bg-green-500/20',
       iconColor: 'text-green-400',
       available: true,
       route: '/heatmap'
     },
     {
+      id: 'marketStats',
+      name: text.marketStats,
+      description: text.marketStatsDesc,
+      icon: TrendingUp,
+      iconBg: 'bg-blue-500/20',
+      iconColor: 'text-blue-400',
+      available: true,
+      route: '/market-stats'
+    },
+    {
       id: 'calculator',
       name: text.calculator,
       description: text.calculatorDesc,
       icon: Calculator,
-      color: 'from-blue-500 to-cyan-600',
-      iconBg: 'bg-blue-500/20',
-      iconColor: 'text-blue-400',
+      iconBg: 'bg-purple-500/20',
+      iconColor: 'text-purple-400',
       available: false,
       route: null
     },
@@ -65,9 +77,8 @@ const ToolsPage: React.FC = () => {
       name: text.analytics,
       description: text.analyticsDesc,
       icon: BarChart3,
-      color: 'from-purple-500 to-pink-600',
-      iconBg: 'bg-purple-500/20',
-      iconColor: 'text-purple-400',
+      iconBg: 'bg-amber-500/20',
+      iconColor: 'text-amber-400',
       available: false,
       route: null
     }

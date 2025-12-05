@@ -148,16 +148,6 @@ const Chart = () => {
             {/* View Mode Toggle */}
             <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/10">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-all ${
                   viewMode === 'list'
@@ -166,6 +156,16 @@ const Chart = () => {
                 }`}
               >
                 <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
               </button>
             </div>
 
