@@ -113,47 +113,45 @@ const ToolsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         {tools.map((tool) => {
           const Icon = tool.icon;
           return (
-            <Card
+            <button
               key={tool.id}
               onClick={() => tool.available && tool.route && navigate(tool.route)}
-              className={`overflow-hidden bg-slate-800/50 border-slate-700/30 rounded-2xl transition-all duration-300 ${
-                tool.available ? 'cursor-pointer hover:bg-slate-800/70 hover:scale-[1.02]' : 'opacity-70'
+              disabled={!tool.available}
+              className={`w-full text-left bg-slate-800/50 border border-slate-700/30 rounded-2xl p-4 transition-all duration-200 ${
+                tool.available 
+                  ? 'hover:bg-slate-800/70 hover:border-slate-600/50 active:scale-[0.98]' 
+                  : 'opacity-60 cursor-not-allowed'
               }`}
             >
-              <div className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Icon */}
-                  <div className={`p-3 rounded-xl ${tool.iconBg}`}>
-                    <Icon className={`w-6 h-6 ${tool.iconColor}`} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-white font-semibold">{tool.name}</h3>
-                      {!tool.available && (
-                        <span className="px-2 py-0.5 bg-amber-500/20 text-blue-400 text-[10px] font-medium rounded-full">
-                          {text.comingSoon}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-slate-400 text-sm mt-0.5">{tool.description}</p>
-                  </div>
-
-                  {/* Arrow */}
-                  {tool.available && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-400 text-sm font-medium">{text.tryNow}</span>
-                      <ChevronRight className="w-5 h-5 text-blue-400" />
-                    </div>
-                  )}
+              <div className="flex items-center gap-4">
+                {/* Icon */}
+                <div className={`p-3 rounded-xl ${tool.iconBg} flex-shrink-0`}>
+                  <Icon className={`w-6 h-6 ${tool.iconColor}`} />
                 </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-white font-semibold text-base">{tool.name}</h3>
+                    {!tool.available && (
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-medium rounded-full">
+                        {text.comingSoon}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-sm line-clamp-1">{tool.description}</p>
+                </div>
+
+                {/* Arrow */}
+                {tool.available && (
+                  <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                )}
               </div>
-            </Card>
+            </button>
           );
         })}
       </div>

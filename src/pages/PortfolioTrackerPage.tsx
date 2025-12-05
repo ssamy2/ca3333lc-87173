@@ -11,11 +11,13 @@ import {
   Loader2,
   AlertCircle,
   BarChart3,
-  Package
+  Package,
+  ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchPortfolioAnalysis } from '@/services/apiService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface PortfolioData {
   success: boolean;
@@ -110,21 +112,26 @@ interface PortfolioData {
 const PortfolioTrackerPage: React.FC = () => {
   const { language } = useLanguage();
   const { username: authUsername } = useAuth();
+  const navigate = useNavigate();
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchUsername, setSearchUsername] = useState('');
   const [currentUsername, setCurrentUsername] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   const t = {
     ar: {
       title: 'متتبع المحفظة',
       subtitle: 'تحليل شامل لمحفظة هداياك',
-      searchPlaceholder: 'ابحث عن مستخدم آخر...',
-      search: 'بحث',
+      searchPlaceholder: 'أدخل اسم المستخدم...',
+      search: 'تحليل',
       loading: 'جاري التحليل...',
       error: 'حدث خطأ',
       retry: 'إعادة المحاولة',
+      back: 'رجوع',
+      searchTitle: 'البحث عن محفظة',
+      searchSubtitle: 'أدخل اسم المستخدم لتحليل محفظته',
       portfolioValue: 'قيمة المحفظة',
       totalValue: 'القيمة الإجمالية',
       upgradedGifts: 'الهدايا المطورة',
@@ -147,11 +154,14 @@ const PortfolioTrackerPage: React.FC = () => {
     en: {
       title: 'Portfolio Tracker',
       subtitle: 'Comprehensive analysis of your gift portfolio',
-      searchPlaceholder: 'Search for another user...',
-      search: 'Search',
+      searchPlaceholder: 'Enter username...',
+      search: 'Analyze',
       loading: 'Analyzing...',
       error: 'An error occurred',
       retry: 'Retry',
+      back: 'Back',
+      searchTitle: 'Search Portfolio',
+      searchSubtitle: 'Enter username to analyze their portfolio',
       portfolioValue: 'Portfolio Value',
       totalValue: 'Total Value',
       upgradedGifts: 'Upgraded Gifts',
@@ -176,11 +186,8 @@ const PortfolioTrackerPage: React.FC = () => {
   const text = t[language] || t.en;
 
   useEffect(() => {
-    if (authUsername) {
-      setCurrentUsername(authUsername);
-      loadPortfolio(authUsername);
-    }
-  }, [authUsername]);
+    // Don't auto-load, let user search
+  }, []);
 
   const loadPortfolio = async (username: string) => {
     setLoading(true);
@@ -198,7 +205,17 @@ const PortfolioTrackerPage: React.FC = () => {
   const handleSearch = () => {
     if (searchUsername.trim()) {
       setCurrentUsername(searchUsername.trim());
+      setIsSearchMode(true);
+      loadPortfolio(searchUsername.trim());
     }
+  };
+
+  const handleBack = () => {
+    setIsSearchMode(false);
+    setPortfolioData(null);
+    setSearchUsername('');
+    setCurrentUsername('');
+    setError(null);
   };
 
   const formatNumber = (num: number) => {
@@ -213,11 +230,71 @@ const PortfolioTrackerPage: React.FC = () => {
     return `${sign}${num.toFixed(2)}%`;
   };
 
+  // Show search screen if no data loaded yet
+  if (!isSearchMode && !portfolioData) {
+    return (
+      <div className="min-h-screen bg-[#0f1729] pb-24">
+        {/* Header with Back Button */}
+        <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 hover:bg-slate-800/50 rounded-xl transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-400" />
+              </button>
+              <div className="p-2 bg-purple-500/20 rounded-xl">
+                <Wallet className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">{text.searchTitle}</h1>
+                <p className="text-xs text-slate-400">{text.searchSubtitle}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Form */}
+        <div className="p-4 max-w-md mx-auto mt-12">
+          <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-2xl p-6 border border-purple-500/20">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-purple-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">{text.searchTitle}</h2>
+              <p className="text-slate-400 text-sm">{text.searchSubtitle}</p>
+            </div>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder={text.searchPlaceholder}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/30 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+              />
+              <button
+                onClick={handleSearch}
+                disabled={!searchUsername.trim()}
+                className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 font-medium disabled:cursor-not-allowed"
+              >
+                <Search className="w-5 h-5" />
+                {text.search}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0f1729] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-purple-400 animate-spin mx-auto mb-4" />
           <p className="text-slate-400">{text.loading}</p>
         </div>
       </div>
@@ -231,12 +308,20 @@ const PortfolioTrackerPage: React.FC = () => {
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-white font-semibold mb-2">{text.error}</h3>
           <p className="text-slate-400 text-sm mb-4">{error}</p>
-          <button
-            onClick={() => loadPortfolio(currentUsername)}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-          >
-            {text.retry}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleBack}
+              className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            >
+              {text.back}
+            </button>
+            <button
+              onClick={() => loadPortfolio(currentUsername)}
+              className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            >
+              {text.retry}
+            </button>
+          </div>
         </Card>
       </div>
     );
@@ -248,7 +333,13 @@ const PortfolioTrackerPage: React.FC = () => {
         <Card className="bg-slate-800/50 border-slate-700/30 p-6 text-center max-w-md">
           <Package className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-white font-semibold mb-2">{text.noGifts}</h3>
-          <p className="text-slate-400 text-sm">{text.noData}</p>
+          <p className="text-slate-400 text-sm mb-4">{text.noData}</p>
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+          >
+            {text.back}
+          </button>
         </Card>
       </div>
     );
@@ -258,36 +349,23 @@ const PortfolioTrackerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0f1729] pb-24">
-      {/* Header */}
+      {/* Header with Back Button */}
       <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-blue-500/20 rounded-xl">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">{text.title}</h1>
-              <p className="text-xs text-slate-400">{text.subtitle}</p>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchUsername}
-              onChange={(e) => setSearchUsername(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder={text.searchPlaceholder}
-              className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700/30 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
-            />
             <button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors flex items-center gap-2"
+              onClick={handleBack}
+              className="p-2 hover:bg-slate-800/50 rounded-xl transition-colors"
             >
-              <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">{text.search}</span>
+              <ArrowLeft className="w-5 h-5 text-slate-400" />
             </button>
+            <div className="p-2 bg-purple-500/20 rounded-xl">
+              <Wallet className="w-5 h-5 text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-lg font-bold text-white">{text.title}</h1>
+              <p className="text-xs text-slate-400">@{currentUsername}</p>
+            </div>
           </div>
         </div>
       </div>
