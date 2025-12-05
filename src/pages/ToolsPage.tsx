@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchPortfolioAnalysis } from '@/services/apiService';
 
 const ToolsPage: React.FC = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const { username } = useAuth();
+
+  // Prefetch portfolio data when entering Tools page
+  useEffect(() => {
+    if (username) {
+      console.log('🔄 Prefetching portfolio data for:', username);
+      fetchPortfolioAnalysis(username).catch(() => {
+        // Silently fail prefetch
+      });
+    }
+  }, [username]);
 
   const t = {
     ar: {
@@ -83,8 +96,8 @@ const ToolsPage: React.FC = () => {
       icon: Calculator,
       iconBg: 'bg-amber-500/20',
       iconColor: 'text-amber-400',
-      available: false,
-      route: null
+      available: true,
+      route: '/profit-calculator'
     },
     {
       id: 'analytics',

@@ -2,15 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { 
   TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
   Wallet, 
   ArrowUpRight, 
   ArrowDownRight,
-  Search,
   Loader2,
   AlertCircle,
-  BarChart3,
   Package,
   ArrowLeft
 } from 'lucide-react';
@@ -114,29 +110,20 @@ const PortfolioTrackerPage: React.FC = () => {
   const { username: authUsername } = useAuth();
   const navigate = useNavigate();
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchUsername, setSearchUsername] = useState('');
-  const [currentUsername, setCurrentUsername] = useState('');
-  const [isSearchMode, setIsSearchMode] = useState(false);
 
   const t = {
     ar: {
       title: 'متتبع المحفظة',
       subtitle: 'تحليل شامل لمحفظة هداياك',
-      searchPlaceholder: 'أدخل اسم المستخدم...',
-      search: 'تحليل',
       loading: 'جاري التحليل...',
       error: 'حدث خطأ',
       retry: 'إعادة المحاولة',
       back: 'رجوع',
-      searchTitle: 'البحث عن محفظة',
-      searchSubtitle: 'أدخل اسم المستخدم لتحليل محفظته',
-      portfolioValue: 'قيمة المحفظة',
       totalValue: 'القيمة الإجمالية',
       upgradedGifts: 'الهدايا المطورة',
       regularGifts: 'الهدايا العادية',
-      performance: 'الأداء',
       day: '24 ساعة',
       week: 'أسبوع',
       month: 'شهر',
@@ -145,28 +132,21 @@ const PortfolioTrackerPage: React.FC = () => {
       mostProfitable: 'الأكثر ربحاً',
       biggestLoss: 'الأكبر خسارة',
       mostValuable: 'الأكثر قيمة',
-      profit: 'ربح',
-      loss: 'خسارة',
       quantity: 'الكمية',
       noData: 'لا توجد بيانات',
-      noGifts: 'لا توجد هدايا في المحفظة'
+      noGifts: 'لا توجد هدايا في المحفظة',
+      noUsername: 'يجب تسجيل الدخول عبر تيليجرام'
     },
     en: {
       title: 'Portfolio Tracker',
       subtitle: 'Comprehensive analysis of your gift portfolio',
-      searchPlaceholder: 'Enter username...',
-      search: 'Analyze',
       loading: 'Analyzing...',
       error: 'An error occurred',
       retry: 'Retry',
       back: 'Back',
-      searchTitle: 'Search Portfolio',
-      searchSubtitle: 'Enter username to analyze their portfolio',
-      portfolioValue: 'Portfolio Value',
       totalValue: 'Total Value',
       upgradedGifts: 'Upgraded Gifts',
       regularGifts: 'Regular Gifts',
-      performance: 'Performance',
       day: '24 Hours',
       week: 'Week',
       month: 'Month',
@@ -175,19 +155,24 @@ const PortfolioTrackerPage: React.FC = () => {
       mostProfitable: 'Most Profitable',
       biggestLoss: 'Biggest Loss',
       mostValuable: 'Most Valuable',
-      profit: 'Profit',
-      loss: 'Loss',
       quantity: 'Quantity',
       noData: 'No data available',
-      noGifts: 'No gifts in portfolio'
+      noGifts: 'No gifts in portfolio',
+      noUsername: 'Please login via Telegram'
     }
   };
 
   const text = t[language] || t.en;
 
+  // Auto-load portfolio data for current user
   useEffect(() => {
-    // Don't auto-load, let user search
-  }, []);
+    if (authUsername) {
+      loadPortfolio(authUsername);
+    } else {
+      setLoading(false);
+      setError(text.noUsername);
+    }
+  }, [authUsername]);
 
   const loadPortfolio = async (username: string) => {
     setLoading(true);
@@ -202,22 +187,6 @@ const PortfolioTrackerPage: React.FC = () => {
     }
   };
 
-  const handleSearch = () => {
-    if (searchUsername.trim()) {
-      setCurrentUsername(searchUsername.trim());
-      setIsSearchMode(true);
-      loadPortfolio(searchUsername.trim());
-    }
-  };
-
-  const handleBack = () => {
-    setIsSearchMode(false);
-    setPortfolioData(null);
-    setSearchUsername('');
-    setCurrentUsername('');
-    setError(null);
-  };
-
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -229,66 +198,6 @@ const PortfolioTrackerPage: React.FC = () => {
     const sign = num >= 0 ? '+' : '';
     return `${sign}${num.toFixed(2)}%`;
   };
-
-  // Show search screen if no data loaded yet
-  if (!isSearchMode && !portfolioData) {
-    return (
-      <div className="min-h-screen bg-[#0f1729] pb-24">
-        {/* Header with Back Button */}
-        <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
-          <div className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-slate-800/50 rounded-xl transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-slate-400" />
-              </button>
-              <div className="p-2 bg-purple-500/20 rounded-xl">
-                <Wallet className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">{text.searchTitle}</h1>
-                <p className="text-xs text-slate-400">{text.searchSubtitle}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Form */}
-        <div className="p-4 max-w-md mx-auto mt-12">
-          <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-2xl p-6 border border-purple-500/20">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-purple-400" />
-              </div>
-              <h2 className="text-xl font-bold text-white mb-2">{text.searchTitle}</h2>
-              <p className="text-slate-400 text-sm">{text.searchSubtitle}</p>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={searchUsername}
-                onChange={(e) => setSearchUsername(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder={text.searchPlaceholder}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/30 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={!searchUsername.trim()}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 font-medium disabled:cursor-not-allowed"
-              >
-                <Search className="w-5 h-5" />
-                {text.search}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -310,17 +219,19 @@ const PortfolioTrackerPage: React.FC = () => {
           <p className="text-slate-400 text-sm mb-4">{error}</p>
           <div className="flex gap-2">
             <button
-              onClick={handleBack}
+              onClick={() => navigate(-1)}
               className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
             >
               {text.back}
             </button>
-            <button
-              onClick={() => loadPortfolio(currentUsername)}
-              className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-            >
-              {text.retry}
-            </button>
+            {authUsername && (
+              <button
+                onClick={() => loadPortfolio(authUsername)}
+                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              >
+                {text.retry}
+              </button>
+            )}
           </div>
         </Card>
       </div>
@@ -335,7 +246,7 @@ const PortfolioTrackerPage: React.FC = () => {
           <h3 className="text-white font-semibold mb-2">{text.noGifts}</h3>
           <p className="text-slate-400 text-sm mb-4">{text.noData}</p>
           <button
-            onClick={handleBack}
+            onClick={() => navigate(-1)}
             className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
           >
             {text.back}
@@ -349,12 +260,12 @@ const PortfolioTrackerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0f1729] pb-24">
-      {/* Header with Back Button */}
+      {/* Header */}
       <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleBack}
+              onClick={() => navigate(-1)}
               className="p-2 hover:bg-slate-800/50 rounded-xl transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-slate-400" />
@@ -364,7 +275,7 @@ const PortfolioTrackerPage: React.FC = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-white">{text.title}</h1>
-              <p className="text-xs text-slate-400">@{currentUsername}</p>
+              <p className="text-xs text-slate-400">@{authUsername}</p>
             </div>
           </div>
         </div>

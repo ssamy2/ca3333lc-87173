@@ -167,9 +167,20 @@ const HeatmapPage = () => {
   }, [topFilter, dataSource, marketData, blackFloorData, chartType, currency]);
 
   const giftItems = useMemo((): GiftItem[] => {
-    return filteredData.map(([name, data]) => {
+    const items = filteredData.map(([name, data]) => {
       const currentPriceTon = data.priceTon || data.price_ton;
       const currentPriceUsd = data.priceUsd || data.price_usd;
+      
+      // Log unupgraded gift data for debugging
+      if (name.startsWith('[Regular]') || (data as any).is_unupgraded) {
+        console.log(`🔍 [Heatmap Data] ${name}:`, {
+          currentPriceTon,
+          tonPrice24hAgo: data.tonPrice24hAgo,
+          tonPriceWeekAgo: data.tonPriceWeekAgo,
+          tonPriceMonthAgo: data.tonPriceMonthAgo,
+          rawData: data
+        });
+      }
       
       return {
         name,
@@ -188,7 +199,10 @@ const HeatmapPage = () => {
         preSale: false
       };
     });
-  }, [filteredData]);
+    
+    console.log(`📊 [Heatmap] Total items: ${items.length}, Source: ${dataSource}`);
+    return items;
+  }, [filteredData, dataSource]);
 
   if (loading) {
     return (

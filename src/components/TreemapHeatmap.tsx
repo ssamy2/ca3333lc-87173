@@ -87,7 +87,9 @@ const awaitCreateImageBitmapSafe = async (img: HTMLImageElement): Promise<ImageB
 };
 
 const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): Promise<Map<string, HTMLImageElement>> => {
-  const imageMap = new Map<string, HTMLImageElement>();
+  const imageMapResult = new Map<string, HTMLImageElement>();
+  let cachedCount = 0;
+  let loadedCount = 0;
   
   // Process images in batches to avoid overwhelming the browser
   const batchSize = 10;
@@ -95,7 +97,10 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
     const batch = data.slice(i, i + batchSize);
     const promises = batch.map(async item => {
       const url = normalizeUrl(item.imageName);
-      if (imageMap.has(url)) return;
+      if (imageMapResult.has(url)) return;
+      
+      // Check if image is cached first
+      const cachedBase64 = imageCache.getImageFromCache(url);
       
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -115,7 +120,14 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
         };
         img.onerror = () => safeResolve();
         
-        img.src = url;
+        // Use cached base64 if available, otherwise load from URL
+        if (cachedBase64 && cachedBase64.startsWith('data:')) {
+          img.src = cachedBase64;
+          cachedCount++;
+        } else {
+          img.src = url;
+          loadedCount++;
+        }
       });
       
       const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
@@ -123,8 +135,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
       
       // Verify image loaded successfully
       if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
-        imageMap.set(url, img);
-        console.log('✅ Image loaded for export:', item.name, img.naturalWidth, 'x', img.naturalHeight);
+        imageMapResult.set(url, img);
       } else {
         console.warn('⚠️ Image failed to load:', item.name, url);
       }
@@ -133,8 +144,8 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
     await Promise.all(promises);
   }
   
-  console.log(`📊 Loaded ${imageMap.size}/${data.length} images for export`);
-  return imageMap;
+  console.log(`📊 Images loaded: ${imageMapResult.size}/${data.length} (${cachedCount} from cache, ${loadedCount} from network)`);
+  return imageMapResult;
 };
 
 // updateInteractivity removed - zoom is now disabled
@@ -176,6 +187,9 @@ const transformGiftData = (
       }
 
       const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
+      
+      // Log unupgraded gift change data
+      console.log(`📊 [Regular Gift] ${displayName}: currentPrice=${currentPrice}, previousPrice=${previousPrice}, change=${percentChange.toFixed(2)}%, timeGap=${timeGap}`);
       
       // Size based on price for regular gifts
       const size = Math.max(10, Math.sqrt(currentPrice) * 5);
