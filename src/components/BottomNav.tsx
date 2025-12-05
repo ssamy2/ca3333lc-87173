@@ -1,11 +1,11 @@
-import { Home, Wrench, Bitcoin, Settings } from 'lucide-react';
+import { Home, TrendingUp, Wrench, Bitcoin, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
 
 interface BottomNavProps {
-  activeTab: 'home' | 'tools' | 'crypto' | 'settings';
-  onTabChange: (tab: 'home' | 'tools' | 'crypto' | 'settings') => void;
+  activeTab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings';
+  onTabChange: (tab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings') => void;
 }
 
 const BottomNav = ({
@@ -19,6 +19,7 @@ const BottomNav = ({
 
   const navItems = [
     { id: 'home' as const, icon: Home, label: t('home') },
+    { id: 'chart' as const, icon: TrendingUp, label: t('chart') },
     { id: 'tools' as const, icon: Wrench, label: language === 'ar' ? 'أدوات' : 'Tools' },
     { id: 'crypto' as const, icon: Bitcoin, label: language === 'ar' ? 'كريبتو' : 'Crypto' },
     { id: 'settings' as const, icon: Settings, label: t('settings') },
