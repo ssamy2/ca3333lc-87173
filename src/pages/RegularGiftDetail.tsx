@@ -2,12 +2,22 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Star, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Send, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import { getAuthHeaders } from '@/lib/telegramAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart
+} from 'recharts';
 
 interface RegularGiftData {
   gift_id: string;
@@ -25,6 +35,37 @@ interface RegularGiftData {
   last_updated: string;
 }
 
+interface PriceHistoryData {
+  price_ton: number;
+  price_usd: number;
+  recorded_at: string;
+}
+
+interface PriceChanges {
+  daily: { change_ton_percent: number; old_price_ton: number } | null;
+  weekly: { change_ton_percent: number; old_price_ton: number } | null;
+  monthly: { change_ton_percent: number; old_price_ton: number } | null;
+  three_months: { change_ton_percent: number; old_price_ton: number } | null;
+  yearly: { change_ton_percent: number; old_price_ton: number } | null;
+}
+
+type ChartPeriod = 'daily' | 'weekly' | 'monthly';
+
+// Helper function for rounded rectangles in canvas
+const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+};
+
 const RegularGiftDetail: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
@@ -34,6 +75,10 @@ const RegularGiftDetail: React.FC = () => {
   const [giftData, setGiftData] = useState<RegularGiftData | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [sending, setSending] = useState(false);
+  const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([]);
+  const [priceChanges, setPriceChanges] = useState<PriceChanges | null>(null);
+  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('weekly');
+  const [historyLoading, setHistoryLoading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const giftImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -54,7 +99,14 @@ const RegularGiftDetail: React.FC = () => {
       loading: 'جاري التحميل...',
       notFound: 'الهدية غير موجودة',
       lastUpdated: 'آخر تحديث',
-      confidence: 'دقة المطابقة'
+      confidence: 'دقة المطابقة',
+      firstPrice: 'السعر الأول',
+      gifts: 'الهدايا',
+      daily: 'يومي',
+      weekly: 'أسبوعي',
+      monthly: 'شهري',
+      priceChart: 'الرسم البياني',
+      noHistory: 'لا يوجد تاريخ أسعار'
     },
     en: {
       back: 'Back',
@@ -72,11 +124,38 @@ const RegularGiftDetail: React.FC = () => {
       loading: 'Loading...',
       notFound: 'Gift not found',
       lastUpdated: 'Last Updated',
-      confidence: 'Match Confidence'
+      confidence: 'Match Confidence',
+      firstPrice: 'First Price',
+      gifts: 'Gifts',
+      daily: 'Daily',
+      weekly: 'Weekly',
+      monthly: 'Monthly',
+      priceChart: 'Price Chart',
+      noHistory: 'No price history'
     }
   };
 
   const text = t[language] || t.en;
+
+  // Fetch price history for chart
+  const fetchPriceHistory = useCallback(async (giftId: string) => {
+    try {
+      setHistoryLoading(true);
+      const response = await fetch(`https://www.channelsseller.site/api/unupgraded-price-history/${giftId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.price_history) {
+          setPriceHistory(result.price_history);
+          setPriceChanges(result.changes);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch price history:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
 
   const fetchGiftData = useCallback(async (giftName: string) => {
     try {
@@ -101,6 +180,10 @@ const RegularGiftDetail: React.FC = () => {
       
       if (result.success && result.data) {
         setGiftData(result.data);
+        // Fetch price history if gift_id is available
+        if (result.data.gift_id) {
+          fetchPriceHistory(result.data.gift_id);
+        }
       } else if (result.is_upgraded === true) {
         // Redirect to upgraded gift page
         navigate(`/gift/${encodeURIComponent(cleanName)}`, { replace: true });
@@ -113,13 +196,47 @@ const RegularGiftDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate, text.notFound]);
+  }, [navigate, text.notFound, fetchPriceHistory]);
 
   useEffect(() => {
     if (name) {
       fetchGiftData(decodeURIComponent(name));
     }
   }, [name, fetchGiftData]);
+
+  // Filter chart data based on period
+  const getChartData = useCallback(() => {
+    if (!priceHistory.length) return [];
+    
+    const now = new Date();
+    let filterDate: Date;
+    
+    switch (chartPeriod) {
+      case 'daily':
+        filterDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case 'weekly':
+        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'monthly':
+        filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+    
+    return priceHistory
+      .filter(item => new Date(item.recorded_at) >= filterDate)
+      .reverse()
+      .map(item => ({
+        ...item,
+        date: new Date(item.recorded_at).toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          hour: chartPeriod === 'daily' ? '2-digit' : undefined
+        })
+      }));
+  }, [priceHistory, chartPeriod]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -134,7 +251,7 @@ const RegularGiftDetail: React.FC = () => {
     return supply.toLocaleString();
   };
 
-  // Create professional canvas image
+  // Create professional canvas image - Nova style
   const createGiftCanvas = useCallback(async (): Promise<HTMLCanvasElement | null> => {
     if (!giftData || !giftImageRef.current) return null;
 
@@ -142,97 +259,87 @@ const RegularGiftDetail: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // Canvas size - compact and professional
+    // Canvas size
     const width = 400;
-    const height = 320;
+    const height = 280;
     canvas.width = width;
     canvas.height = height;
 
-    // Background gradient
+    // Background gradient - blue theme
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(0.5, '#16213e');
-    gradient.addColorStop(1, '#0f0f23');
+    gradient.addColorStop(0, '#0a1628');
+    gradient.addColorStop(0.5, '#0d1f3c');
+    gradient.addColorStop(1, '#0a1628');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Decorative border
-    ctx.strokeStyle = '#f59e0b40';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(8, 8, width - 16, height - 16);
+    // Main card background
+    ctx.fillStyle = 'rgba(26, 58, 92, 0.6)';
+    roundRect(ctx, 15, 15, width - 30, height - 30, 20);
+    ctx.fill();
 
-    // Inner glow effect
-    const innerGlow = ctx.createRadialGradient(width/2, 100, 0, width/2, 100, 150);
-    innerGlow.addColorStop(0, '#f59e0b15');
-    innerGlow.addColorStop(1, 'transparent');
-    ctx.fillStyle = innerGlow;
-    ctx.fillRect(0, 0, width, height);
-
-    // Draw gift image (centered, smaller)
+    // Draw gift image (right side)
     const img = giftImageRef.current;
     const imgSize = 100;
-    const imgX = (width - imgSize) / 2;
-    const imgY = 25;
+    const imgX = width - imgSize - 35;
+    const imgY = 40;
     
-    // Image shadow
-    ctx.shadowColor = '#f59e0b40';
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.3)';
     ctx.shadowBlur = 20;
     ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
     ctx.shadowBlur = 0;
 
+    // Small icon (left side)
+    ctx.drawImage(img, 30, 35, 40, 40);
+
     // Gift name
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 22px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(giftData.gift_name, width / 2, 150);
-
-    // "Regular Gift" badge - more transparent
-    ctx.fillStyle = '#f59e0b15';
-    const badgeText = language === 'ar' ? 'هدية عادية' : 'Regular Gift';
-    const badgeWidth = ctx.measureText(badgeText).width + 20;
-    ctx.fillRect((width - badgeWidth) / 2, 158, badgeWidth, 22);
-    ctx.fillStyle = '#fbbf2480'; // More transparent text
-    ctx.font = '12px Arial, sans-serif';
-    ctx.fillText(badgeText, width / 2, 173);
-
-    // Price section - horizontal layout
-    const priceY = 200;
-    
-    // TON Price
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 24px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${formatNumber(giftData.price_ton)} TON`, width / 2, priceY);
-
-    // USD Price
-    ctx.fillStyle = '#22c55e';
-    ctx.font = '16px Arial, sans-serif';
-    ctx.fillText(`$${formatNumber(giftData.price_usd)}`, width / 2, priceY + 25);
-
-    // Stats row
-    const statsY = 255;
-    const isPositive = giftData.change_24h >= 0;
-    
-    // 24h Change
-    ctx.fillStyle = isPositive ? '#22c55e' : '#ef4444';
-    ctx.font = 'bold 14px Arial, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Arial, sans-serif';
     ctx.textAlign = 'left';
-    const changeText = `${isPositive ? '▲' : '▼'} ${Math.abs(giftData.change_24h).toFixed(2)}%`;
-    ctx.fillText(changeText, 30, statsY);
+    ctx.fillText(giftData.gift_name, 80, 62);
 
-    // Stars
-    ctx.fillStyle = '#eab308';
-    ctx.textAlign = 'center';
-    ctx.fillText(`⭐ ${giftData.price_stars.toLocaleString()}`, width / 2, statsY);
+    // TON Price
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 28px Arial, sans-serif';
+    ctx.fillText(`◈ ${formatNumber(giftData.price_ton)}`, 30, 110);
 
-    // Supply
+    // Change badge
+    const isPositive = giftData.change_24h >= 0;
+    ctx.fillStyle = isPositive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+    roundRect(ctx, 30, 120, 80, 24, 12);
+    ctx.fill();
+    ctx.fillStyle = isPositive ? '#22c55e' : '#ef4444';
+    ctx.font = 'bold 12px Arial, sans-serif';
+    ctx.fillText(`${isPositive ? '▲' : '▼'} ${Math.abs(giftData.change_24h).toFixed(1)}%`, 45, 137);
+
+    // Bottom stats
+    const statsY = 200;
+    
+    // First Price
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+    roundRect(ctx, 30, statsY - 5, 100, 50, 8);
+    ctx.fill();
     ctx.fillStyle = '#94a3b8';
-    ctx.textAlign = 'right';
+    ctx.font = '10px Arial, sans-serif';
+    ctx.fillText(language === 'ar' ? 'السعر الأول:' : 'First Price:', 40, statsY + 12);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px Arial, sans-serif';
+    ctx.fillText(`⭐ ${giftData.price_stars?.toLocaleString() || '—'}`, 40, statsY + 32);
+
+    // Gifts count
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+    roundRect(ctx, 145, statsY - 5, 100, 50, 8);
+    ctx.fill();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px Arial, sans-serif';
+    ctx.fillText(language === 'ar' ? 'الهدايا' : 'Gifts', 155, statsY + 12);
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 14px Arial, sans-serif';
     const supplyText = giftData.supply_text || formatSupply(giftData.supply);
-    ctx.fillText(`📦 ${supplyText}`, width - 30, statsY);
+    ctx.fillText(`🎁 ${supplyText}`, 155, statsY + 32);
 
     // Footer - Nova branding
-    ctx.fillStyle = '#64748b50';
+    ctx.fillStyle = '#64748b80';
     ctx.fillRect(0, height - 35, width, 35);
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px Arial, sans-serif';
@@ -338,42 +445,72 @@ const RegularGiftDetail: React.FC = () => {
   }
 
   const isPositive = giftData.change_24h >= 0;
+  const chartData = getChartData();
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-amber-500/20">
+      <div className="sticky top-0 z-50 bg-[#0a1628]/90 backdrop-blur-lg">
         <div className="flex items-center justify-between p-4">
           <Button 
             variant="ghost" 
             size="icon"
             onClick={() => navigate(-1)}
-            className="hover:bg-amber-500/10"
+            className="hover:bg-blue-500/10 text-white"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <span className="text-amber-400 text-sm font-medium px-3 py-1 bg-amber-500/10 rounded-full border border-amber-500/20">
-              {text.notUpgraded}
-            </span>
-          </div>
-          <div className="w-10" /> {/* Spacer */}
+          <div className="w-10" />
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* Gift Image & Name */}
-        <Card className="overflow-hidden bg-gradient-to-br from-amber-950/30 to-amber-900/10 border-amber-500/20">
-          <div className="relative">
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-amber-600/10" />
-            
-            {/* Image Container */}
-            <div className="relative flex justify-center py-8">
-              <div className="relative w-48 h-48">
+      <div className="p-4 space-y-4">
+        {/* Main Card - Like the image design */}
+        <Card className="overflow-hidden bg-gradient-to-br from-[#1a3a5c]/80 to-[#0d2847]/80 border-blue-500/20 rounded-3xl backdrop-blur-xl">
+          <div className="p-5">
+            {/* Top Section: Gift Info + Image */}
+            <div className="flex items-start justify-between gap-4">
+              {/* Left: Gift Info */}
+              <div className="flex-1">
+                {/* Gift Name with Icon */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-blue-500/20 flex-shrink-0">
+                    <img
+                      src={giftData.image_url}
+                      alt={giftData.gift_name}
+                      className="w-full h-full object-cover"
+                      onLoad={() => setImageLoaded(true)}
+                    />
+                  </div>
+                  <h1 className="text-xl font-bold text-white">{giftData.gift_name}</h1>
+                </div>
+
+                {/* Price */}
+                <div className="flex items-center gap-2 mb-2">
+                  <TonIcon className="w-6 h-6 text-blue-400" />
+                  <span className="text-3xl font-bold text-white">{formatNumber(giftData.price_ton)}</span>
+                </div>
+
+                {/* Change Badge */}
+                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
+                  isPositive 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {isPositive ? (
+                    <TrendingUp className="w-4 h-4" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4" />
+                  )}
+                  {isPositive ? '+' : ''}{giftData.change_24h.toFixed(1)}%
+                </div>
+              </div>
+
+              {/* Right: Large Gift Image */}
+              <div className="w-32 h-32 flex-shrink-0">
                 {!imageLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-amber-500/5 rounded-2xl">
-                    <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                  <div className="w-full h-full flex items-center justify-center bg-blue-500/10 rounded-2xl">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
                   </div>
                 )}
                 <img
@@ -385,101 +522,109 @@ const RegularGiftDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Gift Name */}
-            <div className="text-center pb-6 px-4">
-              <h1 className="text-2xl font-bold text-amber-100 mb-2">{giftData.gift_name}</h1>
-              <p className="text-amber-400/60 text-sm">{text.regularGift}</p>
-            </div>
-          </div>
-        </Card>
+            {/* Price Chart */}
+            <div className="mt-4">
+              {/* Period Selector */}
+              <div className="flex items-center gap-2 mb-3">
+                {(['daily', 'weekly', 'monthly'] as ChartPeriod[]).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setChartPeriod(period)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                      chartPeriod === period
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+                    }`}
+                  >
+                    {text[period]}
+                  </button>
+                ))}
+              </div>
 
-        {/* Price Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* TON Price */}
-          <Card className="p-4 bg-gradient-to-br from-amber-950/20 to-amber-900/10 border-amber-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <TonIcon className="w-5 h-5 text-amber-500" />
-              <span className="text-amber-400/60 text-sm">TON</span>
-            </div>
-            <p className="text-2xl font-bold text-amber-100">{formatNumber(giftData.price_ton)}</p>
-          </Card>
-
-          {/* USD Price */}
-          <Card className="p-4 bg-gradient-to-br from-green-950/20 to-green-900/10 border-green-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-green-500 text-lg">$</span>
-              <span className="text-green-400/60 text-sm">USD</span>
-            </div>
-            <p className="text-2xl font-bold text-green-100">{formatNumber(giftData.price_usd)}</p>
-          </Card>
-
-          {/* Stars */}
-          <Card className="p-4 bg-gradient-to-br from-yellow-950/20 to-yellow-900/10 border-yellow-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-              <span className="text-yellow-400/60 text-sm">{text.stars}</span>
-            </div>
-            <p className="text-2xl font-bold text-yellow-100">{giftData.price_stars.toLocaleString()}</p>
-          </Card>
-
-          {/* 24h Change */}
-          <Card className={`p-4 bg-gradient-to-br ${isPositive ? 'from-green-950/20 to-green-900/10 border-green-500/20' : 'from-red-950/20 to-red-900/10 border-red-500/20'}`}>
-            <div className="flex items-center gap-2 mb-2">
-              {isPositive ? (
-                <TrendingUp className="w-5 h-5 text-green-500" />
+              {/* Chart */}
+              {historyLoading ? (
+                <div className="h-32 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+                </div>
+              ) : chartData.length > 0 ? (
+                <div className="h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 10 }}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis hide domain={['dataMin', 'dataMax']} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          border: '1px solid #334155',
+                          borderRadius: '8px',
+                          color: '#fff'
+                        }}
+                        formatter={(value: number) => [`${formatNumber(value)} TON`, 'Price']}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="price_ton"
+                        stroke="#a855f7"
+                        strokeWidth={2}
+                        fill="url(#priceGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
-                <TrendingDown className="w-5 h-5 text-red-500" />
+                <div className="h-32 flex items-center justify-center text-blue-400/60 text-sm">
+                  {text.noHistory}
+                </div>
               )}
-              <span className={`text-sm ${isPositive ? 'text-green-400/60' : 'text-red-400/60'}`}>{text.change24h}</span>
             </div>
-            <p className={`text-2xl font-bold ${isPositive ? 'text-green-100' : 'text-red-100'}`}>
-              {isPositive ? '+' : ''}{giftData.change_24h.toFixed(2)}%
-            </p>
-          </Card>
-        </div>
 
-        {/* Additional Info */}
-        <Card className="p-4 bg-gradient-to-br from-amber-950/20 to-amber-900/10 border-amber-500/20 space-y-4">
-          {/* Supply */}
-          <div className="flex items-center justify-between">
-            <span className="text-amber-400/60">{text.supply}</span>
-            <span className="text-amber-100 font-semibold">
-              {giftData.supply_text || formatSupply(giftData.supply)}
-            </span>
+            {/* Bottom Stats */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-blue-500/20">
+              {/* First Price */}
+              <div className="text-center">
+                <div className="flex items-center gap-1 text-blue-300 text-xs mb-1">
+                  <span className="px-2 py-0.5 bg-blue-500/20 rounded text-[10px] font-medium">{text.firstPrice}:</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-400 text-lg">⭐</span>
+                  <span className="text-white font-bold">{giftData.price_stars?.toLocaleString() || '—'}</span>
+                </div>
+              </div>
+
+              {/* Gifts Count */}
+              <div className="text-center">
+                <div className="text-blue-300 text-xs mb-1">{text.gifts}</div>
+                <div className="flex items-center gap-1">
+                  <Gift className="w-4 h-4 text-blue-400" />
+                  <span className="text-white font-bold">{giftData.supply_text || formatSupply(giftData.supply)}</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Multiplier */}
-          {giftData.multiplier && (
-            <div className="flex items-center justify-between">
-              <span className="text-amber-400/60">{text.multiplier}</span>
-              <span className="text-green-400 font-semibold">{giftData.multiplier}</span>
-            </div>
-          )}
-
-          {/* Confidence */}
-          {giftData.match_confidence > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-amber-400/60">{text.confidence}</span>
-              <span className="text-amber-100 font-semibold">{giftData.match_confidence.toFixed(1)}%</span>
-            </div>
-          )}
-
-          {/* Last Updated */}
-          {giftData.last_updated && (
-            <div className="flex items-center justify-between">
-              <span className="text-amber-400/60">{text.lastUpdated}</span>
-              <span className="text-amber-100/60 text-sm">
-                {new Date(giftData.last_updated).toLocaleDateString()}
-              </span>
-            </div>
-          )}
         </Card>
+
+        {/* Nova Branding */}
+        <div className="text-center py-2">
+          <span className="text-blue-400/60 text-sm">@ Nova</span>
+        </div>
 
         {/* Send to Telegram Button */}
         <Button
           onClick={handleSendToTelegram}
           disabled={sending || !userId}
-          className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white h-14 text-lg font-semibold shadow-lg shadow-amber-500/20"
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white h-12 text-base font-semibold shadow-lg shadow-blue-500/20 rounded-xl"
         >
           {sending ? (
             <>

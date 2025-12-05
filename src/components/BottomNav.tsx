@@ -1,11 +1,13 @@
-import { Home, TrendingUp, Settings } from 'lucide-react';
+import { Home, Wrench, Bitcoin, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
+
 interface BottomNavProps {
-  activeTab: 'home' | 'chart' | 'settings';
-  onTabChange: (tab: 'home' | 'chart' | 'settings') => void;
+  activeTab: 'home' | 'tools' | 'crypto' | 'settings';
+  onTabChange: (tab: 'home' | 'tools' | 'crypto' | 'settings') => void;
 }
+
 const BottomNav = ({
   activeTab,
   onTabChange
@@ -13,29 +15,78 @@ const BottomNav = ({
   const { language } = useLanguage();
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
     getTranslation(language, key);
-  // Determine flex direction based on language for RTL support
   const isRTL = language === 'ar';
-  
-  return <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-50 mx-[5px]">
-      <div className={cn("flex items-center justify-around h-20 max-w-lg mx-auto", isRTL && "flex-row-reverse")}>
-        <button onClick={() => onTabChange('home')} className={cn("flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all relative", activeTab === 'home' ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
-          <Home className={cn("w-7 h-7 transition-all", activeTab === 'home' && "scale-110")} />
-          <span className="text-xs font-medium">{t('home')}</span>
-          {activeTab === 'home' && <div className="absolute bottom-0 w-12 h-1 bg-primary rounded-t-full" />}
-        </button>
 
-        <button onClick={() => onTabChange('chart')} className={cn("flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all relative", activeTab === 'chart' ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
-          <TrendingUp className={cn("w-7 h-7 transition-all", activeTab === 'chart' && "scale-110")} />
-          <span className="text-xs font-medium">{t('chart')}</span>
-          {activeTab === 'chart' && <div className="absolute bottom-0 w-12 h-1 bg-primary rounded-t-full" />}
-        </button>
+  const navItems = [
+    { id: 'home' as const, icon: Home, label: t('home') },
+    { id: 'tools' as const, icon: Wrench, label: language === 'ar' ? 'أدوات' : 'Tools' },
+    { id: 'crypto' as const, icon: Bitcoin, label: language === 'ar' ? 'كريبتو' : 'Crypto' },
+    { id: 'settings' as const, icon: Settings, label: t('settings') },
+  ];
 
-        <button onClick={() => onTabChange('settings')} className={cn("flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all relative", activeTab === 'settings' ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
-          <Settings className={cn("w-7 h-7 transition-all", activeTab === 'settings' && "scale-110")} />
-          <span className="text-xs font-medium">{t('settings')}</span>
-          {activeTab === 'settings' && <div className="absolute bottom-0 w-12 h-1 bg-primary rounded-t-full" />}
-        </button>
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* Glass effect background */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-xl" />
+      
+      {/* Main nav container */}
+      <div className="relative mx-2 mb-2">
+        <div className="bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 rounded-2xl border border-white/10 shadow-2xl shadow-black/50">
+          <div className={cn(
+            "flex items-center justify-around h-16 max-w-lg mx-auto px-2",
+            isRTL && "flex-row-reverse"
+          )}>
+            {navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              const Icon = item.icon;
+              
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onTabChange(item.id)}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-300",
+                    isActive 
+                      ? "text-white" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  {/* Active indicator glow */}
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent rounded-xl" />
+                  )}
+                  
+                  {/* Icon container */}
+                  <div className={cn(
+                    "relative p-1.5 rounded-lg transition-all duration-300",
+                    isActive && "bg-blue-500/20"
+                  )}>
+                    <Icon className={cn(
+                      "w-5 h-5 transition-all duration-300",
+                      isActive && "text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                    )} />
+                  </div>
+                  
+                  {/* Label */}
+                  <span className={cn(
+                    "text-[10px] font-medium transition-all duration-300",
+                    isActive && "text-blue-400"
+                  )}>
+                    {item.label}
+                  </span>
+                  
+                  {/* Active dot indicator */}
+                  {isActive && (
+                    <div className="absolute -bottom-0.5 w-1 h-1 bg-blue-400 rounded-full shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default BottomNav;

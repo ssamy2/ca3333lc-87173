@@ -12,7 +12,8 @@ import TonIcon from './TonIcon';
 import StatsCard from './StatsCard';
 import ThemeToggle from './ThemeToggle';
 import BottomNav from './BottomNav';
-import Chart from '@/pages/Chart';
+import ToolsPage from '@/pages/ToolsPage';
+import CryptoPage from '@/pages/CryptoPage';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
 import { fetchNFTGifts, fetchSingleGiftPrice, fetchProfileImageAsBase64 } from '@/services/apiService';
 import { proxyImageUrl } from '@/lib/imageProxy';
@@ -114,7 +115,7 @@ const TelegramApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'tools' | 'crypto' | 'settings'>('home');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
@@ -457,10 +458,19 @@ const TelegramApp: React.FC = () => {
   // Threshold for using virtualization (for large lists)
   const VIRTUALIZATION_THRESHOLD = 20;
 
-  if (activeTab === 'chart') {
+  if (activeTab === 'tools') {
     return (
       <>
-        <Chart />
+        <ToolsPage />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
+  if (activeTab === 'crypto') {
+    return (
+      <>
+        <CryptoPage />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
