@@ -10,6 +10,7 @@ interface Ad {
 
 interface AuthContextType {
   userId: string | null;
+  username: string | null;
   authToken: string | null;
   isAuthenticated: boolean;
   isSubscribed: boolean;
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -79,6 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data.valid) {
         setUserId(data.user_id?.toString() || null);
+        setUsername(data.username || null);
         setAuthToken(data.token || null);
         setIsAuthenticated(true);
         setIsSubscribed(data.is_subscribed || false);
@@ -122,6 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         userId,
+        username,
         authToken,
         isAuthenticated,
         isSubscribed,

@@ -109,7 +109,7 @@ interface PortfolioData {
 
 const PortfolioTrackerPage: React.FC = () => {
   const { language } = useLanguage();
-  const { userId } = useAuth();
+  const { username: authUsername } = useAuth();
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -176,11 +176,11 @@ const PortfolioTrackerPage: React.FC = () => {
   const text = t[language] || t.en;
 
   useEffect(() => {
-    if (userId) {
-      setCurrentUsername(userId);
-      loadPortfolio(userId);
+    if (authUsername) {
+      setCurrentUsername(authUsername);
+      loadPortfolio(authUsername);
     }
-  }, [userId]);
+  }, [authUsername]);
 
   const loadPortfolio = async (username: string) => {
     setLoading(true);
