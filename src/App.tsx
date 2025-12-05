@@ -15,6 +15,7 @@ const Index = lazy(() => import("./pages/Index"));
 const Chart = lazy(() => import("./pages/Chart"));
 const HeatmapPage = lazy(() => import("./pages/HeatmapPage"));
 const MarketStatsPage = lazy(() => import("./pages/MarketStatsPage"));
+const PortfolioTrackerPage = lazy(() => import("./pages/PortfolioTrackerPage"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
 const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
@@ -91,6 +92,7 @@ const App = () => {
                           <Route path="/chart" element={<Chart />} />
                           <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/market-stats" element={<MarketStatsPage />} />
+                          <Route path="/portfolio-tracker" element={<PortfolioTrackerPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:name" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />

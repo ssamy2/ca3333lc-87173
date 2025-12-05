@@ -111,6 +111,44 @@ export const fetchSingleGiftPrice = async (giftUrl: string) => {
   }
 }
 
+export const fetchPortfolioAnalysis = async (username: string) => {
+  const cleanUsername = username.startsWith('@') ? username.slice(1) : username
+  const apiUrl = buildApiUrl(`/api/portfolio/${encodeURIComponent(cleanUsername)}`)
+  const authHeaders = await getAuthHeaders()
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...authHeaders
+      },
+      signal: getTimeoutSignal(30000)
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('ACCESS_DENIED')
+      if (response.status === 404) throw new Error('USER_NOT_FOUND')
+      if (response.status === 429) throw new Error('RATE_LIMIT_EXCEEDED')
+      if (response.status >= 500) throw new Error('SERVER_ERROR')
+      throw new Error('NETWORK_ERROR')
+    }
+
+    const responseData = await response.json()
+    
+    if (!responseData.success) {
+      throw new Error(responseData.error || 'Failed to analyze portfolio')
+    }
+
+    return responseData
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Failed to fetch portfolio analysis')
+  }
+}
+
 // Fetch profile image with authentication token
 export const fetchProfileImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
   try {

@@ -32,7 +32,6 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
     total_users: number;
     active_today: number;
     total_gifts_checked: number;
-    top_country: string;
   } | null>(null);
 
   useEffect(() => {
@@ -67,8 +66,7 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
           setStatistics({
             total_users: stats.total_users,
             active_today: stats.active_today,
-            total_gifts_checked: stats.total_gifts_checked,
-            top_country: stats.top_country
+            total_gifts_checked: stats.total_gifts_checked
           });
         }
       } catch (error) {
@@ -251,69 +249,47 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
             <h3 className="text-sm font-semibold">Statistics</h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5">
             {/* Total Users */}
-            <Card className="p-3.5 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-5 h-5 text-orange-500" />
+            <Card className="p-4 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-6 h-6 text-orange-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">Total Users</p>
-                  <p className="text-lg font-bold text-foreground truncate">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Total Users</p>
+                  <p className="text-2xl font-bold text-foreground truncate">
                     {statistics ? statistics.total_users.toLocaleString() : '...'}
                   </p>
                 </div>
               </div>
             </Card>
 
-            {/* Active Now */}
-            <Card className="p-3.5 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0 relative">
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                  <div className="absolute w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">Active Now</p>
-                  <p className="text-lg font-bold text-foreground truncate">
-                    {statistics ? Math.floor(statistics.active_today * 0.15).toLocaleString() : '...'}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
             {/* Active Today */}
-            <Card className="p-3.5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-                  <Flame className="w-5 h-5 text-amber-500" />
+            <Card className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <Flame className="w-6 h-6 text-amber-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">Active Today</p>
-                  <p className="text-lg font-bold text-foreground truncate">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Active Today</p>
+                  <p className="text-2xl font-bold text-foreground truncate">
                     {statistics ? statistics.active_today.toLocaleString() : '...'}
                   </p>
                 </div>
               </div>
             </Card>
 
-            {/* Top Country */}
-            <Card className="p-3.5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-                  <Globe className="w-5 h-5 text-blue-500" />
+            {/* Gifts Checked */}
+            <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-6 h-6 text-blue-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">Top Country</p>
-                  <p className="text-base font-bold text-foreground flex items-center gap-1.5 truncate">
-                    <span className="text-lg">
-                      {statistics?.top_country === 'Iraq' && '🇮🇶'}
-                      {statistics?.top_country === 'USA' && '🇺🇸'}
-                      {statistics?.top_country === 'Russia' && '🇷🇺'}
-                      {statistics?.top_country === 'China' && '🇨🇳'}
-                    </span>
-                    <span className="truncate">{statistics ? statistics.top_country : '...'}</span>
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Gifts Checked</p>
+                  <p className="text-2xl font-bold text-foreground truncate">
+                    {statistics ? statistics.total_gifts_checked.toLocaleString() : '...'}
                   </p>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp } from 'lucide-react';
+import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,8 @@ const ToolsPage: React.FC = () => {
     ar: {
       tools: 'الأدوات',
       toolsDesc: 'أدوات تحليل وتتبع الهدايا',
+      portfolioTracker: 'متتبع المحفظة',
+      portfolioTrackerDesc: 'تحليل شامل لمحفظة هداياك مع تتبع الأرباح والخسائر',
       heatmap: 'خريطة الحرارة',
       heatmapDesc: 'عرض تغيرات أسعار الهدايا بشكل مرئي',
       marketStats: 'إحصائيات السوق',
@@ -26,6 +28,8 @@ const ToolsPage: React.FC = () => {
     en: {
       tools: 'Tools',
       toolsDesc: 'Gift analysis and tracking tools',
+      portfolioTracker: 'Portfolio Tracker',
+      portfolioTrackerDesc: 'Comprehensive portfolio analysis with profit/loss tracking',
       heatmap: 'Heatmap',
       heatmapDesc: 'Visualize gift price changes',
       marketStats: 'Market Stats',
@@ -42,6 +46,16 @@ const ToolsPage: React.FC = () => {
   const text = t[language] || t.en;
 
   const tools = [
+    {
+      id: 'portfolioTracker',
+      name: text.portfolioTracker,
+      description: text.portfolioTrackerDesc,
+      icon: Wallet,
+      iconBg: 'bg-purple-500/20',
+      iconColor: 'text-purple-400',
+      available: true,
+      route: '/portfolio-tracker'
+    },
     {
       id: 'heatmap',
       name: text.heatmap,
@@ -67,8 +81,8 @@ const ToolsPage: React.FC = () => {
       name: text.calculator,
       description: text.calculatorDesc,
       icon: Calculator,
-      iconBg: 'bg-purple-500/20',
-      iconColor: 'text-purple-400',
+      iconBg: 'bg-amber-500/20',
+      iconColor: 'text-amber-400',
       available: false,
       route: null
     },
@@ -77,8 +91,8 @@ const ToolsPage: React.FC = () => {
       name: text.analytics,
       description: text.analyticsDesc,
       icon: BarChart3,
-      iconBg: 'bg-amber-500/20',
-      iconColor: 'text-blue-400',
+      iconBg: 'bg-cyan-500/20',
+      iconColor: 'text-cyan-400',
       available: false,
       route: null
     }
