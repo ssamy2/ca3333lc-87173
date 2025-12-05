@@ -78,23 +78,23 @@ const ToolsPage: React.FC = () => {
       description: text.analyticsDesc,
       icon: BarChart3,
       iconBg: 'bg-amber-500/20',
-      iconColor: 'text-amber-400',
+      iconColor: 'text-blue-400',
       available: false,
       route: null
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] pb-24">
+    <div className="min-h-screen bg-[#0f1729] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#1a1410]/90 backdrop-blur-lg border-b border-amber-900/20">
+      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="flex items-center gap-3 p-4">
-          <div className="p-2 bg-amber-500/20 rounded-xl">
-            <Wrench className="w-5 h-5 text-amber-400" />
+          <div className="p-2 bg-blue-500/20 rounded-xl">
+            <Wrench className="w-5 h-5 text-blue-400" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">{text.tools}</h1>
-            <p className="text-xs text-amber-100/50">{text.toolsDesc}</p>
+            <p className="text-xs text-slate-400">{text.toolsDesc}</p>
           </div>
         </div>
       </div>
@@ -106,8 +106,8 @@ const ToolsPage: React.FC = () => {
             <Card
               key={tool.id}
               onClick={() => tool.available && tool.route && navigate(tool.route)}
-              className={`overflow-hidden bg-[#2a2018]/50 border-amber-900/20 rounded-2xl transition-all duration-300 ${
-                tool.available ? 'cursor-pointer hover:bg-[#2a2018]/70 hover:scale-[1.02]' : 'opacity-70'
+              className={`overflow-hidden bg-slate-800/50 border-slate-700/30 rounded-2xl transition-all duration-300 ${
+                tool.available ? 'cursor-pointer hover:bg-slate-800/70 hover:scale-[1.02]' : 'opacity-70'
               }`}
             >
               <div className="p-4">
@@ -122,19 +122,19 @@ const ToolsPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <h3 className="text-white font-semibold">{tool.name}</h3>
                       {!tool.available && (
-                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-medium rounded-full">
+                        <span className="px-2 py-0.5 bg-amber-500/20 text-blue-400 text-[10px] font-medium rounded-full">
                           {text.comingSoon}
                         </span>
                       )}
                     </div>
-                    <p className="text-amber-100/50 text-sm mt-0.5">{tool.description}</p>
+                    <p className="text-slate-400 text-sm mt-0.5">{tool.description}</p>
                   </div>
 
                   {/* Arrow */}
                   {tool.available && (
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-400 text-sm font-medium">{text.tryNow}</span>
-                      <ChevronRight className="w-5 h-5 text-amber-400" />
+                      <span className="text-blue-400 text-sm font-medium">{text.tryNow}</span>
+                      <ChevronRight className="w-5 h-5 text-blue-400" />
                     </div>
                   )}
                 </div>

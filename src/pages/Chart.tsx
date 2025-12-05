@@ -139,20 +139,20 @@ const Chart = () => {
   }
 
   return (
-    <div className={`min-h-screen pb-24 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410]'}`}>
+    <div className={`min-h-screen pb-24 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-[#0f1729]'}`}>
       {/* Header Controls */}
-      <div className="sticky top-0 z-40 bg-[#1a1410]/90 backdrop-blur-lg border-b border-amber-900/20">
+      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="p-4 space-y-3">
           {/* View Mode & Sort */}
           <div className="flex items-center justify-between gap-3">
             {/* View Mode Toggle */}
-            <div className="flex bg-[#2a2018]/50 rounded-xl p-1 border border-amber-900/20">
+            <div className="flex bg-slate-800/50 rounded-xl p-1 border border-slate-700/30">
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-all ${
                   viewMode === 'list'
                     ? 'bg-amber-500 text-white'
-                    : 'text-amber-100/50 hover:text-amber-100'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -162,7 +162,7 @@ const Chart = () => {
                 className={`p-2 rounded-lg transition-all ${
                   viewMode === 'grid'
                     ? 'bg-amber-500 text-white'
-                    : 'text-amber-100/50 hover:text-amber-100'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -176,7 +176,7 @@ const Chart = () => {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   sortMode === 'priceUp'
                     ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                    : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-green-400 border border-amber-900/20'
+                    : 'bg-slate-800/50 text-slate-400 hover:text-green-400 border border-slate-700/30'
                 }`}
               >
                 <TrendingUp className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ const Chart = () => {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   sortMode === 'priceDown'
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-red-400 border border-amber-900/20'
+                    : 'bg-slate-800/50 text-slate-400 hover:text-red-400 border border-slate-700/30'
                 }`}
               >
                 <TrendingDown className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ const Chart = () => {
               className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                 dataSource === 'market'
                   ? 'bg-blue-500 text-white'
-                  : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-amber-100 border border-amber-900/20'
+                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
               }`}
             >
               {language === 'ar' ? 'الكل' : 'All'}
@@ -213,7 +213,7 @@ const Chart = () => {
               className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                 dataSource === 'black'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-amber-100 border border-amber-900/20'
+                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
               }`}
             >
               {language === 'ar' ? 'السوق السوداء' : 'BG: Black'}
@@ -238,7 +238,7 @@ const Chart = () => {
                 className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                   currency === 'ton'
                     ? 'bg-blue-500 text-white'
-                    : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-amber-100 border border-amber-900/20'
+                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
                 }`}
               >
                 <TonIcon className="w-4 h-4" />
@@ -249,7 +249,7 @@ const Chart = () => {
                 className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                   currency === 'usd'
                     ? 'bg-green-500 text-white'
-                    : 'bg-[#2a2018]/50 text-amber-100/50 hover:text-amber-100 border border-amber-900/20'
+                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
                 }`}
               >
                 $ USD

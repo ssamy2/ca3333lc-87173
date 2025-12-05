@@ -199,13 +199,13 @@ const HeatmapPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1410] via-[#211a14] to-[#1a1410] pb-6">
+    <div className="min-h-screen bg-gradient-to-b from-[#0f1729] via-[#0f1729] to-[#0f1729] pb-6">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#1a1410]/90 backdrop-blur-lg border-b border-amber-900/20">
+      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-amber-100/50 hover:text-amber-100 transition-colors"
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">{text.back}</span>

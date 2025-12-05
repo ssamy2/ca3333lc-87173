@@ -80,50 +80,43 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Nova Theme - Cream/Brown/Gold */
-    --background: 30 15% 8%;
-    --foreground: 40 20% 95%;
-    --card: 30 12% 12%;
-    --card-foreground: 40 20% 95%;
-    --popover: 30 15% 10%;
-    --popover-foreground: 40 20% 95%;
-    --primary: 38 70% 50%;
-    --primary-foreground: 30 15% 8%;
-    --secondary: 30 10% 18%;
-    --secondary-foreground: 40 20% 90%;
-    --secondary-transparent: 30 8% 16%;
-    --muted: 30 10% 18%;
-    --muted-foreground: 30 15% 55%;
-    --accent: 38 70% 50%;
-    --accent-foreground: 30 15% 8%;
+    /* Nova Theme - Dark Blue/Slate */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --secondary-transparent: 217 30% 15%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 10% 20%;
-    --input: 30 10% 20%;
-    --ring: 38 70% 50%;
-    --ton-blue: 205 100% 60%;
-    --success: 142 70% 45%;
+    --border: 217 33% 20%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+    --ton-blue: 217 91% 60%;
+    --success: 160 84% 39%;
     --warning: 38 92% 50%;
-    
-    /* Nova Gold Colors */
-    --nova-gold: 38 70% 50%;
-    --nova-gold-light: 40 65% 60%;
-    --nova-cream: 40 20% 95%;
-    --nova-brown: 30 25% 25%;
-    --nova-brown-dark: 30 20% 15%;
 
-    /* Nova Theme Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(38, 70%, 50%) 0%, hsl(30, 60%, 40%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(30, 15%, 10%) 0%, hsl(30, 12%, 15%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(38, 70%, 50%) 0%, hsl(35, 65%, 45%) 50%, hsl(30, 60%, 40%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(30, 12%, 12%) 0%, hsl(30, 12%, 14%) 50%, hsl(30, 12%, 12%) 100%);
-    --gradient-background: linear-gradient(180deg, hsl(30, 15%, 8%) 0%, hsl(30, 12%, 10%) 50%, hsl(30, 15%, 9%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(38, 70%, 50%) 0%, hsl(38, 75%, 45%) 100%);
+    /* Nova Theme Gradients - Dark Blue */
+    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 50%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(217, 33%, 17%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 55%) 50%, hsl(217, 91%, 50%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 13%) 50%, hsl(222, 47%, 11%) 100%);
+    --gradient-background: linear-gradient(180deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 10%) 50%, hsl(222, 47%, 9%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 55%) 100%);
     
     /* Nova Glassy Button Gradients */
-    --gradient-glass-gold: linear-gradient(135deg, hsl(38, 70%, 55%) 0%, hsl(38, 70%, 45%) 100%);
-    --gradient-glass-dark: linear-gradient(135deg, hsl(30, 12%, 18%) 0%, hsl(30, 12%, 14%) 100%);
-    --gradient-glass-darker: linear-gradient(135deg, hsl(30, 12%, 14%) 0%, hsl(30, 12%, 10%) 100%);
+    --gradient-glass-blue: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 50%) 100%);
+    --gradient-glass-dark: linear-gradient(135deg, hsl(222, 47%, 15%) 0%, hsl(222, 47%, 11%) 100%);
+    --gradient-glass-darker: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 8%) 100%);
 
     --shadow-soft: 0 2px 10px hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 4px 20px hsl(0 0% 0% / 0.4);
