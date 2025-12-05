@@ -13,6 +13,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 // Lazy load pages - يتم تحميلها فقط عند الحاجة
 const Index = lazy(() => import("./pages/Index"));
 const Chart = lazy(() => import("./pages/Chart"));
+const HeatmapPage = lazy(() => import("./pages/HeatmapPage"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
 const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
@@ -87,6 +88,7 @@ const App = () => {
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/chart" element={<Chart />} />
+                          <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:name" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />

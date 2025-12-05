@@ -47,7 +47,7 @@ const ToolsPage: React.FC = () => {
       iconBg: 'bg-green-500/20',
       iconColor: 'text-green-400',
       available: true,
-      route: '/chart'
+      route: '/heatmap'
     },
     {
       id: 'calculator',
