@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Calculator, RefreshCw, User, Gift } from 'lucide-react';
+import { Search, Calculator, RefreshCw, User, Gift, ArrowLeft } from 'lucide-react';
 import NFTCard from './NFTCard';
 import RegularGiftCard from './RegularGiftCard';
 import VirtualizedNFTGrid from './VirtualizedNFTGrid';
@@ -116,7 +116,7 @@ const TelegramApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'chart' | 'tools' | 'crypto' | 'settings'>('chart');
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'tools' | 'crypto' | 'settings'>('home');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
@@ -471,7 +471,7 @@ const TelegramApp: React.FC = () => {
   if (activeTab === 'tools') {
     return (
       <>
-        <ToolsPage />
+        <ToolsPage onGoToHome={() => setActiveTab('home')} />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
@@ -497,6 +497,22 @@ const TelegramApp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
+      {/* Back Button Header */}
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-lg border-b border-border/30">
+        <div className="flex items-center gap-3 p-4">
+          <button
+            onClick={() => setActiveTab('tools')}
+            className="p-2 bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-primary" />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold">{language === 'ar' ? 'حاسبة هدايا المستخدم' : 'User Gift Calculator'}</h1>
+            <p className="text-xs text-muted-foreground">{language === 'ar' ? 'احسب قيمة هدايا أي مستخدم' : "Calculate any user's gift value"}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-md mx-auto p-4 space-y-6">
         {/* Hero Section */}
         {!nftData && !singleGift && !loading && !error && (
@@ -518,42 +534,7 @@ const TelegramApp: React.FC = () => {
 
         {/* Search Section */}
         <div className="telegram-card p-5 animate-slide-up border border-border/50 shadow-[var(--shadow-card)]">
-          {/* Search Mode Toggle */}
-          <div className="mb-4">
-            <div className="flex gap-2 bg-background/50 p-1.5 rounded-xl border border-border">
-              <button
-                onClick={() => {
-                  setSearchMode('user');
-                  setError(null);
-                  setSingleGift(null);
-                }}
-                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
-                  searchMode === 'user'
-                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <User className="w-4 h-4 inline-block mr-2" />
-                {t('userProfile')}
-              </button>
-              <button
-                onClick={() => {
-                  setSearchMode('gift');
-                  setError(null);
-                  setNftData(null);
-                }}
-                className={`flex-1 py-2.5 px-4 rounded-lg transition-all duration-300 font-medium ${
-                  searchMode === 'gift'
-                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Gift className="w-4 h-4 inline-block mr-2" />
-                {t('singleGift')}
-              </button>
-            </div>
-          </div>
-
+          {/* Search Input */}
           <div className="flex gap-2 mb-4">
             {searchMode === 'user' ? (
               <Input
@@ -872,6 +853,44 @@ const TelegramApp: React.FC = () => {
           </div>
         )}
 
+      </div>
+
+      {/* Bottom Toggle Buttons */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 bg-background/90 backdrop-blur-lg border-t border-border/30">
+        <div className="max-w-md mx-auto p-3">
+          <div className="flex gap-2 bg-background/50 p-1.5 rounded-xl border border-border shadow-lg">
+            <button
+              onClick={() => {
+                setSearchMode('user');
+                setError(null);
+                setSingleGift(null);
+              }}
+              className={`flex-1 py-3 px-4 rounded-lg transition-all duration-300 font-medium ${
+                searchMode === 'user'
+                  ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <User className="w-4 h-4 inline-block mr-2" />
+              {t('userProfile')}
+            </button>
+            <button
+              onClick={() => {
+                setSearchMode('gift');
+                setError(null);
+                setNftData(null);
+              }}
+              className={`flex-1 py-3 px-4 rounded-lg transition-all duration-300 font-medium ${
+                searchMode === 'gift'
+                  ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Gift className="w-4 h-4 inline-block mr-2" />
+              {t('singleGift')}
+            </button>
+          </div>
+        </div>
       </div>
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
