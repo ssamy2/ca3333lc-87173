@@ -4,8 +4,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
 
 interface BottomNavProps {
-  activeTab: 'chart' | 'tools' | 'crypto' | 'settings';
-  onTabChange: (tab: 'chart' | 'tools' | 'crypto' | 'settings') => void;
+  activeTab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings';
+  onTabChange: (tab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings') => void;
 }
 
 const BottomNav = ({

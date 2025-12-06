@@ -1,12 +1,16 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet } from 'lucide-react';
+import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchPortfolioAnalysis } from '@/services/apiService';
 
-const ToolsPage: React.FC = () => {
+interface ToolsPageProps {
+  onGoToHome?: () => void;
+}
+
+const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { username } = useAuth();
@@ -25,6 +29,8 @@ const ToolsPage: React.FC = () => {
     ar: {
       tools: 'الأدوات',
       toolsDesc: 'أدوات تحليل وتتبع الهدايا',
+      giftCalculator: 'حاسبة هدايا المستخدم',
+      giftCalculatorDesc: 'احسب قيمة هدايا أي مستخدم',
       portfolioTracker: 'متتبع المحفظة',
       portfolioTrackerDesc: 'تحليل شامل لمحفظة هداياك مع تتبع الأرباح والخسائر',
       heatmap: 'خريطة الحرارة',
@@ -41,6 +47,8 @@ const ToolsPage: React.FC = () => {
     en: {
       tools: 'Tools',
       toolsDesc: 'Gift analysis and tracking tools',
+      giftCalculator: 'User Gift Calculator',
+      giftCalculatorDesc: 'Calculate any user\'s gift value',
       portfolioTracker: 'Portfolio Tracker',
       portfolioTrackerDesc: 'Comprehensive portfolio analysis with profit/loss tracking',
       heatmap: 'Heatmap',
@@ -59,6 +67,17 @@ const ToolsPage: React.FC = () => {
   const text = t[language] || t.en;
 
   const tools = [
+    {
+      id: 'giftCalculator',
+      name: text.giftCalculator,
+      description: text.giftCalculatorDesc,
+      icon: User,
+      iconBg: 'bg-pink-500/20',
+      iconColor: 'text-pink-400',
+      available: true,
+      route: null,
+      action: onGoToHome
+    },
     {
       id: 'portfolioTracker',
       name: text.portfolioTracker,
@@ -132,7 +151,14 @@ const ToolsPage: React.FC = () => {
           return (
             <button
               key={tool.id}
-              onClick={() => tool.available && tool.route && navigate(tool.route)}
+              onClick={() => {
+                if (!tool.available) return;
+                if (tool.action) {
+                  tool.action();
+                } else if (tool.route) {
+                  navigate(tool.route);
+                }
+              }}
               disabled={!tool.available}
               className={`w-full text-left bg-slate-800/50 border border-slate-700/30 rounded-2xl p-4 transition-all duration-200 ${
                 tool.available 
