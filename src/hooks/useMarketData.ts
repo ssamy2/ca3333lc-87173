@@ -87,12 +87,6 @@ const fetchMarketData = async (): Promise<MarketData> => {
           change24hUsd = ((currentPriceUsd - usd24hAgo) / usd24hAgo) * 100;
         }
         
-        // Helper to check if two numbers are approximately equal (for floating point comparison)
-        const isApproxEqual = (a: number | undefined, b: number) => {
-          if (a === undefined || a === null) return false;
-          return Math.abs(a - b) < 0.01;
-        };
-        
         // ALWAYS calculate historical price from change_24h if change is non-zero
         // This ensures the heatmap shows correct changes even if backend sends same value
         let calculatedTon24hAgo = ton24hAgo;
