@@ -407,9 +407,16 @@ const MarketStatsPage: React.FC = () => {
 
         {/* Chart */}
         {chartData && (
-          <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30">
-            <div className="h-64">
+          <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 relative">
+            <div className="h-64 relative">
               <Line data={chartData} options={chartOptions} />
+              {/* Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white/20 mb-2">◎</div>
+                  <div className="text-xl font-bold text-white/20 tracking-wider">Nova Gifts Charts</div>
+                </div>
+              </div>
             </div>
           </div>
         )}
