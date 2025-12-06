@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, Calculator, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User } from 'lucide-react';
+import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,8 +37,6 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       heatmapDesc: 'عرض تغيرات أسعار الهدايا بشكل مرئي',
       marketStats: 'إحصائيات السوق',
       marketStatsDesc: 'تتبع القيمة السوقية الإجمالية',
-      calculator: 'حاسبة الأرباح',
-      calculatorDesc: 'احسب أرباحك المتوقعة',
       analytics: 'تحليلات متقدمة',
       analyticsDesc: 'إحصائيات وتحليلات مفصلة',
       tryNow: 'جرب الآن',
@@ -55,8 +53,6 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       heatmapDesc: 'Visualize gift price changes',
       marketStats: 'Market Stats',
       marketStatsDesc: 'Track total market capitalization',
-      calculator: 'Profit Calculator',
-      calculatorDesc: 'Calculate your expected profits',
       analytics: 'Advanced Analytics',
       analyticsDesc: 'Detailed statistics and analytics',
       tryNow: 'Try Now',
@@ -107,16 +103,6 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       iconColor: 'text-blue-400',
       available: true,
       route: '/market-stats'
-    },
-    {
-      id: 'calculator',
-      name: text.calculator,
-      description: text.calculatorDesc,
-      icon: Calculator,
-      iconBg: 'bg-amber-500/20',
-      iconColor: 'text-amber-400',
-      available: true,
-      route: '/profit-calculator'
     },
     {
       id: 'analytics',
