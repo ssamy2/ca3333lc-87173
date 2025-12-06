@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,14 +9,13 @@ import { getAuthHeaders } from '@/lib/telegramAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   Area,
-  AreaChart
+  AreaChart,
+  CartesianGrid
 } from 'recharts';
 
 interface RegularGiftData {
@@ -57,6 +56,7 @@ interface PriceChanges {
 }
 
 type ChartPeriod = 'daily' | 'weekly' | 'monthly';
+type TimeRange = '24h' | '1w' | '1m';
 
 // Helper function for rounded rectangles in canvas
 const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
@@ -84,7 +84,7 @@ const RegularGiftDetail: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([]);
   const [priceChanges, setPriceChanges] = useState<PriceChanges | null>(null);
-  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('weekly');
+  const [timeRange, setTimeRange] = useState<TimeRange>('1w');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const giftImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -199,39 +199,57 @@ const RegularGiftDetail: React.FC = () => {
     }
   }, [id, fetchGiftData]);
 
-  // Filter chart data based on period
-  const getChartData = useCallback(() => {
+  // Filter chart data based on time range
+  const chartData = useMemo(() => {
     if (!priceHistory.length) return [];
     
     const now = new Date();
     let filterDate: Date;
     
-    switch (chartPeriod) {
-      case 'daily':
+    switch (timeRange) {
+      case '24h':
         filterDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
-      case 'weekly':
+      case '1w':
         filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
-      case 'monthly':
+      case '1m':
         filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       default:
         filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
     
-    return priceHistory
+    const filtered = priceHistory
       .filter(item => new Date(item.recorded_at) >= filterDate)
-      .reverse()
       .map(item => ({
         ...item,
-        date: new Date(item.recorded_at).toLocaleDateString('en-US', { 
+        price: item.price_ton,
+        label: new Date(item.recorded_at).toLocaleDateString('en-US', { 
           month: 'short', 
           day: 'numeric',
-          hour: chartPeriod === 'daily' ? '2-digit' : undefined
+          hour: timeRange === '24h' ? '2-digit' : undefined
         })
       }));
-  }, [priceHistory, chartPeriod]);
+    
+    return filtered;
+  }, [priceHistory, timeRange]);
+  
+  // Check if data is available for current time range
+  const hasDataForRange = useMemo(() => {
+    return chartData.length >= 2;
+  }, [chartData]);
+  
+  // Calculate price change based on chart data
+  const priceChange = useMemo(() => {
+    if (!chartData.length || chartData.length < 2) return giftData?.change_24h || 0;
+    
+    const firstPrice = chartData[0]?.price;
+    const lastPrice = chartData[chartData.length - 1]?.price;
+    
+    if (!firstPrice || !lastPrice || firstPrice === 0) return giftData?.change_24h || 0;
+    return ((lastPrice - firstPrice) / firstPrice) * 100;
+  }, [chartData, giftData?.change_24h]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -246,7 +264,7 @@ const RegularGiftDetail: React.FC = () => {
     return supply.toLocaleString();
   };
 
-  // Create professional canvas image - Nova style
+  // Create professional canvas image - Nova style with chart
   const createGiftCanvas = useCallback(async (): Promise<HTMLCanvasElement | null> => {
     if (!giftData || !giftImageRef.current) return null;
 
@@ -254,13 +272,13 @@ const RegularGiftDetail: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // Canvas size
+    // Canvas size - taller for chart
     const width = 400;
-    const height = 280;
+    const height = 320;
     canvas.width = width;
     canvas.height = height;
 
-    // Background gradient - blue theme
+    // Background gradient - dark blue theme
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, '#0a1628');
     gradient.addColorStop(0.5, '#0d1f3c');
@@ -275,74 +293,124 @@ const RegularGiftDetail: React.FC = () => {
 
     // Draw gift image (right side)
     const img = giftImageRef.current;
-    const imgSize = 100;
+    const imgSize = 80;
     const imgX = width - imgSize - 35;
-    const imgY = 40;
+    const imgY = 35;
     
     ctx.shadowColor = 'rgba(59, 130, 246, 0.3)';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 15;
     ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
     ctx.shadowBlur = 0;
 
     // Small icon (left side)
-    ctx.drawImage(img, 30, 35, 40, 40);
+    ctx.drawImage(img, 30, 30, 36, 36);
 
     // Gift name
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px Arial, sans-serif';
+    ctx.font = 'bold 18px Arial, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(giftData.gift_name, 80, 62);
+    ctx.fillText(giftData.gift_name, 75, 55);
 
-    // TON Price
+    // TON Price with icon
     ctx.fillStyle = '#60a5fa';
-    ctx.font = 'bold 28px Arial, sans-serif';
-    ctx.fillText(`◈ ${formatNumber(giftData.price_ton)}`, 30, 110);
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.fillText(`◈ ${formatNumber(giftData.price_ton)}`, 30, 100);
 
     // Change badge
-    const isPositive = giftData.change_24h >= 0;
-    ctx.fillStyle = isPositive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-    roundRect(ctx, 30, 120, 80, 24, 12);
+    const changeValue = priceHistory.length >= 2 ? priceChange : giftData.change_24h;
+    const isPos = changeValue >= 0;
+    ctx.fillStyle = isPos ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+    roundRect(ctx, 30, 112, 85, 26, 13);
     ctx.fill();
-    ctx.fillStyle = isPositive ? '#22c55e' : '#ef4444';
-    ctx.font = 'bold 12px Arial, sans-serif';
-    ctx.fillText(`${isPositive ? '▲' : '▼'} ${Math.abs(giftData.change_24h).toFixed(1)}%`, 45, 137);
+    ctx.fillStyle = isPos ? '#10b981' : '#ef4444';
+    ctx.font = 'bold 13px Arial, sans-serif';
+    ctx.fillText(`${isPos ? '▲' : '▼'} ${Math.abs(changeValue).toFixed(1)}%`, 48, 130);
+
+    // Draw mini chart area
+    const chartX = 30;
+    const chartY = 150;
+    const chartW = width - 60;
+    const chartH = 80;
+    
+    // Chart background
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+    roundRect(ctx, chartX, chartY, chartW, chartH, 10);
+    ctx.fill();
+    
+    // Draw chart line if we have data
+    if (priceHistory.length >= 2) {
+      const prices = priceHistory.map(p => p.price_ton);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const priceRange = maxPrice - minPrice || 1;
+      
+      const chartColor = isPos ? '#10b981' : '#ef4444';
+      
+      // Draw gradient fill
+      const gradientFill = ctx.createLinearGradient(0, chartY, 0, chartY + chartH);
+      gradientFill.addColorStop(0, isPos ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)');
+      gradientFill.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      
+      ctx.beginPath();
+      ctx.moveTo(chartX + 10, chartY + chartH - 10);
+      
+      priceHistory.forEach((point, i) => {
+        const x = chartX + 10 + (i / (priceHistory.length - 1)) * (chartW - 20);
+        const y = chartY + chartH - 10 - ((point.price_ton - minPrice) / priceRange) * (chartH - 20);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      
+      // Complete the fill path
+      ctx.lineTo(chartX + chartW - 10, chartY + chartH - 10);
+      ctx.lineTo(chartX + 10, chartY + chartH - 10);
+      ctx.closePath();
+      ctx.fillStyle = gradientFill;
+      ctx.fill();
+      
+      // Draw the line
+      ctx.beginPath();
+      priceHistory.forEach((point, i) => {
+        const x = chartX + 10 + (i / (priceHistory.length - 1)) * (chartW - 20);
+        const y = chartY + chartH - 10 - ((point.price_ton - minPrice) / priceRange) * (chartH - 20);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = chartColor;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+    
+    // Watermark in chart area (transparent)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.font = 'bold 24px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('◎ Nova Gifts', chartX + chartW / 2, chartY + chartH / 2 + 8);
 
     // Bottom stats
-    const statsY = 200;
+    const statsY = 245;
     
-    // First Price
-    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-    roundRect(ctx, 30, statsY - 5, 100, 50, 8);
-    ctx.fill();
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px Arial, sans-serif';
-    ctx.fillText(language === 'ar' ? 'السعر الأول:' : 'First Price:', 40, statsY + 12);
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 14px Arial, sans-serif';
-    ctx.fillText(`⭐ ${giftData.price_stars?.toLocaleString() || '—'}`, 40, statsY + 32);
-
     // Gifts count
-    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-    roundRect(ctx, 145, statsY - 5, 100, 50, 8);
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+    roundRect(ctx, 30, statsY, 150, 40, 8);
     ctx.fill();
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px Arial, sans-serif';
-    ctx.fillText(language === 'ar' ? 'الهدايا' : 'Gifts', 155, statsY + 12);
-    ctx.fillStyle = '#60a5fa';
-    ctx.font = 'bold 14px Arial, sans-serif';
-    const supplyText = giftData.supply_text || formatSupply(giftData.supply);
-    ctx.fillText(`🎁 ${supplyText}`, 155, statsY + 32);
-
-    // Footer - Nova branding
-    ctx.fillStyle = '#64748b80';
-    ctx.fillRect(0, height - 35, width, 35);
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Gifts', 45, statsY + 16);
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 16px Arial, sans-serif';
+    const supplyText = giftData.supply_text || formatSupply(giftData.supply);
+    ctx.fillText(`🎁 ${supplyText}`, 45, statsY + 32);
+
+    // Footer - Nova branding
+    ctx.fillStyle = '#94a3b880';
+    ctx.font = '10px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Powered by Nova Calculator • @NovaGiftsBot', width / 2, height - 14);
+    ctx.fillText('@NovaGiftsBot', width / 2, height - 12);
 
     return canvas;
-  }, [giftData, language, formatNumber, formatSupply]);
+  }, [giftData, language, formatNumber, formatSupply, priceHistory, priceChange]);
 
   // Send image to Telegram DM
   const handleSendToTelegram = async () => {
@@ -439,8 +507,8 @@ const RegularGiftDetail: React.FC = () => {
     );
   }
 
-  const isPositive = giftData.change_24h >= 0;
-  const chartData = getChartData();
+  const isPositive = priceChange >= 0;
+  const chartColor = isPositive ? '#10b981' : '#ef4444';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] pb-24">
@@ -487,7 +555,7 @@ const RegularGiftDetail: React.FC = () => {
                 </div>
 
                 {/* Change Badge */}
-                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
+                <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
                   isPositive 
                     ? 'bg-green-500/20 text-green-400' 
                     : 'bg-red-500/20 text-red-400'
@@ -497,7 +565,7 @@ const RegularGiftDetail: React.FC = () => {
                   ) : (
                     <TrendingDown className="w-4 h-4" />
                   )}
-                  {isPositive ? '+' : ''}{giftData.change_24h.toFixed(1)}%
+                  {isPositive ? '+' : ''}{priceChange.toFixed(1)}%
                 </div>
               </div>
 
@@ -518,47 +586,57 @@ const RegularGiftDetail: React.FC = () => {
             </div>
 
             {/* Price Chart */}
-            <div className="mt-4">
-              {/* Period Selector */}
-              <div className="flex items-center gap-2 mb-3">
-                {(['daily', 'weekly', 'monthly'] as ChartPeriod[]).map((period) => (
+            <div className="mt-6">
+              {/* Time Range Selector */}
+              <div className="flex items-center gap-2 mb-4">
+                {(['24h', '1w', '1m'] as TimeRange[]).map((range) => (
                   <button
-                    key={period}
-                    onClick={() => setChartPeriod(period)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                      chartPeriod === period
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      timeRange === range
+                        ? 'bg-white/10 text-white border border-white/20'
+                        : 'text-white/50 hover:text-white/80 hover:bg-white/5'
                     }`}
                   >
-                    {text[period]}
+                    {range}
                   </button>
                 ))}
               </div>
 
               {/* Chart */}
-              {chartData.length > 0 ? (
-                <div className="h-32 relative">
+              {hasDataForRange ? (
+                <div className="h-[200px] relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                       <XAxis 
-                        dataKey="date" 
+                        dataKey="label" 
+                        stroke="rgba(255,255,255,0.3)"
+                        tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
+                        interval="preserveStartEnd"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#64748b', fontSize: 10 }}
-                        interval="preserveStartEnd"
                       />
-                      <YAxis hide domain={['dataMin', 'dataMax']} />
+                      <YAxis 
+                        stroke="rgba(255,255,255,0.3)"
+                        tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
+                        domain={['auto', 'auto']}
+                        axisLine={false}
+                        tickLine={false}
+                        orientation="right"
+                        width={35}
+                      />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
+                          backgroundColor: 'rgba(10, 15, 26, 0.95)',
+                          border: '1px solid rgba(255,255,255,0.1)',
                           borderRadius: '8px',
                           color: '#fff'
                         }}
@@ -566,24 +644,31 @@ const RegularGiftDetail: React.FC = () => {
                       />
                       <Area
                         type="monotone"
-                        dataKey="price_ton"
-                        stroke="#a855f7"
+                        dataKey="price"
+                        stroke={chartColor}
                         strokeWidth={2}
-                        fill="url(#priceGradient)"
+                        fill="url(#colorPrice)"
+                        connectNulls
+                        isAnimationActive={false}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                   {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-white/20 mb-1">◎</div>
-                      <div className="text-sm font-bold text-white/20 tracking-wider">Nova Gifts</div>
+                      <div className="text-4xl font-bold text-white mb-1">◎</div>
+                      <div className="text-lg font-bold text-white tracking-wider">Nova Gifts</div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="h-32 flex items-center justify-center text-blue-400/60 text-sm">
-                  {text.noHistory}
+                <div className="h-[200px] flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-white/30 text-sm mb-2">{text.noHistory}</div>
+                    <div className="text-white/20 text-xs">
+                      {language === 'ar' ? 'لا توجد بيانات كافية لهذه الفترة' : 'Not enough data for this period'}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
