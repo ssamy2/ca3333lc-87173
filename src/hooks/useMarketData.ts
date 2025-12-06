@@ -95,15 +95,19 @@ const fetchMarketData = async (): Promise<MarketData> => {
           rawValue: value
         });
         
-        // Calculate historical prices from change_24h if not available
+        // Calculate historical prices from change_24h if not available OR if they equal current price
+        // This handles the case where backend sets tonPrice24hAgo = current_ton when no historical data
         // Formula: oldPrice = currentPrice / (1 + change/100)
         let calculatedTon24hAgo = ton24hAgo;
         let calculatedUsd24hAgo = usd24hAgo;
         
-        if (!ton24hAgo && change24hTon !== 0 && currentPriceTon > 0) {
+        // If ton24hAgo is missing OR equals current price (meaning no real historical data),
+        // but we have a non-zero change, calculate the old price from the change
+        if (change24hTon !== 0 && currentPriceTon > 0 && (!ton24hAgo || ton24hAgo === currentPriceTon)) {
           calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
+          console.log(`📈 [Calculated] ${key}: ton24hAgo=${calculatedTon24hAgo?.toFixed(2)} from change=${change24hTon.toFixed(2)}%`);
         }
-        if (!usd24hAgo && change24hUsd !== 0 && currentPriceUsd > 0) {
+        if (change24hUsd !== 0 && currentPriceUsd > 0 && (!usd24hAgo || usd24hAgo === currentPriceUsd)) {
           calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
         }
         
