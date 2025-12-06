@@ -103,8 +103,9 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
         // Check if this is a regular (unupgraded) gift
         const isRegular = name.startsWith('[Regular]') || (item as any).is_unupgraded === true;
         const displayName = name.replace('[Regular] ', '');
+        const giftId = (item as any).id;
         const giftRoute = isRegular 
-          ? `/regular-gift/${encodeURIComponent(displayName)}`
+          ? `/regular-gift/${giftId || encodeURIComponent(displayName)}`
           : `/gift/${encodeURIComponent(name)}`;
 
         return (

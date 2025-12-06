@@ -13,6 +13,7 @@ interface GiftCardProps {
   change: number;
   isBlackMode: boolean;
   isUnupgraded?: boolean;
+  giftId?: string;
 }
 
 const GiftCard = React.memo(({ 
@@ -22,7 +23,8 @@ const GiftCard = React.memo(({
   price, 
   change, 
   isBlackMode,
-  isUnupgraded = false
+  isUnupgraded = false,
+  giftId
 }: GiftCardProps) => {
   const { language } = useLanguage();
   const isPositive = change > 0;
@@ -55,9 +57,9 @@ const GiftCard = React.memo(({
     return 'bg-[hsl(var(--destructive))]/20 hover:shadow-lg hover:shadow-[hsl(var(--destructive))]/30 border-[hsl(var(--destructive))]/30';
   };
 
-  // Use different route for regular gifts
+  // Use different route for regular gifts (use ID if available, otherwise name)
   const giftRoute = isRegularGift 
-    ? `/regular-gift/${encodeURIComponent(displayName)}`
+    ? `/regular-gift/${giftId || encodeURIComponent(displayName)}`
     : `/gift/${encodeURIComponent(displayName)}`;
 
   return (

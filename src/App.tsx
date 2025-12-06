@@ -96,7 +96,7 @@ const App = () => {
                           <Route path="/portfolio-tracker" element={<PortfolioTrackerPage />} />
                           <Route path="/profit-calculator" element={<ProfitCalculatorPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
-                          <Route path="/regular-gift/:name" element={<RegularGiftDetail />} />
+                          <Route path="/regular-gift/:id" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />
                           <Route path="/admin" element={<AdminPanel />} />
                           <Route path="/admin/ads" element={<AdminAdsPage />} />

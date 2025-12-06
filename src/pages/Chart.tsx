@@ -278,6 +278,7 @@ const Chart = () => {
                   change={change}
                   isBlackMode={dataSource === 'black'}
                   isUnupgraded={isUnupgraded}
+                  giftId={(data as any).id}
                 />
               );
             })}

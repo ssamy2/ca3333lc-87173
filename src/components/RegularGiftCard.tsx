@@ -66,7 +66,7 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
 
   return (
     <Link 
-      to={`/regular-gift/${encodeURIComponent(gift.name)}`}
+      to={`/regular-gift/${gift.id}`}
       ref={cardRef}
       className="group relative flex flex-col bg-gradient-to-br from-amber-950/20 to-amber-900/10 rounded-xl border border-amber-500/20 hover:border-amber-500/40 overflow-hidden transition-colors duration-200 w-full h-full cursor-pointer no-underline"
     >

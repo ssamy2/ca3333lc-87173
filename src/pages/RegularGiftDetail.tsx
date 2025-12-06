@@ -74,7 +74,7 @@ const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: n
 };
 
 const RegularGiftDetail: React.FC = () => {
-  const { name } = useParams<{ name: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { userId } = useAuth();
@@ -164,15 +164,18 @@ const RegularGiftDetail: React.FC = () => {
     }
   }, []);
 
-  const fetchGiftData = useCallback(async (giftName: string) => {
+  const fetchGiftData = useCallback(async (giftIdentifier: string) => {
     try {
       setLoading(true);
       const authHeaders = await getAuthHeaders();
       
-      // Remove [Regular] prefix if present
-      const cleanName = giftName.replace('[Regular] ', '').replace('%5BRegular%5D%20', '');
+      // Check if identifier is an ID (numeric string) or name
+      const isId = /^\d+$/.test(giftIdentifier);
+      const cleanIdentifier = isId 
+        ? giftIdentifier 
+        : giftIdentifier.replace('[Regular] ', '').replace('%5BRegular%5D%20', '');
       
-      const response = await fetch(`https://www.channelsseller.site/api/regular-gift/${encodeURIComponent(cleanName)}`, {
+      const response = await fetch(`https://www.channelsseller.site/api/regular-gift/${encodeURIComponent(cleanIdentifier)}`, {
         headers: {
           'Accept': 'application/json',
           ...authHeaders
@@ -218,7 +221,7 @@ const RegularGiftDetail: React.FC = () => {
         }
       } else if (result.is_upgraded === true) {
         // Redirect to upgraded gift page
-        navigate(`/gift/${encodeURIComponent(cleanName)}`, { replace: true });
+        navigate(`/gift/${encodeURIComponent(cleanIdentifier)}`, { replace: true });
         return;
       } else {
         toast.error(result.error || text.notFound);
@@ -231,10 +234,10 @@ const RegularGiftDetail: React.FC = () => {
   }, [navigate, text.notFound, fetchPriceHistory]);
 
   useEffect(() => {
-    if (name) {
-      fetchGiftData(decodeURIComponent(name));
+    if (id) {
+      fetchGiftData(decodeURIComponent(id));
     }
-  }, [name, fetchGiftData]);
+  }, [id, fetchGiftData]);
 
   // Filter chart data based on period
   const getChartData = useCallback(() => {
