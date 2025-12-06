@@ -85,7 +85,6 @@ const RegularGiftDetail: React.FC = () => {
   const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([]);
   const [priceChanges, setPriceChanges] = useState<PriceChanges | null>(null);
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('weekly');
-  const [historyLoading, setHistoryLoading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const giftImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -144,26 +143,6 @@ const RegularGiftDetail: React.FC = () => {
 
   const text = t[language] || t.en;
 
-  // Fetch price history for chart
-  const fetchPriceHistory = useCallback(async (giftId: string) => {
-    try {
-      setHistoryLoading(true);
-      const response = await fetch(`https://www.channelsseller.site/api/unupgraded-price-history/${giftId}`);
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.price_history) {
-          setPriceHistory(result.price_history);
-          setPriceChanges(result.changes);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch price history:', error);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
-
   const fetchGiftData = useCallback(async (giftIdentifier: string) => {
     try {
       setLoading(true);
@@ -191,33 +170,14 @@ const RegularGiftDetail: React.FC = () => {
       if (result.success && result.data) {
         setGiftData(result.data);
         
-        // Use price_history from response if available, otherwise fetch separately
+        // Use price_history and changes from response directly
         if (result.data.price_history && result.data.price_history.length > 0) {
           setPriceHistory(result.data.price_history);
-          // Calculate changes from historical prices
-          if (result.data.tonPrice24hAgo || result.data.tonPriceWeekAgo || result.data.tonPriceMonthAgo) {
-            const currentTon = result.data.price_ton;
-            const changes: PriceChanges = {
-              daily: result.data.tonPrice24hAgo && result.data.tonPrice24hAgo !== currentTon ? {
-                change_ton_percent: ((currentTon - result.data.tonPrice24hAgo) / result.data.tonPrice24hAgo) * 100,
-                old_price_ton: result.data.tonPrice24hAgo
-              } : null,
-              weekly: result.data.tonPriceWeekAgo && result.data.tonPriceWeekAgo !== currentTon ? {
-                change_ton_percent: ((currentTon - result.data.tonPriceWeekAgo) / result.data.tonPriceWeekAgo) * 100,
-                old_price_ton: result.data.tonPriceWeekAgo
-              } : null,
-              monthly: result.data.tonPriceMonthAgo && result.data.tonPriceMonthAgo !== currentTon ? {
-                change_ton_percent: ((currentTon - result.data.tonPriceMonthAgo) / result.data.tonPriceMonthAgo) * 100,
-                old_price_ton: result.data.tonPriceMonthAgo
-              } : null,
-              three_months: null,
-              yearly: null
-            };
-            setPriceChanges(changes);
-          }
-        } else if (result.data.gift_id) {
-          // Fallback: fetch price history separately
-          fetchPriceHistory(result.data.gift_id);
+        }
+        
+        // Use changes from API response if available
+        if (result.data.changes) {
+          setPriceChanges(result.data.changes);
         }
       } else if (result.is_upgraded === true) {
         // Redirect to upgraded gift page
@@ -231,7 +191,7 @@ const RegularGiftDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate, text.notFound, fetchPriceHistory]);
+  }, [navigate, text.notFound]);
 
   useEffect(() => {
     if (id) {
@@ -577,11 +537,7 @@ const RegularGiftDetail: React.FC = () => {
               </div>
 
               {/* Chart */}
-              {historyLoading ? (
-                <div className="h-32 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-                </div>
-              ) : chartData.length > 0 ? (
+              {chartData.length > 0 ? (
                 <div className="h-32 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>

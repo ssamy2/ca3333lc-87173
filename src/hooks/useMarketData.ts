@@ -74,15 +74,16 @@ const fetchMarketData = async (): Promise<MarketData> => {
         const ton24hAgo = value.tonPrice24hAgo || value.ton_price_24h_ago || value.price_ton_24h_ago;
         const usd24hAgo = value.usdPrice24hAgo || value.usd_price_24h_ago || value.price_usd_24h_ago;
         
-        // حساب نسبة التغير
-        let change24hTon = value['change_24h_ton_%'] || value.change_24h_ton_percent || value.change_24h || 0;
-        let change24hUsd = value['change_24h_usd_%'] || value.change_24h_usd_percent || value.change_24h || 0;
+        // حساب نسبة التغير - استخدم القيمة من API مباشرة إذا كانت موجودة
+        // لا نعيد الحساب لأن الـ API قد يستخدم sticker_change_percent كـ fallback
+        let change24hTon = value.change_24h ?? value['change_24h_ton_%'] ?? value.change_24h_ton_percent ?? 0;
+        let change24hUsd = value.change_24h ?? value['change_24h_usd_%'] ?? value.change_24h_usd_percent ?? 0;
         
-        // إذا كانت الأسعار التاريخية متوفرة، نحسب النسبة يدوياً
-        if (ton24hAgo && ton24hAgo > 0 && currentPriceTon > 0) {
+        // فقط نحسب يدوياً إذا كان change_24h = 0 والأسعار التاريخية مختلفة عن الحالية
+        if (change24hTon === 0 && ton24hAgo && ton24hAgo > 0 && currentPriceTon > 0 && ton24hAgo !== currentPriceTon) {
           change24hTon = ((currentPriceTon - ton24hAgo) / ton24hAgo) * 100;
         }
-        if (usd24hAgo && usd24hAgo > 0 && currentPriceUsd > 0) {
+        if (change24hUsd === 0 && usd24hAgo && usd24hAgo > 0 && currentPriceUsd > 0 && usd24hAgo !== currentPriceUsd) {
           change24hUsd = ((currentPriceUsd - usd24hAgo) / usd24hAgo) * 100;
         }
         
