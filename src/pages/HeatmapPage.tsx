@@ -173,12 +173,13 @@ const HeatmapPage = () => {
       
       // Log unupgraded gift data for debugging
       if (name.startsWith('[Regular]') || (data as any).is_unupgraded) {
+        const change24h = data['change_24h_ton_%'] || data.change_24h || 0;
         console.log(`🔍 [Heatmap Data] ${name}:`, {
           currentPriceTon,
           tonPrice24hAgo: data.tonPrice24hAgo,
-          tonPriceWeekAgo: data.tonPriceWeekAgo,
-          tonPriceMonthAgo: data.tonPriceMonthAgo,
-          rawData: data
+          change24h,
+          willUse: data.tonPrice24hAgo || currentPriceTon,
+          isDifferent: data.tonPrice24hAgo !== currentPriceTon
         });
       }
       
