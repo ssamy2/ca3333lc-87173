@@ -64,22 +64,50 @@ const fetchMarketData = async (): Promise<MarketData> => {
     
     // Process unupgraded gifts
     if (rawData.unupgraded && typeof rawData.unupgraded === 'object') {
+      console.log('📦 [API] Raw unupgraded data sample:', Object.entries(rawData.unupgraded).slice(0, 3));
+      
       Object.entries(rawData.unupgraded).forEach(([key, value]: [string, any]) => {
-        // Add unupgraded gifts with a special marker
+        const currentPriceTon = value.price_ton || 0;
+        const currentPriceUsd = value.price_usd || 0;
+        
+        // استخدام الأسعار التاريخية من البيانات القادمة أو حسابها
+        const ton24hAgo = value.tonPrice24hAgo || value.ton_price_24h_ago || value.price_ton_24h_ago;
+        const usd24hAgo = value.usdPrice24hAgo || value.usd_price_24h_ago || value.price_usd_24h_ago;
+        
+        // حساب نسبة التغير
+        let change24hTon = value['change_24h_ton_%'] || value.change_24h_ton_percent || value.change_24h || 0;
+        let change24hUsd = value['change_24h_usd_%'] || value.change_24h_usd_percent || value.change_24h || 0;
+        
+        // إذا كانت الأسعار التاريخية متوفرة، نحسب النسبة يدوياً
+        if (ton24hAgo && ton24hAgo > 0 && currentPriceTon > 0) {
+          change24hTon = ((currentPriceTon - ton24hAgo) / ton24hAgo) * 100;
+        }
+        if (usd24hAgo && usd24hAgo > 0 && currentPriceUsd > 0) {
+          change24hUsd = ((currentPriceUsd - usd24hAgo) / usd24hAgo) * 100;
+        }
+        
+        // Log للتصحيح
+        console.log(`🎁 [Unupgraded] ${key}:`, {
+          currentPriceTon,
+          ton24hAgo,
+          change24hTon: change24hTon.toFixed(2) + '%',
+          rawValue: value
+        });
+        
         data[`[Regular] ${key}`] = {
           ...value,
-          priceTon: value.price_ton || 0,
-          priceUsd: value.price_usd || 0,
-          price_ton: value.price_ton || 0,
-          price_usd: value.price_usd || 0,
-          'change_24h_ton_%': value.change_24h || 0,
-          'change_24h_usd_%': value.change_24h || 0,
-          tonPrice24hAgo: value.tonPrice24hAgo || value.price_ton || 0,
-          usdPrice24hAgo: value.usdPrice24hAgo || value.price_usd || 0,
-          tonPriceWeekAgo: value.tonPriceWeekAgo || value.price_ton || 0,
-          usdPriceWeekAgo: value.usdPriceWeekAgo || value.price_usd || 0,
-          tonPriceMonthAgo: value.tonPriceMonthAgo || value.price_ton || 0,
-          usdPriceMonthAgo: value.usdPriceMonthAgo || value.price_usd || 0,
+          priceTon: currentPriceTon,
+          priceUsd: currentPriceUsd,
+          price_ton: currentPriceTon,
+          price_usd: currentPriceUsd,
+          'change_24h_ton_%': change24hTon,
+          'change_24h_usd_%': change24hUsd,
+          tonPrice24hAgo: ton24hAgo || currentPriceTon,
+          usdPrice24hAgo: usd24hAgo || currentPriceUsd,
+          tonPriceWeekAgo: value.tonPriceWeekAgo || value.ton_price_week_ago || currentPriceTon,
+          usdPriceWeekAgo: value.usdPriceWeekAgo || value.usd_price_week_ago || currentPriceUsd,
+          tonPriceMonthAgo: value.tonPriceMonthAgo || value.ton_price_month_ago || currentPriceTon,
+          usdPriceMonthAgo: value.usdPriceMonthAgo || value.usd_price_month_ago || currentPriceUsd,
           image_url: normalizeImageUrl(value.image_url),
           is_upgraded: false,
           is_unupgraded: true,
