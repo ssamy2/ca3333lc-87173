@@ -101,13 +101,19 @@ const fetchMarketData = async (): Promise<MarketData> => {
         let calculatedTon24hAgo = ton24hAgo;
         let calculatedUsd24hAgo = usd24hAgo;
         
+        // Helper to check if two numbers are approximately equal (for floating point comparison)
+        const isApproxEqual = (a: number, b: number) => Math.abs(a - b) < 0.01;
+        
         // If ton24hAgo is missing OR equals current price (meaning no real historical data),
         // but we have a non-zero change, calculate the old price from the change
-        if (change24hTon !== 0 && currentPriceTon > 0 && (!ton24hAgo || ton24hAgo === currentPriceTon)) {
+        const needsCalculation = !ton24hAgo || isApproxEqual(ton24hAgo, currentPriceTon);
+        if (change24hTon !== 0 && currentPriceTon > 0 && needsCalculation) {
           calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
-          console.log(`📈 [Calculated] ${key}: ton24hAgo=${calculatedTon24hAgo?.toFixed(2)} from change=${change24hTon.toFixed(2)}%`);
+          console.log(`📈 [Calculated] ${key}: ton24hAgo=${calculatedTon24hAgo?.toFixed(2)} from change=${change24hTon.toFixed(2)}%, was=${ton24hAgo}`);
         }
-        if (change24hUsd !== 0 && currentPriceUsd > 0 && (!usd24hAgo || usd24hAgo === currentPriceUsd)) {
+        
+        const needsCalculationUsd = !usd24hAgo || isApproxEqual(usd24hAgo, currentPriceUsd);
+        if (change24hUsd !== 0 && currentPriceUsd > 0 && needsCalculationUsd) {
           calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
         }
         
