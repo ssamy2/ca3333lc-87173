@@ -27,6 +27,13 @@ interface RegularGiftData {
   price_usd: number;
   price_stars: number;
   change_24h: number;
+  tonPrice24hAgo?: number;
+  usdPrice24hAgo?: number;
+  tonPriceWeekAgo?: number;
+  usdPriceWeekAgo?: number;
+  tonPriceMonthAgo?: number;
+  usdPriceMonthAgo?: number;
+  price_history?: PriceHistoryData[];
   multiplier: string;
   supply: number;
   supply_text: string;
@@ -180,8 +187,33 @@ const RegularGiftDetail: React.FC = () => {
       
       if (result.success && result.data) {
         setGiftData(result.data);
-        // Fetch price history if gift_id is available
-        if (result.data.gift_id) {
+        
+        // Use price_history from response if available, otherwise fetch separately
+        if (result.data.price_history && result.data.price_history.length > 0) {
+          setPriceHistory(result.data.price_history);
+          // Calculate changes from historical prices
+          if (result.data.tonPrice24hAgo || result.data.tonPriceWeekAgo || result.data.tonPriceMonthAgo) {
+            const currentTon = result.data.price_ton;
+            const changes: PriceChanges = {
+              daily: result.data.tonPrice24hAgo && result.data.tonPrice24hAgo !== currentTon ? {
+                change_ton_percent: ((currentTon - result.data.tonPrice24hAgo) / result.data.tonPrice24hAgo) * 100,
+                old_price_ton: result.data.tonPrice24hAgo
+              } : null,
+              weekly: result.data.tonPriceWeekAgo && result.data.tonPriceWeekAgo !== currentTon ? {
+                change_ton_percent: ((currentTon - result.data.tonPriceWeekAgo) / result.data.tonPriceWeekAgo) * 100,
+                old_price_ton: result.data.tonPriceWeekAgo
+              } : null,
+              monthly: result.data.tonPriceMonthAgo && result.data.tonPriceMonthAgo !== currentTon ? {
+                change_ton_percent: ((currentTon - result.data.tonPriceMonthAgo) / result.data.tonPriceMonthAgo) * 100,
+                old_price_ton: result.data.tonPriceMonthAgo
+              } : null,
+              three_months: null,
+              yearly: null
+            };
+            setPriceChanges(changes);
+          }
+        } else if (result.data.gift_id) {
+          // Fallback: fetch price history separately
           fetchPriceHistory(result.data.gift_id);
         }
       } else if (result.is_upgraded === true) {
