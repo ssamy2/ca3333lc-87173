@@ -95,6 +95,18 @@ const fetchMarketData = async (): Promise<MarketData> => {
           rawValue: value
         });
         
+        // Calculate historical prices from change_24h if not available
+        // Formula: oldPrice = currentPrice / (1 + change/100)
+        let calculatedTon24hAgo = ton24hAgo;
+        let calculatedUsd24hAgo = usd24hAgo;
+        
+        if (!ton24hAgo && change24hTon !== 0 && currentPriceTon > 0) {
+          calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
+        }
+        if (!usd24hAgo && change24hUsd !== 0 && currentPriceUsd > 0) {
+          calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
+        }
+        
         data[`[Regular] ${key}`] = {
           ...value,
           priceTon: currentPriceTon,
@@ -103,8 +115,8 @@ const fetchMarketData = async (): Promise<MarketData> => {
           price_usd: currentPriceUsd,
           'change_24h_ton_%': change24hTon,
           'change_24h_usd_%': change24hUsd,
-          tonPrice24hAgo: ton24hAgo || currentPriceTon,
-          usdPrice24hAgo: usd24hAgo || currentPriceUsd,
+          tonPrice24hAgo: calculatedTon24hAgo || currentPriceTon,
+          usdPrice24hAgo: calculatedUsd24hAgo || currentPriceUsd,
           tonPriceWeekAgo: value.tonPriceWeekAgo || value.ton_price_week_ago || currentPriceTon,
           usdPriceWeekAgo: value.usdPriceWeekAgo || value.usd_price_week_ago || currentPriceUsd,
           tonPriceMonthAgo: value.tonPriceMonthAgo || value.ton_price_month_ago || currentPriceTon,

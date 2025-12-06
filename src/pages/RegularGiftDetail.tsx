@@ -203,39 +203,22 @@ const RegularGiftDetail: React.FC = () => {
   const chartData = useMemo(() => {
     if (!priceHistory.length) return [];
     
-    const now = new Date();
-    let filterDate: Date;
+    // If we have 2+ data points, show all of them regardless of time range
+    // This ensures the chart always shows when data is available
+    const allData = priceHistory.map(item => ({
+      ...item,
+      price: item.price_ton,
+      label: new Date(item.recorded_at).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit'
+      })
+    }));
     
-    switch (timeRange) {
-      case '24h':
-        filterDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '1w':
-        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '1m':
-        filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    }
-    
-    const filtered = priceHistory
-      .filter(item => new Date(item.recorded_at) >= filterDate)
-      .map(item => ({
-        ...item,
-        price: item.price_ton,
-        label: new Date(item.recorded_at).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric',
-          hour: timeRange === '24h' ? '2-digit' : undefined
-        })
-      }));
-    
-    return filtered;
-  }, [priceHistory, timeRange]);
+    return allData;
+  }, [priceHistory]);
   
-  // Check if data is available for current time range
+  // Check if data is available for chart
   const hasDataForRange = useMemo(() => {
     return chartData.length >= 2;
   }, [chartData]);
