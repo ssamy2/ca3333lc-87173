@@ -69,6 +69,7 @@ interface TreemapHeatmapProps {
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
   isRegularMode?: boolean;
+  isAllMode?: boolean;
 }
 
 
@@ -155,12 +156,20 @@ const transformGiftData = (
   chartType: 'change' | 'marketcap', 
   timeGap: '24h' | '1w' | '1m',
   currency: 'ton' | 'usd',
-  isRegularMode: boolean = false
+  isRegularMode: boolean = false,
+  isAllMode: boolean = false
 ): TreemapDataPoint[] => {
   return data.map(item => {
     const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
-    // Remove [Regular] prefix from name for display
-    const displayName = item.name.replace('[Regular] ', '');
+    const isRegularGift = item.name.startsWith('[Regular]');
+    
+    // Format display name: 
+    // - In "all" mode: show "(R) Name" for regular gifts
+    // - Otherwise: just remove the [Regular] prefix
+    let displayName = item.name.replace('[Regular] ', '');
+    if (isAllMode && isRegularGift) {
+      displayName = `(R) ${displayName}`;
+    }
 
     // Regular mode - size based on price (no market cap for regular gifts)
     if (isRegularMode) {
@@ -681,7 +690,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   chartType,
   timeGap,
   currency,
-  isRegularMode = false
+  isRegularMode = false,
+  isAllMode = false
 }, ref) => {
   const chartRef = useRef<ChartJS>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -742,7 +752,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         return;
       }
 
-      const transformedData = transformGiftData(data, chartType, timeGap, currency, isRegularMode);
+      const transformedData = transformGiftData(data, chartType, timeGap, currency, isRegularMode, isAllMode);
       
       console.log('🎨 Starting image preload for export...', transformedData.length, 'items');
       
@@ -953,7 +963,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   useEffect(() => {
     try {
       const filteredData = data.filter(item => !item.preSale);
-      const transformed = transformGiftData(filteredData, chartType, timeGap, currency, isRegularMode);
+      const transformed = transformGiftData(filteredData, chartType, timeGap, currency, isRegularMode, isAllMode);
       
       // Always display data immediately - don't wait for images
       setDisplayData(transformed);
@@ -996,7 +1006,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     } catch {
       setIsLoading(false);
     }
-  }, [data, chartType, timeGap, currency, isRegularMode]);
+  }, [data, chartType, timeGap, currency, isRegularMode, isAllMode]);
 
   const chartData: ChartData<'treemap'> = useMemo(() => ({
     datasets: [{

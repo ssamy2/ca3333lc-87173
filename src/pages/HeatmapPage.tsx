@@ -11,7 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
-type DataSource = 'market' | 'black' | 'regular';
+type DataSource = 'all' | 'upgraded' | 'regular' | 'black';
 type ChartType = 'change' | 'marketcap';
 type TimeGap = '24h' | '1w' | '1m';
 
@@ -42,7 +42,7 @@ const HeatmapPage = () => {
   
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
-  const [dataSource, setDataSource] = useState<DataSource>('market');
+  const [dataSource, setDataSource] = useState<DataSource>('all');
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
   
@@ -122,11 +122,19 @@ const HeatmapPage = () => {
     if (!marketData) return [];
     let entries = Object.entries(marketData);
     
-    if (dataSource === 'regular') {
+    // Filter based on data source
+    if (dataSource === 'upgraded') {
+      // Show only upgraded gifts (not starting with [Regular])
+      entries = entries.filter(([name, data]) => {
+        return !name.startsWith('[Regular]') && (data as any).is_unupgraded !== true;
+      });
+    } else if (dataSource === 'regular') {
+      // Show only regular gifts
       entries = entries.filter(([name, data]) => {
         return name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
       });
     }
+    // 'all' shows everything
 
     if (chartType === 'marketcap') {
       entries.sort((a, b) => {
@@ -305,9 +313,19 @@ const HeatmapPage = () => {
         {/* Data Source */}
         <div className="flex gap-2">
           <button
-            onClick={() => setDataSource('market')}
+            onClick={() => setDataSource('all')}
             className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-              dataSource === 'market'
+              dataSource === 'all'
+                ? 'bg-blue-500 text-white'
+                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+            }`}
+          >
+            {text.all}
+          </button>
+          <button
+            onClick={() => setDataSource('upgraded')}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              dataSource === 'upgraded'
                 ? 'bg-emerald-500 text-white'
                 : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
             }`}
@@ -337,7 +355,7 @@ const HeatmapPage = () => {
         </div>
 
         {/* Currency */}
-        {dataSource === 'market' && (
+        {(dataSource === 'all' || dataSource === 'upgraded') && (
           <div className="flex gap-2">
             <button
               onClick={() => setCurrency('ton')}
@@ -372,6 +390,7 @@ const HeatmapPage = () => {
             timeGap={timeGap}
             currency={currency}
             isRegularMode={dataSource === 'regular'}
+            isAllMode={dataSource === 'all'}
           />
         </div>
       </div>
