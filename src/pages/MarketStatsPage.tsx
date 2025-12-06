@@ -405,6 +405,15 @@ const MarketStatsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Chart */}
+        {chartData && (
+          <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30">
+            <div className="h-64">
+              <Line data={chartData} options={chartOptions} />
+            </div>
+          </div>
+        )}
+
         {/* Time Range & Currency Toggle */}
         <div className="flex gap-2">
           {/* Time Range */}
@@ -448,15 +457,6 @@ const MarketStatsPage: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Chart */}
-        {chartData && (
-          <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30">
-            <div className="h-64">
-              <Line data={chartData} options={chartOptions} />
-            </div>
-          </div>
-        )}
 
         {/* Change Cards */}
         {stats && (
