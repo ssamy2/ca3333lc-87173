@@ -843,7 +843,7 @@ const GiftDetail: React.FC = () => {
         </Card>
 
         {/* Chart */}
-        <Card className="p-3 bg-card/50 backdrop-blur">
+        <Card className="p-3 bg-card/50 backdrop-blur relative">
           {/* Black Market Stable Price Notice */}
           {isBlackPriceStable && (
             <div className="mb-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
@@ -852,7 +852,16 @@ const GiftDetail: React.FC = () => {
               </p>
             </div>
           )}
-          {renderChart()}
+          <div className="relative">
+            {renderChart()}
+            {/* Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-white/20 mb-2">◎</div>
+                <div className="text-xl font-bold text-white/20 tracking-wider">Nova Gifts Charts</div>
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Controls - Responsive Layout */}

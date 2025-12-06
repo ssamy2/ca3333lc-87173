@@ -547,7 +547,7 @@ const RegularGiftDetail: React.FC = () => {
                   <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
                 </div>
               ) : chartData.length > 0 ? (
-                <div className="h-32">
+                <div className="h-32 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
                       <defs>
@@ -582,6 +582,13 @@ const RegularGiftDetail: React.FC = () => {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-white/20 mb-1">◎</div>
+                      <div className="text-sm font-bold text-white/20 tracking-wider">Nova Gifts</div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="h-32 flex items-center justify-center text-blue-400/60 text-sm">
