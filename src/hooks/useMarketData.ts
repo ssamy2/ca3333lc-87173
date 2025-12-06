@@ -87,35 +87,33 @@ const fetchMarketData = async (): Promise<MarketData> => {
           change24hUsd = ((currentPriceUsd - usd24hAgo) / usd24hAgo) * 100;
         }
         
-        // Log للتصحيح
-        console.log(`🎁 [Unupgraded] ${key}:`, {
-          currentPriceTon,
-          ton24hAgo,
-          change24hTon: change24hTon.toFixed(2) + '%',
-          rawValue: value
-        });
+        // Helper to check if two numbers are approximately equal (for floating point comparison)
+        const isApproxEqual = (a: number | undefined, b: number) => {
+          if (a === undefined || a === null) return false;
+          return Math.abs(a - b) < 0.01;
+        };
         
-        // Calculate historical prices from change_24h if not available OR if they equal current price
-        // This handles the case where backend sets tonPrice24hAgo = current_ton when no historical data
-        // Formula: oldPrice = currentPrice / (1 + change/100)
+        // ALWAYS calculate historical price from change_24h if change is non-zero
+        // This ensures the heatmap shows correct changes even if backend sends same value
         let calculatedTon24hAgo = ton24hAgo;
         let calculatedUsd24hAgo = usd24hAgo;
         
-        // Helper to check if two numbers are approximately equal (for floating point comparison)
-        const isApproxEqual = (a: number, b: number) => Math.abs(a - b) < 0.01;
-        
-        // If ton24hAgo is missing OR equals current price (meaning no real historical data),
-        // but we have a non-zero change, calculate the old price from the change
-        const needsCalculation = !ton24hAgo || isApproxEqual(ton24hAgo, currentPriceTon);
-        if (change24hTon !== 0 && currentPriceTon > 0 && needsCalculation) {
+        // Calculate if we have a non-zero change
+        if (change24hTon !== 0 && currentPriceTon > 0) {
           calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
-          console.log(`📈 [Calculated] ${key}: ton24hAgo=${calculatedTon24hAgo?.toFixed(2)} from change=${change24hTon.toFixed(2)}%, was=${ton24hAgo}`);
+          console.log(`📈 [CALC] ${key}: price=${currentPriceTon}, change=${change24hTon.toFixed(2)}%, calculated24hAgo=${calculatedTon24hAgo?.toFixed(4)}`);
         }
-        
-        const needsCalculationUsd = !usd24hAgo || isApproxEqual(usd24hAgo, currentPriceUsd);
-        if (change24hUsd !== 0 && currentPriceUsd > 0 && needsCalculationUsd) {
+        if (change24hUsd !== 0 && currentPriceUsd > 0) {
           calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
         }
+        
+        // Log للتصحيح
+        console.log(`🎁 [Unupgraded] ${key}:`, {
+          currentPriceTon,
+          apiTon24hAgo: ton24hAgo,
+          calculatedTon24hAgo,
+          change24hTon: change24hTon.toFixed(2) + '%'
+        });
         
         data[`[Regular] ${key}`] = {
           ...value,
