@@ -91,61 +91,109 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
   const imageMapResult = new Map<string, HTMLImageElement>();
   let cachedCount = 0;
   let loadedCount = 0;
+  let failedCount = 0;
   
   // Process images in batches to avoid overwhelming the browser
   const batchSize = 10;
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize);
     const promises = batch.map(async item => {
-      const url = normalizeUrl(item.imageName);
-      if (imageMapResult.has(url)) return;
-      
-      // Check if image is cached first
-      const cachedBase64 = imageCache.getImageFromCache(url);
-      
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      const loadPromise = new Promise<void>((resolve) => {
-        let settled = false;
-        const safeResolve = () => { 
-          if (!settled) { 
-            settled = true; 
-            resolve(); 
-          } 
-        };
+      try {
+        const url = normalizeUrl(item.imageName);
+        if (imageMapResult.has(url)) return;
         
-        img.onload = () => {
-          // Wait a bit to ensure image is fully decoded
-          setTimeout(() => safeResolve(), 50);
-        };
-        img.onerror = () => safeResolve();
+        // Check if image is cached first
+        const cachedBase64 = imageCache.getImageFromCache(url);
         
-        // Use cached base64 if available, otherwise load from URL
-        if (cachedBase64 && cachedBase64.startsWith('data:')) {
-          img.src = cachedBase64;
-          cachedCount++;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        const loadPromise = new Promise<void>((resolve) => {
+          let settled = false;
+          const safeResolve = () => { 
+            if (!settled) { 
+              settled = true; 
+              resolve(); 
+            } 
+          };
+          
+          img.onload = () => {
+            // Wait a bit to ensure image is fully decoded
+            setTimeout(() => safeResolve(), 50);
+          };
+          img.onerror = () => {
+            failedCount++;
+            console.warn(`⚠️ Image load error for ${item.name}: ${url}`);
+            safeResolve();
+          };
+          
+          // Use cached base64 if available, otherwise load from URL
+          if (cachedBase64 && cachedBase64.startsWith('data:')) {
+            img.src = cachedBase64;
+            cachedCount++;
+          } else {
+            // Try to load from URL with fallback handling
+            img.src = url;
+            loadedCount++;
+          }
+        });
+        
+        const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
+        await Promise.race([loadPromise, timer]);
+        
+        // Verify image loaded successfully
+        if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+          imageMapResult.set(url, img);
         } else {
-          img.src = url;
-          loadedCount++;
+          // Try alternative URL formats if the original fails
+          const alternativeUrls = [
+            url.replace('https://', 'http://'),
+            url.replace('http://', 'https://'),
+            `https://cdn.changes.tg/gifts/originals/${encodeURIComponent(item.name)}/Original.png`
+          ];
+          
+          for (const altUrl of alternativeUrls) {
+            try {
+              const altImg = new Image();
+              altImg.crossOrigin = 'anonymous';
+              
+              await new Promise<void>((resolve) => {
+                const timeout = setTimeout(() => resolve(), 2000);
+                altImg.onload = () => {
+                  clearTimeout(timeout);
+                  resolve();
+                };
+                altImg.onerror = () => {
+                  clearTimeout(timeout);
+                  resolve();
+                };
+                altImg.src = altUrl;
+              });
+              
+              if (altImg.complete && altImg.naturalWidth > 0) {
+                imageMapResult.set(url, altImg);
+                console.log(`✅ Loaded alternative image for ${item.name}`);
+                break;
+              }
+            } catch {
+              // Continue to next alternative
+            }
+          }
+          
+          if (!imageMapResult.has(url)) {
+            console.warn(`⚠️ All image sources failed for: ${item.name}`);
+          }
         }
-      });
-      
-      const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
-      await Promise.race([loadPromise, timer]);
-      
-      // Verify image loaded successfully
-      if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
-        imageMapResult.set(url, img);
-      } else {
-        console.warn('⚠️ Image failed to load:', item.name, url);
+      } catch (error) {
+        console.error(`❌ Exception loading image for ${item.name}:`, error);
+        failedCount++;
       }
     });
     
     await Promise.all(promises);
   }
   
-  console.log(`📊 Images loaded: ${imageMapResult.size}/${data.length} (${cachedCount} from cache, ${loadedCount} from network)`);
+  console.log(`📊 Images: ${imageMapResult.size}/${data.length} loaded (${cachedCount} cached, ${loadedCount} network, ${failedCount} failed)`);
   return imageMapResult;
 };
 
@@ -551,7 +599,7 @@ const createImagePlugin = (
             willDraw: hasImage && drawImage && width >= 20 && height >= 20
           });
           
-          // Draw image with better error handling
+          // Draw image with robust error handling
           if (hasImage && drawImage && width >= 20 && height >= 20) {
             try {
               // Ensure image is within bounds
@@ -560,14 +608,40 @@ const createImagePlugin = (
               const safeImageWidth = Math.min(imageWidth, width * 0.9);
               const safeImageHeight = Math.min(imageHeight, height * 0.4);
               
-              if ((drawImage as ImageBitmap).close) {
-                ctx.drawImage(drawImage as ImageBitmap, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
-              } else {
-                ctx.drawImage(drawImage as HTMLImageElement, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
+              // Additional validation before drawing
+              if (safeImageWidth > 0 && safeImageHeight > 0 && 
+                  safeImageX >= x && safeImageY >= y &&
+                  safeImageX + safeImageWidth <= x + width &&
+                  safeImageY + safeImageHeight <= y + height) {
+                
+                if ((drawImage as ImageBitmap).close) {
+                  ctx.drawImage(drawImage as ImageBitmap, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
+                } else if (drawImage instanceof HTMLImageElement && drawImage.complete) {
+                  ctx.drawImage(drawImage, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
+                }
+                console.log('✅ Drew image:', item.name);
               }
-              console.log('✅ Drew image:', item.name);
             } catch (err) {
-              console.error('[TREEMAP] Failed to draw image for', item.name, err);
+              console.warn('[TREEMAP] Image draw failed for', item.name, '- continuing without image');
+              // Continue rendering without the image - don't break the entire chart
+            }
+          } else if (!hasImage && width >= 30 && height >= 30) {
+            // Draw placeholder for missing images
+            try {
+              ctx.save();
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+              ctx.lineWidth = 1;
+              const placeholderSize = Math.min(imageWidth * 0.8, imageHeight * 0.8, 30);
+              const placeholderX = x + (width - placeholderSize) / 2;
+              const placeholderY = textStartY + imagePaddingOffset;
+              ctx.beginPath();
+              ctx.roundRect(placeholderX, placeholderY, placeholderSize, placeholderSize, 4);
+              ctx.fill();
+              ctx.stroke();
+              ctx.restore();
+            } catch {
+              // Ignore placeholder errors
             }
           }
 
