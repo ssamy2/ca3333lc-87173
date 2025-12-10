@@ -67,19 +67,47 @@ const fetchMarketData = async (): Promise<MarketData> => {
       console.log('📦 [API] Raw unupgraded data sample:', Object.entries(rawData.unupgraded).slice(0, 3));
       
       Object.entries(rawData.unupgraded).forEach(([key, value]: [string, any]) => {
-        const currentPriceTon = value.price_ton || 0;
-        const currentPriceUsd = value.price_usd || 0;
+        // البيانات الغير مطورة بتيجي بـ priceTon/priceUsd مباشرة
+        const currentPriceTon = value.priceTon || value.price_ton || 0;
+        const currentPriceUsd = value.priceUsd || value.price_usd || 0;
         
-        // استخدام الأسعار التاريخية من البيانات القادمة أو حسابها
+        // قراءة نسبة التغير من الـ API مباشرة
+        // البيانات الغير مطورة بتيجي بـ change_24h_ton_% و change_24h_usd_%
+        let change24hTon = value['change_24h_ton_%'];
+        let change24hUsd = value['change_24h_usd_%'];
+        
+        // التعامل مع القيم null أو undefined
+        if (change24hTon === null || change24hTon === undefined) {
+          change24hTon = 0;
+        }
+        if (change24hUsd === null || change24hUsd === undefined) {
+          change24hUsd = 0;
+        }
+        
+        // محاولة قراءة الأسعار التاريخية من الـ API
         const ton24hAgo = value.tonPrice24hAgo || value.ton_price_24h_ago || value.price_ton_24h_ago;
         const usd24hAgo = value.usdPrice24hAgo || value.usd_price_24h_ago || value.price_usd_24h_ago;
         
-        // حساب نسبة التغير - استخدم القيمة من API مباشرة إذا كانت موجودة
-        // لا نعيد الحساب لأن الـ API قد يستخدم sticker_change_percent كـ fallback
-        let change24hTon = value.change_24h ?? value['change_24h_ton_%'] ?? value.change_24h_ton_percent ?? 0;
-        let change24hUsd = value.change_24h ?? value['change_24h_usd_%'] ?? value.change_24h_usd_percent ?? 0;
+        // حساب الأسعار التاريخية من نسبة التغير
+        let calculatedTon24hAgo = ton24hAgo;
+        let calculatedUsd24hAgo = usd24hAgo;
         
-        // فقط نحسب يدوياً إذا كان change_24h = 0 والأسعار التاريخية مختلفة عن الحالية
+        // إذا كان عندنا نسبة تغير، نحسب السعر التاريخي
+        if (change24hTon !== 0 && currentPriceTon > 0) {
+          calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
+          console.log(`📈 [CALC] ${key}: price=${currentPriceTon}, change=${change24hTon.toFixed(2)}%, calculated24hAgo=${calculatedTon24hAgo?.toFixed(4)}`);
+        } else if (!ton24hAgo) {
+          // إذا مفيش نسبة تغير ولا سعر تاريخي، نستخدم السعر الحالي
+          calculatedTon24hAgo = currentPriceTon;
+        }
+        
+        if (change24hUsd !== 0 && currentPriceUsd > 0) {
+          calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
+        } else if (!usd24hAgo) {
+          calculatedUsd24hAgo = currentPriceUsd;
+        }
+        
+        // إذا مفيش نسبة تغير من الـ API ولكن عندنا أسعار تاريخية، نحسب النسبة
         if (change24hTon === 0 && ton24hAgo && ton24hAgo > 0 && currentPriceTon > 0 && ton24hAgo !== currentPriceTon) {
           change24hTon = ((currentPriceTon - ton24hAgo) / ton24hAgo) * 100;
         }
@@ -87,29 +115,20 @@ const fetchMarketData = async (): Promise<MarketData> => {
           change24hUsd = ((currentPriceUsd - usd24hAgo) / usd24hAgo) * 100;
         }
         
-        // ALWAYS calculate historical price from change_24h if change is non-zero
-        // This ensures the heatmap shows correct changes even if backend sends same value
-        let calculatedTon24hAgo = ton24hAgo;
-        let calculatedUsd24hAgo = usd24hAgo;
-        
-        // Calculate if we have a non-zero change
-        if (change24hTon !== 0 && currentPriceTon > 0) {
-          calculatedTon24hAgo = currentPriceTon / (1 + change24hTon / 100);
-          console.log(`📈 [CALC] ${key}: price=${currentPriceTon}, change=${change24hTon.toFixed(2)}%, calculated24hAgo=${calculatedTon24hAgo?.toFixed(4)}`);
-        }
-        if (change24hUsd !== 0 && currentPriceUsd > 0) {
-          calculatedUsd24hAgo = currentPriceUsd / (1 + change24hUsd / 100);
-        }
+        // استخدام اسم الهدية من البيانات
+        const giftName = value.name || key;
         
         // Log للتصحيح
-        console.log(`🎁 [Unupgraded] ${key}:`, {
+        console.log(`🎁 [Unupgraded] ${giftName}:`, {
           currentPriceTon,
+          apiChange: value['change_24h_ton_%'],
+          calculatedChange: change24hTon,
           apiTon24hAgo: ton24hAgo,
           calculatedTon24hAgo,
           change24hTon: change24hTon.toFixed(2) + '%'
         });
         
-        data[`[Regular] ${key}`] = {
+        data[`[Regular] ${giftName}`] = {
           ...value,
           priceTon: currentPriceTon,
           priceUsd: currentPriceUsd,
