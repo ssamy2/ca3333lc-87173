@@ -1,139 +1,287 @@
-// Lightweight image cache - stores only URLs, no base64 conversion
-// Uses browser's native caching for actual image data
+// Image cache service - stores images in localStorage for offline/faster loading
+
+const CACHE_KEY = 'gift-image-cache';
+const CACHE_VERSION = 'v2';
+const MAX_CACHE_SIZE_MB = 15; // Max localStorage usage for images
+const MAX_ENTRIES = 200; // Max number of cached images
+
+interface CacheEntry {
+  data: string; // base64
+  timestamp: number;
+  size: number;
+}
+
+interface CacheStore {
+  version: string;
+  entries: Record<string, CacheEntry>;
+}
 
 class ImageCacheService {
-  private loadedUrls: Set<string> = new Set();
-  private pendingRequests: Map<string, Promise<HTMLImageElement>> = new Map();
+  private memoryCache: Map<string, string> = new Map();
+  private pendingRequests: Map<string, Promise<string>> = new Map();
+  private cacheStore: CacheStore | null = null;
+  private initialized = false;
+
+  constructor() {
+    this.loadFromStorage();
+  }
+
+  private loadFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(CACHE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as CacheStore;
+        if (parsed.version === CACHE_VERSION) {
+          this.cacheStore = parsed;
+          // Load into memory cache
+          Object.entries(parsed.entries).forEach(([url, entry]) => {
+            this.memoryCache.set(url, entry.data);
+          });
+          console.log(`📦 Loaded ${this.memoryCache.size} images from cache`);
+        } else {
+          // Version mismatch, clear old cache
+          localStorage.removeItem(CACHE_KEY);
+          this.cacheStore = { version: CACHE_VERSION, entries: {} };
+        }
+      } else {
+        this.cacheStore = { version: CACHE_VERSION, entries: {} };
+      }
+      // Clean up old cache key
+      localStorage.removeItem('nft-image-cache');
+    } catch (e) {
+      console.warn('Failed to load image cache:', e);
+      this.cacheStore = { version: CACHE_VERSION, entries: {} };
+    }
+    this.initialized = true;
+  }
+
+  private saveToStorage(): void {
+    if (!this.cacheStore) return;
+    
+    try {
+      const data = JSON.stringify(this.cacheStore);
+      localStorage.setItem(CACHE_KEY, data);
+    } catch (e) {
+      // Storage full, evict oldest entries
+      console.warn('Cache storage full, evicting old entries');
+      this.evictOldEntries(50);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(this.cacheStore));
+      } catch {
+        // Still failed, clear all
+        this.clearAllCache();
+      }
+    }
+  }
+
+  private evictOldEntries(count: number): void {
+    if (!this.cacheStore) return;
+    
+    const entries = Object.entries(this.cacheStore.entries)
+      .sort((a, b) => a[1].timestamp - b[1].timestamp);
+    
+    const toRemove = entries.slice(0, count);
+    toRemove.forEach(([url]) => {
+      delete this.cacheStore!.entries[url];
+      this.memoryCache.delete(url);
+    });
+  }
+
+  private enforceStorageLimits(): void {
+    if (!this.cacheStore) return;
+    
+    const entries = Object.entries(this.cacheStore.entries);
+    
+    // Check entry count
+    if (entries.length > MAX_ENTRIES) {
+      this.evictOldEntries(entries.length - MAX_ENTRIES + 20);
+    }
+    
+    // Check size
+    const totalSize = entries.reduce((sum, [, entry]) => sum + entry.size, 0);
+    const maxBytes = MAX_CACHE_SIZE_MB * 1024 * 1024;
+    
+    if (totalSize > maxBytes) {
+      // Evict until under limit
+      const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+      let currentSize = totalSize;
+      let i = 0;
+      
+      while (currentSize > maxBytes * 0.8 && i < sorted.length) {
+        const [url, entry] = sorted[i];
+        currentSize -= entry.size;
+        delete this.cacheStore.entries[url];
+        this.memoryCache.delete(url);
+        i++;
+      }
+    }
+  }
 
   /**
-   * Check if an image URL has been loaded before
+   * Get image from cache (returns base64 or null)
    */
   getImageFromCache(url: string): string | null {
-    return this.loadedUrls.has(url) ? url : null;
+    return this.memoryCache.get(url) || null;
   }
 
   /**
-   * Mark URL as loaded (for compatibility with existing code)
+   * Check if image is cached
    */
-  saveImageToCache(url: string): void {
-    this.loadedUrls.add(url);
+  isCached(url: string): boolean {
+    return this.memoryCache.has(url);
   }
 
   /**
-   * Preload an image (uses browser cache, no base64 conversion)
+   * Load and cache an image
    */
-  async preloadImage(url: string): Promise<string> {
-    // Already loaded
-    if (this.loadedUrls.has(url)) {
-      return url;
+  async loadAndCache(url: string): Promise<string> {
+    // Return from memory cache
+    const cached = this.memoryCache.get(url);
+    if (cached) {
+      // Update timestamp
+      if (this.cacheStore?.entries[url]) {
+        this.cacheStore.entries[url].timestamp = Date.now();
+      }
+      return cached;
     }
 
-    // Already loading
+    // Check if already loading
     const pending = this.pendingRequests.get(url);
     if (pending) {
-      await pending;
-      return url;
+      return pending;
     }
 
-    // Load image
-    const loadingPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+    // Load and convert to base64
+    const loadPromise = this.fetchAndConvert(url);
+    this.pendingRequests.set(url, loadPromise);
+
+    try {
+      const base64 = await loadPromise;
+      this.pendingRequests.delete(url);
+      return base64;
+    } catch (e) {
+      this.pendingRequests.delete(url);
+      return url; // Return original URL on error
+    }
+  }
+
+  private async fetchAndConvert(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = "anonymous";
-      
+      img.crossOrigin = 'anonymous';
+
       img.onload = () => {
-        this.loadedUrls.add(url);
-        this.pendingRequests.delete(url);
-        resolve(img);
+        try {
+          // Convert to base64
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(url);
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0);
+          const base64 = canvas.toDataURL('image/webp', 0.85);
+          
+          // Save to cache
+          const size = base64.length;
+          this.memoryCache.set(url, base64);
+          
+          if (this.cacheStore) {
+            this.cacheStore.entries[url] = {
+              data: base64,
+              timestamp: Date.now(),
+              size
+            };
+            this.enforceStorageLimits();
+            this.saveToStorage();
+          }
+          
+          resolve(base64);
+        } catch (e) {
+          // CORS or other error, just use URL
+          resolve(url);
+        }
       };
 
       img.onerror = () => {
-        this.pendingRequests.delete(url);
         reject(new Error(`Failed to load: ${url}`));
       };
 
       img.src = url;
     });
-
-    this.pendingRequests.set(url, loadingPromise);
-    
-    try {
-      await loadingPromise;
-      return url;
-    } catch {
-      return url;
-    }
   }
 
   /**
-   * Preload multiple images
+   * Preload multiple images in batches
    */
   async preloadImages(urls: string[]): Promise<void> {
-    // Limit concurrent loads to prevent memory spikes
-    const batchSize = 5;
-    for (let i = 0; i < urls.length; i += batchSize) {
-      const batch = urls.slice(i, i + batchSize);
-      await Promise.allSettled(batch.map(url => this.preloadImage(url)));
+    const uncached = urls.filter(url => !this.memoryCache.has(url));
+    if (uncached.length === 0) return;
+
+    console.log(`📥 Caching ${uncached.length} new images...`);
+    
+    // Process in small batches to avoid memory spikes
+    const batchSize = 3;
+    for (let i = 0; i < uncached.length; i += batchSize) {
+      const batch = uncached.slice(i, i + batchSize);
+      await Promise.allSettled(batch.map(url => this.loadAndCache(url)));
+      // Small delay between batches
+      if (i + batchSize < uncached.length) {
+        await new Promise(r => setTimeout(r, 100));
+      }
     }
+    
+    console.log(`✅ Cache now has ${this.memoryCache.size} images`);
   }
 
   /**
-   * Preload uncached images only
+   * Preload a single image (alias for loadAndCache)
+   */
+  async preloadImage(url: string): Promise<string> {
+    return this.loadAndCache(url);
+  }
+
+  /**
+   * Preload only uncached images
    */
   async preloadUncachedImages(urls: string[]): Promise<void> {
-    const uncached = [...new Set(urls)].filter(url => !this.loadedUrls.has(url));
+    const uncached = urls.filter(url => !this.memoryCache.has(url));
     if (uncached.length === 0) return;
-    
-    console.log(`📥 Preloading ${uncached.length} images`);
     await this.preloadImages(uncached);
   }
 
   /**
-   * Check if cached
-   */
-  isCached(url: string): boolean {
-    return this.loadedUrls.has(url);
-  }
-
-  /**
-   * Get cache stats
+   * Get cache statistics
    */
   getCacheStats() {
-    return { 
-      memoryCacheSize: this.loadedUrls.size, 
-      localStorageSize: 0,
-      memorySizeMB: 0 // No longer storing base64
+    const entries = this.cacheStore ? Object.values(this.cacheStore.entries) : [];
+    const totalSize = entries.reduce((sum, e) => sum + e.size, 0);
+    
+    return {
+      count: this.memoryCache.size,
+      sizeMB: (totalSize / 1024 / 1024).toFixed(2),
+      maxMB: MAX_CACHE_SIZE_MB
     };
   }
 
   /**
-   * Clear cache
+   * Clear all cache
    */
   clearAllCache(): void {
-    this.loadedUrls.clear();
-  }
-
-  clearExpiredCache(): void {
-    // No-op since we don't use localStorage anymore
-  }
-
-  async getCachedOrLoad(url: string): Promise<string> {
-    await this.preloadImage(url);
-    return url;
+    this.memoryCache.clear();
+    this.cacheStore = { version: CACHE_VERSION, entries: {} };
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch {}
+    console.log('🗑️ Image cache cleared');
   }
 }
 
 export const imageCache = new ImageCacheService();
 
-/**
- * Preload images from market data (disabled for performance)
- */
-export const preloadImages = async () => {
-  // Disabled - let browser handle caching naturally
-};
-
-// Clean up old base64 cache from localStorage
-try {
-  localStorage.removeItem('nft-image-cache');
-} catch {
-  // Ignore errors
-}
+// Export for backward compatibility
+export const preloadImages = async () => {};
