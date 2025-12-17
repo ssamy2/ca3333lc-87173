@@ -44,6 +44,7 @@ interface RegularGiftData {
   history: {
     hourly_last_day: HistoryItem[];
     half_hourly_last_week: HistoryItem[];
+    six_hourly_last_month: HistoryItem[];
   };
 }
 
@@ -162,8 +163,8 @@ const RegularGiftDetail: React.FC = () => {
     } else if (timeRange === '7d') {
       historyData = giftData.history.half_hourly_last_week || [];
     } else {
-      // For 30d, use weekly data if available, otherwise use 7d data
-      historyData = giftData.history.half_hourly_last_week || [];
+      // For 30d, use six_hourly_last_month
+      historyData = giftData.history.six_hourly_last_month || [];
     }
     
     return historyData.map(item => ({
