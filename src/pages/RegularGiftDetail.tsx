@@ -241,7 +241,8 @@ const RegularGiftDetail: React.FC = () => {
     }).format(num);
   };
 
-  const formatSupply = (supply: number) => {
+  const formatSupply = (supply: number | undefined | null) => {
+    if (supply === undefined || supply === null) return '0';
     if (supply >= 1000000) return `${(supply / 1000000).toFixed(1)}M`;
     if (supply >= 1000) return `${(supply / 1000).toFixed(0)}K`;
     return supply.toLocaleString();
