@@ -30,6 +30,8 @@ interface GiftItem {
   marketCapUsd?: string;
   upgradedSupply: number;
   preSale?: boolean;
+  percentChange24hTon?: number;
+  percentChange24hUsd?: number;
 }
 
 const HeatmapPage = () => {
@@ -193,7 +195,9 @@ const HeatmapPage = () => {
         marketCapTon: data.market_cap_ton,
         marketCapUsd: data.market_cap_usd,
         upgradedSupply: data.upgradedSupply || 1000000,
-        preSale: false
+        preSale: false,
+        percentChange24hTon: data['change_24h_ton_%'],
+        percentChange24hUsd: data['change_24h_usd_%'],
       };
     });
     

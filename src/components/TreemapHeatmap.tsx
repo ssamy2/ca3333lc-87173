@@ -52,6 +52,8 @@ interface GiftItem {
   marketCapUsd?: string;
   upgradedSupply: number;
   preSale?: boolean;
+  percentChange24hTon?: number;
+  percentChange24hUsd?: number;
 }
 
 interface TreemapDataPoint {
@@ -221,32 +223,37 @@ const transformGiftData = (
 
     // Regular mode - size based on price (no market cap for regular gifts)
     if (isRegularMode) {
-      let previousPrice = currentPrice;
+      // Use pre-calculated percent change if available (for 24h)
+      let percentChange: number;
       
-      switch (timeGap) {
-        case '24h':
-          previousPrice = currency === 'ton'
+      if (timeGap === '24h') {
+        const preCalculated = currency === 'ton' ? item.percentChange24hTon : item.percentChange24hUsd;
+        if (preCalculated !== undefined && preCalculated !== null) {
+          percentChange = preCalculated;
+        } else {
+          // Fallback to calculation
+          const previousPrice = currency === 'ton'
             ? (item.tonPrice24hAgo || currentPrice)
             : (item.usdPrice24hAgo || currentPrice);
-          break;
-        case '1w':
-          previousPrice = currency === 'ton'
-            ? (item.tonPriceWeekAgo || currentPrice)
-            : (item.usdPriceWeekAgo || currentPrice);
-          break;
-        case '1m':
-          previousPrice = currency === 'ton'
-            ? (item.tonPriceMonthAgo || currentPrice)
-            : (item.usdPriceMonthAgo || currentPrice);
-          break;
-        default:
-          previousPrice = currentPrice;
+          percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
+        }
+      } else {
+        // For other time gaps, calculate from historical prices
+        let previousPrice = currentPrice;
+        switch (timeGap) {
+          case '1w':
+            previousPrice = currency === 'ton'
+              ? (item.tonPriceWeekAgo || currentPrice)
+              : (item.usdPriceWeekAgo || currentPrice);
+            break;
+          case '1m':
+            previousPrice = currency === 'ton'
+              ? (item.tonPriceMonthAgo || currentPrice)
+              : (item.usdPriceMonthAgo || currentPrice);
+            break;
+        }
+        percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
       }
-
-      const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
-      
-      // Log unupgraded gift change data
-      console.log(`📊 [Regular Gift] ${displayName}: currentPrice=${currentPrice}, previousPrice=${previousPrice}, change=${percentChange.toFixed(2)}%, timeGap=${timeGap}`);
       
       // Size based on price for regular gifts
       const size = Math.max(10, Math.sqrt(currentPrice) * 5);
