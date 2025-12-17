@@ -49,6 +49,7 @@ interface RegularGiftData {
 }
 
 type TimeRange = '24h' | '7d' | '30d';
+type Currency = 'usd' | 'ton';
 
 // Helper function for rounded rectangles in canvas
 const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
@@ -75,6 +76,7 @@ const RegularGiftDetail: React.FC = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [sending, setSending] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
+  const [currency, setCurrency] = useState<Currency>('usd'); // USD as default for unupgraded
   const giftImageRef = useRef<HTMLImageElement | null>(null);
 
   const t = {
@@ -152,7 +154,7 @@ const RegularGiftDetail: React.FC = () => {
     }
   }, [id, fetchGiftData]);
 
-  // Get chart data based on time range
+  // Get chart data based on time range and currency
   const chartData = useMemo(() => {
     if (!giftData?.history) return [];
     
@@ -163,13 +165,13 @@ const RegularGiftDetail: React.FC = () => {
     } else if (timeRange === '7d') {
       historyData = giftData.history.half_hourly_last_week || [];
     } else {
-      // For 30d, use six_hourly_last_month
       historyData = giftData.history.six_hourly_last_month || [];
     }
     
     return historyData.map(item => ({
       timestamp: item.timestamp,
-      price: item.price_ton,
+      price: currency === 'usd' ? item.price_usd : item.price_ton,
+      price_ton: item.price_ton,
       price_usd: item.price_usd,
       label: new Date(item.timestamp).toLocaleDateString('en-US', { 
         month: 'short', 
@@ -177,19 +179,21 @@ const RegularGiftDetail: React.FC = () => {
         hour: timeRange === '24h' ? '2-digit' : undefined
       })
     }));
-  }, [giftData?.history, timeRange]);
+  }, [giftData?.history, timeRange, currency]);
   
   const hasDataForRange = useMemo(() => {
     return chartData.length >= 2;
   }, [chartData]);
   
-  // Get price change based on time range
+  // Get price change based on time range and currency
   const priceChange = useMemo(() => {
     if (!giftData?.changes) return 0;
     
-    const change = giftData.changes[timeRange]?.ton;
+    const change = currency === 'usd' 
+      ? giftData.changes[timeRange]?.usd 
+      : giftData.changes[timeRange]?.ton;
     return change ?? 0;
-  }, [giftData?.changes, timeRange]);
+  }, [giftData?.changes, timeRange, currency]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -244,10 +248,10 @@ const RegularGiftDetail: React.FC = () => {
     ctx.textAlign = 'left';
     ctx.fillText(giftData.gift_name, 75, 55);
 
-    // TON Price
-    ctx.fillStyle = '#60a5fa';
+    // USD Price (Primary for unupgraded)
+    ctx.fillStyle = '#10b981';
     ctx.font = 'bold 32px Arial, sans-serif';
-    ctx.fillText(`◈ ${formatNumber(giftData.price_ton)}`, 30, 100);
+    ctx.fillText(`$${formatNumber(giftData.price_usd)}`, 30, 100);
 
     // Change badge
     const changeValue = priceChange;
@@ -315,11 +319,11 @@ const RegularGiftDetail: React.FC = () => {
     ctx.textAlign = 'center';
     ctx.fillText('◎ Nova Gifts', chartX + chartW / 2, chartY + chartH / 2 + 8);
 
-    // Footer
+    // Footer - Changed to @NovaChartBot
     ctx.fillStyle = '#94a3b880';
     ctx.font = '10px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('@NovaGiftsBot', width / 2, height - 12);
+    ctx.fillText('@NovaChartBot', width / 2, height - 12);
 
     return canvas;
   }, [giftData, chartData, priceChange]);
@@ -395,7 +399,7 @@ const RegularGiftDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
           <p className="text-muted-foreground">{text.loading}</p>
         </div>
       </div>
@@ -418,194 +422,203 @@ const RegularGiftDetail: React.FC = () => {
   const chartColor = isPositive ? '#10b981' : '#ef4444';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#0a1628]/90 backdrop-blur-lg">
-        <div className="flex items-center justify-between p-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="hover:bg-blue-500/10 text-white"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="w-10" />
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-4">
-        {/* Main Card */}
-        <Card className="overflow-hidden bg-gradient-to-br from-[#1a3a5c]/80 to-[#0d2847]/80 border-blue-500/20 rounded-3xl backdrop-blur-xl">
-          <div className="p-5">
-            {/* Top Section: Gift Info + Image */}
-            <div className="flex items-start justify-between gap-4">
-              {/* Left: Gift Info */}
-              <div className="flex-1">
-                {/* Gift Name with Icon */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-blue-500/20 flex-shrink-0">
-                    <img
-                      src={giftData.image_url}
-                      alt={giftData.gift_name}
-                      className="w-full h-full object-cover"
-                      onLoad={() => setImageLoaded(true)}
-                    />
-                  </div>
-                  <h1 className="text-xl font-bold text-white">{giftData.gift_name}</h1>
-                </div>
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {text.back}
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' })}
+          </div>
+        </div>
 
-                {/* Price */}
-                <div className="flex items-center gap-2 mb-2">
-                  <TonIcon className="w-6 h-6 text-blue-400" />
-                  <span className="text-3xl font-bold text-white">{formatNumber(giftData.price_ton)}</span>
-                </div>
-
-                {/* USD Price */}
-                <div className="text-white/60 text-sm mb-2">
-                  ${formatNumber(giftData.price_usd)}
-                </div>
-
-                {/* Change Badge */}
-                <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                  isPositive 
-                    ? 'bg-green-500/20 text-green-400' 
-                    : 'bg-red-500/20 text-red-400'
-                }`}>
-                  {isPositive ? (
-                    <TrendingUp className="w-4 h-4" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4" />
-                  )}
-                  {isPositive ? '+' : ''}{priceChange.toFixed(1)}%
-                </div>
-              </div>
-
-              {/* Right: Large Gift Image */}
-              <div className="w-32 h-32 flex-shrink-0">
-                {!imageLoaded && (
-                  <div className="w-full h-full flex items-center justify-center bg-blue-500/10 rounded-2xl">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-                  </div>
-                )}
+        {/* Gift Header Card - Matching GiftDetail design */}
+        <Card className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left Side: Image, Name */}
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
                 <img
                   src={giftData.image_url}
                   alt={giftData.gift_name}
-                  className={`w-full h-full object-contain drop-shadow-2xl transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  className="w-full h-full object-cover"
                   onLoad={() => setImageLoaded(true)}
                 />
               </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground mb-0.5">{giftData.gift_name}</h1>
+                <p className="text-sm text-muted-foreground">{text.notUpgraded}</p>
+              </div>
             </div>
 
-            {/* Price Chart */}
-            <div className="mt-6">
-              {/* Time Range Selector */}
-              <div className="flex items-center gap-2 mb-4">
-                {(['24h', '7d', '30d'] as TimeRange[]).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      timeRange === range
-                        ? 'bg-white/10 text-white border border-white/20'
-                        : 'text-white/50 hover:text-white/80 hover:bg-white/5'
-                    }`}
-                  >
-                    {range}
-                  </button>
-                ))}
+            {/* Right Side: Price, Change */}
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-1.5 text-2xl font-bold text-foreground mb-0.5">
+                {currency === 'usd' ? (
+                  <>$ {formatNumber(giftData.price_usd)}</>
+                ) : (
+                  <>
+                    <TonIcon className="w-5 h-5" />
+                    {formatNumber(giftData.price_ton)}
+                  </>
+                )}
               </div>
-
-              {/* Chart */}
-              {hasDataForRange ? (
-                <div className="h-[200px] relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorPriceRegular" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis 
-                        dataKey="label" 
-                        stroke="rgba(255,255,255,0.3)"
-                        tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
-                        interval="preserveStartEnd"
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis 
-                        stroke="rgba(255,255,255,0.3)"
-                        tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
-                        domain={['auto', 'auto']}
-                        axisLine={false}
-                        tickLine={false}
-                        orientation="right"
-                        width={35}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'rgba(10, 15, 26, 0.95)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '8px',
-                          color: '#fff'
-                        }}
-                        formatter={(value: number) => [`${formatNumber(value)} TON`, 'Price']}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="price"
-                        stroke={chartColor}
-                        strokeWidth={2}
-                        fill="url(#colorPriceRegular)"
-                        connectNulls
-                        isAnimationActive={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                  {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-white mb-1">◎</div>
-                      <div className="text-lg font-bold text-white tracking-wider">Nova Gifts</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-[200px] flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-white/30 text-sm mb-2">{text.noHistory}</div>
-                    <div className="text-white/20 text-xs">
-                      {language === 'ar' ? 'لا توجد بيانات كافية لهذه الفترة' : 'Not enough data for this period'}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+              </div>
             </div>
           </div>
         </Card>
 
-        {/* Nova Branding */}
+        {/* Chart Card */}
+        <Card className="p-3 bg-card/50 backdrop-blur relative">
+          <div className="relative">
+            {hasDataForRange ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorPriceRegular" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis 
+                    dataKey="label" 
+                    stroke="rgba(255,255,255,0.3)"
+                    tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
+                    interval="preserveStartEnd"
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    stroke="rgba(255,255,255,0.3)"
+                    tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
+                    domain={['auto', 'auto']}
+                    axisLine={false}
+                    tickLine={false}
+                    orientation="right"
+                    width={50}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(10, 15, 26, 0.95)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }}
+                    formatter={(value: number) => [
+                      currency === 'usd' ? `$${formatNumber(value)}` : `${formatNumber(value)} TON`, 
+                      'Price'
+                    ]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="price"
+                    stroke={chartColor}
+                    strokeWidth={2}
+                    fill="url(#colorPriceRegular)"
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-muted-foreground text-sm mb-2">{text.noHistory}</div>
+                  <div className="text-muted-foreground/60 text-xs">
+                    {language === 'ar' ? 'لا توجد بيانات كافية لهذه الفترة' : 'Not enough data for this period'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-white/20 mb-2">◎</div>
+                <div className="text-xl font-bold text-white/20 tracking-wider">Nova Gifts Charts</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Currency Toggle */}
+        <div className="flex rounded-xl bg-muted/50 p-1 gap-1 shadow-lg w-full">
+          <Button
+            onClick={() => setCurrency('usd')}
+            variant="ghost"
+            size="sm"
+            className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
+              currency === 'usd' 
+                ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90 scale-105' 
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
+          >
+            <span className="text-sm font-bold">$</span>
+            <span>USD</span>
+          </Button>
+          <Button
+            onClick={() => setCurrency('ton')}
+            variant="ghost"
+            size="sm"
+            className={`flex-1 h-10 gap-2 rounded-lg font-semibold text-xs uppercase transition-all ${
+              currency === 'ton' 
+                ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90 scale-105' 
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
+          >
+            <TonIcon className="w-4 h-4" />
+            <span>TON</span>
+          </Button>
+        </div>
+
+        {/* Time Range Toggle */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {(['24h', '7d', '30d'] as TimeRange[]).map((range) => (
+            <Button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              variant="ghost"
+              size="sm"
+              className={`rounded-xl px-5 h-10 whitespace-nowrap font-bold text-xs uppercase transition-all ${
+                timeRange === range 
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg scale-105' 
+                  : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground shadow-md'
+              }`}
+            >
+              {range.toUpperCase()}
+            </Button>
+          ))}
+        </div>
+
+        {/* Bot Branding - Changed to @NovaChartBot without logo */}
         <div className="text-center py-2">
-          <span className="text-blue-400/60 text-sm">@ Nova</span>
+          <span className="text-muted-foreground text-sm">@NovaChartBot</span>
         </div>
 
         {/* Send to Telegram Button */}
         <Button
           onClick={handleSendToTelegram}
           disabled={sending || !userId}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white h-12 text-base font-semibold shadow-lg shadow-blue-500/20 rounded-xl"
+          className="w-full gap-2"
         >
           {sending ? (
             <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
               {text.sending}
             </>
           ) : (
             <>
-              <Send className="w-5 h-5 mr-2" />
+              <Send className="w-5 h-5" />
               {text.sendToTelegram}
             </>
           )}
