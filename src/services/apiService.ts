@@ -204,22 +204,28 @@ const processAPIResponse = (responseData: any, username?: string) => {
   const ratio = totalValueTON > 0 ? totalValueUSD / totalValueTON : 2.12
   const minUSD = minPrice * ratio
 
-  // Process regular gifts
-  const processedRegularGifts = regularGifts.map((g: any) => ({
-    id: g.id || '',
-    name: g.full_name || g.short_name || 'Unknown',
-    short_name: g.short_name || '',
-    image: g.image_url || '',
-    count: g.count || 1,
-    price_ton: g.price_ton || 0,
-    price_usd: g.price_usd || 0,
-    total_ton: g.total_ton || 0,
-    total_usd: g.total_usd || 0,
-    supply: g.supply || 0,
-    multiplier: g.multiplier || '',
-    change_24h: g.change_24h || 0,
-    is_unupgraded: true
-  }))
+  // Process regular gifts - handle different API formats
+  const processedRegularGifts = regularGifts.map((g: any) => {
+    const count = g.quantity || g.count || 1
+    const priceTon = g.price_ton || 0
+    const priceUsd = g.price_usd || 0
+    
+    return {
+      id: g.id || '',
+      name: g.gift_name || g.name || g.full_name || g.short_name || 'Unknown',
+      short_name: g.short_name || '',
+      image: g.image || g.image_url || '',
+      count: count,
+      price_ton: priceTon,
+      price_usd: priceUsd,
+      total_ton: g.total_ton || (priceTon * count),
+      total_usd: g.total_usd || (priceUsd * count),
+      supply: g.supply || 0,
+      multiplier: g.multiplier || '',
+      change_24h: g['change_24h_ton_%'] || g.change_24h || 0,
+      is_unupgraded: g.is_unupgraded !== false
+    }
+  })
 
   return {
     success: true,
