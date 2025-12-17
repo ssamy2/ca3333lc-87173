@@ -429,7 +429,13 @@ const RegularGiftDetail: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/chart');
+              }
+            }}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
