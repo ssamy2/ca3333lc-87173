@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { DEV_MODE, DEV_USER } from '@/config/devMode';
 
 interface Ad {
   id: number;
@@ -34,6 +35,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [ads, setAds] = useState<Ad[]>([]);
 
   useEffect(() => {
+    // In dev mode, skip Telegram authentication
+    if (DEV_MODE) {
+      console.log('[Auth] DEV_MODE enabled - skipping Telegram authentication');
+      setUserId(DEV_USER.id);
+      setUsername(DEV_USER.username);
+      setAuthToken('dev_mode_token');
+      setIsAuthenticated(true);
+      setIsSubscribed(true);
+      setIsLoading(false);
+      return;
+    }
+
     // دائماً نصادق للحصول على توكن جديد
     // لأن Telegram ينتج initData جديد في كل مرة
     // والباك اند يحتاج توكن جديد لكل جلسة
@@ -42,6 +55,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const authenticate = async () => {
+    // In dev mode, authentication is already done in useEffect
+    if (DEV_MODE) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setAuthError(false);

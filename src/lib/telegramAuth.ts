@@ -1,7 +1,15 @@
+import { DEV_MODE, DEV_ADMIN_HEADERS } from '@/config/devMode';
+
 /**
  * Get Telegram authentication token
  */
 export const getToken = async (): Promise<string | null> => {
+  // In dev mode, skip Telegram authentication
+  if (DEV_MODE) {
+    console.log('[TelegramAuth] DEV_MODE enabled - skipping Telegram auth');
+    return 'dev_mode_token';
+  }
+
   try {
     // Check if Telegram WebApp is available
     if (!window.Telegram?.WebApp) {
@@ -60,6 +68,12 @@ export const getToken = async (): Promise<string | null> => {
  * Get authorization headers for API requests
  */
 export const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  // In dev mode, use admin headers
+  if (DEV_MODE) {
+    console.log('[TelegramAuth] DEV_MODE - using admin headers');
+    return DEV_ADMIN_HEADERS;
+  }
+
   const token = await getToken();
   
   if (token) {
