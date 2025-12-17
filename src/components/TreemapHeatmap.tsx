@@ -221,8 +221,11 @@ const transformGiftData = (
       displayName = `(R) ${displayName}`;
     }
 
-    // Regular mode - size based on price (no market cap for regular gifts)
-    if (isRegularMode) {
+    // Regular gifts should use price-based sizing and have no market cap
+    // This applies in regular mode OR when it's a regular gift in all mode
+    const shouldUseRegularLogic = isRegularMode || (isAllMode && isRegularGift);
+
+    if (shouldUseRegularLogic) {
       // Use pre-calculated percent change if available (for 24h)
       let percentChange: number;
       
@@ -264,7 +267,7 @@ const transformGiftData = (
         size,
         imageName: item.image,
         price: currentPrice,
-        marketCap: '-'
+        marketCap: '-'  // No market cap for regular gifts
       };
     }
 
