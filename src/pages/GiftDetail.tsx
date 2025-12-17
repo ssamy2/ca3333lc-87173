@@ -856,10 +856,7 @@ const GiftDetail: React.FC = () => {
             {renderChart()}
             {/* Watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-white/20 mb-2">◎</div>
-                <div className="text-xl font-bold text-white/20 tracking-wider">Nova Gifts Charts</div>
-              </div>
+              <div className="text-lg font-bold text-white/15 tracking-wider">@NovaChartBot</div>
             </div>
           </div>
         </Card>
