@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Gift } from 'lucide-react';
 import { normalizeImageUrl } from '@/utils/urlNormalizer';
+import { imageCache } from '@/services/imageCache';
 
 interface GiftImageProps {
   imageUrl: string;
@@ -40,10 +41,15 @@ const GiftImage: React.FC<GiftImageProps> = ({
   };
 
   const normalizedUrl = normalizeImageUrl(imageUrl);
-  const [currentSrc, setCurrentSrc] = useState(normalizedUrl);
+  const [currentSrc, setCurrentSrc] = useState<string>(() => {
+    // Check cache first
+    const cached = imageCache.getImageFromCache(normalizedUrl);
+    return cached || normalizedUrl;
+  });
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => imageCache.isCached(normalizedUrl));
   const imgRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer for lazy loading
@@ -57,7 +63,7 @@ const GiftImage: React.FC<GiftImageProps> = ({
           }
         });
       },
-      { rootMargin: '100px', threshold: 0.01 }
+      { rootMargin: '200px', threshold: 0.01 }
     );
 
     if (imgRef.current) {
@@ -66,6 +72,23 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
     return () => observer.disconnect();
   }, []);
+
+  // Load and cache image when visible
+  useEffect(() => {
+    if (!isVisible || isLoaded) return;
+    
+    const loadImage = async () => {
+      try {
+        const cachedUrl = await imageCache.loadAndCache(normalizedUrl);
+        setCurrentSrc(cachedUrl);
+        setIsLoaded(true);
+      } catch {
+        // Will use fallback on error
+      }
+    };
+    
+    loadImage();
+  }, [isVisible, normalizedUrl, isLoaded]);
 
   const getFallbackUrl = (level: number): string | null => {
     const camelCase = toCamelFromName(name);
@@ -103,6 +126,13 @@ const GiftImage: React.FC<GiftImageProps> = ({
     if (nextUrl && nextUrl !== currentSrc) {
       setCurrentSrc(nextUrl);
       setFallbackLevel(nextLevel);
+      setIsLoaded(false);
+      
+      // Try to cache the fallback URL
+      imageCache.loadAndCache(nextUrl).then(cached => {
+        setCurrentSrc(cached);
+        setIsLoaded(true);
+      }).catch(() => {});
     } else {
       setImageError(true);
     }
@@ -139,8 +169,9 @@ const GiftImage: React.FC<GiftImageProps> = ({
           alt={name}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-contain"
+          className={`w-full h-full object-contain transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           onError={handleImageError}
+          onLoad={() => setIsLoaded(true)}
         />
       )}
     </div>
