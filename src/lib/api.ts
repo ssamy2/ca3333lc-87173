@@ -93,9 +93,8 @@ class APIClient {
 
   async getGlobalStatistics(): Promise<GlobalStatistics | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/statistics/global`, {
-        headers: this.getHeaders()
-      });
+      // Public endpoint - no auth headers needed
+      const response = await fetch(`${API_BASE_URL}/statistics/global`);
 
       if (!response.ok) return null;
 
