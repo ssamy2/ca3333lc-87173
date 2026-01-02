@@ -22,16 +22,18 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
     name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString('en-US', { 
+  const formatNumber = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    return value.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
   };
 
-  const formatPercent = (num: number) => {
-    const sign = num >= 0 ? '+' : '';
-    return `${sign}${num.toFixed(2)}%`;
+  const formatPercent = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
   };
 
   const getImageUrl = (imageUrl: string) => {
@@ -71,7 +73,7 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
       {/* Gifts List */}
       <div className="space-y-2">
         {filteredGifts.map(([name, gift]) => {
-          const isPositive = gift.change_24h_ton_percent >= 0;
+          const isPositive = (gift.change_24h_ton_percent ?? 0) >= 0;
           
           return (
             <button
@@ -113,7 +115,7 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
                   )}>
                     <Users className="w-3 h-3" />
                     <span>
-                      {gift.bot_owners_count} {isRTL ? 'مالك' : 'owners'}
+                      {gift.bot_owners_count ?? 0} {isRTL ? 'مالك' : 'owners'}
                     </span>
                   </div>
                 </div>
@@ -128,7 +130,7 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
                     isRTL && "flex-row-reverse justify-start"
                   )}>
                     <TonIcon className="w-4 h-4" />
-                    <span>{formatNumber(gift.priceTon)}</span>
+                    <span>{formatNumber(gift.priceTon ?? 0)}</span>
                   </div>
                   <div className={cn(
                     "flex items-center gap-1 text-sm",
@@ -140,7 +142,7 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
                     ) : (
                       <TrendingDown className="w-3 h-3" />
                     )}
-                    <span>{formatPercent(gift.change_24h_ton_percent)}</span>
+                    <span>{formatPercent(gift.change_24h_ton_percent ?? 0)}</span>
                   </div>
                 </div>
               </div>
