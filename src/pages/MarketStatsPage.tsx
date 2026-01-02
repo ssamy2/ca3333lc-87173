@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Loader2, ArrowLeft, TrendingUp, TrendingDown, BarChart3, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Loader2, ArrowLeft, TrendingUp, TrendingDown, BarChart3, Calendar, Send } from 'lucide-react';
+import { toast } from 'sonner';
+import TonIcon from '@/components/TonIcon';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAuthHeaders } from '@/lib/telegramAuth';
@@ -47,6 +49,8 @@ const MarketStatsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
   const [currency, setCurrency] = useState<'ton' | 'usd'>('ton');
+  const [sending, setSending] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   const t = {
     ar: {
@@ -320,6 +324,55 @@ const MarketStatsPage: React.FC = () => {
     return num >= 0 ? `+${formatted}%` : `-${formatted}%`;
   };
 
+  const handleSendToTelegram = async () => {
+    if (!chartContainerRef.current || !stats) return;
+    
+    setSending(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Capture the page content
+      const pageContent = document.querySelector('.min-h-screen') as HTMLElement;
+      if (!pageContent) throw new Error('Page content not found');
+      
+      const canvas = await html2canvas(pageContent, {
+        backgroundColor: '#0f1729',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        height: Math.min(pageContent.scrollHeight, 1200),
+        windowHeight: 1200,
+      });
+      
+      const imageData = canvas.toDataURL('image/png', 0.9);
+      const authHeaders = await getAuthHeaders();
+      
+      const response = await fetch('https://www.channelsseller.site/api/send-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          image: imageData,
+          caption: `📊 ${text.title}\n💰 ${text.totalMarketCap}: ${currency === 'ton' ? '◎' : '$'} ${formatNumber(stats.current)}\n📈 ${formatPercent(stats.change)}\n\n@NovaChartBot`,
+        }),
+      });
+      
+      if (response.ok) {
+        toast.success(language === 'ar' ? 'تم الإرسال بنجاح!' : 'Sent successfully!');
+      } else {
+        throw new Error('Failed to send');
+      }
+    } catch (error) {
+      console.error('Send error:', error);
+      toast.error(language === 'ar' ? 'فشل في الإرسال' : 'Failed to send');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0f1729] via-[#0f1729] to-[#0f1729] flex items-center justify-center">
@@ -353,7 +406,13 @@ const MarketStatsPage: React.FC = () => {
       <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
         <div className="flex items-center justify-between p-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/tools');
+              }
+            }}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -362,7 +421,18 @@ const MarketStatsPage: React.FC = () => {
             <h1 className="text-lg font-bold text-white">{text.title}</h1>
             <p className="text-xs text-slate-400">{text.subtitle}</p>
           </div>
-          <div className="w-7" />
+          <button
+            onClick={handleSendToTelegram}
+            disabled={sending || !chartData}
+            className="p-2 text-slate-400 hover:text-blue-400 transition-colors disabled:opacity-50"
+            title={language === 'ar' ? 'إرسال للتليجرام' : 'Send to Telegram'}
+          >
+            {sending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -373,9 +443,12 @@ const MarketStatsPage: React.FC = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-slate-400 text-sm mb-1">{text.totalMarketCap}</p>
-                <p className="text-3xl font-bold text-white">
-                  {currency === 'ton' ? '◎ ' : '$ '}{formatNumber(stats.current)}
-                </p>
+                <div className="flex items-center gap-2">
+                  {currency === 'ton' && <TonIcon className="w-7 h-7" />}
+                  <p className="text-3xl font-bold text-white">
+                    {currency === 'usd' ? '$ ' : ''}{formatNumber(stats.current)}
+                  </p>
+                </div>
               </div>
               <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
                 stats.change >= 0 
@@ -407,15 +480,12 @@ const MarketStatsPage: React.FC = () => {
 
         {/* Chart */}
         {chartData && (
-          <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 relative">
+          <div ref={chartContainerRef} className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 relative">
             <div className="h-64 relative">
               <Line data={chartData} options={chartOptions} />
               {/* Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-white/20 mb-2">◎</div>
-                  <div className="text-xl font-bold text-white/20 tracking-wider">Nova Gifts Charts</div>
-                </div>
+                <span className="text-lg font-medium text-white/15 tracking-wide">@NovaChartBot</span>
               </div>
             </div>
           </div>
