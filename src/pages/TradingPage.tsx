@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TradingHeader } from '@/components/trading/TradingHeader';
@@ -14,6 +14,7 @@ import {
   useSellGift,
   useResetAccount,
 } from '@/hooks/useTradingData';
+import { useMarketData } from '@/hooks/useMarketData';
 
 type TabType = 'market' | 'portfolio' | 'leaderboard';
 
@@ -26,6 +27,26 @@ const TradingPage = () => {
   const { data: giftsData, isLoading: giftsLoading } = useTradingGifts();
   const { data: portfolioData, isLoading: portfolioLoading } = usePortfolio();
   const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard();
+  const { data: marketData } = useMarketData();
+
+  // Calculate real TON/USD rate from market data
+  const tonToUsdRate = useMemo(() => {
+    if (!marketData) return 1.81; // Default fallback
+    
+    // Get first available gift's price ratio to calculate TON/USD rate
+    const gifts = Object.values(marketData);
+    if (gifts.length === 0) return 1.81;
+    
+    // Find a gift with valid prices
+    for (const gift of gifts) {
+      const tonPrice = gift.priceTon || gift.price_ton;
+      const usdPrice = gift.priceUsd || gift.price_usd;
+      if (tonPrice > 0 && usdPrice > 0) {
+        return usdPrice / tonPrice;
+      }
+    }
+    return 1.81;
+  }, [marketData]);
 
   // Mutation hooks
   const buyMutation = useBuyGift();
@@ -75,8 +96,7 @@ const TradingPage = () => {
     }
   };
 
-  // Calculate USD balance estimate (assuming 1 TON = ~5.2 USD as an approximation)
-  const tonToUsdRate = 5.2;
+  // Calculate USD balance using real TON rate
   const balanceTon = portfolioData?.data?.balance_ton ?? 10000;
   const balanceUsd = balanceTon * tonToUsdRate;
 

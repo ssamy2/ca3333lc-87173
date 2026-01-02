@@ -129,7 +129,13 @@ export interface SellResponse {
 
 // API Functions
 export async function fetchTradingGifts(): Promise<TradingGiftsResponse> {
-  const response = await fetch(`${BASE_URL}/api/trading/gifts`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${BASE_URL}/api/trading/gifts`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+  });
   if (!response.ok) throw new Error('Failed to fetch trading gifts');
   return response.json();
 }
@@ -150,13 +156,25 @@ export async function fetchPortfolio(): Promise<{ success: boolean; data: Portfo
 }
 
 export async function fetchLeaderboard(): Promise<{ success: boolean; data: LeaderboardData }> {
-  const response = await fetch(`${BASE_URL}/api/trading/leaderboard`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${BASE_URL}/api/trading/leaderboard`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+  });
   if (!response.ok) throw new Error('Failed to fetch leaderboard');
   return response.json();
 }
 
 export async function fetchTradingStats(): Promise<{ success: boolean; data: TradingStats }> {
-  const response = await fetch(`${BASE_URL}/api/trading/stats`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${BASE_URL}/api/trading/stats`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+  });
   if (!response.ok) throw new Error('Failed to fetch trading stats');
   return response.json();
 }
