@@ -22,6 +22,7 @@ const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
+const TradingPage = lazy(() => import("./pages/TradingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
 
@@ -100,7 +101,9 @@ const App = () => {
                           <Route path="/settings" element={<ProfileSettingsPage />} />
                           <Route path="/admin" element={<AdminPanel />} />
                           <Route path="/admin/ads" element={<AdminAdsPage />} />
+                          <Route path="/trade" element={<TradingPage />} />
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                          <Route path="*" element={<NotFound />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </div>
