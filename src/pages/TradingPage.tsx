@@ -70,9 +70,10 @@ const TradingPage = () => {
   const handleSell = async (holdingId: number) => {
     try {
       const result = await sellMutation.mutateAsync(holdingId);
-      const pnlText = result.data.pnl_percent >= 0 
-        ? `+${result.data.pnl_percent.toFixed(2)}%` 
-        : `${result.data.pnl_percent.toFixed(2)}%`;
+      const pnlPercent = result?.data?.pnl_percent ?? 0;
+      const pnlText = pnlPercent >= 0 
+        ? `+${pnlPercent.toFixed(2)}%` 
+        : `${pnlPercent.toFixed(2)}%`;
       toast.success(
         isRTL 
           ? `تم البيع بنجاح! (${pnlText})` 
@@ -96,9 +97,9 @@ const TradingPage = () => {
     }
   };
 
-  // Calculate USD balance using real TON rate
+  // Calculate USD balance using real TON rate with safe fallbacks
   const balanceTon = portfolioData?.data?.balance_ton ?? 10000;
-  const balanceUsd = balanceTon * tonToUsdRate;
+  const balanceUsd = (balanceTon || 0) * (tonToUsdRate || 1.81);
 
   return (
     <div className="min-h-screen pb-20">

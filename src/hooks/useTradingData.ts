@@ -14,8 +14,10 @@ export function useTradingGifts() {
   return useQuery({
     queryKey: ['trading-gifts'],
     queryFn: fetchTradingGifts,
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 30000,
+    refetchInterval: 60000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 
@@ -24,8 +26,11 @@ export function usePortfolio() {
   return useQuery({
     queryKey: ['trading-portfolio'],
     queryFn: fetchPortfolio,
-    staleTime: 10000, // 10 seconds
-    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 10000,
+    refetchInterval: 60000,
+    retry: 2,
+    retryDelay: 1000,
+    enabled: true,
   });
 }
 
@@ -36,6 +41,8 @@ export function useLeaderboard() {
     queryFn: fetchLeaderboard,
     staleTime: 30000,
     refetchInterval: 60000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 

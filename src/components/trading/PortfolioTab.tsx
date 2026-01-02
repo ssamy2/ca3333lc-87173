@@ -18,16 +18,18 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
   const [showHistory, setShowHistory] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString('en-US', { 
+  const formatNumber = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    return value.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
   };
 
-  const formatPercent = (num: number) => {
-    const sign = num >= 0 ? '+' : '';
-    return `${sign}${num.toFixed(2)}%`;
+  const formatPercent = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
   };
 
   const getImageUrl = (imageUrl: string) => {
@@ -53,8 +55,8 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
     );
   }
 
-  const isPositivePnl = portfolio.total_pnl_ton >= 0;
-  const activeHoldings = portfolio.holdings.filter(h => h.status === 'active');
+  const isPositivePnl = (portfolio.total_pnl_ton ?? 0) >= 0;
+  const activeHoldings = (portfolio.holdings || []).filter(h => h.status === 'active');
 
   return (
     <div className="space-y-4">
@@ -77,7 +79,7 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
             isPositivePnl ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
           )}>
             {isPositivePnl ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {formatPercent(portfolio.total_return_percent)}
+            {formatPercent(portfolio.total_return_percent ?? 0)}
           </div>
         </div>
         
@@ -90,7 +92,7 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
             "text-2xl font-bold",
             isPositivePnl ? "text-success" : "text-destructive"
           )}>
-            {portfolio.total_pnl_ton >= 0 ? '+' : ''}{formatNumber(portfolio.total_pnl_ton)}
+            {(portfolio.total_pnl_ton ?? 0) >= 0 ? '+' : ''}{formatNumber(portfolio.total_pnl_ton ?? 0)}
           </span>
         </div>
         
@@ -103,7 +105,7 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
           </span>
           <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
             <TonIcon className="w-4 h-4" />
-            <span className="font-medium">{formatNumber(portfolio.portfolio_value_ton)}</span>
+            <span className="font-medium">{formatNumber(portfolio.portfolio_value_ton ?? 0)}</span>
           </div>
         </div>
       </div>
@@ -146,11 +148,11 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                     <div className="text-xs text-muted-foreground space-y-0.5">
                       <p>
                         {isRTL ? 'الشراء: ' : 'Buy: '}
-                        {formatNumber(holding.buy_price_ton)} TON
+                        {formatNumber(holding.buy_price_ton ?? 0)} TON
                       </p>
                       <p>
                         {isRTL ? 'الحالي: ' : 'Current: '}
-                        {formatNumber(holding.current_price_ton || 0)} TON
+                        {formatNumber(holding.current_price_ton ?? 0)} TON
                       </p>
                     </div>
                   </div>
@@ -160,13 +162,13 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                       "text-sm font-medium",
                       pnlPositive ? "text-success" : "text-destructive"
                     )}>
-                      {pnlPositive ? '+' : ''}{formatNumber(holding.unrealized_pnl_ton || 0)} TON
+                      {pnlPositive ? '+' : ''}{formatNumber(holding.unrealized_pnl_ton ?? 0)} TON
                     </div>
                     <div className={cn(
                       "text-xs",
                       pnlPositive ? "text-success" : "text-destructive"
                     )}>
-                      {formatPercent(holding.pnl_percent || 0)}
+                      {formatPercent(holding.pnl_percent ?? 0)}
                     </div>
                     <Button
                       size="sm"
@@ -203,15 +205,15 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
           >
             <History className="w-4 h-4" />
             <span>
-              {isRTL ? 'تاريخ التداول' : 'Trade History'} ({portfolio.sold_holdings_count})
+              {isRTL ? 'تاريخ التداول' : 'Trade History'} ({portfolio.sold_holdings_count ?? 0})
             </span>
             {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </Button>
           
           {showHistory && (
             <div className="space-y-2 mt-2">
-              {portfolio.trade_history.map((trade) => {
-                const pnlPositive = (trade.realized_pnl_ton || 0) >= 0;
+              {(portfolio.trade_history || []).map((trade) => {
+                const pnlPositive = (trade.realized_pnl_ton ?? 0) >= 0;
                 
                 return (
                   <div
@@ -227,14 +229,14 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                           {trade.gift_name}
                         </h4>
                         <div className="text-xs text-muted-foreground">
-                          {formatNumber(trade.buy_price_ton)} → {formatNumber(trade.sell_price_ton || 0)} TON
+                          {formatNumber(trade.buy_price_ton ?? 0)} → {formatNumber(trade.sell_price_ton ?? 0)} TON
                         </div>
                       </div>
                       <div className={cn(
                         "font-medium",
                         pnlPositive ? "text-success" : "text-destructive"
                       )}>
-                        {pnlPositive ? '+' : ''}{formatNumber(trade.realized_pnl_ton || 0)} TON
+                        {pnlPositive ? '+' : ''}{formatNumber(trade.realized_pnl_ton ?? 0)} TON
                       </div>
                     </div>
                   </div>
