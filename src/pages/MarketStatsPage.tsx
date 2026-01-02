@@ -327,6 +327,13 @@ const MarketStatsPage: React.FC = () => {
   const handleSendToTelegram = async () => {
     if (!chartContainerRef.current || !stats) return;
     
+    // Get Telegram user ID
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+    if (!userId) {
+      toast.error(language === 'ar' ? 'يجب فتح التطبيق من تليجرام' : 'Please open from Telegram');
+      return;
+    }
+    
     setSending(true);
     try {
       const html2canvas = (await import('html2canvas')).default;
@@ -345,7 +352,12 @@ const MarketStatsPage: React.FC = () => {
         windowHeight: 1200,
       });
       
-      const imageData = canvas.toDataURL('image/png', 0.9);
+      // Convert to base64 and extract data part only
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const parts = imageDataUrl.split(',');
+      if (parts.length !== 2) throw new Error('Invalid image format');
+      const base64Data = parts[1];
+      
       const authHeaders = await getAuthHeaders();
       
       const response = await fetch('https://www.channelsseller.site/api/send-image', {
@@ -355,19 +367,20 @@ const MarketStatsPage: React.FC = () => {
           ...authHeaders,
         },
         body: JSON.stringify({
-          image: imageData,
-          caption: `📊 ${text.title}\n💰 ${text.totalMarketCap}: ${currency === 'ton' ? '◎' : '$'} ${formatNumber(stats.current)}\n📈 ${formatPercent(stats.change)}\n\n@NovaChartBot`,
+          id: userId,
+          image: base64Data,
         }),
       });
       
       if (response.ok) {
         toast.success(language === 'ar' ? 'تم الإرسال بنجاح!' : 'Sent successfully!');
       } else {
-        throw new Error('Failed to send');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to send');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Send error:', error);
-      toast.error(language === 'ar' ? 'فشل في الإرسال' : 'Failed to send');
+      toast.error(language === 'ar' ? 'فشل في الإرسال' : error.message || 'Failed to send');
     } finally {
       setSending(false);
     }
