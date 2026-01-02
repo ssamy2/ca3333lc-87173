@@ -15,6 +15,7 @@ import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import ToolsPage from '@/pages/ToolsPage';
 import CryptoPage from '@/pages/CryptoPage';
+import TradingPage from '@/pages/TradingPage';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
 import { fetchNFTGifts, fetchSingleGiftPrice, fetchProfileImageAsBase64 } from '@/services/apiService';
 import { proxyImageUrl } from '@/lib/imageProxy';
@@ -116,7 +117,7 @@ const TelegramApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'tools' | 'crypto' | 'settings'>('chart');
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade'>('chart');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
@@ -463,6 +464,15 @@ const TelegramApp: React.FC = () => {
     return (
       <>
         <Chart />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </>
+    );
+  }
+
+  if (activeTab === 'trade') {
+    return (
+      <>
+        <TradingPage />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
