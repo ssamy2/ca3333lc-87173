@@ -12,6 +12,7 @@ interface LeaderboardTabProps {
 
 export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTabProps) {
   const [viewMode, setViewMode] = useState<'winners' | 'losers'>('winners');
+  const [sortBy, setSortBy] = useState<'percent' | 'ton'>('percent');
 
   const formatPercent = (num: number | undefined | null) => {
     const value = num ?? 0;
@@ -121,9 +122,17 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
     );
   }
 
-  const users = viewMode === 'winners' 
-    ? leaderboard.top_winners 
-    : leaderboard.top_losers;
+  // Sort users based on selected criteria
+  let users = viewMode === 'winners' 
+    ? [...(leaderboard.top_winners || [])] 
+    : [...(leaderboard.top_losers || [])];
+  
+  // Apply sorting
+  if (sortBy === 'percent') {
+    users.sort((a, b) => Math.abs(b.return_percent || 0) - Math.abs(a.return_percent || 0));
+  } else {
+    users.sort((a, b) => Math.abs(b.total_pnl_ton || 0) - Math.abs(a.total_pnl_ton || 0));
+  }
 
   return (
     <div className="space-y-4">
@@ -160,17 +169,53 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
         </button>
       </div>
 
-      {/* Stats */}
-      <div className={cn(
-        "flex items-center justify-between text-sm text-muted-foreground px-1",
-        isRTL && "flex-row-reverse"
-      )}>
-        <span>
-          {isRTL ? 'إجمالي المتداولين' : 'Total Traders'}: {leaderboard.total_users}
-        </span>
-        <span className="text-xs">
-          {isRTL ? 'آخر تحديث' : 'Updated'}: {new Date(leaderboard.updated_at).toLocaleTimeString()}
-        </span>
+      {/* Stats & Sort */}
+      <div className="space-y-2">
+        <div className={cn(
+          "flex items-center justify-between text-sm text-muted-foreground px-1",
+          isRTL && "flex-row-reverse"
+        )}>
+          <span>
+            {isRTL ? 'إجمالي المتداولين' : 'Total Traders'}: {leaderboard.total_users}
+          </span>
+          <span className="text-xs">
+            {isRTL ? 'آخر تحديث' : 'Updated'}: {new Date(leaderboard.updated_at).toLocaleTimeString()}
+          </span>
+        </div>
+        
+        {/* Sort Options */}
+        <div className={cn(
+          "flex gap-2 items-center text-xs",
+          isRTL && "flex-row-reverse"
+        )}>
+          <span className="text-muted-foreground">
+            {isRTL ? 'ترتيب حسب:' : 'Sort by:'}
+          </span>
+          <button
+            onClick={() => setSortBy('percent')}
+            className={cn(
+              "px-3 py-1.5 rounded-lg transition-all",
+              sortBy === 'percent'
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/70 text-muted-foreground"
+            )}
+          >
+            {isRTL ? 'النسبة المئوية' : 'Percentage'}
+          </button>
+          <button
+            onClick={() => setSortBy('ton')}
+            className={cn(
+              "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1",
+              sortBy === 'ton'
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/70 text-muted-foreground",
+              isRTL && "flex-row-reverse"
+            )}
+          >
+            <TonIcon className="w-3 h-3" />
+            {isRTL ? 'TON' : 'TON'}
+          </button>
+        </div>
       </div>
 
       {/* Users List */}

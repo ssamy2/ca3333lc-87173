@@ -58,9 +58,11 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
 
   useEffect(() => {
     if (gift && isOpen) {
+      // Reset detail data when opening a new gift
+      setDetailData(null);
       fetchGiftDetails(gift.name);
     }
-  }, [gift, isOpen]);
+  }, [gift?.name, isOpen]);
 
   const fetchGiftDetails = async (giftName: string) => {
     setIsLoading(true);
