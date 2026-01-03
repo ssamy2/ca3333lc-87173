@@ -314,10 +314,10 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                   <>
                     {/* Model Image */}
                     <div className="relative shrink-0">
-                      {selectedModelData.image_url ? (
+                      {selectedModelData.image ? (
                         <img
-                          src={selectedModelData.image_url}
-                          alt={selectedModelData.name || `Model #${selectedModel}`}
+                          src={selectedModelData.image}
+                          alt={selectedModelData.name || `Model #${selectedModelData.number || ''}`}
                           className="w-12 h-12 rounded-lg object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -328,11 +328,11 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                                 const div = document.createElement('div');
                                 div.className = 'w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold';
                                 div.style.backgroundColor = selectedModelData.backdrop_color || '#666';
-                                div.textContent = `#${selectedModel}`;
+                                div.textContent = selectedModelData.name || `#${selectedModelData.number || ''}`;
                                 parent.appendChild(div);
                               }
                             } else {
-                              target.src = '/placeholder.svg';
+                              target.src = 'https://placehold.co/48x48?text=M';
                             }
                           }}
                         />
@@ -341,7 +341,7 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                           className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
                           style={{ backgroundColor: selectedModelData.backdrop_color || '#666' }}
                         >
-                          #{selectedModel}
+                          {selectedModelData.name || `#${selectedModelData.number || ''}`}
                         </div>
                       )}
                     </div>
@@ -349,15 +349,15 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                     {/* Model Info */}
                     <div className={cn("flex-1 text-left", isRTL && "text-right")}>
                       <p className="font-semibold text-sm">
-                        {selectedModelData.name || `Model #${selectedModel}`}
+                        {selectedModelData.name || `Model #${selectedModelData.number || ''}`}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <div className="flex items-center gap-1">
                           <TonIcon className="w-3 h-3" />
-                          <span className="text-sm font-semibold">{formatNumber(selectedModelData.price_ton || 0)}</span>
+                          <span className="text-sm font-semibold">{formatNumber(selectedModelData.priceTon || 0)}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          ${formatNumber(selectedModelData.price_usd || 0)}
+                          ${formatNumber(selectedModelData.priceUsd || 0)}
                         </span>
                       </div>
                     </div>
@@ -425,7 +425,7 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                         onClick={() => { setSelectedModel(modelId); setShowModelSelector(false); }}
                         className={cn(
                           "p-2 rounded-lg transition-colors border flex flex-col items-center gap-1",
-                          selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
+                          selectedModel === modelId ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                         )}
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
