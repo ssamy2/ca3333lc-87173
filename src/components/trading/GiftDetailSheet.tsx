@@ -396,25 +396,17 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                     const modelId = model._id || `model-${index}`;
                     
                     const getRarityPercent = (rarity: number) => {
-                      switch (rarity) {
-                        case 1: return '50%';
-                        case 2: return '25%';
-                        case 3: return '15%';
-                        case 4: return '7%';
-                        case 5: return '3%';
-                        default: return '50%';
-                      }
+                      // Rarity comes as percentage value (e.g., 1.5, 15, 50)
+                      return `${rarity.toFixed(1)}%`;
                     };
                     
                     const getRarityColor = (rarity: number) => {
-                      switch (rarity) {
-                        case 1: return 'text-gray-400';
-                        case 2: return 'text-green-500';
-                        case 3: return 'text-blue-500';
-                        case 4: return 'text-purple-500';
-                        case 5: return 'text-yellow-500';
-                        default: return 'text-gray-400';
-                      }
+                      // Color based on rarity percentage
+                      if (rarity >= 50) return 'text-gray-400';      // Common (50%+)
+                      if (rarity >= 25) return 'text-green-500';     // Uncommon (25-50%)
+                      if (rarity >= 10) return 'text-blue-500';      // Rare (10-25%)
+                      if (rarity >= 5) return 'text-purple-500';     // Epic (5-10%)
+                      return 'text-yellow-500';                      // Legendary (<5%)
                     };
                     
                     return (
@@ -440,8 +432,8 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                         <p className="font-medium text-[10px] text-foreground truncate w-full text-center leading-tight">
                           {modelName}
                         </p>
-                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round(model.rarity || 1)))}>
-                          {getRarityPercent(Math.round(model.rarity || 1))}
+                        <span className={cn("text-[10px] font-semibold", getRarityColor(model.rarity || 50))}>
+                          {getRarityPercent(model.rarity || 50)}
                         </span>
                         
                         <div className="flex items-center gap-0.5 font-semibold text-foreground">
