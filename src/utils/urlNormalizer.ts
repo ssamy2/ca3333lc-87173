@@ -1,18 +1,34 @@
 /**
  * Normalize image URLs from API responses
- * Converts localhost URLs to production domain
+ * Converts external URLs to use our backend proxy to avoid CORS issues
  */
 export const normalizeImageUrl = (url: string | undefined | null): string => {
   if (!url) return '';
   
   // If already a valid HTTPS URL from correct domain, return as is
-  if (url.startsWith('https://www.channelsseller.site')) {
+  if (url.startsWith('https://www.channelsseller.site') || url.startsWith('https://channelsseller.site')) {
     return url;
   }
   
   // If it's a data URL (base64), return as is
   if (url.startsWith('data:')) {
     return url;
+  }
+  
+  // Handle giftcharts-api.onrender.com URLs - convert to our proxy
+  if (url.includes('giftcharts-api.onrender.com/api/image/')) {
+    const imageName = url.split('/api/image/')[1]?.split('?')[0] || '';
+    if (imageName) {
+      return `https://www.channelsseller.site/api/image/${imageName}`;
+    }
+  }
+  
+  // Handle giftcharts.com URLs - convert to our proxy
+  if (url.includes('giftcharts.com/gifts/')) {
+    const imageName = url.split('/gifts/')[1]?.replace('.webp', '').replace('.png', '') || '';
+    if (imageName) {
+      return `https://www.channelsseller.site/api/image/${imageName}`;
+    }
   }
   
   // If it's a relative path, prepend the domain

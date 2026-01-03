@@ -68,10 +68,14 @@ export const getToken = async (): Promise<string | null> => {
  * Get authorization headers for API requests
  */
 export const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  // In dev mode, use admin headers
+  // In dev mode, use admin headers with proper Authorization
   if (DEV_MODE) {
     console.log('[TelegramAuth] DEV_MODE - using admin headers');
-    return DEV_ADMIN_HEADERS;
+    return {
+      ...DEV_ADMIN_HEADERS,
+      'Authorization': 'Bearer dev_mode_admin',
+      'X-Telegram-Init-Data': 'dev_mode_admin'
+    };
   }
 
   const token = await getToken();
