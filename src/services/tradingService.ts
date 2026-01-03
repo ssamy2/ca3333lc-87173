@@ -76,6 +76,8 @@ export interface LeaderboardUser {
   username: string;
   full_name: string;
   profile_image: string;
+  photo_url: string;
+  balance_ton: number;
   portfolio_value_ton: number;
   total_pnl_ton: number;
   return_percent: number;

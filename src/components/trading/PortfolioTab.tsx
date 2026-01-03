@@ -140,9 +140,16 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                   />
                   
                   <div className={cn("flex-1 min-w-0", isRTL && "text-right")}>
-                    <h4 className="font-semibold text-foreground truncate">
-                      {holding.gift_name}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-foreground truncate">
+                        {holding.gift_name}
+                      </h4>
+                      {holding.quantity > 1 && (
+                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          x{holding.quantity}
+                        </span>
+                      )}
+                    </div>
                     {holding.model_name && (
                       <p className="text-xs text-primary/80 truncate">
                         {holding.model_name}
@@ -152,10 +159,20 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                       <p>
                         {isRTL ? 'الشراء: ' : 'Buy: '}
                         {formatNumber(holding.buy_price_ton ?? 0)} TON
+                        {holding.quantity > 1 && (
+                          <span className="text-muted-foreground/70">
+                            {' '}({formatNumber((holding.buy_price_ton ?? 0) * holding.quantity)} TON {isRTL ? 'إجمالي' : 'total'})
+                          </span>
+                        )}
                       </p>
                       <p>
                         {isRTL ? 'الحالي: ' : 'Current: '}
                         {formatNumber(holding.current_price_ton ?? 0)} TON
+                        {holding.quantity > 1 && (
+                          <span className="text-muted-foreground/70">
+                            {' '}({formatNumber((holding.current_price_ton ?? 0) * holding.quantity)} TON {isRTL ? 'إجمالي' : 'total'})
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

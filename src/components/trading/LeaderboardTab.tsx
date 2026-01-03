@@ -52,9 +52,9 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
 
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          {user.profile_image ? (
+          {user.photo_url ? (
             <img
-              src={user.profile_image}
+              src={user.photo_url}
               alt={user.username || user.full_name}
               className="w-10 h-10 rounded-full object-cover border-2 border-border"
               onError={(e) => {
