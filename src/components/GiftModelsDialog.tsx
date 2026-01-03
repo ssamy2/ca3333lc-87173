@@ -27,37 +27,25 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
   models,
   giftName 
 }) => {
+  // Rarity is now a percentage value (e.g., 2.6, 15, 50)
   const getRarityColor = (rarity: number) => {
-    switch (rarity) {
-      case 1: return 'text-gray-300';
-      case 2: return 'text-green-500';
-      case 3: return 'text-blue-500';
-      case 4: return 'text-purple-500';
-      case 5: return 'text-yellow-500';
-      default: return 'text-gray-300';
-    }
+    if (rarity >= 50) return 'text-gray-300';       // Common (50%+)
+    if (rarity >= 25) return 'text-green-500';      // Uncommon (25-50%)
+    if (rarity >= 10) return 'text-blue-500';       // Rare (10-25%)
+    if (rarity >= 5) return 'text-purple-500';      // Epic (5-10%)
+    return 'text-yellow-500';                       // Legendary (<5%)
   };
 
   const getRarityBgColor = (rarity: number) => {
-    switch (rarity) {
-      case 1: return 'bg-gray-500/20';
-      case 2: return 'bg-green-500/20';
-      case 3: return 'bg-blue-500/20';
-      case 4: return 'bg-purple-500/20';
-      case 5: return 'bg-yellow-500/20';
-      default: return 'bg-gray-500/20';
-    }
+    if (rarity >= 50) return 'bg-gray-500/20';
+    if (rarity >= 25) return 'bg-green-500/20';
+    if (rarity >= 10) return 'bg-blue-500/20';
+    if (rarity >= 5) return 'bg-purple-500/20';
+    return 'bg-yellow-500/20';
   };
 
-  const getRarityName = (rarity: number) => {
-    switch (rarity) {
-      case 1: return 'Common';
-      case 2: return 'Uncommon';
-      case 3: return 'Rare';
-      case 4: return 'Epic';
-      case 5: return 'Legendary';
-      default: return 'Common';
-    }
+  const getRarityPercent = (rarity: number) => {
+    return `${rarity.toFixed(1)}%`;
   };
 
   return (
@@ -107,7 +95,7 @@ const GiftModelsDialog: React.FC<GiftModelsDialogProps> = ({
                   <h3 className="font-semibold text-foreground">{model.name}</h3>
                   <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getRarityColor(model.rarity)} ${getRarityBgColor(model.rarity)}`}>
                     <Star className="w-3 h-3" fill="currentColor" />
-                    {getRarityName(model.rarity)}
+                    {getRarityPercent(model.rarity)}
                   </div>
                 </div>
 
