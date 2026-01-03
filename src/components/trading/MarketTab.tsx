@@ -10,7 +10,7 @@ interface MarketTabProps {
   gifts: Record<string, TradingGift>;
   isLoading: boolean;
   isRTL: boolean;
-  onBuy: (giftName: string, quantity: number, modelNumber?: number, modelName?: string, modelImageUrl?: string) => Promise<void>;
+  onBuy: (giftName: string, quantity: number, modelId?: string, modelName?: string, modelImageUrl?: string) => Promise<void>;
   isBuying: boolean;
 }
 

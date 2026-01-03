@@ -22,16 +22,18 @@ import {
 const BASE_URL = 'https://channelsseller.site';
 
 interface GiftModel {
-  model_number: number;
+  _id: string;
+  number?: number;
   name?: string;
   backdrop_color?: string;
   pattern_color?: string;
   symbol_color?: string;
-  rarity?: string;
-  price_ton?: number;
-  price_usd?: number;
-  change_24h_percent?: number;
-  image_url?: string;
+  rarity?: number;
+  priceTon?: number;
+  priceUsd?: number;
+  tonPrice24hAgo?: number;
+  usdPrice24hAgo?: number;
+  image?: string;
 }
 
 interface GiftDetailData {
@@ -44,14 +46,14 @@ interface GiftDetailSheetProps {
   gift: TradingGift | null;
   isOpen: boolean;
   onClose: () => void;
-  onBuy: (giftName: string, quantity: number, modelNumber?: number, modelName?: string, modelImageUrl?: string) => Promise<void>;
+  onBuy: (giftName: string, quantity: number, modelId?: string, modelName?: string, modelImageUrl?: string) => Promise<void>;
   isBuying: boolean;
   isRTL: boolean;
 }
 
 export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: GiftDetailSheetProps) {
   const [quantity, setQuantity] = useState(1);
-  const [selectedModel, setSelectedModel] = useState<number | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<GiftDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showModelSelector, setShowModelSelector] = useState(false);
@@ -102,17 +104,19 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
     if (!gift) return;
     
     // Find selected model data if a model is selected
+    let modelId = undefined;
     let modelName = undefined;
     let modelImageUrl = undefined;
     if (selectedModel !== null && models.length > 0) {
-      const selectedModelData = models.find(m => m.model_number === selectedModel);
+      const selectedModelData = models.find(m => m._id === selectedModel);
       if (selectedModelData) {
-        modelName = `Model #${selectedModel}`;
-        modelImageUrl = selectedModelData.image_url;
+        modelId = selectedModelData._id;
+        modelName = selectedModelData.name || `Model #${selectedModelData.number || ''}`;
+        modelImageUrl = selectedModelData.image;
       }
     }
     
-    await onBuy(gift.name, quantity, selectedModel ?? undefined, modelName, modelImageUrl);
+    await onBuy(gift.name, quantity, modelId, modelName, modelImageUrl);
     setQuantity(1);
     setSelectedModel(null);
     onClose();
@@ -151,10 +155,13 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const currentChange = marketData.change_24h_ton_percent ?? gift.change_24h_ton_percent ?? 0;
   
   // Get selected model price if a model is selected
-  const selectedModelData = selectedModel !== null ? models.find(m => m.model_number === selectedModel) : null;
-  const displayPriceTon = selectedModelData?.price_ton ?? currentPriceTon;
-  const displayPriceUsd = selectedModelData?.price_usd ?? currentPriceUsd;
-  const displayChange = selectedModelData?.change_24h_percent ?? currentChange;
+  const selectedModelData = selectedModel !== null ? models.find(m => m._id === selectedModel) : null;
+  const displayPriceTon = selectedModelData?.priceTon ?? currentPriceTon;
+  const displayPriceUsd = selectedModelData?.priceUsd ?? currentPriceUsd;
+  const displayChange = selectedModelData ? 
+    (selectedModelData.tonPrice24hAgo && selectedModelData.tonPrice24hAgo > 0 && selectedModelData.priceTon ? 
+      ((selectedModelData.priceTon - selectedModelData.tonPrice24hAgo) / selectedModelData.tonPrice24hAgo) * 100 : 0) 
+    : currentChange;
   
   const changePercent = displayChange;
   const isPositive = changePercent >= 0;
@@ -415,7 +422,7 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                     return (
                       <button
                         key={modelId}
-                        onClick={() => { setSelectedModel(index + 1); setShowModelSelector(false); }}
+                        onClick={() => { setSelectedModel(modelId); setShowModelSelector(false); }}
                         className={cn(
                           "p-2 rounded-lg transition-colors border flex flex-col items-center gap-1",
                           selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
@@ -435,8 +442,8 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                         <p className="font-medium text-[10px] text-foreground truncate w-full text-center leading-tight">
                           {modelName}
                         </p>
-                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round((model.rarity || 10) / 10)))}>
-                          {getRarityPercent(Math.round((model.rarity || 10) / 10))}
+                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round(model.rarity || 1)))}>
+                          {getRarityPercent(Math.round(model.rarity || 1))}
                         </span>
                         
                         <div className="flex items-center gap-0.5 font-semibold text-foreground">
