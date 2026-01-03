@@ -33,7 +33,12 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
     return `${sign}${value.toFixed(2)}%`;
   };
 
-  const getImageUrl = (imageUrl: string) => {
+  const getImageUrl = (imageUrl: string | undefined | null, modelImageUrl?: string | null) => {
+    // If model_image_url is a full URL, use it directly
+    if (modelImageUrl && (modelImageUrl.startsWith('http://') || modelImageUrl.startsWith('https://'))) {
+      return modelImageUrl;
+    }
+    // Otherwise fall back to image_url with server prefix if needed
     if (imageUrl?.startsWith('/api/')) {
       return `https://channelsseller.site${imageUrl}`;
     }
@@ -160,7 +165,7 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                   isRTL && "flex-row-reverse"
                 )}>
                   <CachedImage
-                    src={getImageUrl(holding.model_image_url || holding.image_url)}
+                    src={getImageUrl(holding.image_url, holding.model_image_url)}
                     alt={holding.model_name || holding.gift_name}
                     className="w-12 h-12 rounded-lg object-cover bg-muted"
                   />
