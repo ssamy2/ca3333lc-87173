@@ -73,7 +73,8 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
       {/* Gifts List */}
       <div className="space-y-2">
         {filteredGifts.map(([name, gift]) => {
-          const isPositive = (gift.change_24h_ton_percent ?? 0) >= 0;
+          const changePercent = gift.change_24h_ton_percent ?? 0;
+          const isPositive = changePercent >= 0;
           
           return (
             <button
@@ -142,7 +143,7 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
                     ) : (
                       <TrendingDown className="w-3 h-3" />
                     )}
-                    <span>{formatPercent(gift.change_24h_ton_percent ?? 0)}</span>
+                    <span>{formatPercent(changePercent)}</span>
                   </div>
                 </div>
               </div>

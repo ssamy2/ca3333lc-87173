@@ -7,8 +7,8 @@ export interface TradingGift {
   name: string;
   priceTon: number;
   priceUsd: number;
-  change_24h_ton_percent: number;
-  change_24h_usd_percent: number;
+  change_24h_ton_percent?: number;
+  change_24h_usd_percent?: number;
   image_url: string;
   bot_owners_count: number;
 }
