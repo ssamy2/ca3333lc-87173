@@ -17,9 +17,10 @@ interface MarketTabProps {
 export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGift, setSelectedGift] = useState<TradingGift | null>(null);
+  const [filterMode, setFilterMode] = useState<'all' | 'gain' | 'lose' | 'price'>('all');
 
   // Filter only upgraded gifts (exclude those with [Regular] prefix or no price)
-  const filteredGifts = Object.entries(gifts).filter(([name, gift]) => {
+  let filteredGifts = Object.entries(gifts).filter(([name, gift]) => {
     // Skip non-upgraded gifts
     if (name.startsWith('[Regular]')) return false;
     
@@ -30,6 +31,27 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
     // Search filter
     return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
+  
+  // Apply sorting based on filter mode
+  if (filterMode === 'gain') {
+    filteredGifts = filteredGifts.sort(([, a], [, b]) => {
+      const changeA = a.change_24h_ton_percent ?? 0;
+      const changeB = b.change_24h_ton_percent ?? 0;
+      return changeB - changeA; // Highest gain first
+    });
+  } else if (filterMode === 'lose') {
+    filteredGifts = filteredGifts.sort(([, a], [, b]) => {
+      const changeA = a.change_24h_ton_percent ?? 0;
+      const changeB = b.change_24h_ton_percent ?? 0;
+      return changeA - changeB; // Lowest (most negative) first
+    });
+  } else if (filterMode === 'price') {
+    filteredGifts = filteredGifts.sort(([, a], [, b]) => {
+      const priceA = a.priceTon || 0;
+      const priceB = b.priceTon || 0;
+      return priceB - priceA; // Highest price first
+    });
+  }
 
   const formatNumber = (num: number | undefined | null) => {
     const value = num ?? 0;
@@ -66,6 +88,57 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
 
   return (
     <div className="space-y-3">
+      {/* Filter Buttons */}
+      <div className={cn(
+        "flex gap-2 overflow-x-auto pb-1",
+        isRTL && "flex-row-reverse"
+      )}>
+        <button
+          onClick={() => setFilterMode('gain')}
+          className={cn(
+            "px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
+            filterMode === 'gain'
+              ? "bg-success text-white shadow-lg"
+              : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <TrendingUp className="w-3.5 h-3.5" />
+          {isRTL ? 'أعلى ربح' : 'Top Gain'}
+        </button>
+        <button
+          onClick={() => setFilterMode('lose')}
+          className={cn(
+            "px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
+            filterMode === 'lose'
+              ? "bg-destructive text-white shadow-lg"
+              : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <TrendingDown className="w-3.5 h-3.5" />
+          {isRTL ? 'أعلى خسارة' : 'Top Lose'}
+        </button>
+        <button
+          onClick={() => setFilterMode('price')}
+          className={cn(
+            "px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
+            filterMode === 'price'
+              ? "bg-primary text-primary-foreground shadow-lg"
+              : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <TonIcon className="w-3.5 h-3.5" />
+          {isRTL ? 'أعلى سعر' : 'Highest Price'}
+        </button>
+        {filterMode !== 'all' && (
+          <button
+            onClick={() => setFilterMode('all')}
+            className="px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all bg-muted/30 text-muted-foreground hover:bg-muted/50"
+          >
+            {isRTL ? 'الكل' : 'All'}
+          </button>
+        )}
+      </div>
+
       {/* Search Bar */}
       <div className="relative">
         <Search className={cn(

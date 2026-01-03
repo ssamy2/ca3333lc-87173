@@ -299,17 +299,72 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               <button
                 onClick={() => setShowModelSelector(!showModelSelector)}
                 className={cn(
-                  "w-full flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors",
+                  "w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors",
                   isRTL && "flex-row-reverse"
                 )}
               >
-                <span>
-                  {selectedModel !== null 
-                    ? `${isRTL ? 'موديل' : 'Model'} #${selectedModel}`
-                    : (isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)')
-                  }
-                </span>
-                <ChevronDown className={cn("w-4 h-4 transition-transform", showModelSelector && "rotate-180")} />
+                {selectedModel !== null && selectedModelData ? (
+                  <>
+                    {/* Model Image */}
+                    <div className="relative shrink-0">
+                      {selectedModelData.image_url ? (
+                        <img
+                          src={selectedModelData.image_url}
+                          alt={selectedModelData.name || `Model #${selectedModel}`}
+                          className="w-12 h-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (selectedModelData.backdrop_color) {
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const div = document.createElement('div');
+                                div.className = 'w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold';
+                                div.style.backgroundColor = selectedModelData.backdrop_color || '#666';
+                                div.textContent = `#${selectedModel}`;
+                                parent.appendChild(div);
+                              }
+                            } else {
+                              target.src = '/placeholder.svg';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div 
+                          className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
+                          style={{ backgroundColor: selectedModelData.backdrop_color || '#666' }}
+                        >
+                          #{selectedModel}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Model Info */}
+                    <div className={cn("flex-1 text-left", isRTL && "text-right")}>
+                      <p className="font-semibold text-sm">
+                        {selectedModelData.name || `Model #${selectedModel}`}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-1">
+                          <TonIcon className="w-3 h-3" />
+                          <span className="text-sm font-semibold">{formatNumber(selectedModelData.price_ton || 0)}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          ${formatNumber(selectedModelData.price_usd || 0)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <ChevronDown className={cn("w-4 h-4 transition-transform shrink-0", showModelSelector && "rotate-180")} />
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1">
+                      {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
+                    </span>
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", showModelSelector && "rotate-180")} />
+                  </>
+                )}
               </button>
               
               {showModelSelector && (
@@ -380,8 +435,8 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                         <p className="font-medium text-[10px] text-foreground truncate w-full text-center leading-tight">
                           {modelName}
                         </p>
-                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round(model.rarity || 1)))}>
-                          {getRarityPercent(Math.round(model.rarity || 1))}
+                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round((model.rarity || 10) / 10)))}>
+                          {getRarityPercent(Math.round((model.rarity || 10) / 10))}
                         </span>
                         
                         <div className="flex items-center gap-0.5 font-semibold text-foreground">
