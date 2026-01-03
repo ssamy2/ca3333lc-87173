@@ -134,8 +134,8 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                   isRTL && "flex-row-reverse"
                 )}>
                   <CachedImage
-                    src={getImageUrl(holding.image_url)}
-                    alt={holding.gift_name}
+                    src={getImageUrl(holding.model_image_url || holding.image_url)}
+                    alt={holding.model_name || holding.gift_name}
                     className="w-12 h-12 rounded-lg object-cover bg-muted"
                   />
                   

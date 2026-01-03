@@ -164,6 +164,33 @@ const TelegramApp: React.FC = () => {
       if (photoUrl) {
         setCurrentUserPhotoUrl(photoUrl);
       }
+
+      // Send user info to backend for trading system
+      const sendUserInfo = async () => {
+        try {
+          const { getAuthHeaders } = await import('@/lib/telegramAuth');
+          const headers = await getAuthHeaders();
+          
+          await fetch('https://channelsseller.site/api/trading/update-user-info', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers
+            },
+            body: JSON.stringify({
+              username: telegramUser.username,
+              first_name: telegramUser.first_name,
+              last_name: telegramUser.last_name,
+              photo_url: photoUrl,
+              language_code: telegramUser.language_code
+            })
+          });
+        } catch (error) {
+          console.error('Failed to update user info:', error);
+        }
+      };
+      
+      sendUserInfo();
     } else {
       // Fallback for testing
       setCurrentUser('demo_user');
