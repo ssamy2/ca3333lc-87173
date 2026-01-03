@@ -40,7 +40,11 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
   };
 
   const formatPercent = (num: number | undefined | null) => {
-    const value = num ?? 0;
+    // Handle NaN, undefined, null, and invalid numbers
+    if (num === null || num === undefined || isNaN(num) || !isFinite(num)) {
+      return '0.00%';
+    }
+    const value = Number(num);
     const sign = value >= 0 ? '+' : '';
     return `${sign}${value.toFixed(2)}%`;
   };
@@ -82,7 +86,11 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
       {/* Gifts List */}
       <div className="space-y-2">
         {filteredGifts.map(([name, gift]) => {
-          const changePercent = gift.change_24h_ton_percent ?? 0;
+          // Safely get change percent, handling NaN and invalid values
+          let changePercent = gift.change_24h_ton_percent;
+          if (changePercent === null || changePercent === undefined || isNaN(changePercent) || !isFinite(changePercent)) {
+            changePercent = 0;
+          }
           const isPositive = changePercent >= 0;
           
           return (

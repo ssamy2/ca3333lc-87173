@@ -23,9 +23,11 @@ const BASE_URL = 'https://channelsseller.site';
 
 interface GiftModel {
   model_number: number;
+  name?: string;
   backdrop_color?: string;
   pattern_color?: string;
   symbol_color?: string;
+  rarity?: string;
   price_ton?: number;
   price_usd?: number;
   change_24h_percent?: number;
@@ -139,10 +141,26 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const currentChange = marketData.change_24h_ton_percent ?? gift.change_24h_ton_percent ?? 0;
 
   // Prepare chart data
-  const chartData = (detailData?.chart_data || []).map((item: any) => ({
-    date: new Date(item.date || item.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    price: item.floor_price_ton || item.price_ton || item.price || 0,
-  })).slice(-30); // Last 30 days
+  const chartData = (detailData?.chart_data || []).map((item: any) => {
+    const dateStr = item.date || item.timestamp;
+    let formattedDate = '';
+    
+    try {
+      if (dateStr) {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+      }
+    } catch (e) {
+      console.error('Error formatting date:', e);
+    }
+    
+    return {
+      date: formattedDate || 'N/A',
+      price: parseFloat(item.price) || 0,
+    };
+  }).filter(item => item.date !== 'N/A' && item.price > 0).slice(-30); // Last 30 days
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -276,6 +294,7 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                     const modelPrice = model.price_ton || currentPriceTon;
                     const modelChange = model.change_24h_percent ?? currentChange;
                     const isModelPositive = modelChange >= 0;
+                    const modelName = model.name || `Model #${model.model_number}`;
                     
                     return (
                       <button
@@ -291,16 +310,29 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                           <div className="relative shrink-0">
                             {model.image_url ? (
                               <img
-                                src={getImageUrl(model.image_url)}
-                                alt={`Model ${model.model_number}`}
-                                className="w-12 h-12 rounded-lg object-cover bg-muted"
+                                src={model.image_url}
+                                alt={modelName}
+                                className="w-14 h-14 rounded-lg object-cover"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                  const target = e.target as HTMLImageElement;
+                                  if (model.backdrop_color) {
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const div = document.createElement('div');
+                                      div.className = 'w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-bold';
+                                      div.style.backgroundColor = model.backdrop_color || '#666';
+                                      div.textContent = `#${model.model_number}`;
+                                      parent.appendChild(div);
+                                    }
+                                  } else {
+                                    target.src = '/placeholder.svg';
+                                  }
                                 }}
                               />
                             ) : (
                               <div 
-                                className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
+                                className="w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
                                 style={{ backgroundColor: model.backdrop_color || '#666' }}
                               >
                                 #{model.model_number}
@@ -311,11 +343,16 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                           {/* Model Info */}
                           <div className={cn("flex-1 text-left", isRTL && "text-right")}>
                             <p className="font-semibold text-sm">
-                              {isRTL ? 'موديل' : 'Model'} #{model.model_number}
+                              {modelName}
                             </p>
-                            <div className={cn("flex items-center gap-1 text-xs text-muted-foreground", isRTL && "flex-row-reverse justify-end")}>
+                            {model.rarity && (
+                              <p className="text-xs text-muted-foreground capitalize">
+                                {model.rarity}
+                              </p>
+                            )}
+                            <div className={cn("flex items-center gap-1 text-xs mt-1", isRTL && "flex-row-reverse justify-end")}>
                               <TonIcon className="w-3 h-3" />
-                              <span>{formatNumber(modelPrice)}</span>
+                              <span className="font-semibold">{formatNumber(modelPrice)}</span>
                             </div>
                           </div>
                           
