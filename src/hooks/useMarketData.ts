@@ -156,10 +156,16 @@ const fetchMarketData = async (): Promise<MarketData> => {
       });
     }
   } else {
-    // Old format - process as before
+    // Old format - process as before (direct object without upgraded/unupgraded sections)
     Object.entries(rawData).forEach(([key, value]: [string, any]) => {
+      // Read change percentages from API - handle both naming conventions
+      const change24hTon = value['change_24h_ton_%'] ?? value.change_24h_ton_percent ?? 0;
+      const change24hUsd = value['change_24h_usd_%'] ?? value.change_24h_usd_percent ?? 0;
+      
       data[key] = {
         ...value,
+        'change_24h_ton_%': change24hTon,
+        'change_24h_usd_%': change24hUsd,
         image_url: normalizeImageUrl(value.image_url)
       };
     });
