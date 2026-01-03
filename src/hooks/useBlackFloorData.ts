@@ -39,7 +39,9 @@ interface BlackAPIResponse {
 
 // Fetch black floor data from API
 const fetchBlackFloorData = async (): Promise<BlackFloorItem[]> => {
-  const apiUrl = 'https://www.channelsseller.site/api/black/summary';
+  const { DEV_MODE } = await import('@/config/devMode');
+  const baseUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site';
+  const apiUrl = `${baseUrl}/api/black/summary`;
   const headers = await getAuthHeaders();
   
   const response = await fetch(apiUrl, {

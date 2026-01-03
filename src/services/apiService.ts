@@ -1,10 +1,12 @@
 import { getAuthHeaders } from '@/lib/telegramAuth'
 import { normalizeImageUrl } from '@/utils/urlNormalizer'
+import { DEV_MODE } from '@/config/devMode'
 
 export const USE_MOCK_DATA = false
 
 const buildApiUrl = (path: string): string => {
-  return `https://www.channelsseller.site${path}`
+  const baseUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site'
+  return `${baseUrl}${path}`
 }
 
 const getTimeoutSignal = (ms: number): AbortSignal => {
