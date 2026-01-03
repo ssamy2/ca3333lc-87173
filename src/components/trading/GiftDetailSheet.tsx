@@ -68,15 +68,26 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
     setIsLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`${BASE_URL}/api/trading/gift/${encodeURIComponent(giftName)}/details`, {
+      // Use the same API as GiftDetail page for better chart data
+      const response = await fetch(`https://www.channelsseller.site/api/gift/${encodeURIComponent(giftName)}/data`, {
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...headers,
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        setDetailData(data.data);
+        const rawData = await response.json();
+        // Transform to expected format
+        const transformedData: GiftDetailData = {
+          gift_info: rawData.info || {},
+          market_data: rawData.info || {},
+          chart_data: rawData.life_chart || rawData.week_chart || [],
+        };
+        // Add models if available
+        if (rawData.info?.models) {
+          transformedData.gift_info.models = rawData.info.models;
+        }
+        setDetailData(transformedData);
       }
     } catch (error) {
       console.error('Failed to fetch gift details:', error);
@@ -142,14 +153,23 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const currentPriceUsd = marketData.priceUsd || gift.priceUsd || 0;
   const currentChange = marketData.change_24h_ton_percent ?? gift.change_24h_ton_percent ?? 0;
 
-  // Prepare chart data
+  // Prepare chart data - handle life_chart format from API
   const chartData = (detailData?.chart_data || []).map((item: any) => {
-    const dateStr = item.date || item.timestamp;
     let formattedDate = '';
     
     try {
+      // Handle different date formats
+      const dateStr = item.date || item.timestamp;
       if (dateStr) {
-        const date = new Date(dateStr);
+        // Try parsing DD-MM-YYYY format first
+        const parts = dateStr.split('-');
+        let date: Date;
+        if (parts.length === 3 && parts[0].length <= 2) {
+          // DD-MM-YYYY format
+          date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        } else {
+          date = new Date(dateStr);
+        }
         if (!isNaN(date.getTime())) {
           formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
@@ -158,11 +178,14 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
       console.error('Error formatting date:', e);
     }
     
+    // Handle both priceTon and price formats
+    const price = item.priceTon ?? item.price ?? item.price_ton ?? 0;
+    
     return {
       date: formattedDate || 'N/A',
-      price: parseFloat(item.price) || 0,
+      price: parseFloat(String(price)) || 0,
     };
-  }).filter(item => item.date !== 'N/A' && item.price > 0).slice(-30); // Last 30 days
+  }).filter((item: any) => item.date !== 'N/A' && item.price > 0).slice(-50); // Last 50 data points
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -292,9 +315,14 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                   >
                     {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
                   </button>
-                  {models.map((model) => {
-                    const modelPrice = model.price_ton || currentPriceTon;
-                    const modelChange = model.change_24h_percent ?? currentChange;
+                  {models.map((model: any) => {
+                    // API returns priceTon, not price_ton
+                    const modelPrice = model.priceTon || model.price_ton || currentPriceTon;
+                    // Calculate change from tonPrice24hAgo if available
+                    const price24hAgo = model.tonPrice24hAgo || model.price_24h_ago;
+                    const modelChange = price24hAgo && modelPrice > 0 
+                      ? ((modelPrice - price24hAgo) / price24hAgo) * 100 
+                      : (model.change_24h_percent ?? currentChange);
                     const isModelPositive = modelChange >= 0;
                     const modelName = model.name || `Model #${model.model_number}`;
                     
