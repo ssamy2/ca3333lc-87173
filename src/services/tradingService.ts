@@ -43,6 +43,9 @@ export interface Holding {
   sell_timestamp?: string;
   realized_pnl_ton?: number;
   realized_pnl_usd?: number;
+  model_id?: string;
+  model_name?: string;
+  model_image_url?: string;
 }
 
 export interface PortfolioData {

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import TonIcon from '@/components/TonIcon';
 import type { PortfolioData, Holding } from '@/services/tradingService';
 import { SellDialog } from './SellDialog';
+import { CachedImage } from './CachedImage';
 
 interface PortfolioTabProps {
   portfolio: PortfolioData | null;
@@ -132,19 +133,21 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
                   "flex items-center gap-3",
                   isRTL && "flex-row-reverse"
                 )}>
-                  <img
+                  <CachedImage
                     src={getImageUrl(holding.image_url)}
                     alt={holding.gift_name}
                     className="w-12 h-12 rounded-lg object-cover bg-muted"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
-                    }}
                   />
                   
                   <div className={cn("flex-1 min-w-0", isRTL && "text-right")}>
                     <h4 className="font-semibold text-foreground truncate">
                       {holding.gift_name}
                     </h4>
+                    {holding.model_name && (
+                      <p className="text-xs text-primary/80 truncate">
+                        {holding.model_name}
+                      </p>
+                    )}
                     <div className="text-xs text-muted-foreground space-y-0.5">
                       <p>
                         {isRTL ? 'الشراء: ' : 'Buy: '}

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import TonIcon from '@/components/TonIcon';
 import type { TradingGift } from '@/services/tradingService';
 import { GiftDetailSheet } from './GiftDetailSheet';
+import { CachedImage } from './CachedImage';
 
 interface MarketTabProps {
   gifts: Record<string, TradingGift>;
@@ -182,13 +183,10 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
               )}>
                 {/* Gift Image */}
                 <div className="relative">
-                  <img
+                  <CachedImage
                     src={getImageUrl(gift.image_url)}
                     alt={gift.name}
                     className="w-12 h-12 rounded-lg object-cover bg-muted"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
-                    }}
                   />
                 </div>
 

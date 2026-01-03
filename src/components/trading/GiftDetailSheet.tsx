@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import TonIcon from '@/components/TonIcon';
 import type { TradingGift } from '@/services/tradingService';
 import { getAuthHeaders } from '@/lib/telegramAuth';
+import { CachedImage } from './CachedImage';
 import {
   LineChart,
   Line,
@@ -221,13 +222,10 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
           {/* Gift Info Card */}
           <div className="glass-effect rounded-xl p-4">
             <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
-              <img
+              <CachedImage
                 src={getImageUrl(gift.image_url)}
                 alt={gift.name}
                 className="w-20 h-20 rounded-xl object-cover bg-muted"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
-                }}
               />
               <div className={cn("flex-1", isRTL && "text-right")}>
                 <div className={cn("flex items-center gap-2 mb-1", isRTL && "flex-row-reverse justify-end")}>
