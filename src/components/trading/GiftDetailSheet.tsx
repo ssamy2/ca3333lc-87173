@@ -307,25 +307,20 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               </button>
               
               {showModelSelector && (
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
                   <button
                     onClick={() => { setSelectedModel(null); setShowModelSelector(false); }}
                     className={cn(
-                      "col-span-2 p-3 rounded-xl transition-colors border text-center",
+                      "col-span-full p-2 rounded-lg transition-colors border text-center text-sm",
                       selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                     )}
                   >
-                    {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
+                    {isRTL ? 'أي موديل' : 'Any Model'}
                   </button>
                   {models.map((model: any, index: number) => {
-                    // Skip models with null prices
-                    if (!model.priceTon || model.priceTon === null) {
-                      return null;
-                    }
+                    if (!model.priceTon || model.priceTon === null) return null;
                     
-                    // API returns priceTon directly
                     const modelPrice = model.priceTon || 0;
-                    // Calculate change from tonPrice24hAgo if available
                     const price24hAgo = model.tonPrice24hAgo;
                     const modelChange = (price24hAgo && price24hAgo > 0 && modelPrice > 0)
                       ? ((modelPrice - price24hAgo) / price24hAgo) * 100 
@@ -334,66 +329,68 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                     const modelName = model.name || `Model #${index + 1}`;
                     const modelId = model._id || `model-${index}`;
                     
-                    // Get rarity info
-                    const getRarityInfo = (rarity: number) => {
+                    const getRarityPercent = (rarity: number) => {
                       switch (rarity) {
-                        case 1: return { name: 'Common', color: 'text-gray-400', bg: 'bg-gray-500/20' };
-                        case 2: return { name: 'Uncommon', color: 'text-green-500', bg: 'bg-green-500/20' };
-                        case 3: return { name: 'Rare', color: 'text-blue-500', bg: 'bg-blue-500/20' };
-                        case 4: return { name: 'Epic', color: 'text-purple-500', bg: 'bg-purple-500/20' };
-                        case 5: return { name: 'Legendary', color: 'text-yellow-500', bg: 'bg-yellow-500/20' };
-                        default: return { name: 'Common', color: 'text-gray-400', bg: 'bg-gray-500/20' };
+                        case 1: return '50%';
+                        case 2: return '25%';
+                        case 3: return '15%';
+                        case 4: return '7%';
+                        case 5: return '3%';
+                        default: return '50%';
                       }
                     };
-                    const rarityInfo = getRarityInfo(Math.round(model.rarity || 1));
+                    
+                    const getRarityColor = (rarity: number) => {
+                      switch (rarity) {
+                        case 1: return 'text-gray-400';
+                        case 2: return 'text-green-500';
+                        case 3: return 'text-blue-500';
+                        case 4: return 'text-purple-500';
+                        case 5: return 'text-yellow-500';
+                        default: return 'text-gray-400';
+                      }
+                    };
                     
                     return (
                       <button
                         key={modelId}
                         onClick={() => { setSelectedModel(index + 1); setShowModelSelector(false); }}
                         className={cn(
-                          "p-3 rounded-xl transition-colors border flex flex-col items-center gap-2",
+                          "p-2 rounded-lg transition-colors border flex flex-col items-center gap-1",
                           selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                         )}
                       >
-                        {/* Model Image */}
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
                           <img
                             src={model.image}
                             alt={modelName}
                             className="w-full h-full object-contain"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/64x64?text=Model';
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/40x40?text=M';
                             }}
                           />
                         </div>
                         
-                        {/* Model Info */}
-                        <div className="text-center w-full">
-                          <p className="font-semibold text-xs text-foreground truncate">
-                            {modelName}
-                          </p>
-                          <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mt-1", rarityInfo.color, rarityInfo.bg)}>
-                            {rarityInfo.name}
-                          </span>
-                        </div>
+                        <p className="font-medium text-[10px] text-foreground truncate w-full text-center leading-tight">
+                          {modelName}
+                        </p>
+                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round(model.rarity || 1)))}>
+                          {getRarityPercent(Math.round(model.rarity || 1))}
+                        </span>
                         
-                        {/* Price */}
-                        <div className="text-center">
-                          <div className={cn("flex items-center gap-1 font-semibold text-foreground justify-center")}>
-                            <TonIcon className="w-3 h-3" />
-                            <span className="text-sm">{modelPrice.toFixed(1)}</span>
-                          </div>
-                          {modelChange !== 0 && (
-                            <div className={cn(
-                              "flex items-center gap-0.5 text-[10px] font-semibold justify-center",
-                              isModelPositive ? "text-success" : "text-destructive"
-                            )}>
-                              {isModelPositive ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                              <span>{isModelPositive ? '+' : ''}{modelChange.toFixed(1)}%</span>
-                            </div>
-                          )}
+                        <div className="flex items-center gap-0.5 font-semibold text-foreground">
+                          <TonIcon className="w-2.5 h-2.5" />
+                          <span className="text-[10px]">{modelPrice.toFixed(1)}</span>
                         </div>
+                        {modelChange !== 0 && (
+                          <div className={cn(
+                            "flex items-center gap-0.5 text-[9px] font-semibold",
+                            isModelPositive ? "text-success" : "text-destructive"
+                          )}>
+                            {isModelPositive ? <TrendingUp className="w-2 h-2" /> : <TrendingDown className="w-2 h-2" />}
+                            <span>{isModelPositive ? '+' : ''}{modelChange.toFixed(1)}%</span>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
