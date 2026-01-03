@@ -64,6 +64,8 @@ export interface PortfolioData {
   total_pnl_ton: number;
   total_pnl_usd: number;
   total_return_percent: number;
+  daily_return_percent: number;
+  cumulative_return_percent: number;
   active_holdings_count: number;
   sold_holdings_count: number;
   holdings: Holding[];

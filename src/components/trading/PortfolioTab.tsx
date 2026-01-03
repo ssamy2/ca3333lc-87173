@@ -59,8 +59,34 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
   const isPositivePnl = (portfolio.total_pnl_ton ?? 0) >= 0;
   const activeHoldings = (portfolio.holdings || []).filter(h => h.status === 'active');
 
+  const isDailyPositive = (portfolio.daily_return_percent ?? 0) >= 0;
+
   return (
     <div className="space-y-4">
+      {/* Daily Return Card */}
+      {portfolio.daily_return_percent !== undefined && (
+        <div className={cn(
+          "glass-effect rounded-xl p-3 border",
+          isDailyPositive ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
+        )}>
+          <div className={cn(
+            "flex items-center justify-between",
+            isRTL && "flex-row-reverse"
+          )}>
+            <span className="text-xs text-muted-foreground">
+              {isRTL ? 'الربح اليومي' : 'Today\'s Return'}
+            </span>
+            <div className={cn(
+              "flex items-center gap-1 text-sm font-bold",
+              isDailyPositive ? "text-success" : "text-destructive"
+            )}>
+              {isDailyPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {formatPercent(portfolio.daily_return_percent ?? 0)}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Performance Summary Card */}
       <div className={cn(
         "glass-effect rounded-2xl p-4 border-2",
@@ -73,7 +99,7 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
           isRTL && "flex-row-reverse"
         )}>
           <span className="text-sm text-muted-foreground">
-            {isRTL ? 'إجمالي الربح/الخسارة' : 'Total PnL'}
+            {isRTL ? 'إجمالي الربح (منذ البداية)' : 'Total Return (Since Start)'}
           </span>
           <div className={cn(
             "flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium",
