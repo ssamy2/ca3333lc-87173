@@ -68,15 +68,28 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
     setIsLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`${BASE_URL}/api/trading/gift/${encodeURIComponent(giftName)}/details`, {
+      // Use the same API as GiftDetail page for better chart data
+      const response = await fetch(`https://www.channelsseller.site/api/gift/${encodeURIComponent(giftName)}/data`, {
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...headers,
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        setDetailData(data.data);
+        const rawData = await response.json();
+        // Transform to expected format
+        const transformedData: GiftDetailData = {
+          gift_info: rawData.info || {},
+          market_data: rawData.info || {},
+          chart_data: rawData.life_chart || rawData.week_chart || [],
+        };
+        // Add models if available - models come at root level, not inside info
+        if (rawData.models && rawData.models.length > 0) {
+          transformedData.gift_info.models = rawData.models;
+        } else if (rawData.info?.models) {
+          transformedData.gift_info.models = rawData.info.models;
+        }
+        setDetailData(transformedData);
       }
     } catch (error) {
       console.error('Failed to fetch gift details:', error);
@@ -148,14 +161,23 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const totalCostTon = displayPriceTon * quantity;
   const totalCostUsd = displayPriceUsd * quantity;
 
-  // Prepare chart data
+  // Prepare chart data - handle life_chart format from API
   const chartData = (detailData?.chart_data || []).map((item: any) => {
-    const dateStr = item.date || item.timestamp;
     let formattedDate = '';
     
     try {
+      // Handle different date formats
+      const dateStr = item.date || item.timestamp;
       if (dateStr) {
-        const date = new Date(dateStr);
+        // Try parsing DD-MM-YYYY format first
+        const parts = dateStr.split('-');
+        let date: Date;
+        if (parts.length === 3 && parts[0].length <= 2) {
+          // DD-MM-YYYY format
+          date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        } else {
+          date = new Date(dateStr);
+        }
         if (!isNaN(date.getTime())) {
           formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
@@ -164,27 +186,31 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
       console.error('Error formatting date:', e);
     }
     
+    // Handle both priceTon and price formats
+    const price = item.priceTon ?? item.price ?? item.price_ton ?? 0;
+    
     return {
       date: formattedDate || 'N/A',
-      price: parseFloat(item.price) || 0,
+      price: parseFloat(String(price)) || 0,
     };
-  }).filter(item => item.date !== 'N/A' && item.price > 0).slice(-30); // Last 30 days
+  }).filter((item: any) => item.date !== 'N/A' && item.price > 0).slice(-50); // Last 50 data points
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="glass-effect border-t border-border/50 rounded-t-3xl h-[85vh] overflow-y-auto"
+        className="glass-effect border-t border-border/50 rounded-t-3xl h-[85vh] flex flex-col"
       >
         {/* Header */}
-        <div className={cn("flex items-center gap-3 pb-4 border-b border-border/30", isRTL && "flex-row-reverse")}>
+        <div className={cn("flex items-center gap-3 pb-4 border-b border-border/30 shrink-0", isRTL && "flex-row-reverse")}>
           <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
             <ArrowLeft className={cn("w-5 h-5", isRTL && "rotate-180")} />
           </Button>
           <h2 className="text-lg font-bold flex-1">{gift.name}</h2>
         </div>
 
-        <div className="space-y-4 py-4">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Gift Info Card */}
           <div className="glass-effect rounded-xl p-4">
             <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
@@ -287,93 +313,90 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               </button>
               
               {showModelSelector && (
-                <div className="mt-2 max-h-60 overflow-y-auto space-y-2">
+                <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
                   <button
                     onClick={() => { setSelectedModel(null); setShowModelSelector(false); }}
                     className={cn(
-                      "w-full p-3 rounded-lg transition-colors border",
-                      selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent",
-                      isRTL && "text-right"
+                      "col-span-full p-2 rounded-lg transition-colors border text-center text-sm",
+                      selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                     )}
                   >
-                    {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
+                    {isRTL ? 'أي موديل' : 'Any Model'}
                   </button>
-                  {models.map((model) => {
-                    const modelPrice = model.price_ton || currentPriceTon;
-                    const modelChange = model.change_24h_percent ?? currentChange;
+                  {models.map((model: any, index: number) => {
+                    if (!model.priceTon || model.priceTon === null) return null;
+                    
+                    const modelPrice = model.priceTon || 0;
+                    const price24hAgo = model.tonPrice24hAgo;
+                    const modelChange = (price24hAgo && price24hAgo > 0 && modelPrice > 0)
+                      ? ((modelPrice - price24hAgo) / price24hAgo) * 100 
+                      : 0;
                     const isModelPositive = modelChange >= 0;
-                    const modelName = model.name || `Model #${model.model_number}`;
+                    const modelName = model.name || `Model #${index + 1}`;
+                    const modelId = model._id || `model-${index}`;
+                    
+                    const getRarityPercent = (rarity: number) => {
+                      switch (rarity) {
+                        case 1: return '50%';
+                        case 2: return '25%';
+                        case 3: return '15%';
+                        case 4: return '7%';
+                        case 5: return '3%';
+                        default: return '50%';
+                      }
+                    };
+                    
+                    const getRarityColor = (rarity: number) => {
+                      switch (rarity) {
+                        case 1: return 'text-gray-400';
+                        case 2: return 'text-green-500';
+                        case 3: return 'text-blue-500';
+                        case 4: return 'text-purple-500';
+                        case 5: return 'text-yellow-500';
+                        default: return 'text-gray-400';
+                      }
+                    };
                     
                     return (
                       <button
-                        key={model.model_number}
-                        onClick={() => { setSelectedModel(model.model_number); setShowModelSelector(false); }}
+                        key={modelId}
+                        onClick={() => { setSelectedModel(index + 1); setShowModelSelector(false); }}
                         className={cn(
-                          "w-full p-3 rounded-lg transition-colors border",
-                          selectedModel === model.model_number ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent",
+                          "p-2 rounded-lg transition-colors border flex flex-col items-center gap-1",
+                          selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                         )}
                       >
-                        <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                          {/* Model Image */}
-                          <div className="relative shrink-0">
-                            {model.image_url ? (
-                              <img
-                                src={model.image_url}
-                                alt={modelName}
-                                className="w-14 h-14 rounded-lg object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  if (model.backdrop_color) {
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      const div = document.createElement('div');
-                                      div.className = 'w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-bold';
-                                      div.style.backgroundColor = model.backdrop_color || '#666';
-                                      div.textContent = `#${model.model_number}`;
-                                      parent.appendChild(div);
-                                    }
-                                  } else {
-                                    target.src = '/placeholder.svg';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div 
-                                className="w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
-                                style={{ backgroundColor: model.backdrop_color || '#666' }}
-                              >
-                                #{model.model_number}
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Model Info */}
-                          <div className={cn("flex-1 text-left", isRTL && "text-right")}>
-                            <p className="font-semibold text-sm">
-                              {modelName}
-                            </p>
-                            {model.rarity && (
-                              <p className="text-xs text-muted-foreground capitalize">
-                                {model.rarity}
-                              </p>
-                            )}
-                            <div className={cn("flex items-center gap-1 text-xs mt-1", isRTL && "flex-row-reverse justify-end")}>
-                              <TonIcon className="w-3 h-3" />
-                              <span className="font-semibold">{formatNumber(modelPrice)}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Model Change */}
-                          <div className={cn(
-                            "flex items-center gap-1 text-xs font-semibold",
-                            isModelPositive ? "text-success" : "text-destructive",
-                            isRTL && "flex-row-reverse"
-                          )}>
-                            {isModelPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            <span>{formatPercent(modelChange)}</span>
-                          </div>
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+                          <img
+                            src={model.image}
+                            alt={modelName}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/40x40?text=M';
+                            }}
+                          />
                         </div>
+                        
+                        <p className="font-medium text-[10px] text-foreground truncate w-full text-center leading-tight">
+                          {modelName}
+                        </p>
+                        <span className={cn("text-[10px] font-semibold", getRarityColor(Math.round(model.rarity || 1)))}>
+                          {getRarityPercent(Math.round(model.rarity || 1))}
+                        </span>
+                        
+                        <div className="flex items-center gap-0.5 font-semibold text-foreground">
+                          <TonIcon className="w-2.5 h-2.5" />
+                          <span className="text-[10px]">{modelPrice.toFixed(1)}</span>
+                        </div>
+                        {modelChange !== 0 && (
+                          <div className={cn(
+                            "flex items-center gap-0.5 text-[9px] font-semibold",
+                            isModelPositive ? "text-success" : "text-destructive"
+                          )}>
+                            {isModelPositive ? <TrendingUp className="w-2 h-2" /> : <TrendingDown className="w-2 h-2" />}
+                            <span>{isModelPositive ? '+' : ''}{modelChange.toFixed(1)}%</span>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -426,8 +449,10 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               ${formatNumber(totalCostUsd)} USD
             </p>
           </div>
+        </div>
 
-          {/* Buy Button */}
+        {/* Fixed Buy Button at Bottom */}
+        <div className="shrink-0 pt-4 border-t border-border/30">
           <Button
             onClick={handleBuy}
             disabled={isBuying}
