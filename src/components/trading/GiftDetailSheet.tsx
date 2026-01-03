@@ -26,6 +26,10 @@ interface GiftModel {
   backdrop_color?: string;
   pattern_color?: string;
   symbol_color?: string;
+  price_ton?: number;
+  price_usd?: number;
+  change_24h_percent?: number;
+  image_url?: string;
 }
 
 interface GiftDetailData {
@@ -38,7 +42,7 @@ interface GiftDetailSheetProps {
   gift: TradingGift | null;
   isOpen: boolean;
   onClose: () => void;
-  onBuy: (giftName: string, quantity: number, modelNumber?: number) => Promise<void>;
+  onBuy: (giftName: string, quantity: number, modelNumber?: number, modelName?: string, modelImageUrl?: string) => Promise<void>;
   isBuying: boolean;
   isRTL: boolean;
 }
@@ -79,7 +83,19 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
 
   const handleBuy = async () => {
     if (!gift) return;
-    await onBuy(gift.name, quantity, selectedModel ?? undefined);
+    
+    // Find selected model data if a model is selected
+    let modelName = undefined;
+    let modelImageUrl = undefined;
+    if (selectedModel !== null && models.length > 0) {
+      const selectedModelData = models.find(m => m.model_number === selectedModel);
+      if (selectedModelData) {
+        modelName = `Model #${selectedModel}`;
+        modelImageUrl = selectedModelData.image_url;
+      }
+    }
+    
+    await onBuy(gift.name, quantity, selectedModel ?? undefined, modelName, modelImageUrl);
     setQuantity(1);
     setSelectedModel(null);
     onClose();
@@ -113,8 +129,14 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const totalCostTon = (gift.priceTon ?? 0) * quantity;
   const totalCostUsd = (gift.priceUsd ?? 0) * quantity;
 
-  // Get models from detail data
+  // Get models from detail data - API returns array of models
   const models: GiftModel[] = detailData?.gift_info?.models || [];
+  
+  // Get market data for current prices
+  const marketData = detailData?.market_data || {};
+  const currentPriceTon = marketData.priceTon || gift.priceTon || 0;
+  const currentPriceUsd = marketData.priceUsd || gift.priceUsd || 0;
+  const currentChange = marketData.change_24h_ton_percent ?? gift.change_24h_ton_percent ?? 0;
 
   // Prepare chart data
   const chartData = (detailData?.chart_data || []).map((item: any) => ({
@@ -239,34 +261,77 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               </button>
               
               {showModelSelector && (
-                <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                <div className="mt-2 max-h-60 overflow-y-auto space-y-2">
                   <button
                     onClick={() => { setSelectedModel(null); setShowModelSelector(false); }}
                     className={cn(
-                      "w-full p-2 rounded-lg text-left transition-colors",
-                      selectedModel === null ? "bg-primary/20 text-primary" : "hover:bg-muted/30",
+                      "w-full p-3 rounded-lg transition-colors border",
+                      selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent",
                       isRTL && "text-right"
                     )}
                   >
                     {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
                   </button>
-                  {models.map((model) => (
-                    <button
-                      key={model.model_number}
-                      onClick={() => { setSelectedModel(model.model_number); setShowModelSelector(false); }}
-                      className={cn(
-                        "w-full p-2 rounded-lg text-left transition-colors flex items-center gap-2",
-                        selectedModel === model.model_number ? "bg-primary/20 text-primary" : "hover:bg-muted/30",
-                        isRTL && "text-right flex-row-reverse"
-                      )}
-                    >
-                      <div 
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: model.backdrop_color || '#666' }}
-                      />
-                      <span>{isRTL ? 'موديل' : 'Model'} #{model.model_number}</span>
-                    </button>
-                  ))}
+                  {models.map((model) => {
+                    const modelPrice = model.price_ton || currentPriceTon;
+                    const modelChange = model.change_24h_percent ?? currentChange;
+                    const isModelPositive = modelChange >= 0;
+                    
+                    return (
+                      <button
+                        key={model.model_number}
+                        onClick={() => { setSelectedModel(model.model_number); setShowModelSelector(false); }}
+                        className={cn(
+                          "w-full p-3 rounded-lg transition-colors border",
+                          selectedModel === model.model_number ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent",
+                        )}
+                      >
+                        <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                          {/* Model Image */}
+                          <div className="relative shrink-0">
+                            {model.image_url ? (
+                              <img
+                                src={getImageUrl(model.image_url)}
+                                alt={`Model ${model.model_number}`}
+                                className="w-12 h-12 rounded-lg object-cover bg-muted"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                }}
+                              />
+                            ) : (
+                              <div 
+                                className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xs font-bold"
+                                style={{ backgroundColor: model.backdrop_color || '#666' }}
+                              >
+                                #{model.model_number}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Model Info */}
+                          <div className={cn("flex-1 text-left", isRTL && "text-right")}>
+                            <p className="font-semibold text-sm">
+                              {isRTL ? 'موديل' : 'Model'} #{model.model_number}
+                            </p>
+                            <div className={cn("flex items-center gap-1 text-xs text-muted-foreground", isRTL && "flex-row-reverse justify-end")}>
+                              <TonIcon className="w-3 h-3" />
+                              <span>{formatNumber(modelPrice)}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Model Change */}
+                          <div className={cn(
+                            "flex items-center gap-1 text-xs font-semibold",
+                            isModelPositive ? "text-success" : "text-destructive",
+                            isRTL && "flex-row-reverse"
+                          )}>
+                            {isModelPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span>{formatPercent(modelChange)}</span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -60,8 +60,8 @@ export function useBuyGift() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ giftName, quantity, modelNumber }: { giftName: string; quantity: number; modelNumber?: number }) =>
-      buyGift(giftName, quantity, modelNumber),
+    mutationFn: ({ giftName, quantity, modelNumber, modelName, modelImageUrl }: { giftName: string; quantity: number; modelNumber?: number; modelName?: string; modelImageUrl?: string }) =>
+      buyGift(giftName, quantity, modelNumber, modelName, modelImageUrl),
     onSuccess: () => {
       // Invalidate portfolio and gifts to refresh data
       queryClient.invalidateQueries({ queryKey: ['trading-portfolio'] });

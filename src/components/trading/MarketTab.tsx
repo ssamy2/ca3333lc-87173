@@ -10,7 +10,7 @@ interface MarketTabProps {
   gifts: Record<string, TradingGift>;
   isLoading: boolean;
   isRTL: boolean;
-  onBuy: (giftName: string, quantity: number, modelNumber?: number) => Promise<void>;
+  onBuy: (giftName: string, quantity: number, modelNumber?: number, modelName?: string, modelImageUrl?: string) => Promise<void>;
   isBuying: boolean;
 }
 
@@ -22,7 +22,10 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
   const filteredGifts = Object.entries(gifts).filter(([name, gift]) => {
     // Skip non-upgraded gifts
     if (name.startsWith('[Regular]')) return false;
-    if (!gift.priceTon || gift.priceTon <= 0) return false;
+    
+    // Check both camelCase and snake_case for compatibility
+    const price = gift.priceTon || (gift as any).price_ton || 0;
+    if (price <= 0) return false;
     
     // Search filter
     return name.toLowerCase().includes(searchQuery.toLowerCase());

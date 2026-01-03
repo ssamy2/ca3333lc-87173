@@ -54,9 +54,9 @@ const TradingPage = () => {
   const resetMutation = useResetAccount();
 
   // Handlers
-  const handleBuy = async (giftName: string, quantity: number, modelNumber?: number) => {
+  const handleBuy = async (giftName: string, quantity: number, modelNumber?: number, modelName?: string, modelImageUrl?: string) => {
     try {
-      const result = await buyMutation.mutateAsync({ giftName, quantity, modelNumber });
+      const result = await buyMutation.mutateAsync({ giftName, quantity, modelNumber, modelName, modelImageUrl });
       toast.success(
         isRTL 
           ? `تم شراء ${quantity} ${giftName} بنجاح!` 
