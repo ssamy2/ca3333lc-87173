@@ -128,11 +128,6 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
 
   if (!gift) return null;
 
-  const changePercent = gift.change_24h_ton_percent ?? 0;
-  const isPositive = changePercent >= 0;
-  const totalCostTon = (gift.priceTon ?? 0) * quantity;
-  const totalCostUsd = (gift.priceUsd ?? 0) * quantity;
-
   // Get models from detail data - API returns array of models
   const models: GiftModel[] = detailData?.gift_info?.models || [];
   
@@ -141,6 +136,17 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   const currentPriceTon = marketData.priceTon || gift.priceTon || 0;
   const currentPriceUsd = marketData.priceUsd || gift.priceUsd || 0;
   const currentChange = marketData.change_24h_ton_percent ?? gift.change_24h_ton_percent ?? 0;
+  
+  // Get selected model price if a model is selected
+  const selectedModelData = selectedModel !== null ? models.find(m => m.model_number === selectedModel) : null;
+  const displayPriceTon = selectedModelData?.price_ton ?? currentPriceTon;
+  const displayPriceUsd = selectedModelData?.price_usd ?? currentPriceUsd;
+  const displayChange = selectedModelData?.change_24h_percent ?? currentChange;
+  
+  const changePercent = displayChange;
+  const isPositive = changePercent >= 0;
+  const totalCostTon = displayPriceTon * quantity;
+  const totalCostUsd = displayPriceUsd * quantity;
 
   // Prepare chart data
   const chartData = (detailData?.chart_data || []).map((item: any) => {
