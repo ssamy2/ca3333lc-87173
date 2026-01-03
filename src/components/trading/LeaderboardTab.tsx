@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Trophy, TrendingUp, TrendingDown, Loader2, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import TonIcon from '@/components/TonIcon';
 import type { LeaderboardData, LeaderboardUser } from '@/services/tradingService';
 
 interface LeaderboardTabProps {
@@ -12,9 +13,16 @@ interface LeaderboardTabProps {
 export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTabProps) {
   const [viewMode, setViewMode] = useState<'winners' | 'losers'>('winners');
 
-  const formatPercent = (num: number) => {
-    const sign = num >= 0 ? '+' : '';
-    return `${sign}${num.toFixed(2)}%`;
+  const formatPercent = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
+  };
+
+  const formatTon = (num: number | undefined | null) => {
+    const value = num ?? 0;
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}`;
   };
 
   const getRankIcon = (rank: number) => {
@@ -73,19 +81,25 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
           )}
         </div>
 
-        {/* Return */}
-        <div className={cn(
-          "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-bold",
-          isWinner 
-            ? "bg-success/20 text-success" 
-            : "bg-destructive/20 text-destructive"
-        )}>
-          {isWinner ? (
-            <TrendingUp className="w-4 h-4" />
-          ) : (
-            <TrendingDown className="w-4 h-4" />
-          )}
-          {formatPercent(user.return_percent)}
+        {/* Profit/Loss Info */}
+        <div className={cn("text-right", isRTL && "text-left")}>
+          {/* PnL in TON */}
+          <div className={cn(
+            "flex items-center gap-1 font-bold text-sm",
+            isWinner ? "text-success" : "text-destructive",
+            isRTL && "flex-row-reverse justify-start"
+          )}>
+            {isWinner ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            <TonIcon className="w-3 h-3" />
+            <span>{formatTon(user.total_pnl_ton)}</span>
+          </div>
+          {/* Return Percent */}
+          <p className={cn(
+            "text-xs",
+            isWinner ? "text-success/80" : "text-destructive/80"
+          )}>
+            {formatPercent(user.return_percent)}
+          </p>
         </div>
       </div>
     </div>

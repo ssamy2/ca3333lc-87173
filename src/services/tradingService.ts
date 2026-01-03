@@ -179,15 +179,22 @@ export async function fetchTradingStats(): Promise<{ success: boolean; data: Tra
   return response.json();
 }
 
-export async function buyGift(giftName: string, quantity: number = 1): Promise<BuyResponse> {
+export async function buyGift(giftName: string, quantity: number = 1, modelNumber?: number): Promise<BuyResponse> {
   const headers = await getAuthHeaders();
+  const body: { gift_name: string; quantity: number; model_number?: number } = { 
+    gift_name: giftName, 
+    quantity 
+  };
+  if (modelNumber !== undefined) {
+    body.model_number = modelNumber;
+  }
   const response = await fetch(`${BASE_URL}/api/trading/buy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
-    body: JSON.stringify({ gift_name: giftName, quantity }),
+    body: JSON.stringify(body),
   });
   
   const data = await response.json();

@@ -4,13 +4,13 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import TonIcon from '@/components/TonIcon';
 import type { TradingGift } from '@/services/tradingService';
-import { BuySheet } from './BuySheet';
+import { GiftDetailSheet } from './GiftDetailSheet';
 
 interface MarketTabProps {
   gifts: Record<string, TradingGift>;
   isLoading: boolean;
   isRTL: boolean;
-  onBuy: (giftName: string, quantity: number) => Promise<void>;
+  onBuy: (giftName: string, quantity: number, modelNumber?: number) => Promise<void>;
   isBuying: boolean;
 }
 
@@ -18,9 +18,15 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGift, setSelectedGift] = useState<TradingGift | null>(null);
 
-  const filteredGifts = Object.entries(gifts).filter(([name]) =>
-    name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter only upgraded gifts (exclude those with [Regular] prefix or no price)
+  const filteredGifts = Object.entries(gifts).filter(([name, gift]) => {
+    // Skip non-upgraded gifts
+    if (name.startsWith('[Regular]')) return false;
+    if (!gift.priceTon || gift.priceTon <= 0) return false;
+    
+    // Search filter
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const formatNumber = (num: number | undefined | null) => {
     const value = num ?? 0;
@@ -158,8 +164,8 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
         )}
       </div>
 
-      {/* Buy Sheet */}
-      <BuySheet
+      {/* Gift Detail Sheet with Chart */}
+      <GiftDetailSheet
         gift={selectedGift}
         isOpen={!!selectedGift}
         onClose={() => setSelectedGift(null)}
