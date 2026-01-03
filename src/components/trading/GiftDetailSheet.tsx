@@ -191,17 +191,18 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="glass-effect border-t border-border/50 rounded-t-3xl h-[85vh] overflow-y-auto"
+        className="glass-effect border-t border-border/50 rounded-t-3xl h-[85vh] flex flex-col"
       >
         {/* Header */}
-        <div className={cn("flex items-center gap-3 pb-4 border-b border-border/30", isRTL && "flex-row-reverse")}>
+        <div className={cn("flex items-center gap-3 pb-4 border-b border-border/30 shrink-0", isRTL && "flex-row-reverse")}>
           <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
             <ArrowLeft className={cn("w-5 h-5", isRTL && "rotate-180")} />
           </Button>
           <h2 className="text-lg font-bold flex-1">{gift.name}</h2>
         </div>
 
-        <div className="space-y-4 py-4">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Gift Info Card */}
           <div className="glass-effect rounded-xl p-4">
             <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
@@ -304,13 +305,12 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               </button>
               
               {showModelSelector && (
-                <div className="mt-2 max-h-60 overflow-y-auto space-y-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => { setSelectedModel(null); setShowModelSelector(false); }}
                     className={cn(
-                      "w-full p-3 rounded-lg transition-colors border",
-                      selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent",
-                      isRTL && "text-right"
+                      "col-span-2 p-3 rounded-xl transition-colors border text-center",
+                      selectedModel === null ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                     )}
                   >
                     {isRTL ? 'أي موديل (عشوائي)' : 'Any Model (Random)'}
@@ -350,48 +350,47 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                         key={modelId}
                         onClick={() => { setSelectedModel(index + 1); setShowModelSelector(false); }}
                         className={cn(
-                          "w-full p-3 rounded-lg transition-colors border",
-                          selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-transparent bg-secondary/50",
+                          "p-3 rounded-xl transition-colors border flex flex-col items-center gap-2",
+                          selectedModel === index + 1 ? "bg-primary/20 text-primary border-primary" : "hover:bg-muted/30 border-border/50 bg-secondary/30",
                         )}
                       >
-                        <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                          {/* Model Image */}
+                        {/* Model Image */}
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
                           <img
                             src={model.image}
                             alt={modelName}
-                            className="w-12 h-12 rounded-lg object-cover bg-muted"
+                            className="w-full h-full object-contain"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/48x48?text=Model';
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/64x64?text=Model';
                             }}
                           />
-                          
-                          {/* Model Info */}
-                          <div className={cn("flex-1 text-left", isRTL && "text-right")}>
-                            <p className="font-semibold text-sm text-foreground">
-                              {modelName}
-                            </p>
-                            <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold", rarityInfo.color, rarityInfo.bg)}>
-                              {rarityInfo.name}
-                            </span>
+                        </div>
+                        
+                        {/* Model Info */}
+                        <div className="text-center w-full">
+                          <p className="font-semibold text-xs text-foreground truncate">
+                            {modelName}
+                          </p>
+                          <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mt-1", rarityInfo.color, rarityInfo.bg)}>
+                            {rarityInfo.name}
+                          </span>
+                        </div>
+                        
+                        {/* Price */}
+                        <div className="text-center">
+                          <div className={cn("flex items-center gap-1 font-semibold text-foreground justify-center")}>
+                            <TonIcon className="w-3 h-3" />
+                            <span className="text-sm">{modelPrice.toFixed(1)}</span>
                           </div>
-                          
-                          {/* Price and Change */}
-                          <div className={cn("text-right", isRTL && "text-left")}>
-                            <div className={cn("flex items-center gap-1 font-semibold text-foreground", isRTL && "flex-row-reverse justify-end")}>
-                              <TonIcon className="w-4 h-4" />
-                              <span>{modelPrice.toFixed(0)}</span>
+                          {modelChange !== 0 && (
+                            <div className={cn(
+                              "flex items-center gap-0.5 text-[10px] font-semibold justify-center",
+                              isModelPositive ? "text-success" : "text-destructive"
+                            )}>
+                              {isModelPositive ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                              <span>{isModelPositive ? '+' : ''}{modelChange.toFixed(1)}%</span>
                             </div>
-                            {modelChange !== 0 && (
-                              <div className={cn(
-                                "flex items-center gap-1 text-xs font-semibold justify-end",
-                                isModelPositive ? "text-success" : "text-destructive",
-                                isRTL && "flex-row-reverse"
-                              )}>
-                                {isModelPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                <span>{isModelPositive ? '+' : ''}{modelChange.toFixed(1)}%</span>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </button>
                     );
@@ -445,8 +444,10 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
               ${formatNumber(totalCostUsd)} USD
             </p>
           </div>
+        </div>
 
-          {/* Buy Button */}
+        {/* Fixed Buy Button at Bottom */}
+        <div className="shrink-0 pt-4 border-t border-border/30">
           <Button
             onClick={handleBuy}
             disabled={isBuying}
