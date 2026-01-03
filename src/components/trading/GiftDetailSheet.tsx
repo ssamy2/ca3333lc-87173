@@ -138,6 +138,9 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
 
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '/placeholder.svg';
+    if (imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) {
+      return imageUrl;
+    }
     if (imageUrl.startsWith('/api/')) {
       return `${BASE_URL}${imageUrl}`;
     }

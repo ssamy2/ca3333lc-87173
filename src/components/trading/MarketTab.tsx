@@ -73,6 +73,12 @@ export function MarketTab({ gifts, isLoading, isRTL, onBuy, isBuying }: MarketTa
   };
 
   const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '/placeholder.svg';
+    // CDN and full URLs - use directly
+    if (imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) {
+      return imageUrl;
+    }
+    // Backend API paths
     if (imageUrl.startsWith('/api/')) {
       return `https://channelsseller.site${imageUrl}`;
     }

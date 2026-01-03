@@ -42,6 +42,10 @@ export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuyS
   };
 
   const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '/placeholder.svg';
+    if (imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) {
+      return imageUrl;
+    }
     if (imageUrl.startsWith('/api/')) {
       return `https://channelsseller.site${imageUrl}`;
     }

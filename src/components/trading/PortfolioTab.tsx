@@ -34,35 +34,22 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
   };
 
   const getImageUrl = (imageUrl: string | undefined | null, modelImageUrl?: string | null) => {
-    // Priority 1: Use model_image_url if available (always use full CDN URLs directly)
+    // Priority 1: model_image_url (CDN URLs used directly)
     if (modelImageUrl) {
-      // If it's already a full URL (CDN), return it as-is
-      if (modelImageUrl.startsWith('http://') || modelImageUrl.startsWith('https://')) {
+      if (modelImageUrl.startsWith('https://') || modelImageUrl.startsWith('http://')) {
         return modelImageUrl;
       }
-      // If it's a backend proxy path, try to decode base64
-      if (modelImageUrl.startsWith('/api/image/')) {
-        const base64Part = modelImageUrl.replace('/api/image/', '').split('.')[0];
-        if (base64Part.startsWith('aHR0cHM6Ly9jZG4')) {
-          try {
-            const decoded = atob(base64Part);
-            if (decoded.startsWith('https://')) {
-              return decoded;
-            }
-          } catch (e) {
-            // Not valid base64, use backend proxy
-          }
-        }
-        return `https://channelsseller.site${modelImageUrl}`;
+    }
+    // Priority 2: general image_url
+    if (imageUrl) {
+      if (imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) {
+        return imageUrl;
+      }
+      if (imageUrl.startsWith('/api/')) {
+        return `https://channelsseller.site${imageUrl}`;
       }
     }
-    
-    // Priority 2: Use general image_url
-    if (imageUrl?.startsWith('/api/')) {
-      return `https://channelsseller.site${imageUrl}`;
-    }
-    
-    return imageUrl || '/placeholder.svg';
+    return '/placeholder.svg';
   };
 
   if (isLoading) {
