@@ -34,11 +34,27 @@ export function PortfolioTab({ portfolio, isLoading, isRTL, onSell, isSelling }:
   };
 
   const getImageUrl = (imageUrl: string | undefined | null, modelImageUrl?: string | null) => {
-    // If model_image_url is a full URL, use it directly
-    if (modelImageUrl && (modelImageUrl.startsWith('http://') || modelImageUrl.startsWith('https://'))) {
-      return modelImageUrl;
+    if (modelImageUrl) {
+      if (modelImageUrl.startsWith('https://cdn.swap.coffee') || modelImageUrl.startsWith('https://cdn.changes.tg')) {
+        return modelImageUrl;
+      }
+      if (modelImageUrl.startsWith('http://') || modelImageUrl.startsWith('https://')) {
+        return modelImageUrl;
+      }
+      if (modelImageUrl.startsWith('/api/image/')) {
+        const base64Part = modelImageUrl.replace('/api/image/', '').split('.')[0];
+        if (base64Part.startsWith('aHR0cHM6Ly9jZG4')) {
+          try {
+            const decoded = atob(base64Part);
+            if (decoded.startsWith('https://')) {
+              return decoded;
+            }
+          } catch (e) {
+            // Not valid base64
+          }
+        }
+      }
     }
-    // Otherwise fall back to image_url with server prefix if needed
     if (imageUrl?.startsWith('/api/')) {
       return `https://channelsseller.site${imageUrl}`;
     }
