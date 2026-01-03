@@ -83,8 +83,10 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
           market_data: rawData.info || {},
           chart_data: rawData.life_chart || rawData.week_chart || [],
         };
-        // Add models if available
-        if (rawData.info?.models) {
+        // Add models if available - models come at root level, not inside info
+        if (rawData.models && rawData.models.length > 0) {
+          transformedData.gift_info.models = rawData.models;
+        } else if (rawData.info?.models) {
           transformedData.gift_info.models = rawData.info.models;
         }
         setDetailData(transformedData);
