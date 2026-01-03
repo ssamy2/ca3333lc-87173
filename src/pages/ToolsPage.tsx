@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User } from 'lucide-react';
+import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User, Bell } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +39,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       marketStatsDesc: 'تتبع القيمة السوقية الإجمالية',
       analytics: 'تحليلات متقدمة',
       analyticsDesc: 'إحصائيات وتحليلات مفصلة',
+      priceAlerts: 'تنبيهات الأسعار',
+      priceAlertsDesc: 'تنبيهات فورية عند وصول الهدايا لسعر معين',
       tryNow: 'جرب الآن',
       comingSoon: 'قريباً'
     },
@@ -55,6 +57,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       marketStatsDesc: 'Track total market capitalization',
       analytics: 'Advanced Analytics',
       analyticsDesc: 'Detailed statistics and analytics',
+      priceAlerts: 'Price Alerts',
+      priceAlertsDesc: 'Instant notifications when gifts reach target price',
       tryNow: 'Try Now',
       comingSoon: 'Coming Soon'
     }
@@ -73,6 +77,16 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       available: true,
       route: null,
       action: onGoToHome
+    },
+    {
+      id: 'priceAlerts',
+      name: text.priceAlerts,
+      description: text.priceAlertsDesc,
+      icon: Bell,
+      iconBg: 'bg-yellow-500/20',
+      iconColor: 'text-yellow-400',
+      available: true,
+      route: '/price-alerts'
     },
     {
       id: 'portfolioTracker',

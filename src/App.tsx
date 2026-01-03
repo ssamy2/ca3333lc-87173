@@ -23,6 +23,8 @@ const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
+const ToolsPage = lazy(() => import("./pages/ToolsPage"));
+const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
 

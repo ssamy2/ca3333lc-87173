@@ -19,6 +19,81 @@ const getTimeoutSignal = (ms: number): AbortSignal => {
   return controller.signal
 }
 
+// --- Price Alerts API ---
+
+export interface PriceAlert {
+  alert_id: number;
+  user_id: string;
+  gift_name: string;
+  target_price_ton: number;
+  condition: 'ABOVE' | 'BELOW';
+  status: 'ACTIVE' | 'TRIGGERED';
+  created_at: number;
+  current_price_ton?: number;
+}
+
+export const createPriceAlert = async (giftName: string, targetPrice: number, condition: 'ABOVE' | 'BELOW') => {
+  const apiUrl = buildApiUrl('/api/alerts/create');
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders
+    },
+    body: JSON.stringify({
+      gift_name: giftName,
+      target_price_ton: targetPrice,
+      condition: condition
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to create alert');
+  }
+
+  return await response.json();
+};
+
+export const getUserPriceAlerts = async (): Promise<PriceAlert[]> => {
+  const apiUrl = buildApiUrl('/api/alerts/user');
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      ...authHeaders
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch alerts');
+  }
+
+  const data = await response.json();
+  return data.alerts || [];
+};
+
+export const deletePriceAlert = async (alertId: number) => {
+  const apiUrl = buildApiUrl(`/api/alerts/${alertId}`);
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(apiUrl, {
+    method: 'DELETE',
+    headers: {
+      ...authHeaders
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete alert');
+  }
+
+  return await response.json();
+};
+
 export const fetchNFTGifts = async (username: string) => {
   const cleanUsername = username.startsWith('@') ? username : `@${username}`
   const apiUrl = buildApiUrl(`/api/user/${encodeURIComponent(cleanUsername)}/nfts`)
