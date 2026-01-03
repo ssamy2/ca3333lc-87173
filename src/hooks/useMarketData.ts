@@ -55,8 +55,14 @@ const fetchMarketData = async (): Promise<MarketData> => {
   if (rawData.upgraded && typeof rawData.upgraded === 'object') {
     // Process upgraded gifts
     Object.entries(rawData.upgraded).forEach(([key, value]: [string, any]) => {
+      // Read change percentages from API - handle both naming conventions
+      const change24hTon = value['change_24h_ton_%'] ?? value.change_24h_ton_percent ?? 0;
+      const change24hUsd = value['change_24h_usd_%'] ?? value.change_24h_usd_percent ?? 0;
+      
       data[key] = {
         ...value,
+        'change_24h_ton_%': change24hTon,
+        'change_24h_usd_%': change24hUsd,
         image_url: normalizeImageUrl(value.image_url),
         is_upgraded: true
       };
