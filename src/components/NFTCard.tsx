@@ -1,6 +1,15 @@
+/**
+ * ============================================================================
+ * NOVA NFT CARD - Premium Gift Display Component
+ * Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
+ * ============================================================================
+ */
+
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
 import TonIcon from './TonIcon';
+import { cn } from '@/lib/utils';
+import { imageCache } from '@/services/imageCache';
 
 interface NFTGift {
   count: number;
@@ -40,6 +49,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   const [imageError, setImageError] = React.useState(false);
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
+  const [cachedImage, setCachedImage] = React.useState<string | null>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const imageRef = React.useRef<HTMLImageElement | null>(null);
@@ -208,18 +218,38 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
   return (
     <div 
       ref={cardRef}
-      className="group relative flex flex-col bg-gradient-to-br from-[#0f1419] to-[#1a1f2e] rounded-xl border border-white/5 hover:border-white/10 overflow-hidden cursor-pointer transition-colors duration-200 w-full h-full"
+      className={cn(
+        "group relative flex flex-col overflow-hidden cursor-pointer w-full h-full",
+        "bg-card/80 dark:bg-card/60 backdrop-blur-xl",
+        "rounded-2xl border border-border/30 dark:border-border/20",
+        "shadow-lg shadow-black/5 dark:shadow-black/30",
+        "hover:shadow-xl hover:shadow-primary/10 dark:hover:shadow-primary/20",
+        "hover:border-primary/30 dark:hover:border-primary/40",
+        "transition-all duration-300 ease-out",
+        "hover:-translate-y-1"
+      )}
       onClick={handleCardClick}
     >
+      {/* Glassmorphism overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent dark:from-white/[0.02] pointer-events-none" />
+      
       {/* Quantity Badge */}
       {nft.count > 1 && (
-        <div className="absolute top-2 right-2 bg-gradient-to-br from-[#0098EA] to-[#0077BA] text-white text-xs font-bold rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center z-20 shadow-lg border border-white/10 animate-bounce-in">
+        <div className={cn(
+          "absolute top-2 right-2 z-20",
+          "bg-gradient-to-br from-primary to-accent",
+          "text-primary-foreground text-xs font-bold",
+          "rounded-full min-w-[26px] h-[26px] px-2",
+          "flex items-center justify-center",
+          "shadow-lg shadow-primary/30 border border-white/20",
+          "animate-bounce-in"
+        )}>
           {nft.count}
         </div>
       )}
 
       {/* NFT Image - Square 1:1 with backdrop */}
-      <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-[#0098EA]/5 to-[#8B5CF6]/5">
+      <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
         {isVisible && nft.image && !imageError ? (
           <>
             <canvas
@@ -227,58 +257,61 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
               className="w-full h-full object-contain"
             />
             {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0098EA]/10 to-[#8B5CF6]/10 flex items-center justify-center">
-                <div className="animate-spin w-6 h-6 border-2 border-[#0098EA]/20 border-t-[#0098EA] rounded-full"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
               </div>
             )}
           </>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 bg-[#0098EA]/10 rounded-full flex items-center justify-center mb-1">
-              <TonIcon className="w-5 h-5 text-[#0098EA]" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+              <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-xs text-gray-400 font-medium">NFT Gift</p>
+            <p className="text-xs text-muted-foreground font-medium">NFT Gift</p>
           </div>
         )}
+        
+        {/* Image overlay gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card/80 to-transparent pointer-events-none" />
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col p-3 gap-2 flex-1 overflow-hidden">
+      <div className="relative flex flex-col p-3 gap-2 flex-1 overflow-hidden">
         {/* Title with ID */}
-        <h3 
-          className="font-bold leading-tight text-white group-hover:text-[#0098EA] transition-colors"
-          style={{ fontSize: 'clamp(9px, 2.5vw, 14px)' }}
-        >
-          {nft.title || nft.name} <span className="text-gray-400 font-normal">{nft.quantity_raw}</span>
+        <h3 className="font-bold leading-tight text-foreground group-hover:text-primary transition-colors duration-200 text-[clamp(10px,2.5vw,14px)]">
+          {nft.title || nft.name}
+          {nft.quantity_raw && (
+            <span className="text-muted-foreground font-normal ml-1">{nft.quantity_raw}</span>
+          )}
         </h3>
         
         {/* Model and Rarity */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-gray-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Model:</span>
-            <span className="font-semibold text-white" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.model}</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-muted-foreground font-medium text-[clamp(8px,1.8vw,11px)]">Model:</span>
+            <span className="font-semibold text-foreground text-[clamp(8px,1.8vw,11px)]">{nft.model}</span>
             {nft.model_rarity && (
-              <span className="text-purple-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(6px, 1.5vw, 10px)' }}>
-                ({nft.model_rarity})
+              <span className="text-purple-400 dark:text-purple-300 font-medium bg-purple-500/10 px-1.5 py-0.5 rounded-md text-[clamp(7px,1.5vw,10px)]">
+                {nft.model_rarity}
               </span>
             )}
           </div>
           
           {/* Backdrop */}
           {nft.backdrop && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-gray-400 font-medium flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>BG:</span>
-              <span className="font-semibold text-amber-300" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.backdrop}</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-muted-foreground font-medium text-[clamp(8px,1.8vw,11px)]">BG:</span>
+              <span className="font-semibold text-amber-500 dark:text-amber-400 text-[clamp(8px,1.8vw,11px)]">{nft.backdrop}</span>
             </div>
           )}
           
           {/* Symbol */}
           {nft.symbol && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-gray-400 flex-shrink-0" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Symbol:</span>
-              <span className="font-semibold text-[#0098EA]" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>{nft.symbol}</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-muted-foreground text-[clamp(8px,1.8vw,11px)]">Symbol:</span>
+              <span className="font-semibold text-primary text-[clamp(8px,1.8vw,11px)]">{nft.symbol}</span>
               {nft.symbol_rarity && (
-                <span className="text-cyan-400 bg-cyan-500/10 px-1 py-0.5 rounded border border-cyan-500/20 flex-shrink-0" style={{ fontSize: 'clamp(6px, 1.5vw, 9px)' }}>
+                <span className="text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-md border border-cyan-500/20 text-[clamp(7px,1.5vw,9px)]">
                   {nft.symbol_rarity}
                 </span>
               )}
@@ -287,29 +320,38 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
         </div>
 
         {/* Floor Price Section */}
-        <div className="flex items-center justify-between pt-1 border-t border-white/5">
-          <span className="text-gray-400 font-medium" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Floor Price</span>
-          <div className="flex items-center gap-0.5 bg-black/30 px-2 py-1 rounded-md border border-white/10">
+        <div className="flex items-center justify-between pt-2 mt-auto border-t border-border/30">
+          <span className="text-muted-foreground font-medium text-[clamp(8px,1.8vw,11px)]">Floor</span>
+          <div className={cn(
+            "flex items-center gap-1 px-2.5 py-1.5 rounded-lg",
+            "bg-primary/10 dark:bg-primary/20",
+            "border border-primary/20"
+          )}>
             {nft.floor_price === 0 ? (
-              <span className="font-bold text-yellow-400" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
+              <span className="font-bold text-warning text-[clamp(8px,1.8vw,11px)]">
                 Presale
               </span>
             ) : (
               <>
-                <span className="font-bold text-white" style={{ fontSize: 'clamp(8px, 2.2vw, 14px)' }}>{formatTON(nft.floor_price)}</span>
-                <TonIcon className="text-[#0098EA] flex-shrink-0" style={{ width: 'clamp(8px, 1.8vw, 11px)', height: 'clamp(8px, 1.8vw, 11px)' }} />
+                <span className="font-bold text-foreground font-mono text-[clamp(9px,2.2vw,14px)]">
+                  {formatTON(nft.floor_price)}
+                </span>
+                <TonIcon className="text-primary w-3.5 h-3.5 flex-shrink-0" />
               </>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* View in Store - Very Small Footer */}
+      {/* View in Store Footer */}
       {(nft.tg_deeplink || (nft.details && nft.details.links && nft.details.links.length > 0)) && (
-        <div className="flex items-center justify-center py-1 px-2 border-t border-white/5 bg-black/20">
-          <div className="flex items-center gap-0.5 text-gray-500 group-hover:text-[#0098EA] transition-colors" style={{ fontSize: 'clamp(6px, 1.5vw, 9px)' }}>
-            <ExternalLink style={{ width: 'clamp(8px, 1.5vw, 11px)', height: 'clamp(8px, 1.5vw, 11px)' }} />
+        <div className={cn(
+          "flex items-center justify-center py-2 px-3",
+          "border-t border-border/20",
+          "bg-muted/30 dark:bg-muted/10"
+        )}>
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors text-[clamp(7px,1.5vw,10px)]">
+            <ExternalLink className="w-3 h-3" />
             <span className="font-medium">View in Store</span>
           </div>
         </div>

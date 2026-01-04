@@ -2,138 +2,224 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================================================
+   NOVA DESIGN SYSTEM 2026 - Premium Visual Identity
+   Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
+   ============================================================================ */
 
 @layer base {
+  /* ========== ARCTIC LIGHT THEME ========== */
   :root {
-    /* Light theme - Vibrant Colors */
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Colors - Pure white base with soft slate accents */
+    --background: 220 20% 98%;
+    --foreground: 222 47% 11%;
     
-    /* Black Gifts Theme - Fixed colors that won't change with theme */
-    --black-bg: 218 7% 4%;           /* #0B0B0D */
-    --black-pattern: 217 6% 7%;      /* #111214 */
-    --black-gold: 41 46% 54%;        /* #C9A14B */
-    --black-copper: 25 60% 46%;      /* #B87333 */
-    --black-purple: 257 69% 52%;     /* #5B2EDD */
+    /* Card System */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 210 100% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --secondary-transparent: 220 15% 93%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 158 64% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 210 100% 58%;
-    --ton-blue: 205 100% 60%;
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-
-    /* Enhanced Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210, 100%, 58%) 0%, hsl(158, 64%, 52%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(240, 5%, 96%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(210, 100%, 58%) 0%, hsl(180, 70%, 50%) 35%, hsl(158, 64%, 52%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 99%) 50%, hsl(0, 0%, 100%) 100%);
-    --gradient-background: linear-gradient(180deg, hsl(210, 40%, 98%) 0%, hsl(210, 30%, 96%) 50%, hsl(210, 35%, 97%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(158, 64%, 52%) 0%, hsl(158, 80%, 45%) 100%);
+    --card-foreground: 222 47% 11%;
+    --card-elevated: 220 20% 99%;
     
-    /* Glassy Button Gradients */
-    --gradient-glass-blue: linear-gradient(135deg, hsl(210, 100%, 62%) 0%, hsl(210, 100%, 52%) 100%);
-    --gradient-glass-dark: linear-gradient(135deg, hsl(220, 15%, 18%) 0%, hsl(220, 15%, 14%) 100%);
-    --gradient-glass-darker: linear-gradient(135deg, hsl(220, 15%, 14%) 0%, hsl(220, 15%, 10%) 100%);
-
-    /* Enhanced Shadows */
-    --shadow-soft: 0 2px 10px hsl(210 100% 58% / 0.08);
-    --shadow-medium: 0 4px 20px hsl(210 100% 58% / 0.12);
-    --shadow-large: 0 8px 40px hsl(210 100% 58% / 0.16);
-    --shadow-primary: 0 8px 24px hsl(210 100% 58% / 0.35);
-    --shadow-card: 0 4px 24px -4px hsl(210 100% 58% / 0.18);
-    --shadow-floating: 0 12px 40px -8px hsl(210 100% 58% / 0.3);
-    --shadow-glow: 0 0 40px hsl(210 100% 58% / 0.4);
-
-    /* Smooth Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    --transition-spring: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    /* Nova Theme - Dark Blue/Slate */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    /* Popover & Overlays */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary - Electric Blue */
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --secondary-transparent: 217 30% 15%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 91% 60%;
+    --primary-hover: 217 91% 55%;
+    
+    /* Secondary */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --secondary-transparent: 220 15% 93%;
+    
+    /* Muted */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    
+    /* Accent - Emerald */
+    --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 45%;
+    
+    /* Semantic Colors */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 20%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-    --ton-blue: 217 91% 60%;
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
-
-    /* Nova Theme Gradients - Dark Blue */
-    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 50%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(217, 33%, 17%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 55%) 50%, hsl(217, 91%, 50%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 13%) 50%, hsl(222, 47%, 11%) 100%);
-    --gradient-background: linear-gradient(180deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 10%) 50%, hsl(222, 47%, 9%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 55%) 100%);
+    --info: 217 91% 60%;
     
-    /* Nova Glassy Button Gradients */
-    --gradient-glass-blue: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 50%) 100%);
-    --gradient-glass-dark: linear-gradient(135deg, hsl(222, 47%, 15%) 0%, hsl(222, 47%, 11%) 100%);
-    --gradient-glass-darker: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 8%) 100%);
+    /* Borders & Input */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+    
+    /* Brand Colors */
+    --ton-blue: 217 91% 60%;
+    --nova-gradient-start: 217 91% 60%;
+    --nova-gradient-end: 160 84% 39%;
+    
+    /* Black Gifts Theme - Fixed */
+    --black-bg: 0 0% 0%;
+    --black-pattern: 0 0% 5%;
+    --black-gold: 41 46% 54%;
+    --black-copper: 25 60% 46%;
+    --black-purple: 257 69% 52%;
 
-    --shadow-soft: 0 2px 10px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 4px 20px hsl(0 0% 0% / 0.4);
-    --shadow-large: 0 8px 40px hsl(0 0% 0% / 0.5);
-    --shadow-primary: 0 8px 24px hsl(210 100% 58% / 0.4);
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.3);
-    --shadow-floating: 0 12px 40px -8px hsl(0 0% 0% / 0.45);
-    --shadow-glow: 0 0 40px hsl(210 100% 58% / 0.3);
+    /* Premium Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(160, 84%, 39%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(220, 20%, 98%) 0%, hsl(220, 14%, 96%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(190, 90%, 50%) 50%, hsl(160, 84%, 39%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(220, 20%, 99%) 100%);
+    --gradient-background: linear-gradient(180deg, hsl(220, 20%, 98%) 0%, hsl(220, 14%, 96%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(160, 90%, 35%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+    --gradient-sidebar: linear-gradient(180deg, hsl(220, 20%, 98%) 0%, hsl(220, 14%, 96%) 100%);
+    
+    /* Chart Colors - Vibrant for Light Mode */
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 87% 65%;
+    --chart-5: 0 84% 60%;
+    --chart-6: 190 90% 50%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Premium Shadows - Soft Slate */
+    --shadow-xs: 0 1px 2px hsl(220 14% 10% / 0.05);
+    --shadow-sm: 0 2px 8px hsl(220 14% 10% / 0.08);
+    --shadow-md: 0 4px 16px hsl(220 14% 10% / 0.1);
+    --shadow-lg: 0 8px 32px hsl(220 14% 10% / 0.12);
+    --shadow-xl: 0 16px 48px hsl(220 14% 10% / 0.15);
+    --shadow-primary: 0 8px 24px hsl(217 91% 60% / 0.3);
+    --shadow-card: 0 2px 12px hsl(220 14% 10% / 0.08);
+    --shadow-floating: 0 12px 40px hsl(220 14% 10% / 0.15);
+    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.25);
+    --shadow-inner: inset 0 2px 4px hsl(220 14% 10% / 0.05);
+
+    /* Glass Effects */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-blur: 20px;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+
+    /* Sidebar */
+    --sidebar-width: 280px;
+    --sidebar-width-collapsed: 72px;
+    --sidebar-background: 220 20% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  /* ========== OBSIDIAN DARK THEME ========== */
+  .dark {
+    /* Core Colors - Deep black with high contrast */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    
+    /* Card System - Elevated surfaces */
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
+    --card-elevated: 0 0% 6%;
+    
+    /* Popover & Overlays */
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Primary - Electric Cyan-Blue */
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 0%;
+    --primary-hover: 199 89% 55%;
+    
+    /* Secondary */
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-transparent: 0 0% 7%;
+    
+    /* Muted */
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 64%;
+    
+    /* Accent - Neon Emerald */
+    --accent: 160 84% 45%;
+    --accent-foreground: 0 0% 0%;
+    
+    /* Semantic Colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 84% 45%;
+    --warning: 45 93% 47%;
+    --info: 199 89% 48%;
+    
+    /* Borders & Input */
+    --border: 0 0% 14%;
+    --input: 0 0% 9%;
+    --ring: 199 89% 48%;
+    
+    /* Brand Colors */
+    --ton-blue: 199 89% 48%;
+    --nova-gradient-start: 199 89% 48%;
+    --nova-gradient-end: 160 84% 45%;
+
+    /* Premium Gradients - Glassmorphism */
+    --gradient-primary: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(160, 84%, 45%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(0, 0%, 6%) 0%, hsl(0, 0%, 9%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(180, 85%, 45%) 50%, hsl(160, 84%, 45%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 5%) 0%, hsl(0, 0%, 7%) 100%);
+    --gradient-background: linear-gradient(180deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 2%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(160, 84%, 45%) 0%, hsl(160, 90%, 40%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    --gradient-sidebar: linear-gradient(180deg, hsl(0, 0%, 2%) 0%, hsl(0, 0%, 4%) 100%);
+    
+    /* Chart Colors - High Contrast Neon */
+    --chart-1: 199 89% 48%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 280 100% 70%;
+    --chart-5: 0 72% 51%;
+    --chart-6: 190 95% 55%;
+
+    /* Premium Shadows - Deep blacks with glow */
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.5);
+    --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.6);
+    --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.7);
+    --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.8);
+    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.9);
+    --shadow-primary: 0 8px 32px hsl(199 89% 48% / 0.4);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-floating: 0 12px 40px hsl(0 0% 0% / 0.7);
+    --shadow-glow: 0 0 60px hsl(199 89% 48% / 0.3);
+    --shadow-inner: inset 0 2px 4px hsl(0 0% 0% / 0.3);
+
+    /* Glass Effects - Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 24px;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 2%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 199 89% 48%;
   }
 }
 
@@ -149,11 +235,34 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     background: var(--gradient-background);
     min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-feature-settings: 'ss01' on, 'ss02' on, 'cv01' on;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Arabic text styling */
+  [lang="ar"], 
+  [dir="rtl"],
+  .font-arabic {
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* Monospace for numbers and code */
+  .font-mono,
+  .tabular-nums {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fluid Typography */
+  h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: -0.025em; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  h3 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; letter-spacing: -0.015em; }
+  h4 { font-size: clamp(1.1rem, 2vw, 1.25rem); font-weight: 500; }
 }
 
 @layer components {

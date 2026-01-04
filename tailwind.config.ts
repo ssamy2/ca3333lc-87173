@@ -19,7 +19,10 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				inter: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
+				sans: ['Space Grotesk', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+				arabic: ['IBM Plex Sans Arabic', 'Segoe UI', 'system-ui', 'sans-serif'],
+				mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
+				display: ['Space Grotesk', 'system-ui', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

@@ -1,6 +1,13 @@
+/**
+ * ============================================================================
+ * NOVA CHART PAGE - Premium Market Overview
+ * Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
+ * ============================================================================
+ */
+
 // @ts-nocheck
 import React, { useState, useMemo } from 'react';
-import { Loader2, LayoutGrid, List, TrendingUp, TrendingDown } from 'lucide-react';
+import { Loader2, LayoutGrid, List, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import TonIcon from '@/components/TonIcon';
 import GiftCard from '@/components/GiftCard';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -8,6 +15,7 @@ import { useBlackFloorData } from '@/hooks/useBlackFloorData';
 import MarketTable from '@/components/MarketTable';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
+import { cn } from '@/lib/utils';
 
 type ViewMode = 'grid' | 'list';
 type Currency = 'ton' | 'usd';
@@ -132,38 +140,54 @@ const Chart = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-pulse">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <div className="absolute inset-0 rounded-2xl bg-primary/20 animate-ping" />
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground font-medium">Loading market data...</p>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen pb-24 ${dataSource === 'black' ? 'bg-[#0B0B0D]' : 'bg-[#0f1729]'}`}>
+    <div className={cn(
+      "min-h-screen pb-24 transition-colors duration-300",
+      dataSource === 'black' ? 'bg-[hsl(var(--black-bg))]' : 'bg-background'
+    )}>
       {/* Header Controls */}
-      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
+      <div className={cn(
+        "sticky top-0 z-40 backdrop-blur-xl border-b",
+        dataSource === 'black' 
+          ? 'bg-[hsl(var(--black-bg))]/90 border-white/5' 
+          : 'bg-background/80 border-border/30'
+      )}>
         <div className="p-4 space-y-3">
           {/* View Mode & Sort */}
           <div className="flex items-center justify-between gap-3">
             {/* View Mode Toggle */}
-            <div className="flex bg-slate-800/50 rounded-xl p-1 border border-slate-700/30">
+            <div className="flex bg-secondary/50 rounded-xl p-1 border border-border/30">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${
+                className={cn(
+                  "p-2.5 rounded-lg transition-all duration-200",
                   viewMode === 'list'
-                    ? 'bg-amber-500 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                    ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
                 <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${
+                className={cn(
+                  "p-2.5 rounded-lg transition-all duration-200",
                   viewMode === 'grid'
-                    ? 'bg-amber-500 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                    ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -173,22 +197,24 @@ const Chart = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
                   sortMode === 'priceUp'
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-green-400 border border-slate-700/30'
-                }`}
+                    ? 'bg-success/20 text-success border border-success/30 shadow-lg shadow-success/10'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-success border border-border/30'
+                )}
               >
                 <TrendingUp className="w-3.5 h-3.5" />
                 {t('priceUp')}
               </button>
               <button
                 onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
                   sortMode === 'priceDown'
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-red-400 border border-slate-700/30'
-                }`}
+                    ? 'bg-destructive/20 text-destructive border border-destructive/30 shadow-lg shadow-destructive/10'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-destructive border border-border/30'
+                )}
               >
                 <TrendingDown className="w-3.5 h-3.5" />
                 {t('priceDown')}
@@ -200,31 +226,34 @@ const Chart = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setDataSource('market')}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
                 dataSource === 'market'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
-              }`}
+                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
+              )}
             >
-              {language === 'ar' ? 'الكل' : 'All'}
+              {language === 'ar' ? 'الكل' : 'All Gifts'}
             </button>
             <button
               onClick={() => setDataSource('black')}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
                 dataSource === 'black'
-                  ? 'bg-slate-700 text-white'
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
-              }`}
+                  ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 text-white border border-white/10 shadow-lg'
+                  : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
+              )}
             >
-              {language === 'ar' ? 'السوق السوداء' : 'BG: Black'}
+              {language === 'ar' ? 'خلفية سوداء' : 'BG: Black'}
             </button>
             <button
               onClick={() => setDataSource('regular')}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
                 dataSource === 'regular'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-slate-800/50 text-amber-400/60 hover:text-amber-400 border border-white/10'
-              }`}
+                  ? 'bg-gradient-to-r from-warning to-warning/80 text-white shadow-lg shadow-warning/20'
+                  : 'bg-secondary/50 text-warning/60 hover:text-warning border border-border/30'
+              )}
             >
               {language === 'ar' ? 'غير مطور' : 'Regular'}
             </button>
@@ -235,22 +264,24 @@ const Chart = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrency('ton')}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                className={cn(
+                  "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2",
                   currency === 'ton'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
-                }`}
+                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
+                )}
               >
                 <TonIcon className="w-4 h-4" />
                 TON
               </button>
               <button
                 onClick={() => setCurrency('usd')}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={cn(
+                  "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
                   currency === 'usd'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/30'
-                }`}
+                    ? 'bg-gradient-to-r from-success to-success/80 text-white shadow-lg shadow-success/20'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
+                )}
               >
                 $ USD
               </button>
@@ -262,7 +293,7 @@ const Chart = () => {
       {/* Content */}
       <div className="p-4">
         {viewMode === 'grid' && (
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
             {filteredData.map(([name, data]) => {
               const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
               const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
