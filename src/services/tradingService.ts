@@ -91,6 +91,7 @@ export interface LeaderboardData {
   top_losers: LeaderboardUser[];
   total_users: number;
   updated_at: string;
+  all_users_ranked?: LeaderboardUser[];
 }
 
 export interface TradingStats {

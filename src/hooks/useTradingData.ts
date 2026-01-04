@@ -10,39 +10,44 @@ import {
 } from '@/services/tradingService';
 
 // Hook for fetching trading gifts (market data)
-export function useTradingGifts() {
+export function useTradingGifts(enabled: boolean = true) {
   return useQuery({
     queryKey: ['trading-gifts'],
     queryFn: fetchTradingGifts,
-    staleTime: 30000,
-    refetchInterval: 60000,
-    retry: 2,
-    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: false, // Disable auto-refetch
+    retry: 1,
+    retryDelay: 500,
+    enabled,
   });
 }
 
 // Hook for fetching user portfolio
-export function usePortfolio() {
+export function usePortfolio(enabled: boolean = true) {
   return useQuery({
     queryKey: ['trading-portfolio'],
     queryFn: fetchPortfolio,
-    staleTime: 10000,
-    refetchInterval: 60000,
-    retry: 2,
-    retryDelay: 1000,
-    enabled: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: false, // Disable auto-refetch
+    retry: 1,
+    retryDelay: 500,
+    enabled,
   });
 }
 
 // Hook for fetching leaderboard
-export function useLeaderboard() {
+export function useLeaderboard(enabled: boolean = true) {
   return useQuery({
     queryKey: ['trading-leaderboard'],
     queryFn: fetchLeaderboard,
-    staleTime: 30000,
-    refetchInterval: 60000,
-    retry: 2,
-    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: false, // Disable auto-refetch
+    retry: 1,
+    retryDelay: 500,
+    enabled,
   });
 }
 

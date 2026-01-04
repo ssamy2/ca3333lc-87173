@@ -24,17 +24,27 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
   
   const currentUserId = getCurrentUserId();
   
-  // Find current user's rank in the leaderboard
+  // Find current user's rank in the leaderboard (from all users)
   const findUserRank = () => {
     if (!currentUserId || !leaderboard) return null;
     
-    // Check in winners
+    // Check in all_users_ranked first (most accurate)
+    if (leaderboard.all_users_ranked) {
+      const userRank = leaderboard.all_users_ranked.find(u => u.user_id === currentUserId);
+      if (userRank) {
+        return { 
+          ...userRank, 
+          isWinner: userRank.return_percent > 0 
+        };
+      }
+    }
+    
+    // Fallback to checking in winners/losers
     const winnerIndex = leaderboard.top_winners?.findIndex(u => u.user_id === currentUserId);
     if (winnerIndex !== undefined && winnerIndex >= 0) {
       return { ...leaderboard.top_winners[winnerIndex], isWinner: true };
     }
     
-    // Check in losers
     const loserIndex = leaderboard.top_losers?.findIndex(u => u.user_id === currentUserId);
     if (loserIndex !== undefined && loserIndex >= 0) {
       return { ...leaderboard.top_losers[loserIndex], isWinner: false };
