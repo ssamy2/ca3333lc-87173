@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Plus, Trash2, Target, TrendingUp, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Bell, Plus, Trash2, Target, TrendingUp, Loader2, AlertCircle, ChevronDown, Gift } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { createPriceAlert, getUserPriceAlerts, deletePriceAlert, PriceAlert } from '@/services/apiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAuthHeaders } from '@/lib/telegramAuth';
+import { DEV_MODE } from '@/config/devMode';
+import GiftImage from '@/components/GiftImage';
+import { imageCache } from '@/services/imageCache';
 
 interface GiftModel {
   name: string;
@@ -22,6 +25,8 @@ interface GiftData {
   priceTon: number;
   priceUsd: number;
   models: GiftModel[];
+  image?: string;
+  image_url?: string;
 }
 
 const PriceAlertsPage = () => {
@@ -53,7 +58,8 @@ const PriceAlertsPage = () => {
     try {
       setLoadingGifts(true);
       const authHeaders = await getAuthHeaders();
-      const response = await fetch('https://www.channelsseller.site/api/market-data', {
+      const baseUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site';
+      const response = await fetch(`${baseUrl}/api/market-data`, {
         headers: {
           'Accept': 'application/json',
           ...authHeaders
@@ -75,6 +81,11 @@ const PriceAlertsPage = () => {
       setGifts(giftsArray);
     } catch (error) {
       console.error('Failed to load gifts:', error);
+      toast({
+        title: isRTL ? 'تحذير' : 'Warning',
+        description: isRTL ? 'فشل تحميل الهدايا - سيتم استخدام القائمة الفارغة' : 'Failed to load gifts - using empty list',
+        variant: 'default',
+      });
     } finally {
       setLoadingGifts(false);
     }
@@ -84,14 +95,14 @@ const PriceAlertsPage = () => {
     try {
       setIsLoading(true);
       const data = await getUserPriceAlerts();
-      setAlerts(data);
+      if (Array.isArray(data)) {
+        setAlerts(data);
+      } else {
+        setAlerts([]);
+      }
     } catch (error) {
       console.error('Failed to load alerts:', error);
-      toast({
-        title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل تحميل التنبيهات' : 'Failed to load alerts',
-        variant: 'destructive',
-      });
+      setAlerts([]);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +133,7 @@ const PriceAlertsPage = () => {
 
     try {
       setIsCreating(true);
-      await createPriceAlert(
+      const result = await createPriceAlert(
         selectedGift,
         parseFloat(targetPrice),
         alertType,
@@ -130,21 +141,26 @@ const PriceAlertsPage = () => {
         percentageChange ? parseFloat(percentageChange) : null
       );
       
-      toast({
-        title: isRTL ? 'تم بنجاح' : 'Success',
-        description: isRTL ? 'تم إنشاء التنبيه بنجاح' : 'Price alert created successfully',
-      });
+      if (result && result.success) {
+        toast({
+          title: isRTL ? 'تم بنجاح' : 'Success',
+          description: isRTL ? 'تم إنشاء التنبيه بنجاح' : 'Price alert created successfully',
+        });
 
-      // Reset form and reload
-      setSelectedGift('');
-      setSelectedModel('');
-      setTargetPrice('');
-      setPercentageChange('');
-      loadAlerts();
-    } catch (error) {
+        // Reset form and reload
+        setSelectedGift('');
+        setSelectedModel('');
+        setTargetPrice('');
+        setPercentageChange('');
+        loadAlerts();
+      } else {
+        throw new Error('Invalid response');
+      }
+    } catch (error: any) {
+      console.error('Error creating alert:', error);
       toast({
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل إنشاء التنبيه' : 'Failed to create alert',
+        description: error?.message || (isRTL ? 'فشل إنشاء التنبيه' : 'Failed to create alert'),
         variant: 'destructive',
       });
     } finally {
@@ -358,54 +374,63 @@ const PriceAlertsPage = () => {
             </div>
           ) : (
             <div className="grid gap-3">
-              {alerts.map((alert) => (
-                <div
-                  key={alert.alert_id}
-                  className="group flex items-center justify-between p-4 bg-card/40 border border-border/50 rounded-xl hover:border-primary/30 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      alert.alert_type === 'PRICE_TARGET' 
-                        ? 'bg-blue-500/10 text-blue-500' 
-                        : 'bg-purple-500/10 text-purple-500'
-                    }`}>
-                      {alert.alert_type === 'PRICE_TARGET' ? (
-                        <Target className="w-5 h-5" />
-                      ) : (
-                        <TrendingUp className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">
-                        {alert.gift_name}
-                        {alert.model_name && <span className="text-xs text-muted-foreground ml-1">({alert.model_name})</span>}
-                      </h4>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        {alert.alert_type === 'PRICE_TARGET' ? (
-                          <>
-                            {isRTL ? 'الهدف:' : 'Target:'} 
-                            <span className="text-foreground font-medium">{alert.target_price_ton.toFixed(4)} TON</span>
-                          </>
-                        ) : (
-                          <>
-                            {isRTL ? 'مراقبة:' : 'Monitoring:'} 
-                            <span className="text-foreground font-medium">±{alert.percentage_change}%</span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteAlert(alert.alert_id)}
-                    className="opacity-50 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10"
+              {alerts.map((alert) => {
+                const giftData = gifts.find(g => g.name === alert.gift_name);
+                const imageUrl = giftData?.image_url || giftData?.image;
+                
+                return (
+                  <div
+                    key={alert.alert_id}
+                    className="group flex items-center justify-between p-4 bg-card/40 border border-border/50 rounded-xl hover:border-primary/30 transition-all"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Gift Image */}
+                      {imageUrl ? (
+                        <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50">
+                          <GiftImage
+                            imageUrl={imageUrl}
+                            name={alert.gift_name}
+                            shortName={alert.gift_name}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 flex-shrink-0 rounded-lg bg-muted/50 flex items-center justify-center">
+                          <Gift className="w-6 h-6 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold truncate">
+                          {alert.gift_name}
+                          {alert.model_name && <span className="text-xs text-muted-foreground ml-1">({alert.model_name})</span>}
+                        </h4>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          {alert.alert_type === 'PRICE_TARGET' ? (
+                            <>
+                              {isRTL ? 'الهدف:' : 'Target:'} 
+                              <span className="text-foreground font-medium">{alert.target_price_ton.toFixed(4)} TON</span>
+                            </>
+                          ) : (
+                            <>
+                              {isRTL ? 'مراقبة:' : 'Monitoring:'} 
+                              <span className="text-foreground font-medium">±{alert.percentage_change}%</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteAlert(alert.alert_id)}
+                      className="opacity-50 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
