@@ -13,6 +13,37 @@ interface LeaderboardTabProps {
 export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTabProps) {
   const [viewMode, setViewMode] = useState<'winners' | 'losers'>('winners');
   const [sortBy, setSortBy] = useState<'percent' | 'ton'>('percent');
+  
+  // Get current user's rank from Telegram WebApp
+  const getCurrentUserId = () => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      return window.Telegram.WebApp.initDataUnsafe.user.id;
+    }
+    return null;
+  };
+  
+  const currentUserId = getCurrentUserId();
+  
+  // Find current user's rank in the leaderboard
+  const findUserRank = () => {
+    if (!currentUserId || !leaderboard) return null;
+    
+    // Check in winners
+    const winnerIndex = leaderboard.top_winners?.findIndex(u => u.user_id === currentUserId);
+    if (winnerIndex !== undefined && winnerIndex >= 0) {
+      return { ...leaderboard.top_winners[winnerIndex], isWinner: true };
+    }
+    
+    // Check in losers
+    const loserIndex = leaderboard.top_losers?.findIndex(u => u.user_id === currentUserId);
+    if (loserIndex !== undefined && loserIndex >= 0) {
+      return { ...leaderboard.top_losers[loserIndex], isWinner: false };
+    }
+    
+    return null;
+  };
+  
+  const currentUserRank = findUserRank();
 
   const formatPercent = (num: number | undefined | null) => {
     const value = num ?? 0;
@@ -221,6 +252,48 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
           </button>
         </div>
       </div>
+
+      {/* Current User Rank Box - Only show in Leaderboard tab */}
+      {currentUserRank && (
+        <div className={cn(
+          "glass-effect rounded-xl p-4 border-2 border-primary/50 bg-primary/5",
+          "animate-in fade-in slide-in-from-bottom-2 duration-300"
+        )}>
+          <div className={cn(
+            "flex items-center justify-between",
+            isRTL && "flex-row-reverse"
+          )}>
+            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+              <Trophy className="w-5 h-5 text-primary" />
+              <div className={cn(isRTL && "text-right")}>
+                <p className="text-sm font-semibold text-foreground">
+                  {isRTL ? 'ترتيبك' : 'Your Rank'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isRTL ? `#${currentUserRank.rank} من ${leaderboard.total_users}` : `#${currentUserRank.rank} of ${leaderboard.total_users}`}
+                </p>
+              </div>
+            </div>
+            <div className={cn("text-right", isRTL && "text-left")}>
+              <div className={cn(
+                "flex items-center gap-1 font-bold text-sm",
+                currentUserRank.isWinner ? "text-success" : "text-destructive",
+                isRTL && "flex-row-reverse"
+              )}>
+                {currentUserRank.isWinner ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                <TonIcon className="w-3 h-3" />
+                <span>{formatTon(currentUserRank.total_pnl_ton)}</span>
+              </div>
+              <p className={cn(
+                "text-xs",
+                currentUserRank.isWinner ? "text-success/80" : "text-destructive/80"
+              )}>
+                {formatPercent(currentUserRank.return_percent)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Users List */}
       <div className="space-y-2">
