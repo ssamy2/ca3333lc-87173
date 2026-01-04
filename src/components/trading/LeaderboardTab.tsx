@@ -80,6 +80,10 @@ export function LeaderboardTab({ leaderboard, isLoading, isRTL }: LeaderboardTab
               @{user.username}
             </p>
           )}
+          {/* Show user's rank position */}
+          <p className="text-xs text-primary/70 font-medium">
+            {isRTL ? `الترتيب: #${user.rank}` : `Rank: #${user.rank}`}
+          </p>
         </div>
 
         {/* Profit/Loss Info */}
