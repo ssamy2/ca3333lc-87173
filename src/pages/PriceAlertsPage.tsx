@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Plus, Trash2, Target, TrendingUp, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { createPriceAlert, getUserPriceAlerts, deletePriceAlert, PriceAlert } from '@/services/apiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getAuthHeaders } from '@/lib/telegramAuth';
+
+interface GiftModel {
+  name: string;
+  priceTon: number;
+  priceUsd: number;
+  rarity: number;
+}
+
+interface GiftData {
+  name: string;
+  priceTon: number;
+  priceUsd: number;
+  models: GiftModel[];
+}
 
 const PriceAlertsPage = () => {
   const navigate = useNavigate();
@@ -18,16 +33,52 @@ const PriceAlertsPage = () => {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [gifts, setGifts] = useState<GiftData[]>([]);
+  const [loadingGifts, setLoadingGifts] = useState(false);
 
   // Form state
-  const [giftName, setGiftName] = useState('');
+  const [selectedGift, setSelectedGift] = useState('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
   const [targetPrice, setTargetPrice] = useState('');
-  const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
+  const [alertType, setAlertType] = useState<'PRICE_TARGET' | 'PERCENTAGE_CHANGE'>('PRICE_TARGET');
+  const [percentageChange, setPercentageChange] = useState('');
 
   // Load alerts on mount
   useEffect(() => {
     loadAlerts();
+    loadGifts();
   }, []);
+
+  const loadGifts = async () => {
+    try {
+      setLoadingGifts(true);
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch('https://www.channelsseller.site/api/market-data', {
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load gifts');
+      
+      const data = await response.json();
+      
+      // Convert market data to array
+      const giftsArray: GiftData[] = Object.entries(data).map(([name, giftData]: [string, any]) => ({
+        name: name,
+        priceTon: giftData.priceTon || 0,
+        priceUsd: giftData.priceUsd || 0,
+        models: giftData.models || []
+      }));
+      
+      setGifts(giftsArray);
+    } catch (error) {
+      console.error('Failed to load gifts:', error);
+    } finally {
+      setLoadingGifts(false);
+    }
+  };
 
   const loadAlerts = async () => {
     try {
@@ -46,11 +97,24 @@ const PriceAlertsPage = () => {
     }
   };
 
+  const getSelectedGiftData = () => {
+    return gifts.find(g => g.name === selectedGift);
+  };
+
   const handleCreateAlert = async () => {
-    if (!giftName || !targetPrice) {
+    if (!selectedGift || !targetPrice) {
       toast({
         title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
-        description: isRTL ? 'يرجى إدخال اسم الهدية والسعر المستهدف' : 'Please enter gift name and target price',
+        description: isRTL ? 'يرجى إدخال الهدية والسعر' : 'Please enter gift and price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (alertType === 'PERCENTAGE_CHANGE' && !percentageChange) {
+      toast({
+        title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
+        description: isRTL ? 'يرجى إدخال نسبة التغيير' : 'Please enter percentage change',
         variant: 'destructive',
       });
       return;
@@ -58,7 +122,13 @@ const PriceAlertsPage = () => {
 
     try {
       setIsCreating(true);
-      await createPriceAlert(giftName, parseFloat(targetPrice), condition);
+      await createPriceAlert(
+        selectedGift,
+        parseFloat(targetPrice),
+        alertType,
+        selectedModel || null,
+        percentageChange ? parseFloat(percentageChange) : null
+      );
       
       toast({
         title: isRTL ? 'تم بنجاح' : 'Success',
@@ -66,8 +136,10 @@ const PriceAlertsPage = () => {
       });
 
       // Reset form and reload
-      setGiftName('');
+      setSelectedGift('');
+      setSelectedModel('');
       setTargetPrice('');
+      setPercentageChange('');
       loadAlerts();
     } catch (error) {
       toast({
@@ -97,6 +169,8 @@ const PriceAlertsPage = () => {
     }
   };
 
+  const selectedGiftData = getSelectedGiftData();
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -106,7 +180,7 @@ const PriceAlertsPage = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold">Price Alerts</h1>
+            <h1 className="text-lg font-bold">{isRTL ? 'تنبيهات الأسعار' : 'Price Alerts'}</h1>
             <p className="text-xs text-muted-foreground">
               {isRTL ? 'تنبيهات فورية لتغيرات الأسعار' : 'Instant notifications for price changes'}
             </p>
@@ -123,64 +197,134 @@ const PriceAlertsPage = () => {
           </div>
 
           <div className="grid gap-4">
+            {/* Alert Type Selection */}
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">
-                {isRTL ? 'اسم الهدية' : 'Gift Name'}
+                {isRTL ? 'نوع التنبيه' : 'Alert Type'}
               </label>
-              <Input
-                placeholder="e.g. Red Star"
-                value={giftName}
-                onChange={(e) => setGiftName(e.target.value)}
-                className="bg-background/50"
-              />
+              <Select
+                value={alertType}
+                onValueChange={(v: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE') => setAlertType(v)}
+              >
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRICE_TARGET">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      {isRTL ? 'سعر مستهدف' : 'Price Target'}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="PERCENTAGE_CHANGE">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      {isRTL ? 'مراقبة التغيير %' : 'Percentage Change Monitor'}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Gift Selection */}
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">
+                {isRTL ? 'اختر الهدية' : 'Select Gift'}
+              </label>
+              <Select
+                value={selectedGift}
+                onValueChange={setSelectedGift}
+                disabled={loadingGifts}
+              >
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder={loadingGifts ? 'Loading...' : 'Choose a gift'} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {gifts.map((gift) => (
+                    <SelectItem key={gift.name} value={gift.name}>
+                      {gift.name} ({gift.priceTon.toFixed(4)} TON)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model Selection (if gift has models) */}
+            {selectedGiftData && selectedGiftData.models.length > 0 && (
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {isRTL ? 'الشرط' : 'Condition'}
+                  {isRTL ? 'اختر النموذج (اختياري)' : 'Select Model (Optional)'}
                 </label>
                 <Select
-                  value={condition}
-                  onValueChange={(v: 'ABOVE' | 'BELOW') => setCondition(v)}
+                  value={selectedModel}
+                  onValueChange={setSelectedModel}
                 >
                   <SelectTrigger className="bg-background/50">
-                    <SelectValue />
+                    <SelectValue placeholder={isRTL ? 'السعر العام (Floor)' : 'Floor Price'} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ABOVE">
-                      <div className="flex items-center gap-2 text-green-500">
-                        <TrendingUp className="w-4 h-4" />
-                        {isRTL ? 'أعلى من' : 'Above'}
-                      </div>
+                  <SelectContent className="max-h-[200px]">
+                    <SelectItem value="">
+                      {isRTL ? '🏢 السعر العام (Floor)' : '🏢 Floor Price'} - {selectedGiftData.priceTon.toFixed(4)} TON
                     </SelectItem>
-                    <SelectItem value="BELOW">
-                      <div className="flex items-center gap-2 text-red-500">
-                        <TrendingDown className="w-4 h-4" />
-                        {isRTL ? 'أقل من' : 'Below'}
-                      </div>
-                    </SelectItem>
+                    {selectedGiftData.models.map((model) => (
+                      <SelectItem key={model.name} value={model.name}>
+                        {model.name} - {model.priceTon.toFixed(4)} TON
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+            )}
 
+            {/* Price/Percentage Input */}
+            {alertType === 'PRICE_TARGET' ? (
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
                   {isRTL ? 'السعر المستهدف (TON)' : 'Target Price (TON)'}
                 </label>
                 <Input
                   type="number"
-                  placeholder="0.00"
+                  step="0.0001"
+                  placeholder="0.0000"
                   value={targetPrice}
                   onChange={(e) => setTargetPrice(e.target.value)}
                   className="bg-background/50"
                 />
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">
+                    {isRTL ? 'السعر الحالي' : 'Current Price'}
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    placeholder="0.0000"
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">
+                    {isRTL ? 'نسبة التغيير %' : 'Change %'}
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="±5.0"
+                    value={percentageChange}
+                    onChange={(e) => setPercentageChange(e.target.value)}
+                    className="bg-background/50"
+                  />
+                </div>
+              </div>
+            )}
 
             <Button 
               onClick={handleCreateAlert} 
-              disabled={isCreating || !giftName || !targetPrice}
+              disabled={isCreating || !selectedGift || !targetPrice}
               className="w-full bg-primary hover:bg-primary/90"
             >
               {isCreating ? (
@@ -221,19 +365,33 @@ const PriceAlertsPage = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${
-                      alert.condition === 'ABOVE' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                      alert.alert_type === 'PRICE_TARGET' 
+                        ? 'bg-blue-500/10 text-blue-500' 
+                        : 'bg-purple-500/10 text-purple-500'
                     }`}>
-                      {alert.condition === 'ABOVE' ? (
-                        <TrendingUp className="w-5 h-5" />
+                      {alert.alert_type === 'PRICE_TARGET' ? (
+                        <Target className="w-5 h-5" />
                       ) : (
-                        <TrendingDown className="w-5 h-5" />
+                        <TrendingUp className="w-5 h-5" />
                       )}
                     </div>
                     <div>
-                      <h4 className="font-semibold">{alert.gift_name}</h4>
+                      <h4 className="font-semibold">
+                        {alert.gift_name}
+                        {alert.model_name && <span className="text-xs text-muted-foreground ml-1">({alert.model_name})</span>}
+                      </h4>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        {isRTL ? 'الهدف:' : 'Target:'} 
-                        <span className="text-foreground font-medium">{alert.target_price_ton} TON</span>
+                        {alert.alert_type === 'PRICE_TARGET' ? (
+                          <>
+                            {isRTL ? 'الهدف:' : 'Target:'} 
+                            <span className="text-foreground font-medium">{alert.target_price_ton.toFixed(4)} TON</span>
+                          </>
+                        ) : (
+                          <>
+                            {isRTL ? 'مراقبة:' : 'Monitoring:'} 
+                            <span className="text-foreground font-medium">±{alert.percentage_change}%</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>

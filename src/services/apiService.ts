@@ -26,13 +26,23 @@ export interface PriceAlert {
   user_id: string;
   gift_name: string;
   target_price_ton: number;
-  condition: 'ABOVE' | 'BELOW';
-  status: 'ACTIVE' | 'TRIGGERED';
+  alert_type: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE';
+  model_name?: string | null;
+  percentage_change?: number | null;
+  base_price_ton?: number | null;
+  status: 'ACTIVE' | 'TRIGGERED' | 'DELETED';
   created_at: number;
+  triggered_at?: number;
   current_price_ton?: number;
 }
 
-export const createPriceAlert = async (giftName: string, targetPrice: number, condition: 'ABOVE' | 'BELOW') => {
+export const createPriceAlert = async (
+  giftName: string, 
+  targetPrice: number, 
+  alertType: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE',
+  modelName?: string | null,
+  percentageChange?: number | null
+) => {
   const apiUrl = buildApiUrl('/api/alerts/create');
   const authHeaders = await getAuthHeaders();
 
@@ -45,7 +55,9 @@ export const createPriceAlert = async (giftName: string, targetPrice: number, co
     body: JSON.stringify({
       gift_name: giftName,
       target_price_ton: targetPrice,
-      condition: condition
+      alert_type: alertType,
+      model_name: modelName,
+      percentage_change: percentageChange
     })
   });
 
