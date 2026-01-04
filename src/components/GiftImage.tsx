@@ -49,8 +49,12 @@ const GiftImage: React.FC<GiftImageProps> = ({
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(() => imageCache.isCached(normalizedUrl));
+  const [isLoaded, setIsLoaded] = useState(() => {
+    // If image is cached, mark as loaded immediately
+    return imageCache.isCached(normalizedUrl);
+  });
   const imgRef = useRef<HTMLDivElement>(null);
+  const hasLoadedRef = useRef(imageCache.isCached(normalizedUrl));
 
   // Intersection Observer for lazy loading
   useEffect(() => {
@@ -75,20 +79,22 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
   // Load and cache image when visible
   useEffect(() => {
-    if (!isVisible || isLoaded) return;
+    // Skip if already loaded (from cache or previous load)
+    if (!isVisible || hasLoadedRef.current) return;
     
     const loadImage = async () => {
       try {
         const cachedUrl = await imageCache.loadAndCache(normalizedUrl);
         setCurrentSrc(cachedUrl);
         setIsLoaded(true);
+        hasLoadedRef.current = true;
       } catch {
         // Will use fallback on error
       }
     };
     
     loadImage();
-  }, [isVisible, normalizedUrl, isLoaded]);
+  }, [isVisible, normalizedUrl]);
 
   const getFallbackUrl = (level: number): string | null => {
     const camelCase = toCamelFromName(name);
