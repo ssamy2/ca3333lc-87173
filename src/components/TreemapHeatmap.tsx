@@ -105,7 +105,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
         if (imageMapResult.has(url)) return;
         
         // Check if image is cached first
-        const cachedBase64 = imageCache.getImageFromCache(url);
+        const cachedBase64 = imageCache?.getFromMemory?.(url);
         
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -383,7 +383,7 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
-    const cachedBase64 = imageCache.getImageFromCache(url);
+    const cachedBase64 = imageCache?.getFromMemory?.(url);
     if (cachedBase64) {
       img.src = cachedBase64;
       
@@ -1055,7 +1055,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       // Check if all images are already cached
       const allImagesCached = transformed.every(item => {
         try {
-          const cached = imageCache.getImageFromCache(item.imageName);
+          const cached = imageCache?.getFromMemory?.(item.imageName);
           return cached !== null;
         } catch {
           return false;
@@ -1072,7 +1072,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         // Preload uncached images in background
         const imageUrls = transformed.map(item => item.imageName);
         
-        imageCache.preloadUncachedImages(imageUrls)
+        imageCache.preloadImages(imageUrls.filter(url => !imageCache.isCached(url)))
           .then(() => {
             setIsLoading(false);
             

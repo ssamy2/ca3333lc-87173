@@ -42,19 +42,29 @@ const GiftImage: React.FC<GiftImageProps> = ({
 
   const normalizedUrl = normalizeImageUrl(imageUrl);
   const [currentSrc, setCurrentSrc] = useState<string>(() => {
-    // Check cache first
-    const cached = imageCache.getImageFromCache(normalizedUrl);
-    return cached || normalizedUrl;
+    // Check cache first with safety check
+    try {
+      const cached = imageCache?.getFromMemory?.(normalizedUrl);
+      return cached || normalizedUrl;
+    } catch (e) {
+      console.warn('Cache access failed:', e);
+      return normalizedUrl;
+    }
   });
   const [fallbackLevel, setFallbackLevel] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(() => {
     // If image is cached, mark as loaded immediately
-    return imageCache.isCached(normalizedUrl);
+    try {
+      return imageCache?.isCached?.(normalizedUrl) ?? false;
+    } catch (e) {
+      console.warn('Cache access failed:', e);
+      return false;
+    }
   });
   const imgRef = useRef<HTMLDivElement>(null);
-  const hasLoadedRef = useRef(imageCache.isCached(normalizedUrl));
+  const hasLoadedRef = useRef(false);
 
   // Intersection Observer for lazy loading
   useEffect(() => {

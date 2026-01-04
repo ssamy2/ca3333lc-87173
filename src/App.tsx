@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { useState, useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppLoader from "@/components/AppLoader";
+import AppLayout from "@/components/AppLayout";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -85,7 +86,7 @@ const App = () => {
                 <BrowserRouter>
                   <DataPrefetcher>
                     <Suspense fallback={<PageLoader />}>
-                      <div className="min-h-screen">
+                      <AppLayout>
                         {/* Ads Banner at the top of all pages */}
                         <Suspense fallback={null}>
                           <AdsBanner />
@@ -109,7 +110,7 @@ const App = () => {
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />
                         </Routes>
-                      </div>
+                      </AppLayout>
                     </Suspense>
                   </DataPrefetcher>
                 </BrowserRouter>
