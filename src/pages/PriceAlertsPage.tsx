@@ -70,12 +70,13 @@ const PriceAlertsPage = () => {
       
       const data = await response.json();
       
-      // Convert market data to array
+      // Convert market data to array with image URLs
       const giftsArray: GiftData[] = Object.entries(data).map(([name, giftData]: [string, any]) => ({
         name: name,
         priceTon: giftData.priceTon || 0,
         priceUsd: giftData.priceUsd || 0,
-        models: giftData.models || []
+        models: giftData.models || [],
+        image_url: giftData.image_url || giftData.image || ''
       }));
       
       setGifts(giftsArray);
@@ -137,7 +138,7 @@ const PriceAlertsPage = () => {
         selectedGift,
         parseFloat(targetPrice),
         alertType,
-        selectedModel || null,
+        selectedModel === '__floor__' ? null : (selectedModel || null),
         percentageChange ? parseFloat(percentageChange) : null
       );
       
@@ -279,7 +280,7 @@ const PriceAlertsPage = () => {
                     <SelectValue placeholder={isRTL ? 'السعر العام (Floor)' : 'Floor Price'} />
                   </SelectTrigger>
                   <SelectContent className="max-h-[200px]">
-                    <SelectItem value="">
+                    <SelectItem value="__floor__">
                       {isRTL ? '🏢 السعر العام (Floor)' : '🏢 Floor Price'} - {selectedGiftData.priceTon.toFixed(4)} TON
                     </SelectItem>
                     {selectedGiftData.models.map((model) => (
