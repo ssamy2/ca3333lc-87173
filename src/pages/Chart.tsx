@@ -25,12 +25,12 @@ const Chart = () => {
   const { language } = useLanguage();
   const { data: marketData = {}, isLoading: marketLoading } = useMarketData();
   const { data: blackFloorData = [], isLoading: blackLoading } = useBlackFloorData();
-  
+
   const loading = marketLoading || blackLoading;
-  
-  const t = (key: keyof typeof import('@/i18n/translations').translations.en) => 
+
+  const t = (key: keyof typeof import('@/i18n/translations').translations.en) =>
     getTranslation(language, key);
-  
+
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currency, setCurrency] = useState<Currency>('ton');
   const [dataSource, setDataSource] = useState<DataSource>('market');
@@ -48,91 +48,74 @@ const Chart = () => {
       if (!marketData || !blackFloorData || blackFloorData.length === 0) {
         return [];
       }
-      
+
       let blackEntries = blackFloorData
         .filter(item => marketData[item.gift_name])
         .map(item => {
           const marketImage = marketData[item.gift_name]?.image_url;
           const imageUrl = marketImage || `https://www.channelsseller.site/api/image/${item.short_name}`;
-          
-          return [
-            item.gift_name,
-            {
-              priceTon: item.black_price,
-              priceUsd: item.black_price * 2.16,
-              price_ton: item.black_price,
-              price_usd: item.black_price * 2.16,
-              'change_24h_ton_%': item.change_24h_ton_percent || 0,
-              'change_24h_usd_%': item.change_24h_ton_percent || 0,
-              image_url: imageUrl,
-              short_name: item.short_name,
-              change_24h_ton_percent: item.change_24h_ton_percent || 0,
-            }
-          ];
+
+          return {
+            id: item.short_name,
+            name: item.gift_name,
+            short_name: item.short_name,
+            image: imageUrl,
+            price_ton: item.black_price,
+            price_usd: item.black_price * 2.16,
+            change_24h: item.change_24h_ton_percent || 0,
+            change_7d: item.weekly_change_percent_ton || 0,
+            change_30d: item.monthly_change_percent_ton || 0,
+            is_black_market: true,
+            supply: marketData[item.gift_name]?.upgradedSupply || 0
+          };
         });
 
       // Sort
       if (sortMode === 'priceUp') {
-        blackEntries.sort((a, b) => {
-          const changeA = a[1].change_24h_ton_percent || 0;
-          const changeB = b[1].change_24h_ton_percent || 0;
-          if (changeA === 0 && changeB !== 0) return 1;
-          if (changeA !== 0 && changeB === 0) return -1;
-          return changeB - changeA;
-        });
+        blackEntries.sort((a, b) => a.change_24h - b.change_24h);
       } else if (sortMode === 'priceDown') {
-        blackEntries.sort((a, b) => {
-          const changeA = a[1].change_24h_ton_percent || 0;
-          const changeB = b[1].change_24h_ton_percent || 0;
-          if (changeA === 0 && changeB !== 0) return 1;
-          if (changeA !== 0 && changeB === 0) return -1;
-          return changeA - changeB;
-        });
+        blackEntries.sort((a, b) => b.change_24h - a.change_24h);
       } else {
-        blackEntries.sort((a, b) => (b[1].priceTon || b[1].price_ton) - (a[1].priceTon || a[1].price_ton));
+        blackEntries.sort((a, b) => b.price_ton - a.price_ton);
       }
 
       return blackEntries;
     }
 
     if (!marketData) return [];
-    let entries = Object.entries(marketData);
-    
+    let entries = Object.entries(marketData).map(([name, data]: [string, any]) => {
+      const count = data.quantity || data.count || 1;
+      const priceTon = data.price_ton || 0;
+      const priceUsd = data.price_usd || 0;
+      const isRegular = name.startsWith('[Regular]') || data.is_unupgraded === true;
+
+      return {
+        id: data.id || name,
+        name: name,
+        short_name: data.short_name || '',
+        image: data.image || data.image_url || '',
+        price_ton: priceTon,
+        price_usd: priceUsd,
+        change_24h: currency === 'ton' ? (data['change_24h_ton_%'] || 0) : (data['change_24h_usd_%'] || 0),
+        change_7d: currency === 'ton' ? (data['change_7d_ton_%'] || 0) : (data['change_7d_usd_%'] || 0),
+        change_30d: currency === 'ton' ? (data['change_30d_ton_%'] || 0) : (data['change_30d_usd_%'] || 0),
+        supply: data.supply || 0,
+        is_black_market: false,
+        is_unupgraded: isRegular
+      };
+    });
+
     if (dataSource === 'regular') {
-      entries = entries.filter(([name, data]) => {
-        return name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
-      });
+      entries = entries.filter(item => item.is_unupgraded);
     }
 
     // Sort
     if (sortMode === 'priceUp') {
-      entries.sort((a, b) => {
-        const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-        const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-        if (changeA === 0 && changeB !== 0) return 1;
-        if (changeA !== 0 && changeB === 0) return -1;
-        if (changeA > 0 && changeB <= 0) return -1;
-        if (changeA <= 0 && changeB > 0) return 1;
-        return changeB - changeA;
-      });
+      entries.sort((a, b) => a.change_24h - b.change_24h);
     } else if (sortMode === 'priceDown') {
-      entries.sort((a, b) => {
-        const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-        const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-        if (changeA === 0 && changeB !== 0) return 1;
-        if (changeA !== 0 && changeB === 0) return -1;
-        if (changeA < 0 && changeB >= 0) return -1;
-        if (changeA >= 0 && changeB < 0) return 1;
-        return changeA - changeB;
-      });
+      entries.sort((a, b) => b.change_24h - a.change_24h);
     } else {
-      entries.sort((a, b) => {
-        const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
-        const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-        if (changeA === 0 && changeB !== 0) return 1;
-        if (changeA !== 0 && changeB === 0) return -1;
-        return Math.abs(changeB) - Math.abs(changeA);
-      });
+      entries.sort((a, b) => Math.abs(b.change_24h) - Math.abs(a.change_24h));
     }
 
     return entries;
@@ -160,8 +143,8 @@ const Chart = () => {
       {/* Header Controls */}
       <div className={cn(
         "sticky top-0 z-40 backdrop-blur-xl border-b",
-        dataSource === 'black' 
-          ? 'bg-[hsl(var(--black-bg))]/90 border-white/5' 
+        dataSource === 'black'
+          ? 'bg-[hsl(var(--black-bg))]/90 border-white/5'
           : 'bg-background/80 border-border/30'
       )}>
         <div className="p-4 space-y-3">
@@ -294,22 +277,18 @@ const Chart = () => {
       <div className="p-4">
         {viewMode === 'grid' && (
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
-            {filteredData.map(([name, data]) => {
-              const change = currency === 'ton' ? data['change_24h_ton_%'] : data['change_24h_usd_%'];
-              const price = currency === 'ton' ? (data.priceTon || data.price_ton) : (data.priceUsd || data.price_usd);
-              const isUnupgraded = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
-
+            {filteredData.map((item) => {
               return (
                 <GiftCard
-                  key={name}
-                  name={name}
-                  imageUrl={data.image_url}
-                  shortName={(data as any).short_name}
-                  price={price}
-                  change={change}
-                  isBlackMode={dataSource === 'black'}
-                  isUnupgraded={isUnupgraded}
-                  giftId={(data as any).id}
+                  key={item.name}
+                  name={item.name}
+                  imageUrl={item.image}
+                  shortName={item.short_name}
+                  price={currency === 'ton' ? item.price_ton : item.price_usd}
+                  change={item.change_24h}
+                  isBlackMode={item.is_black_market}
+                  isUnupgraded={item.is_unupgraded}
+                  giftId={item.id}
                 />
               );
             })}
@@ -317,9 +296,9 @@ const Chart = () => {
         )}
 
         {viewMode === 'list' && (
-          <MarketTable 
-            data={filteredData} 
-            isBlackMode={dataSource === 'black'} 
+          <MarketTable
+            data={filteredData}
+            isBlackMode={dataSource === 'black'}
           />
         )}
       </div>

@@ -8,6 +8,7 @@ import TreemapHeatmap from '@/components/TreemapHeatmap';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useBlackFloorData } from '@/hooks/useBlackFloorData';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { MarketItem } from '@/types/MarketData';
 
 type Currency = 'ton' | 'usd';
 type TopFilter = 'all' | 'top50' | 'top35' | 'top25';
@@ -15,39 +16,20 @@ type DataSource = 'all' | 'upgraded' | 'regular' | 'black';
 type ChartType = 'change' | 'marketcap';
 type TimeGap = '24h' | '1w' | '1m';
 
-interface GiftItem {
-  name: string;
-  image: string;
-  priceTon: number;
-  priceUsd: number;
-  tonPrice24hAgo?: number;
-  usdPrice24hAgo?: number;
-  tonPriceWeekAgo?: number;
-  usdPriceWeekAgo?: number;
-  tonPriceMonthAgo?: number;
-  usdPriceMonthAgo?: number;
-  marketCapTon?: string;
-  marketCapUsd?: string;
-  upgradedSupply: number;
-  preSale?: boolean;
-  percentChange24hTon?: number;
-  percentChange24hUsd?: number;
-}
-
 const HeatmapPage = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { data: marketData = {}, isLoading: marketLoading } = useMarketData();
   const { data: blackFloorData = [], isLoading: blackLoading } = useBlackFloorData();
-  
+
   const loading = marketLoading || blackLoading;
-  
+
   const [currency, setCurrency] = useState<Currency>('ton');
   const [topFilter, setTopFilter] = useState<TopFilter>('all');
   const [dataSource, setDataSource] = useState<DataSource>('all');
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
-  
+
   const treemapRef = useRef<any>(null);
 
   const t = {
@@ -87,13 +69,13 @@ const HeatmapPage = () => {
       if (!marketData || !blackFloorData || blackFloorData.length === 0) {
         return [];
       }
-      
+
       let blackEntries = blackFloorData
         .filter(item => marketData[item.gift_name])
         .map(item => {
           const marketImage = marketData[item.gift_name]?.image_url;
           const imageUrl = marketImage || `https://www.channelsseller.site/api/image/${item.short_name}`;
-          
+
           return [
             item.gift_name,
             {
@@ -123,7 +105,7 @@ const HeatmapPage = () => {
 
     if (!marketData) return [];
     let entries = Object.entries(marketData);
-    
+
     // Filter based on data source
     if (dataSource === 'upgraded') {
       // Show only upgraded gifts (not starting with [Regular])
@@ -146,25 +128,25 @@ const HeatmapPage = () => {
           if (str.includes('K')) return num * 1000;
           return num;
         };
-        
-        const marketCapA = currency === 'ton' 
+
+        const marketCapA = currency === 'ton'
           ? parseMarketCap(a[1].market_cap_ton || '0')
           : parseMarketCap(a[1].market_cap_usd || '0');
         const marketCapB = currency === 'ton'
           ? parseMarketCap(b[1].market_cap_ton || '0')
           : parseMarketCap(b[1].market_cap_usd || '0');
-        
+
         return marketCapB - marketCapA;
       });
     } else {
       entries.sort((a, b) => {
         const changeA = currency === 'ton' ? a[1]['change_24h_ton_%'] : a[1]['change_24h_usd_%'];
         const changeB = currency === 'ton' ? b[1]['change_24h_ton_%'] : b[1]['change_24h_usd_%'];
-        
+
         if (changeA === 0 && changeB !== 0) return 1;
         if (changeA !== 0 && changeB === 0) return -1;
         if (changeA === 0 && changeB === 0) return 0;
-        
+
         return Math.abs(changeB) - Math.abs(changeA);
       });
     }
@@ -176,31 +158,30 @@ const HeatmapPage = () => {
     return entries;
   }, [topFilter, dataSource, marketData, blackFloorData, chartType, currency]);
 
-  const giftItems = useMemo((): GiftItem[] => {
+  const giftItems = useMemo((): MarketItem[] => {
     const items = filteredData.map(([name, data]) => {
       const currentPriceTon = data.priceTon || data.price_ton;
       const currentPriceUsd = data.priceUsd || data.price_usd;
-      
+      const isRegular = name.startsWith('[Regular]') || (data as any).is_unupgraded === true;
+
       return {
+        id: (data as any).id || name,
         name,
+        short_name: (data as any).short_name || '',
         image: data.image_url || '',
-        priceTon: currentPriceTon,
-        priceUsd: currentPriceUsd,
-        tonPrice24hAgo: data.tonPrice24hAgo || currentPriceTon,
-        usdPrice24hAgo: data.usdPrice24hAgo || currentPriceUsd,
-        tonPriceWeekAgo: data.tonPriceWeekAgo || currentPriceTon,
-        usdPriceWeekAgo: data.usdPriceWeekAgo || currentPriceUsd,
-        tonPriceMonthAgo: data.tonPriceMonthAgo || currentPriceTon,
-        usdPriceMonthAgo: data.usdPriceMonthAgo || currentPriceUsd,
-        marketCapTon: data.market_cap_ton,
-        marketCapUsd: data.market_cap_usd,
-        upgradedSupply: data.upgradedSupply || 1000000,
-        preSale: false,
-        percentChange24hTon: data['change_24h_ton_%'],
-        percentChange24hUsd: data['change_24h_usd_%'],
+        price_ton: currentPriceTon,
+        price_usd: currentPriceUsd,
+        change_24h: data['change_24h_ton_%'] || 0,
+        change_7d: data['change_7d_ton_%'] || 0,
+        change_30d: data['change_30d_ton_%'] || 0,
+        market_cap_ton: data.market_cap_ton ? parseFloat(data.market_cap_ton.replace(/[KM,]/g, '')) * (data.market_cap_ton.includes('M') ? 1000000 : data.market_cap_ton.includes('K') ? 1000 : 1) : undefined,
+        market_cap_usd: data.market_cap_usd ? parseFloat(data.market_cap_usd.replace(/[KM,]/g, '')) * (data.market_cap_usd.includes('M') ? 1000000 : data.market_cap_usd.includes('K') ? 1000 : 1) : undefined,
+        supply: data.upgradedSupply || 1000000,
+        is_black_market: dataSource === 'black',
+        is_unupgraded: isRegular
       };
     });
-    
+
     console.log(`📊 [Heatmap] Total items: ${items.length}, Source: ${dataSource}`);
     return items;
   }, [filteredData, dataSource]);
@@ -241,21 +222,19 @@ const HeatmapPage = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setChartType('change')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              chartType === 'change'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-            }`}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${chartType === 'change'
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+              }`}
           >
             {text.change}
           </button>
           <button
             onClick={() => setChartType('marketcap')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              chartType === 'marketcap'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-            }`}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${chartType === 'marketcap'
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+              }`}
           >
             {text.marketCap}
           </button>
@@ -268,11 +247,10 @@ const HeatmapPage = () => {
               <button
                 key={time}
                 onClick={() => setTimeGap(time)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  timeGap === time
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-                }`}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timeGap === time
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+                  }`}
               >
                 {time.toUpperCase()}
               </button>
@@ -291,11 +269,10 @@ const HeatmapPage = () => {
             <button
               key={filter.value}
               onClick={() => setTopFilter(filter.value as TopFilter)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                topFilter === filter.value
-                  ? 'bg-green-500 text-white'
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${topFilter === filter.value
+                ? 'bg-green-500 text-white'
+                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+                }`}
             >
               {filter.label}
             </button>
@@ -306,41 +283,37 @@ const HeatmapPage = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setDataSource('all')}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-              dataSource === 'all'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-            }`}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'all'
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+              }`}
           >
             {text.all}
           </button>
           <button
             onClick={() => setDataSource('upgraded')}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-              dataSource === 'upgraded'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-            }`}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'upgraded'
+              ? 'bg-emerald-500 text-white'
+              : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+              }`}
           >
             {text.upgraded}
           </button>
           <button
             onClick={() => setDataSource('regular')}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-              dataSource === 'regular'
-                ? 'bg-amber-500 text-white'
-                : 'bg-slate-800/50 text-amber-400/60 hover:text-amber-400 border border-white/10'
-            }`}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'regular'
+              ? 'bg-amber-500 text-white'
+              : 'bg-slate-800/50 text-amber-400/60 hover:text-amber-400 border border-white/10'
+              }`}
           >
             {text.regular}
           </button>
           <button
             onClick={() => setDataSource('black')}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-              dataSource === 'black'
-                ? 'bg-slate-700 text-white'
-                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-            }`}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'black'
+              ? 'bg-slate-700 text-white'
+              : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+              }`}
           >
             Black
           </button>
@@ -351,22 +324,20 @@ const HeatmapPage = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setCurrency('ton')}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                currency === 'ton'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-              }`}
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${currency === 'ton'
+                ? 'bg-blue-500 text-white'
+                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+                }`}
             >
               <TonIcon className="w-4 h-4" />
               TON
             </button>
             <button
               onClick={() => setCurrency('usd')}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                currency === 'usd'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
-              }`}
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${currency === 'usd'
+                ? 'bg-green-500 text-white'
+                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-white/10'
+                }`}
             >
               $ USD
             </button>
@@ -375,9 +346,9 @@ const HeatmapPage = () => {
 
         {/* Heatmap */}
         <div className="rounded-2xl overflow-hidden">
-          <TreemapHeatmap 
+          <TreemapHeatmap
             ref={treemapRef}
-            data={giftItems} 
+            data={giftItems}
             chartType={chartType}
             timeGap={timeGap}
             currency={currency}

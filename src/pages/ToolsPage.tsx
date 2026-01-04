@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, Wallet, User, Bell } from 'lucide-react';
+import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, User, Bell, Calculator } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchPortfolioAnalysis } from '@/services/apiService';
+import { cn } from '@/lib/utils';
 
 interface ToolsPageProps {
   onGoToHome?: () => void;
@@ -31,8 +32,6 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       toolsDesc: 'أدوات تحليل وتتبع الهدايا',
       giftCalculator: 'حاسبة هدايا المستخدم',
       giftCalculatorDesc: 'احسب قيمة هدايا أي مستخدم',
-      portfolioTracker: 'متتبع المحفظة',
-      portfolioTrackerDesc: 'تحليل شامل لمحفظة هداياك مع تتبع الأرباح والخسائر',
       heatmap: 'خريطة الحرارة',
       heatmapDesc: 'عرض تغيرات أسعار الهدايا بشكل مرئي',
       marketStats: 'إحصائيات السوق',
@@ -49,8 +48,6 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       toolsDesc: 'Gift analysis and tracking tools',
       giftCalculator: 'User Gift Calculator',
       giftCalculatorDesc: 'Calculate any user\'s gift value',
-      portfolioTracker: 'Portfolio Tracker',
-      portfolioTrackerDesc: 'Comprehensive portfolio analysis with profit/loss tracking',
       heatmap: 'Heatmap',
       heatmapDesc: 'Visualize gift price changes',
       marketStats: 'Market Stats',
@@ -65,6 +62,7 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
   };
 
   const text = t[language] || t.en;
+  const isRTL = language === 'ar';
 
   const tools = [
     {
@@ -72,8 +70,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       name: text.giftCalculator,
       description: text.giftCalculatorDesc,
       icon: User,
-      iconBg: 'bg-pink-500/20',
-      iconColor: 'text-pink-400',
+      gradient: 'from-pink-500 to-rose-500',
+      shadowColor: 'shadow-pink-500/20',
       available: true,
       route: null,
       action: onGoToHome
@@ -83,28 +81,18 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       name: text.priceAlerts,
       description: text.priceAlertsDesc,
       icon: Bell,
-      iconBg: 'bg-yellow-500/20',
-      iconColor: 'text-yellow-400',
+      gradient: 'from-amber-400 to-orange-500',
+      shadowColor: 'shadow-amber-500/20',
       available: true,
       route: '/price-alerts'
-    },
-    {
-      id: 'portfolioTracker',
-      name: text.portfolioTracker,
-      description: text.portfolioTrackerDesc,
-      icon: Wallet,
-      iconBg: 'bg-purple-500/20',
-      iconColor: 'text-purple-400',
-      available: true,
-      route: '/portfolio-tracker'
     },
     {
       id: 'heatmap',
       name: text.heatmap,
       description: text.heatmapDesc,
       icon: Grid3X3,
-      iconBg: 'bg-green-500/20',
-      iconColor: 'text-green-400',
+      gradient: 'from-emerald-400 to-green-600',
+      shadowColor: 'shadow-emerald-500/20',
       available: true,
       route: '/heatmap'
     },
@@ -113,8 +101,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       name: text.marketStats,
       description: text.marketStatsDesc,
       icon: TrendingUp,
-      iconBg: 'bg-blue-500/20',
-      iconColor: 'text-blue-400',
+      gradient: 'from-blue-400 to-indigo-600',
+      shadowColor: 'shadow-blue-500/20',
       available: true,
       route: '/market-stats'
     },
@@ -123,76 +111,114 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       name: text.analytics,
       description: text.analyticsDesc,
       icon: BarChart3,
-      iconBg: 'bg-cyan-500/20',
-      iconColor: 'text-cyan-400',
+      gradient: 'from-cyan-400 to-blue-500',
+      shadowColor: 'shadow-cyan-500/20',
       available: false,
       route: null
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f1729] pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
-        <div className="flex items-center gap-3 p-4">
-          <div className="p-2 bg-blue-500/20 rounded-xl">
-            <Wrench className="w-5 h-5 text-blue-400" />
+    <div className="min-h-screen bg-background pb-24 font-sans">
+      {/* Header with Glassmorphism */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className={cn(
+          "flex items-center gap-4 p-4 max-w-5xl mx-auto",
+          isRTL && "flex-row-reverse"
+        )}>
+          <div className="p-2.5 bg-primary/10 rounded-xl ring-1 ring-primary/20">
+            <Wrench className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">{text.tools}</h1>
-            <p className="text-xs text-slate-400">{text.toolsDesc}</p>
+          <div className={cn("flex flex-col", isRTL && "items-end")}>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {text.tools}
+            </h1>
+            <p className="text-xs text-muted-foreground font-medium">{text.toolsDesc}</p>
           </div>
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
-        {tools.map((tool) => {
-          const Icon = tool.icon;
-          return (
-            <button
-              key={tool.id}
-              onClick={() => {
-                if (!tool.available) return;
-                if (tool.action) {
-                  tool.action();
-                } else if (tool.route) {
-                  navigate(tool.route);
-                }
-              }}
-              disabled={!tool.available}
-              className={`w-full text-left bg-slate-800/50 border border-slate-700/30 rounded-2xl p-4 transition-all duration-200 ${
-                tool.available 
-                  ? 'hover:bg-slate-800/70 hover:border-slate-600/50 active:scale-[0.98]' 
-                  : 'opacity-60 cursor-not-allowed'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                {/* Icon */}
-                <div className={`p-3 rounded-xl ${tool.iconBg} flex-shrink-0`}>
-                  <Icon className={`w-6 h-6 ${tool.iconColor}`} />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-white font-semibold text-base">{tool.name}</h3>
-                    {!tool.available && (
-                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-medium rounded-full">
-                        {text.comingSoon}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-slate-400 text-sm line-clamp-1">{tool.description}</p>
-                </div>
-
-                {/* Arrow */}
-                {tool.available && (
-                  <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+      <div className="p-4 max-w-5xl mx-auto space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {tools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button
+                key={tool.id}
+                onClick={() => {
+                  if (!tool.available) return;
+                  if (tool.action) {
+                    tool.action();
+                  } else if (tool.route) {
+                    navigate(tool.route);
+                  }
+                }}
+                disabled={!tool.available}
+                className={cn(
+                  "group relative w-full text-left overflow-hidden",
+                  "bg-card hover:bg-card-elevated border border-border/50 rounded-2xl p-5",
+                  "transition-all duration-300 ease-out",
+                  tool.available
+                    ? "hover:scale-[1.02] hover:shadow-lg hover:border-primary/30 cursor-pointer"
+                    : "opacity-60 cursor-not-allowed grayscale-[0.5]"
                 )}
-              </div>
-            </button>
-          );
-        })}
+              >
+                {/* Hover Gradient Glow */}
+                <div className={cn(
+                  "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500",
+                  `bg-gradient-to-br ${tool.gradient}`
+                )} />
+
+                <div className={cn(
+                  "relative flex items-center gap-5",
+                  isRTL && "flex-row-reverse text-right"
+                )}>
+                  {/* Icon Container */}
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0",
+                    "bg-gradient-to-br shadow-md transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3",
+                    tool.gradient,
+                    tool.shadowColor
+                  )}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className={cn(
+                      "flex items-center gap-2 mb-1.5",
+                      isRTL && "flex-row-reverse"
+                    )}>
+                      <h3 className="text-foreground font-bold text-lg tracking-tight group-hover:text-primary transition-colors">
+                        {tool.name}
+                      </h3>
+                      {!tool.available && (
+                        <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-500/20">
+                          {text.comingSoon}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                      {tool.description}
+                    </p>
+                  </div>
+
+                  {/* Arrow */}
+                  {tool.available && (
+                    <div className={cn(
+                      "w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center",
+                      "text-muted-foreground group-hover:text-primary group-hover:bg-primary/10",
+                      "transition-all duration-300",
+                      isRTL && "rotate-180"
+                    )}>
+                      <ChevronRight className="w-5 h-5" />
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

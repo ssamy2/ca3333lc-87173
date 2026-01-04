@@ -15,11 +15,11 @@ import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import { Chart } from 'react-chartjs-2';
 import { imageCache } from '@/services/imageCache';
 import { ImageSendDialog } from '@/components/ImageSendDialog';
-import { 
-  getCachedChartImages, 
-  setCachedChartImages, 
-  generateChartCacheKey, 
-  generateDataHash 
+import {
+  getCachedChartImages,
+  setCachedChartImages,
+  generateChartCacheKey,
+  generateDataHash
 } from '@/services/chartCache';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { sendHeatmapImage } from '@/utils/heatmapImageSender';
@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import tonIconSrc from '@/assets/ton-icon.png';
 
 ChartJS.register(
-  TreemapController, 
+  TreemapController,
   TreemapElement,
   CategoryScale,
   LinearScale,
@@ -37,24 +37,7 @@ ChartJS.register(
   Legend
 );
 
-interface GiftItem {
-  name: string;
-  image: string;
-  priceTon: number;
-  priceUsd: number;
-  tonPrice24hAgo?: number;
-  usdPrice24hAgo?: number;
-  tonPriceWeekAgo?: number;
-  usdPriceWeekAgo?: number;
-  tonPriceMonthAgo?: number;
-  usdPriceMonthAgo?: number;
-  marketCapTon?: string;
-  marketCapUsd?: string;
-  upgradedSupply: number;
-  preSale?: boolean;
-  percentChange24hTon?: number;
-  percentChange24hUsd?: number;
-}
+import { MarketItem } from '@/types/MarketData';
 
 interface TreemapDataPoint {
   name: string;
@@ -66,7 +49,7 @@ interface TreemapDataPoint {
 }
 
 interface TreemapHeatmapProps {
-  data: GiftItem[];
+  data: MarketItem[];
   chartType: 'change' | 'marketcap';
   timeGap: '24h' | '1w' | '1m';
   currency: 'ton' | 'usd';
@@ -94,7 +77,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
   let cachedCount = 0;
   let loadedCount = 0;
   let failedCount = 0;
-  
+
   // Process images in batches to avoid overwhelming the browser
   const batchSize = 10;
   for (let i = 0; i < data.length; i += batchSize) {
@@ -103,22 +86,22 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
       try {
         const url = normalizeUrl(item.imageName);
         if (imageMapResult.has(url)) return;
-        
+
         // Check if image is cached first
         const cachedBase64 = imageCache?.getFromMemory?.(url);
-        
+
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        
+
         const loadPromise = new Promise<void>((resolve) => {
           let settled = false;
-          const safeResolve = () => { 
-            if (!settled) { 
-              settled = true; 
-              resolve(); 
-            } 
+          const safeResolve = () => {
+            if (!settled) {
+              settled = true;
+              resolve();
+            }
           };
-          
+
           img.onload = () => {
             // Wait a bit to ensure image is fully decoded
             setTimeout(() => safeResolve(), 50);
@@ -128,7 +111,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
             console.warn(`⚠️ Image load error for ${item.name}: ${url}`);
             safeResolve();
           };
-          
+
           // Use cached base64 if available, otherwise load from URL
           if (cachedBase64 && cachedBase64.startsWith('data:')) {
             img.src = cachedBase64;
@@ -139,10 +122,10 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
             loadedCount++;
           }
         });
-        
+
         const timer = new Promise<void>((r) => setTimeout(r, timeoutMs));
         await Promise.race([loadPromise, timer]);
-        
+
         // Verify image loaded successfully
         if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
           imageMapResult.set(url, img);
@@ -153,12 +136,12 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
             url.replace('http://', 'https://'),
             `https://cdn.changes.tg/gifts/originals/${encodeURIComponent(item.name)}/Original.png`
           ];
-          
+
           for (const altUrl of alternativeUrls) {
             try {
               const altImg = new Image();
               altImg.crossOrigin = 'anonymous';
-              
+
               await new Promise<void>((resolve) => {
                 const timeout = setTimeout(() => resolve(), 2000);
                 altImg.onload = () => {
@@ -171,7 +154,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
                 };
                 altImg.src = altUrl;
               });
-              
+
               if (altImg.complete && altImg.naturalWidth > 0) {
                 imageMapResult.set(url, altImg);
                 console.log(`✅ Loaded alternative image for ${item.name}`);
@@ -181,7 +164,7 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
               // Continue to next alternative
             }
           }
-          
+
           if (!imageMapResult.has(url)) {
             console.warn(`⚠️ All image sources failed for: ${item.name}`);
           }
@@ -191,10 +174,10 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
         failedCount++;
       }
     });
-    
+
     await Promise.all(promises);
   }
-  
+
   console.log(`📊 Images: ${imageMapResult.size}/${data.length} loaded (${cachedCount} cached, ${loadedCount} network, ${failedCount} failed)`);
   return imageMapResult;
 };
@@ -202,17 +185,17 @@ const preloadImagesAsync = async (data: TreemapDataPoint[], timeoutMs = 15000): 
 // updateInteractivity removed - zoom is now disabled
 
 const transformGiftData = (
-  data: GiftItem[], 
-  chartType: 'change' | 'marketcap', 
+  data: MarketItem[],
+  chartType: 'change' | 'marketcap',
   timeGap: '24h' | '1w' | '1m',
   currency: 'ton' | 'usd',
   isRegularMode: boolean = false,
   isAllMode: boolean = false
 ): TreemapDataPoint[] => {
   return data.map(item => {
-    const currentPrice = currency === 'ton' ? item.priceTon : item.priceUsd;
-    const isRegularGift = item.name.startsWith('[Regular]');
-    
+    const currentPrice = currency === 'ton' ? item.price_ton : (item.price_usd || 0);
+    const isRegularGift = !item.is_black_market;
+
     // Format display name: 
     // - In "all" mode: show "(R) Name" for regular gifts
     // - Otherwise: just remove the [Regular] prefix
@@ -225,39 +208,12 @@ const transformGiftData = (
     // This applies in regular mode OR when it's a regular gift in all mode
     const shouldUseRegularLogic = isRegularMode || (isAllMode && isRegularGift);
 
+    let percentChange: number = 0;
+    if (timeGap === '24h') percentChange = item.change_24h;
+    else if (timeGap === '1w') percentChange = item.change_7d || 0;
+    else if (timeGap === '1m') percentChange = item.change_30d || 0;
+
     if (shouldUseRegularLogic) {
-      // Use pre-calculated percent change if available (for 24h)
-      let percentChange: number;
-      
-      if (timeGap === '24h') {
-        const preCalculated = currency === 'ton' ? item.percentChange24hTon : item.percentChange24hUsd;
-        if (preCalculated !== undefined && preCalculated !== null) {
-          percentChange = preCalculated;
-        } else {
-          // Fallback to calculation
-          const previousPrice = currency === 'ton'
-            ? (item.tonPrice24hAgo || currentPrice)
-            : (item.usdPrice24hAgo || currentPrice);
-          percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
-        }
-      } else {
-        // For other time gaps, calculate from historical prices
-        let previousPrice = currentPrice;
-        switch (timeGap) {
-          case '1w':
-            previousPrice = currency === 'ton'
-              ? (item.tonPriceWeekAgo || currentPrice)
-              : (item.usdPriceWeekAgo || currentPrice);
-            break;
-          case '1m':
-            previousPrice = currency === 'ton'
-              ? (item.tonPriceMonthAgo || currentPrice)
-              : (item.usdPriceMonthAgo || currentPrice);
-            break;
-        }
-        percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
-      }
-      
       // Size based on price for regular gifts
       const size = Math.max(10, Math.sqrt(currentPrice) * 5);
 
@@ -271,51 +227,25 @@ const transformGiftData = (
       };
     }
 
+    const marketCapValue = currency === 'ton'
+      ? (item.market_cap_ton || 0)
+      : (item.market_cap_usd || 0);
+
+    const formatMarketCap = (val: number): string => {
+      if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+      if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+      return val.toString();
+    };
+
+    const marketCapStr = formatMarketCap(marketCapValue);
+
     if (chartType === 'marketcap') {
       // Market Cap mode - size based on market cap value
-      const marketCapStr = currency === 'ton' 
-        ? (item.marketCapTon || '0')
-        : (item.marketCapUsd || '0');
-      
-      // Parse market cap string (e.g., "203.07K" -> 203070)
-      const parseMarketCap = (str: string): number => {
-        const num = parseFloat(str.replace(/[KM,]/g, ''));
-        if (str.includes('M')) return num * 1000000;
-        if (str.includes('K')) return num * 1000;
-        return num;
-      };
-      
-      const marketCapValue = parseMarketCap(marketCapStr);
       const size = Math.sqrt(marketCapValue) / 100; // Scale for reasonable sizes
-
-      // Calculate percentChange for colors even in marketcap mode
-      let previousPrice = currentPrice;
-      
-      switch (timeGap) {
-        case '24h':
-          previousPrice = currency === 'ton'
-            ? (item.tonPrice24hAgo || currentPrice)
-            : (item.usdPrice24hAgo || currentPrice);
-          break;
-        case '1w':
-          previousPrice = currency === 'ton'
-            ? (item.tonPriceWeekAgo || currentPrice)
-            : (item.usdPriceWeekAgo || currentPrice);
-          break;
-        case '1m':
-          previousPrice = currency === 'ton'
-            ? (item.tonPriceMonthAgo || currentPrice)
-            : (item.usdPriceMonthAgo || currentPrice);
-          break;
-        default:
-          previousPrice = currentPrice;
-      }
-
-      const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
 
       return {
         name: item.name,
-        percentChange: Number(percentChange.toFixed(2)), // Use actual change for colors
+        percentChange: Number(percentChange.toFixed(2)),
         size,
         imageName: item.image,
         price: currentPrice,
@@ -323,35 +253,7 @@ const transformGiftData = (
       };
     }
 
-    // Change mode - existing logic
-    let previousPrice = currentPrice;
-    
-    switch (timeGap) {
-      case '24h':
-        previousPrice = currency === 'ton'
-          ? (item.tonPrice24hAgo || currentPrice)
-          : (item.usdPrice24hAgo || currentPrice);
-        break;
-      case '1w':
-        previousPrice = currency === 'ton'
-          ? (item.tonPriceWeekAgo || currentPrice)
-          : (item.usdPriceWeekAgo || currentPrice);
-        break;
-      case '1m':
-        previousPrice = currency === 'ton'
-          ? (item.tonPriceMonthAgo || currentPrice)
-          : (item.usdPriceMonthAgo || currentPrice);
-        break;
-      default:
-        previousPrice = currentPrice;
-    }
-
-    const percentChange = previousPrice === 0 ? 0 : ((currentPrice - previousPrice) / previousPrice) * 100;
-    
-    const marketCap = currency === 'ton' 
-      ? (item.marketCapTon || '0')
-      : (item.marketCapUsd || '0');
-    
+    // Change mode
     const size = Math.max(
       6,
       Math.abs(percentChange) < 4
@@ -365,7 +267,7 @@ const transformGiftData = (
       size,
       imageName: item.image,
       price: currentPrice,
-      marketCap
+      marketCap: marketCapStr
     };
   });
 };
@@ -375,7 +277,7 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
   if (cached) return cached;
 
   const imageMap = new Map<string, HTMLImageElement>();
-  
+
   data.forEach(item => {
     const url = normalizeUrl(item.imageName);
     if (imageMap.has(url)) return;
@@ -386,19 +288,23 @@ const preloadImages = (data: TreemapDataPoint[], cacheKey: string): Map<string, 
     const cachedBase64 = imageCache?.getFromMemory?.(url);
     if (cachedBase64) {
       img.src = cachedBase64;
-      
+
       (async () => {
         try {
           await img.decode();
-        } catch {}
+        } catch {
+          // ignore
+        }
       })();
     } else {
       img.src = url;
       img.onload = async () => {
         try {
           await img.decode();
-        } catch {}
-        imageCache.preloadImage(url).catch(() => {});
+        } catch {
+          // ignore
+        }
+        imageCache.preloadImage(url).catch(() => { });
       };
     }
 
@@ -419,7 +325,7 @@ const calculateFontSize = (minDimension: number, scale: number = 1) => {
   const titleFontSize = Math.min(Math.max(minDimension / 8, 4), 24) * scale;
   const valueFontSize = 0.75 * titleFontSize;
   const marketCapFontSize = 0.6 * titleFontSize;
-  
+
   return { titleFontSize, valueFontSize, marketCapFontSize };
 };
 
@@ -438,9 +344,9 @@ const shouldDrawText = (width: number, height: number, minSize: number = 40, sca
 const handleTextOverflow = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, fontSize: number) => {
   ctx.font = `${fontSize}px sans-serif`;
   const textWidth = ctx.measureText(text).width;
-  
+
   if (textWidth <= maxWidth) return text;
-  
+
   // Smart text wrapping - try to fit full text by reducing font size first
   // If still doesn't fit, then truncate
   let shortened = text;
@@ -457,7 +363,7 @@ const calculateTotalTextHeight = (
   spacing: number
 ) => {
   const { titleFontSize, valueFontSize, marketCapFontSize } = fontSizes;
-  
+
   return chartType === 'marketcap'
     ? imageHeight + (2 * titleFontSize) + 3 * spacing
     : imageHeight + (2 * titleFontSize + valueFontSize + marketCapFontSize) + 4 * spacing;
@@ -476,18 +382,20 @@ const createImagePlugin = (
     afterDatasetDraw(chart) {
       try {
         const { ctx, data } = chart;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const dataset = data.datasets[0] as any;
         const imageMap = dataset.imageMap as Map<string, HTMLImageElement>;
-        
+
         const toncoinImage = imageMap.get('toncoin') || new Image();
         if (!imageMap.has('toncoin')) {
           toncoinImage.src = tonIconSrc;
           imageMap.set('toncoin', toncoinImage);
         }
-        
+
         dataset.tree.forEach((item: TreemapDataPoint, index: number) => {
           ctx.save();
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const element = chart.getDatasetMeta(0).data[index] as any;
           if (!element) {
             ctx.restore();
@@ -505,9 +413,9 @@ const createImagePlugin = (
           }
 
           // Colors based on percent change
-          const color = item.percentChange > 0 ? '#018f35' 
-            : item.percentChange < 0 ? '#dc2626' 
-            : '#8F9779';
+          const color = item.percentChange > 0 ? '#018f35'
+            : item.percentChange < 0 ? '#dc2626'
+              : '#8F9779';
 
           // Draw rectangle with adaptive border
           ctx.fillStyle = color;
@@ -525,14 +433,16 @@ const createImagePlugin = (
           const rawImage = imageMap.get(normalizeUrl(item.imageName)) || imageMap.get(item.imageName);
           let drawImage: HTMLImageElement | ImageBitmap | null = null;
           let hasImage = false;
-          
+
           if (rawImage) {
             try {
               if (rawImage.naturalWidth > 0 && rawImage.naturalHeight > 0) {
                 drawImage = rawImage;
                 hasImage = true;
               }
-            } catch {}
+            } catch {
+              // ignore
+            }
           }
 
           console.log('[TREEMAP BLOCK]', {
@@ -550,28 +460,28 @@ const createImagePlugin = (
           // Dynamic font sizing based on element size with export scaling
           const fontSizes = calculateFontSize(minDimension, scale);
           const spacing = calculateSpacing(minDimension, scale);
-          
+
           // Reduce text size for export to prevent overflow
           if (scale > 1) {
             fontSizes.titleFontSize = Math.max(fontSizes.titleFontSize * 0.85, 8);
             fontSizes.valueFontSize = Math.max(fontSizes.valueFontSize * 0.85, 6);
             fontSizes.marketCapFontSize = Math.max(fontSizes.marketCapFontSize * 0.85, 5);
           }
-          
+
           const imageSize = Math.max(minDimension * 0.3, 22);
-          
-          const aspectRatio = (hasImage && drawImage && drawImage.width && drawImage.height) 
-            ? (drawImage.width / drawImage.height) 
+
+          const aspectRatio = (hasImage && drawImage && drawImage.width && drawImage.height)
+            ? (drawImage.width / drawImage.height)
             : 1;
-          
+
           let imageWidth = imageSize;
           let imageHeight = imageSize / aspectRatio;
-          
+
           if (!isFinite(imageWidth) || !isFinite(imageHeight) || imageWidth <= 0 || imageHeight <= 0) {
             imageWidth = imageSize;
             imageHeight = imageSize;
           }
-          
+
           if (imageHeight > imageSize) {
             imageHeight = imageSize;
             imageWidth = imageSize * aspectRatio;
@@ -580,7 +490,7 @@ const createImagePlugin = (
           // Calculate available space for text
           const availableWidth = width * 0.95;
           const totalTextHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
-          
+
           // Smart scaling - ensure everything fits perfectly
           if (totalTextHeight > height * 0.95) {
             const scaleFactor = (height * 0.95) / totalTextHeight;
@@ -590,7 +500,7 @@ const createImagePlugin = (
             imageWidth *= scaleFactor;
             imageHeight *= scaleFactor;
           }
-          
+
           const finalTotalHeight = calculateTotalTextHeight(chartType, imageHeight, fontSizes, spacing);
           const textStartY = y + (height - finalTotalHeight) / 2;
           const centerX = x + width / 2;
@@ -601,14 +511,14 @@ const createImagePlugin = (
 
           const imageX = x + (width - imageWidth) / 2;
           const imageY = textStartY + imagePaddingOffset;
-          
+
           console.log('[TREEMAP BLOCK] Image dimensions:', {
             name: item.name,
             finalImageWidth: imageWidth,
             finalImageHeight: imageHeight,
             willDraw: hasImage && drawImage && width >= 20 && height >= 20
           });
-          
+
           // Draw image with robust error handling
           if (hasImage && drawImage && width >= 20 && height >= 20) {
             try {
@@ -617,13 +527,13 @@ const createImagePlugin = (
               const safeImageY = Math.max(y, Math.min(imageY, y + height - imageHeight));
               const safeImageWidth = Math.min(imageWidth, width * 0.9);
               const safeImageHeight = Math.min(imageHeight, height * 0.4);
-              
+
               // Additional validation before drawing
-              if (safeImageWidth > 0 && safeImageHeight > 0 && 
-                  safeImageX >= x && safeImageY >= y &&
-                  safeImageX + safeImageWidth <= x + width &&
-                  safeImageY + safeImageHeight <= y + height) {
-                
+              if (safeImageWidth > 0 && safeImageHeight > 0 &&
+                safeImageX >= x && safeImageY >= y &&
+                safeImageX + safeImageWidth <= x + width &&
+                safeImageY + safeImageHeight <= y + height) {
+
                 if ((drawImage as ImageBitmap).close) {
                   ctx.drawImage(drawImage as ImageBitmap, safeImageX, safeImageY, safeImageWidth, safeImageHeight);
                 } else if (drawImage instanceof HTMLImageElement && drawImage.complete) {
@@ -660,7 +570,7 @@ const createImagePlugin = (
           ctx.shadowBlur = 3;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 1;
-          
+
           ctx.fillStyle = 'white';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -693,7 +603,7 @@ const createImagePlugin = (
                 const coinSize = fontSizes.valueFontSize * 0.8;
                 const textWidth = ctx.measureText(bottomText).width;
                 const totalWidth = coinSize + textWidth + 2;
-                
+
                 // Draw coin icon
                 ctx.drawImage(
                   toncoinImage,
@@ -702,7 +612,7 @@ const createImagePlugin = (
                   coinSize,
                   coinSize
                 );
-                
+
                 // Draw price text
                 ctx.fillText(bottomText, centerX + coinSize / 2 + 2, priceY);
               } catch {
@@ -720,7 +630,7 @@ const createImagePlugin = (
             if (minDimension > 60 && item.marketCap !== '-') {
               const mcSpacing = fontSizes.valueFontSize + spacing * 2;
               const mcY = priceY + mcSpacing;
-              
+
               // Only draw if there's enough space (not overlapping bottom edge)
               if (mcY + fontSizes.marketCapFontSize < y + height - spacing * 2) {
                 ctx.font = `${fontSizes.marketCapFontSize}px sans-serif`;
@@ -752,7 +662,7 @@ const createImagePlugin = (
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
-        
+
         const chartArea = chart.chartArea;
         if (chartArea) {
           ctx.fillText('@Novachartbot', chartArea.right - 10, chartArea.bottom - 10);
@@ -784,7 +694,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   const [showSendDialog, setShowSendDialog] = useState(false);
   const { language } = useLanguage();
   const { toast } = useToast();
-  
+
   // Memoize preloaded images to prevent re-fetching on every render
   const preloadedImages = useMemo(() => {
     if (displayData.length === 0) return new Map<string, HTMLImageElement>();
@@ -793,7 +703,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   }, [displayData, chartType, timeGap, currency]);
 
   const handleHapticFeedback = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).Telegram?.WebApp) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).Telegram.WebApp.HapticFeedback.impactOccurred('light');
     } else if ('vibrate' in navigator) {
       navigator.vibrate(50);
@@ -802,16 +714,17 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   const downloadImage = useCallback(async () => {
     if (isDownloading) return;
-    
+
     try {
       setIsDownloading(true);
       handleHapticFeedback();
-      
+
       if (!chartRef.current) {
         setIsDownloading(false);
         return;
       }
-      
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const telegramWebApp = (window as any).Telegram?.WebApp;
       const isTelegram = !!telegramWebApp;
 
@@ -819,34 +732,34 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       // High quality export dimensions
       let exportWidth = 4800;
       let exportHeight = 2700;
-      
+
       // Use lower resolution for mobile/Telegram
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       if (isTelegram || isMobile) {
         exportWidth = 3000;
         exportHeight = 1688;
       }
-      
+
       canvas.width = exportWidth;
       canvas.height = exportHeight;
       const ctx = canvas.getContext('2d');
-      
+
       if (!ctx) {
         setIsDownloading(false);
         return;
       }
 
       const transformedData = transformGiftData(data, chartType, timeGap, currency, isRegularMode, isAllMode);
-      
+
       console.log('🎨 Starting image preload for export...', transformedData.length, 'items');
-      
+
       // Preload all images with extended timeout for export quality
       const imageMap = await preloadImagesAsync(transformedData, 20000);
-      
+
       console.log('✅ Image preload complete:', imageMap.size, 'images loaded');
 
       let tempChart: ChartJS | null = null;
-      
+
       try {
         // CRITICAL: Completely disable ALL event handling to prevent _positionChanged errors
         const tempChartOptions: ChartOptions<'treemap'> = {
@@ -862,6 +775,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           },
           events: [], // NO DOM EVENTS
           interaction: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             mode: undefined as any, // COMPLETELY disable interactions
             intersect: false
           },
@@ -882,6 +796,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               borderWidth: 2,
               imageMap,
               backgroundColor: 'transparent'
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any]
           },
           options: tempChartOptions,
@@ -900,18 +815,20 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           await new Promise(resolve => setTimeout(resolve, 500));
           tempChart.update('none');
           await new Promise(resolve => setTimeout(resolve, 300));
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
 
       console.log('🎨 Chart rendering complete, preparing download...');
 
       // Wait a bit more before download to ensure everything is rendered
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       // Download/send with comprehensive error handling
       try {
         console.log('📥 [EXPORT] Starting download/send process...');
-        
+
         if (!isTelegram) {
           // PC: Direct download with JPEG compression
           console.log('💻 [EXPORT] PC mode - downloading...');
@@ -926,7 +843,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             setTimeout(() => {
               try {
                 document.body.removeChild(link);
-              } catch {}
+              } catch {
+                // ignore
+              }
             }, 100);
             console.log('✅ [EXPORT] Download triggered successfully');
           } catch (downloadError) {
@@ -937,19 +856,19 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           // Mobile/Telegram: Send to API
           console.log('📱 [EXPORT] Telegram mode - sending to API...');
           const userId = telegramWebApp?.initDataUnsafe?.user?.id;
-          
+
           if (!userId) {
             console.error('❌ [EXPORT] User ID not found');
             throw new Error('User ID not available');
           }
-          
+
           if (typeof sendHeatmapImage !== 'function') {
             console.error('❌ [EXPORT] sendHeatmapImage function not available');
             throw new Error('Send function not available');
           }
-          
+
           console.log('📤 [EXPORT] Sending image for user:', userId);
-          
+
           // Show dialog immediately
           try {
             setShowSendDialog(true);
@@ -957,7 +876,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           } catch (dialogError) {
             console.warn('⚠️ [EXPORT] Failed to show dialog:', dialogError);
           }
-          
+
           // Send image with proper error handling
           try {
             await sendHeatmapImage({
@@ -997,7 +916,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             console.log('✅ [EXPORT] Send process completed');
           } catch (sendError) {
             console.error('❌ [EXPORT] Send failed, attempting fallback download...', sendError);
-            
+
             // Fallback: Download locally
             try {
               const fallbackUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -1010,7 +929,9 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
               setTimeout(() => {
                 try {
                   document.body.removeChild(link);
-                } catch {}
+                } catch {
+                  // ignore
+                }
               }, 100);
               console.log('✅ [EXPORT] Fallback download triggered');
             } catch (fallbackError) {
@@ -1037,7 +958,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     } finally {
       setTimeout(() => setIsDownloading(false), 1000);
     }
-  }, [data, chartType, timeGap, currency, language, handleHapticFeedback, isDownloading]);
+  }, [data, chartType, timeGap, currency, language, handleHapticFeedback, isDownloading, isAllMode, isRegularMode, toast]);
 
   // Expose downloadImage to parent components
   React.useImperativeHandle(ref, () => ({
@@ -1046,12 +967,12 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   useEffect(() => {
     try {
-      const filteredData = data.filter(item => !item.preSale);
+      const filteredData = data;
       const transformed = transformGiftData(filteredData, chartType, timeGap, currency, isRegularMode, isAllMode);
-      
+
       // Always display data immediately - don't wait for images
       setDisplayData(transformed);
-      
+
       // Check if all images are already cached
       const allImagesCached = transformed.every(item => {
         try {
@@ -1061,26 +982,28 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
           return false;
         }
       });
-      
+
       if (allImagesCached) {
         // All images are cached, no loading needed
         setIsLoading(false);
       } else {
         // Some images need loading - show chart but indicate loading
         setIsLoading(true);
-        
+
         // Preload uncached images in background
         const imageUrls = transformed.map(item => item.imageName);
-        
+
         imageCache.preloadImages(imageUrls.filter(url => !imageCache.isCached(url)))
           .then(() => {
             setIsLoading(false);
-            
+
             // Force chart update without triggering re-render
             if (chartRef.current) {
               try {
                 chartRef.current.update('none'); // 'none' mode prevents animation and is faster
-              } catch {}
+              } catch {
+                // ignore
+              }
             }
           })
           .catch(() => {
@@ -1101,6 +1024,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
       borderWidth: 1,
       imageMap: preloadedImages,
       backgroundColor: 'transparent'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any]
   }), [displayData, preloadedImages]);
 
@@ -1118,6 +1042,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
     // CRITICAL: Disable ALL events to prevent _positionChanged errors
     events: [],
     interaction: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mode: undefined as any,
       intersect: false
     },
@@ -1132,7 +1057,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
   return (
     <>
       <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
-      
+
       <div className="w-full flex flex-col items-center gap-3 px-3">
         {/* Loading indicator - small and non-intrusive */}
         {isLoading && (
@@ -1141,7 +1066,7 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
             <span className="text-xs text-muted-foreground">Loading images...</span>
           </div>
         )}
-        
+
         {/* Chart - Full height container */}
         <div className="w-full h-[calc(100vh-140px)] rounded-xl overflow-hidden bg-card border border-border">
           {(() => {
@@ -1161,8 +1086,8 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center space-y-2">
                     <p className="text-muted-foreground">Failed to render chart</p>
-                    <button 
-                      onClick={() => window.location.reload()} 
+                    <button
+                      onClick={() => window.location.reload()}
                       className="text-primary hover:underline text-sm"
                     >
                       Reload page

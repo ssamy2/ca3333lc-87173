@@ -61,17 +61,14 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Force dark theme on mount
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('nova-theme', 'dark');
-  }, []);
+
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
         attribute="class"
         defaultTheme="dark"
-        themes={["light", "dark"]}
+        themes={["light", "dark", "electric"]}
         enableSystem={false}
         storageKey="nova-theme"
       >
@@ -91,7 +88,7 @@ const App = () => {
                         <Suspense fallback={null}>
                           <AdsBanner />
                         </Suspense>
-                        
+
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/chart" element={<Chart />} />

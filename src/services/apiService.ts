@@ -1,6 +1,7 @@
 import { getAuthHeaders } from '@/lib/telegramAuth'
 import { normalizeImageUrl } from '@/utils/urlNormalizer'
 import { DEV_MODE } from '@/config/devMode'
+import { MarketItem } from '@/types/MarketData'
 
 export const USE_MOCK_DATA = false
 
@@ -37,8 +38,8 @@ export interface PriceAlert {
 }
 
 export const createPriceAlert = async (
-  giftName: string, 
-  targetPrice: number, 
+  giftName: string,
+  targetPrice: number,
   alertType: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE',
   modelName?: string | null,
   percentageChange?: number | null
@@ -224,7 +225,7 @@ export const fetchPortfolioAnalysis = async (username: string) => {
     }
 
     const responseData = await response.json()
-    
+
     if (!responseData.success) {
       throw new Error(responseData.error || 'Failed to analyze portfolio')
     }
@@ -294,25 +295,23 @@ const processAPIResponse = (responseData: any, username?: string) => {
   const minUSD = minPrice * ratio
 
   // Process regular gifts - handle different API formats
-  const processedRegularGifts = regularGifts.map((g: any) => {
+  const processedRegularGifts: MarketItem[] = regularGifts.map((g: any) => {
     const count = g.quantity || g.count || 1
     const priceTon = g.price_ton || 0
     const priceUsd = g.price_usd || 0
-    
+
     return {
       id: g.id || '',
       name: g.gift_name || g.name || g.full_name || g.short_name || 'Unknown',
       short_name: g.short_name || '',
       image: g.image || g.image_url || '',
-      count: count,
       price_ton: priceTon,
       price_usd: priceUsd,
-      total_ton: g.total_ton || (priceTon * count),
-      total_usd: g.total_usd || (priceUsd * count),
-      supply: g.supply || 0,
-      multiplier: g.multiplier || '',
       change_24h: g['change_24h_ton_%'] || g.change_24h || 0,
-      is_unupgraded: g.is_unupgraded !== false
+      change_7d: g['change_7d_ton_%'] || g.change_7d || 0,
+      change_30d: g['change_30d_ton_%'] || g.change_30d || 0,
+      supply: g.supply || 0,
+      is_black_market: false
     }
   })
 
@@ -359,7 +358,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
         // Use image URL directly from API (Google Storage)
         const img = g.image || ''
         const link = g.link || ''
-        
+
         // Convert API colors (integer) to hex format
         const colors = g.colors ? {
           center: `#${(g.colors.center >>> 0).toString(16).padStart(6, '0')}`,
@@ -367,7 +366,7 @@ const processAPIResponse = (responseData: any, username?: string) => {
           symbol: `#${(g.colors.symbol >>> 0).toString(16).padStart(6, '0')}`,
           text: `#${(g.colors.text >>> 0).toString(16).padStart(6, '0')}`
         } : null
-        
+
         return {
           count: 1,
           name: g.gift_name || g.name || 'Unknown',
