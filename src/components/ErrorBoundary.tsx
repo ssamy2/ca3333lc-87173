@@ -14,11 +14,17 @@ interface ErrorBoundaryProps {
 }
 
 /**
- * Global Error Boundary - Catches rendering errors without crashing the app
+ * ============================================================================
+ * NOVA GLOBAL ERROR BOUNDARY
+ * Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
+ * ============================================================================
  * Features:
+ * - Global exception handling for all tool components
  * - Fallback UI for failed widget loading
  * - Bilingual error messages (AR/EN)
  * - Reset functionality
+ * - GPU-optimized animations for low-end devices
+ * - CSS transitions instead of JS animations
  */
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {

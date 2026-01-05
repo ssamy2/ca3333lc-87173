@@ -414,30 +414,30 @@ const MarketStatsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f1729] via-[#0f1729] to-[#0f1729] pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0f1729]/90 backdrop-blur-lg border-b border-slate-700/30">
-        <div className="flex items-center justify-between p-4">
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header - Glassmorphism Design */}
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center justify-between p-4 max-w-5xl mx-auto">
           <button
             onClick={() => {
               if (window.history.length > 1) {
                 navigate(-1);
               } else {
-                navigate('/tools');
+                navigate('/');
               }
             }}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="text-center">
-            <h1 className="text-lg font-bold text-white">{text.title}</h1>
-            <p className="text-xs text-slate-400">{text.subtitle}</p>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{text.title}</h1>
+            <p className="text-xs text-muted-foreground">{text.subtitle}</p>
           </div>
           <button
             onClick={handleSendToTelegram}
             disabled={sending || !chartData}
-            className="p-2 text-slate-400 hover:text-blue-400 transition-colors disabled:opacity-50"
+            className="p-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all disabled:opacity-50 border border-primary/20"
             title={language === 'ar' ? 'إرسال للتليجرام' : 'Send to Telegram'}
           >
             {sending ? (
@@ -449,73 +449,76 @@ const MarketStatsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
-        {/* Current Value Card */}
+      <div className="p-4 space-y-4 max-w-5xl mx-auto">
+        {/* Current Value Card - Glassmorphism */}
         {stats && (
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-5 border border-slate-700/30">
-            <div className="flex items-start justify-between mb-4">
+          <div className="telegram-card p-5 relative overflow-hidden">
+            {/* Glow effect */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+            
+            <div className="relative flex items-start justify-between mb-4">
               <div>
-                <p className="text-slate-400 text-sm mb-1">{text.totalMarketCap}</p>
+                <p className="text-muted-foreground text-sm mb-1">{text.totalMarketCap}</p>
                 <div className="flex items-center gap-2">
                   {currency === 'ton' && <TonIcon className="w-7 h-7" />}
-                  <p className="text-3xl font-bold text-white">
+                  <p className="text-3xl font-bold text-foreground">
                     {currency === 'usd' ? '$ ' : ''}{formatNumber(stats.current)}
                   </p>
                 </div>
               </div>
-              <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
+              <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-medium border ${
                 stats.change >= 0 
-                  ? 'bg-green-500/20 text-green-400' 
-                  : 'bg-red-500/20 text-red-400'
+                  ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20' 
+                  : 'bg-destructive/10 text-destructive border-destructive/20'
               }`}>
                 {stats.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {formatPercent(stats.change)}
               </div>
             </div>
             
-            {/* Mini Stats */}
+            {/* Mini Stats - Grid Layout */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.high}</p>
-                <p className="text-white font-semibold text-sm">{formatNumber(stats.high)}</p>
+              <div className="bg-card/50 rounded-xl p-3 text-center border border-border/30">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1">{text.high}</p>
+                <p className="text-foreground font-semibold text-sm">{formatNumber(stats.high)}</p>
               </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.low}</p>
-                <p className="text-white font-semibold text-sm">{formatNumber(stats.low)}</p>
+              <div className="bg-card/50 rounded-xl p-3 text-center border border-border/30">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1">{text.low}</p>
+                <p className="text-foreground font-semibold text-sm">{formatNumber(stats.low)}</p>
               </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">{text.avg}</p>
-                <p className="text-white font-semibold text-sm">{formatNumber(stats.avg)}</p>
+              <div className="bg-card/50 rounded-xl p-3 text-center border border-border/30">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1">{text.avg}</p>
+                <p className="text-foreground font-semibold text-sm">{formatNumber(stats.avg)}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Chart */}
+        {/* Chart - Glassmorphism */}
         {chartData && (
-          <div ref={chartContainerRef} className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 relative">
+          <div ref={chartContainerRef} className="telegram-card p-4 relative">
             <div className="h-64 relative">
               <Line data={chartData} options={chartOptions} />
               {/* Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-lg font-medium text-white/15 tracking-wide">@NovaChartBot</span>
+                <span className="text-lg font-medium text-foreground/10 tracking-wide">@NovaChartBot</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Time Range & Currency Toggle */}
+        {/* Time Range & Currency Toggle - Modern Design */}
         <div className="flex gap-2">
           {/* Time Range */}
-          <div className="flex-1 flex bg-slate-800/50 rounded-xl p-1 border border-slate-700/30">
+          <div className="flex-1 flex bg-card/50 rounded-xl p-1 border border-border/30">
             {(['24h', '7d', '30d', 'all'] as TimeRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                   timeRange === range
-                    ? 'bg-blue-500 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {range === '24h' ? text.day : range === '7d' ? text.week : range === '30d' ? text.month : text.all}
@@ -524,13 +527,13 @@ const MarketStatsPage: React.FC = () => {
           </div>
           
           {/* Currency Toggle */}
-          <div className="flex bg-slate-800/50 rounded-xl p-1 border border-slate-700/30">
+          <div className="flex bg-card/50 rounded-xl p-1 border border-border/30">
             <button
               onClick={() => setCurrency('ton')}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 currency === 'ton'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               TON
@@ -539,8 +542,8 @@ const MarketStatsPage: React.FC = () => {
               onClick={() => setCurrency('usd')}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 currency === 'usd'
-                  ? 'bg-green-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[hsl(var(--success))] text-white'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               USD
@@ -548,28 +551,28 @@ const MarketStatsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Change Cards */}
+        {/* Change Cards - Grid Layout with Glassmorphism */}
         {stats && (
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/30">
-              <p className="text-slate-400 text-xs mb-2">{text.change24h}</p>
-              <div className={`flex items-center gap-1 ${stats.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="telegram-card p-4">
+              <p className="text-muted-foreground text-xs mb-2">{text.change24h}</p>
+              <div className={`flex items-center gap-1 ${stats.change24h >= 0 ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
                 {stats.change24h >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change24h)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/30">
-              <p className="text-slate-400 text-xs mb-2">{text.change7d}</p>
-              <div className={`flex items-center gap-1 ${stats.change7d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="telegram-card p-4">
+              <p className="text-muted-foreground text-xs mb-2">{text.change7d}</p>
+              <div className={`flex items-center gap-1 ${stats.change7d >= 0 ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
                 {stats.change7d >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change7d)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/30">
-              <p className="text-slate-400 text-xs mb-2">{text.change30d}</p>
-              <div className={`flex items-center gap-1 ${stats.change30d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="telegram-card p-4">
+              <p className="text-muted-foreground text-xs mb-2">{text.change30d}</p>
+              <div className={`flex items-center gap-1 ${stats.change30d >= 0 ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
                 {stats.change30d >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="font-bold">{formatPercent(stats.change30d)}</span>
               </div>
@@ -578,7 +581,7 @@ const MarketStatsPage: React.FC = () => {
         )}
 
         {/* Data Info */}
-        <div className="flex items-center justify-center gap-2 text-slate-500 text-xs">
+        <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs">
           <Calendar className="w-3 h-3" />
           <span>{filteredData.length} {language === 'ar' ? 'نقطة بيانات' : 'data points'}</span>
         </div>

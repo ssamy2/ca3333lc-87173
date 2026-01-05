@@ -239,6 +239,15 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('community')}</h3>
           </div>
           <div className="space-y-3">
+            {/* Nova Gifts Channel - Primary */}
+            <Button
+              onClick={() => openTelegramLink('https://t.me/Nova_Gifts')}
+              variant="outline"
+              className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
+            >
+              <span className="font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Nova Gifts</span>
+              <ExternalLink className="w-4 h-4 text-primary" />
+            </Button>
             <Button
               onClick={() => openTelegramLink('https://t.me/GT_Rolet')}
               variant="outline"

@@ -3,14 +3,16 @@
  * NOVA APP SIDEBAR - Smart Hover Sidebar (Desktop Only)
  * Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
  * Features:
- * - Collapsed by default (icons only)
- * - Expands on hover (icons + labels)
- * - GPU-accelerated animations for 60fps
- * - Lazy loading of tools
+ * - Collapsed: 60px width, icons only
+ * - Expanded on hover: 250px width, icon + label (RTL support)
+ * - GPU-accelerated CSS transitions for 60fps on low-end devices
+ * - All tools from /tools page integrated directly
+ * - Removed: Profit Calculator, /tools page route
+ * - User Gift Calc redirects to internal tool component
  * ============================================================================
  */
 
-import React, { useState, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -27,6 +29,8 @@ import {
   Sparkles,
   User,
   Grid3X3,
+  Bitcoin,
+  ExternalLink,
 } from 'lucide-react';
 
 interface NavItem {
@@ -39,13 +43,18 @@ interface NavItem {
   badge?: string;
 }
 
-// Navigation items - merged from Tools page, removed Profit Calculator and Tools page
+// Nova Channel Link
+const NOVA_CHANNEL = 'https://t.me/Nova_Gifts';
+
+// Navigation items - All tools from /tools page integrated
+// Removed: Profit Calculator, /tools page route
 const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'chart', icon: TrendingUp, label: 'Market', labelAr: 'السوق', path: '/chart' },
   { id: 'trade', icon: LineChart, label: 'Trade', labelAr: 'تداول', path: '/trade' },
   { id: 'heatmap', icon: Flame, label: 'Heatmap', labelAr: 'خريطة حرارية', path: '/heatmap' },
   { id: 'stats', icon: BarChart3, label: 'Statistics', labelAr: 'الإحصائيات', path: '/market-stats' },
-  // User Gift Calculator - merged from Tools page
+  { id: 'crypto', icon: Bitcoin, label: 'Crypto', labelAr: 'العملات', path: '/crypto' },
+  // User Gift Calculator - redirects to internal tool component (not /market)
   { id: 'gift-calc', icon: User, label: 'Gift Calculator', labelAr: 'حاسبة الهدايا', action: onGiftCalcClick },
   { id: 'alerts', icon: Bell, label: 'Alerts', labelAr: 'التنبيهات', path: '/price-alerts' },
   { id: 'settings', icon: Settings, label: 'Settings', labelAr: 'الإعدادات', path: '/settings' },
@@ -99,11 +108,12 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
       className={cn(
         'fixed top-0 left-0 z-50 h-screen',
         'hidden lg:flex flex-col',
-        // GPU-accelerated transition for 60fps
+        // GPU-accelerated transition for 60fps on low-end devices
         'transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
-        // GPU acceleration hint
+        // GPU acceleration for smooth performance
         'transform-gpu will-change-[width]',
-        isExpanded ? 'w-[280px]' : 'w-[72px]',
+        // Collapsed: 60px, Expanded: 250px (as per spec)
+        isExpanded ? 'w-[250px]' : 'w-[60px]',
         isRTL && 'left-auto right-0',
         className
       )}
@@ -221,11 +231,36 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
 
         {/* Bottom Section */}
         <div className="p-3 border-t border-sidebar-border/50 space-y-2">
+          {/* Nova Channel Link */}
+          <button
+            onClick={() => window.open(NOVA_CHANNEL, '_blank', 'noopener,noreferrer')}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
+              'text-muted-foreground hover:text-accent',
+              'hover:bg-accent/10 transition-all duration-200',
+              'group transform-gpu border border-transparent hover:border-accent/30',
+              !isExpanded && 'justify-center px-0'
+            )}
+            style={{ transform: 'translateZ(0)' }}
+          >
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-accent/10 group-hover:bg-accent/20 transition-colors">
+              <ExternalLink className="w-4 h-4 text-accent" />
+            </div>
+            {isExpanded && (
+              <span className={cn(
+                'flex-1 text-sm font-medium whitespace-nowrap text-accent',
+                isRTL ? 'text-right' : 'text-left'
+              )}>
+                {isRTL ? 'قناة نوفا' : 'Nova Channel'}
+              </span>
+            )}
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-3 rounded-xl',
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
               'text-muted-foreground hover:text-foreground',
               'hover:bg-sidebar-accent transition-all duration-200',
               'group transform-gpu',
@@ -233,11 +268,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
             )}
             style={{ transform: 'translateZ(0)' }}
           >
-            <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center group-hover:bg-sidebar-accent transition-colors">
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-sidebar-accent transition-colors">
               {isDark ? (
-                <Sun className="w-5 h-5 group-hover:text-amber-400 transition-colors" />
+                <Sun className="w-4 h-4 group-hover:text-amber-400 transition-colors" />
               ) : (
-                <Moon className="w-5 h-5 group-hover:text-primary transition-colors" />
+                <Moon className="w-4 h-4 group-hover:text-primary transition-colors" />
               )}
             </div>
             {isExpanded && (

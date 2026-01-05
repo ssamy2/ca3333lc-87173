@@ -52,8 +52,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Main Content Area */}
       <main className={cn(
         'min-h-screen transition-all duration-300',
-        showNav && 'lg:pl-[72px]',
-        isRTL && showNav && 'lg:pl-0 lg:pr-[72px]',
+        // Match sidebar collapsed width (60px)
+        showNav && 'lg:pl-[60px]',
+        isRTL && showNav && 'lg:pl-0 lg:pr-[60px]',
         'pb-20 lg:pb-0',
         className
       )}>
