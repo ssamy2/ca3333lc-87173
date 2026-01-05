@@ -50,23 +50,36 @@ const Chart = () => {
       }
 
       let blackEntries = blackFloorData
-        .filter(item => marketData[item.gift_name])
+        .filter(item => marketData[item.name || item.gift_name])
         .map(item => {
-          const marketImage = marketData[item.gift_name]?.image_url;
-          const imageUrl = marketImage || `https://www.channelsseller.site/api/image/${item.short_name}`;
+          const giftName = item.name || item.gift_name;
+          const marketImage = marketData[giftName]?.image_url;
+          const imageUrl = marketImage || item.image || `https://www.channelsseller.site/api/image/${item.short_name}`;
 
           return {
-            id: item.short_name,
-            name: item.gift_name,
+            id: item.short_name || item.id,
+            name: giftName,
             short_name: item.short_name,
             image: imageUrl,
-            price_ton: item.black_price,
-            price_usd: item.black_price * 2.16,
-            change_24h: item.change_24h_ton_percent || 0,
-            change_7d: item.weekly_change_percent_ton || 0,
-            change_30d: item.monthly_change_percent_ton || 0,
+            image_url: imageUrl,
+            price_ton: item.price_ton,
+            price_usd: item.price_usd,
+            priceTon: item.price_ton,
+            priceUsd: item.price_usd,
+            change_24h: item.change_24h || item.change_24h_ton_percent || 0,
+            change_7d: item.change_7d || item.weekly_change_percent_ton || 0,
+            change_30d: item.change_30d || item.monthly_change_percent_ton || 0,
+            'change_24h_ton_%': item.change_24h || item.change_24h_ton_percent || 0,
+            'change_7d_ton_%': item.change_7d || item.weekly_change_percent_ton || 0,
+            'change_30d_ton_%': item.change_30d || item.monthly_change_percent_ton || 0,
+            change_24h_ton_percent: item.change_24h || item.change_24h_ton_percent || 0,
+            tonPrice24hAgo: item.tonPrice24hAgo || item.daily_past_price_ton || item.price_ton,
+            tonPriceWeekAgo: item.tonPriceWeekAgo || item.weekly_past_price_ton || item.price_ton,
+            tonPriceMonthAgo: item.tonPriceMonthAgo || item.monthly_past_price_ton || item.price_ton,
+            available_periods: ['24h', '7d', '30d'],
             is_black_market: true,
-            supply: marketData[item.gift_name]?.upgradedSupply || 0
+            supply: marketData[giftName]?.upgradedSupply || 0,
+            upgradedSupply: marketData[giftName]?.upgradedSupply || 0
           };
         });
 

@@ -11,12 +11,16 @@ interface BlackAPIResponse {
     current_black_price_usd: number;
     daily_change_percent_ton: number;
     daily_past_price_ton: number;
+    daily_change_percent_usd: number;
     weekly_change_percent_ton: number;
     weekly_past_price_ton: number;
+    weekly_change_percent_usd: number;
     monthly_change_percent_ton: number | null;
     monthly_past_price_ton: number | null;
+    monthly_change_percent_usd: number | null;
     quarterly_change_percent_ton: number | null;
     quarterly_past_price_ton: number | null;
+    quarterly_change_percent_usd: number | null;
   };
 }
 
@@ -42,7 +46,7 @@ const fetchBlackFloorData = async (): Promise<MarketItem[]> => {
   }
   const data: BlackAPIResponse = await response.json();
 
-  // Convert object of objects to array
+  // Convert object of objects to array and preserve all fields
   const processedData: MarketItem[] = Object.entries(data).map(([shortName, item]) => {
     return {
       id: shortName,
@@ -51,9 +55,22 @@ const fetchBlackFloorData = async (): Promise<MarketItem[]> => {
       image: `https://www.channelsseller.site/api/image/${shortName}`,
       price_ton: item.current_black_price_ton,
       price_usd: item.current_black_price_usd,
+      black_price: item.current_black_price_ton,
       change_24h: item.daily_change_percent_ton,
       change_7d: item.weekly_change_percent_ton,
       change_30d: item.monthly_change_percent_ton ?? undefined,
+      change_24h_ton_percent: item.daily_change_percent_ton,
+      change_24h_usd_percent: item.daily_change_percent_usd,
+      weekly_change_percent_ton: item.weekly_change_percent_ton,
+      weekly_change_percent_usd: item.weekly_change_percent_usd,
+      monthly_change_percent_ton: item.monthly_change_percent_ton ?? undefined,
+      monthly_change_percent_usd: item.monthly_change_percent_usd ?? undefined,
+      daily_past_price_ton: item.daily_past_price_ton,
+      weekly_past_price_ton: item.weekly_past_price_ton,
+      monthly_past_price_ton: item.monthly_past_price_ton ?? undefined,
+      tonPrice24hAgo: item.daily_past_price_ton,
+      tonPriceWeekAgo: item.weekly_past_price_ton,
+      tonPriceMonthAgo: item.monthly_past_price_ton ?? undefined,
       is_black_market: true
     };
   });
