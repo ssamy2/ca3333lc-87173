@@ -73,8 +73,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       gradient: 'from-pink-500 to-rose-500',
       shadowColor: 'shadow-pink-500/20',
       available: true,
-      route: null,
-      action: onGoToHome
+      route: '/user-gift-calculator',
+      action: null
     },
     {
       id: 'priceAlerts',
