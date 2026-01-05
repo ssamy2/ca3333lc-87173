@@ -198,51 +198,45 @@ const HeatmapPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-background pb-6">
       {/* Header - using design system styling */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 p-2 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">{text.back}</span>
+            <span className="text-sm">{text.back}</span>
           </button>
           <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{text.heatmap}</h1>
           <Button
             onClick={() => treemapRef.current?.downloadImage()}
             size="sm"
-            className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl shadow-sm"
+            className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl"
           >
             <Download className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      <div className="p-4 space-y-4 max-w-7xl mx-auto relative z-10">
+      <div className="p-4 space-y-3 max-w-7xl mx-auto">
         {/* Chart Type - using design system buttons */}
-        <div className="bg-card/40 backdrop-blur-md p-1.5 rounded-xl border border-white/5 flex gap-2">
+        <div className="flex gap-2">
           <button
             onClick={() => setChartType('change')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${chartType === 'change'
-              ? 'bg-primary text-primary-foreground shadow-md'
-              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm ${chartType === 'change'
+              ? 'bg-primary text-primary-foreground shadow-[var(--shadow-primary)]'
+              : 'bg-card text-muted-foreground hover:text-foreground border border-border/50 hover:border-primary/30'
               }`}
           >
             {text.change}
           </button>
           <button
             onClick={() => setChartType('marketcap')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${chartType === 'marketcap'
-              ? 'bg-primary text-primary-foreground shadow-md'
-              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm ${chartType === 'marketcap'
+              ? 'bg-primary text-primary-foreground shadow-[var(--shadow-primary)]'
+              : 'bg-card text-muted-foreground hover:text-foreground border border-border/50 hover:border-primary/30'
               }`}
           >
             {text.marketCap}
@@ -251,14 +245,14 @@ const HeatmapPage = () => {
 
         {/* Time Period - using accent colors */}
         {chartType === 'change' && (
-          <div className="flex gap-2 justify-center bg-card/30 backdrop-blur-sm p-1 rounded-xl w-fit mx-auto border border-white/5">
+          <div className="flex gap-2 justify-center">
             {(['24h', '1w', '1m'] as TimeGap[]).map((time) => (
               <button
                 key={time}
                 onClick={() => setTimeGap(time)}
-                className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${timeGap === time
-                  ? 'bg-accent text-accent-foreground shadow-md scale-105'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timeGap === time
+                  ? 'bg-accent text-accent-foreground shadow-sm'
+                  : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
                   }`}
               >
                 {time.toUpperCase()}
@@ -268,7 +262,7 @@ const HeatmapPage = () => {
         )}
 
         {/* Top Filter - using success color for active state */}
-        <div className="flex gap-2 justify-center flex-wrap">
+        <div className="flex gap-2 justify-center">
           {[
             { value: 'all', label: text.all },
             { value: 'top50', label: 'Top 50' },
@@ -278,9 +272,9 @@ const HeatmapPage = () => {
             <button
               key={filter.value}
               onClick={() => setTopFilter(filter.value as TopFilter)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${topFilter === filter.value
-                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-sm'
-                : 'bg-card/30 text-muted-foreground border-transparent hover:border-white/10 hover:bg-card/50'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${topFilter === filter.value
+                ? 'bg-[hsl(var(--success))] text-white shadow-sm'
+                : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
                 }`}
             >
               {filter.label}
@@ -289,39 +283,39 @@ const HeatmapPage = () => {
         </div>
 
         {/* Data Source - using design system colors */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2">
           <button
             onClick={() => setDataSource('all')}
-            className={`flex-1 min-w-[80px] py-2 rounded-xl text-xs font-bold transition-all duration-300 ${dataSource === 'all'
-              ? 'bg-primary/90 text-primary-foreground shadow-lg'
-              : 'bg-card/40 text-muted-foreground hover:bg-card/60'
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'all'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
               }`}
           >
             {text.all}
           </button>
           <button
             onClick={() => setDataSource('upgraded')}
-            className={`flex-1 min-w-[80px] py-2 rounded-xl text-xs font-bold transition-all duration-300 ${dataSource === 'upgraded'
-              ? 'bg-accent/90 text-accent-foreground shadow-lg'
-              : 'bg-card/40 text-muted-foreground hover:bg-card/60'
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'upgraded'
+              ? 'bg-accent text-accent-foreground shadow-sm'
+              : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
               }`}
           >
             {text.upgraded}
           </button>
           <button
             onClick={() => setDataSource('regular')}
-            className={`flex-1 min-w-[80px] py-2 rounded-xl text-xs font-bold transition-all duration-300 ${dataSource === 'regular'
-              ? 'bg-amber-500/90 text-white shadow-lg'
-              : 'bg-card/40 text-muted-foreground hover:bg-card/60'
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'regular'
+              ? 'bg-[hsl(var(--warning))] text-white shadow-sm'
+              : 'bg-card text-[hsl(var(--warning))]/60 hover:text-[hsl(var(--warning))] border border-border/50'
               }`}
           >
             {text.regular}
           </button>
           <button
             onClick={() => setDataSource('black')}
-            className={`flex-1 min-w-[80px] py-2 rounded-xl text-xs font-bold transition-all duration-300 ${dataSource === 'black'
-              ? 'bg-foreground text-background shadow-lg'
-              : 'bg-card/40 text-muted-foreground hover:bg-card/60'
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${dataSource === 'black'
+              ? 'bg-secondary text-secondary-foreground shadow-sm'
+              : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
               }`}
           >
             Black
@@ -330,22 +324,22 @@ const HeatmapPage = () => {
 
         {/* Currency - using design system colors */}
         {(dataSource === 'all' || dataSource === 'upgraded') && (
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-2">
             <button
               onClick={() => setCurrency('ton')}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-2 ${currency === 'ton'
-                ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-sm'
-                : 'bg-card/30 text-muted-foreground hover:bg-card/50 border border-transparent'
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${currency === 'ton'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
                 }`}
             >
-              <TonIcon className="w-3.5 h-3.5" />
+              <TonIcon className="w-4 h-4" />
               TON
             </button>
             <button
               onClick={() => setCurrency('usd')}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${currency === 'usd'
-                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-sm'
-                : 'bg-card/30 text-muted-foreground hover:bg-card/50 border border-transparent'
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${currency === 'usd'
+                ? 'bg-[hsl(var(--success))] text-white shadow-sm'
+                : 'bg-card text-muted-foreground hover:text-foreground border border-border/50'
                 }`}
             >
               $ USD
@@ -354,7 +348,7 @@ const HeatmapPage = () => {
         )}
 
         {/* Heatmap - with consistent rounded corners */}
-        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-card/20 backdrop-blur-md">
+        <div className="rounded-2xl overflow-hidden border border-border/30 shadow-[var(--shadow-card)]">
           <TreemapHeatmap
             ref={treemapRef}
             data={giftItems}

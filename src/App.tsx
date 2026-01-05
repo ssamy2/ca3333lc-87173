@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { useState, useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -25,7 +25,6 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
-const CryptoPage = lazy(() => import("./pages/CryptoPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
 
@@ -102,11 +101,7 @@ const App = () => {
                           <Route path="/admin/ads" element={<AdminAdsPage />} />
                           <Route path="/trade" element={<TradingPage />} />
                           <Route path="/price-alerts" element={<PriceAlertsPage />} />
-                          <Route path="/crypto" element={<CryptoPage />} />
-                          {/* Redirects */}
-                          <Route path="/market" element={<Navigate to="/" replace />} />
-                          <Route path="/tools" element={<Navigate to="/" replace />} />
-                          <Route path="/tools" element={<Navigate to="/" replace />} />
+                          {/* Removed: /tools and /profit-calculator - merged into sidebar */}
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />
                         </Routes>

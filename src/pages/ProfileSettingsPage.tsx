@@ -240,7 +240,7 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
           </div>
           <div className="space-y-3">
             <Button
-              onClick={() => openTelegramLink('https://t.me/Nova_Gifts')}
+              onClick={() => openTelegramLink('https://t.me/GT_Rolet')}
               variant="outline"
               className="w-full justify-between rounded-xl h-12 text-sm hover:bg-blue-500/10 hover:border-blue-500/30 transition-all border-blue-500/20"
             >
