@@ -58,7 +58,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className }) => {
   const { language } = useLanguage();
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const isRTL = language === 'ar';
 
   const isExpanded = !isCollapsed;

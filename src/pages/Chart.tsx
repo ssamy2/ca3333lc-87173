@@ -289,6 +289,7 @@ const Chart = () => {
                   isBlackMode={item.is_black_market}
                   isUnupgraded={item.is_unupgraded}
                   giftId={item.id}
+                  currency={currency}
                 />
               );
             })}

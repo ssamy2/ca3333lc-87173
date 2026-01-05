@@ -22,6 +22,7 @@ interface GiftCardProps {
   isBlackMode: boolean;
   isUnupgraded?: boolean;
   giftId?: string;
+  currency?: 'ton' | 'usd';
 }
 
 const GiftCard = React.memo(({ 
@@ -32,7 +33,8 @@ const GiftCard = React.memo(({
   change, 
   isBlackMode,
   isUnupgraded = false,
-  giftId
+  giftId,
+  currency = 'ton'
 }: GiftCardProps) => {
   const { language } = useLanguage();
   const isPositive = change > 0;
@@ -108,11 +110,19 @@ const GiftCard = React.memo(({
         {/* Price Section */}
         <div className="relative w-full flex flex-col items-center gap-0.5 mt-auto pt-1">
           <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
-            <TonIcon className={cn(
-              "w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 flex-shrink-0",
-              isBlackMode ? "text-[hsl(var(--black-copper))]" : "",
-              isRegularGift && "text-warning"
-            )} />
+            {currency === 'usd' ? (
+              <span className={cn(
+                "font-bold text-[10px] sm:text-xs md:text-sm lg:text-base",
+                isBlackMode ? "text-[hsl(var(--black-copper))]" : "",
+                isRegularGift && "text-warning"
+              )}>$</span>
+            ) : (
+              <TonIcon className={cn(
+                "w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 flex-shrink-0",
+                isBlackMode ? "text-[hsl(var(--black-copper))]" : "",
+                isRegularGift && "text-warning"
+              )} />
+            )}
             <span className={cn(
               "font-bold font-mono text-[10px] sm:text-xs md:text-sm lg:text-base leading-tight",
               isBlackMode ? "text-[hsl(var(--black-copper))]" : "",

@@ -80,6 +80,8 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
         <div className="flex items-center gap-4 sm:gap-6">
           <span className="text-xs font-semibold text-muted-foreground">Price</span>
           <span className="text-xs font-semibold text-muted-foreground min-w-[45px] text-right">24h</span>
+          <span className="hidden xl:block text-xs font-semibold text-muted-foreground min-w-[45px] text-right">7d</span>
+          <span className="hidden xl:block text-xs font-semibold text-muted-foreground min-w-[45px] text-right">30d</span>
         </div>
       </div>
 
@@ -98,6 +100,9 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
             const change24h = isBlackMode && item.change_24h_ton_percent !== undefined
               ? item.change_24h_ton_percent
               : item['change_24h_ton_%'] || item.change_24h || 0;
+
+            const change7d = item['change_7d_ton_%'] || item.change_7d || 0;
+            const change30d = item['change_30d_ton_%'] || item.change_30d || 0;
 
             // Check if data is available
             const has24h = isBlackMode ? (item.available_periods?.includes('24h') ?? false) : true;
@@ -176,6 +181,28 @@ const MarketTable: React.FC<MarketTableProps> = ({ data, isBlackMode = false }) 
                         {change24h > 0 ? '+' : ''}{change24h.toFixed(2)}%
                       </span>
                     )}
+                  </div>
+
+                  <div className="hidden xl:block min-w-[45px] text-right">
+                    <span className={`font-bold text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded whitespace-nowrap ${change7d > 0
+                      ? 'text-green-500 bg-green-500/10'
+                      : change7d < 0
+                        ? 'text-red-500 bg-red-500/10'
+                        : 'text-muted-foreground bg-secondary/20'
+                      }`}>
+                      {change7d > 0 ? '+' : ''}{change7d.toFixed(2)}%
+                    </span>
+                  </div>
+
+                  <div className="hidden xl:block min-w-[45px] text-right">
+                    <span className={`font-bold text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded whitespace-nowrap ${change30d > 0
+                      ? 'text-green-500 bg-green-500/10'
+                      : change30d < 0
+                        ? 'text-red-500 bg-red-500/10'
+                        : 'text-muted-foreground bg-secondary/20'
+                      }`}>
+                      {change30d > 0 ? '+' : ''}{change30d.toFixed(2)}%
+                    </span>
                   </div>
                 </div>
               </Link>

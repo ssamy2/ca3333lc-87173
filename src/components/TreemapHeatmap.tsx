@@ -209,7 +209,7 @@ const transformGiftData = (
     const shouldUseRegularLogic = isRegularMode || (isAllMode && isRegularGift);
 
     let percentChange: number = 0;
-    if (timeGap === '24h') percentChange = item.change_24h;
+    if (timeGap === '24h') percentChange = item.change_24h || 0;
     else if (timeGap === '1w') percentChange = item.change_7d || 0;
     else if (timeGap === '1m') percentChange = item.change_30d || 0;
 
