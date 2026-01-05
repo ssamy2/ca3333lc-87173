@@ -135,7 +135,15 @@ const UserGiftCalculatorPage: React.FC = () => {
   }, []);
 
   // Translations
-  const t = getTranslation(language);
+  const t = (key: string) => {
+    const translations = {
+      heroTitle: language === 'ar' ? 'احسب قيمة هداياك بدقة الآن' : 'Calculate Your Gift Value Accurately Now',
+      heroDescription: language === 'ar' ? 'اكتشف القيمة الحقيقية لهدايا Telegram الخاصة بك من خلال أداة التحليل المتقدمة لبيانات السوق في الوقت الفعلي' : 'Discover the true value of your Telegram gifts through our advanced real-time market data analysis tool',
+      heroExample: language === 'ar' ? '💡 اختر هديتك ← شاهد الأسعار المباشرة ← اتخذ قرارات مستنيرة' : '💡 Select your gift → View live prices → Make informed decisions',
+      enterUsername: language === 'ar' ? 'أدخل اسم المستخدم...' : 'Enter username...'
+    };
+    return translations[key as keyof typeof translations] || key;
+  };
 
   // Save to search history
   const saveToHistory = (searchTerm: string) => {
