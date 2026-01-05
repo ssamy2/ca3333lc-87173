@@ -18,16 +18,12 @@ import BottomNav from './BottomNav';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  activeTab?: 'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade';
-  onTabChange?: (tab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade') => void;
   showNav?: boolean;
   className?: string;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
   children,
-  activeTab = 'chart',
-  onTabChange,
   showNav = true,
   className
 }) => {
@@ -52,8 +48,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Main Content Area */}
       <main className={cn(
         'min-h-screen transition-all duration-300',
-        showNav && 'lg:pl-[72px]',
-        isRTL && showNav && 'lg:pl-0 lg:pr-[72px]',
+        showNav && 'lg:pl-[60px]',
+        isRTL && showNav && 'lg:pl-0 lg:pr-[60px]',
         'pb-20 lg:pb-0',
         className
       )}>
@@ -64,9 +60,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       </main>
 
       {/* Mobile Bottom Navigation */}
-      {showNav && onTabChange && (
+      {showNav && (
         <div className="lg:hidden">
-          <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+          <BottomNav />
         </div>
       )}
     </div>

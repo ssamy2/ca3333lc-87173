@@ -76,7 +76,7 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
                 <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-2xl"></div>
               </div>
-              
+
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -97,7 +97,7 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Title */}
                 <h2 className="text-2xl font-bold text-foreground mb-2">
                   {t.title}
@@ -136,9 +136,9 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
                   asChild
                   className="w-full h-12 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 border-0"
                 >
-                  <a 
-                    href="https://t.me/GT_Rolet" 
-                    target="_blank" 
+                  <a
+                    href="https://t.me/Nova_Gifts"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2"
                   >
@@ -146,10 +146,13 @@ const SubscribePrompt: React.FC<SubscribePromptProps> = ({ isOpen, onClose }) =>
                     {t.subscribeButton}
                   </a>
                 </Button>
-                
+
                 {/* Skip Button */}
                 <button
-                  onClick={onClose}
+                  onClick={() => {
+                    if (onSkip) onSkip();
+                    onClose();
+                  }}
                   className="w-full mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   {language === 'ar' ? 'تخطي الآن' : language === 'ru' ? 'Пропустить' : 'Skip for now'}

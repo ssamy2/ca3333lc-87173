@@ -27,6 +27,7 @@ import {
   Sparkles,
   User,
   Grid3X3,
+  Bitcoin,
 } from 'lucide-react';
 
 interface NavItem {
@@ -39,14 +40,14 @@ interface NavItem {
   badge?: string;
 }
 
-// Navigation items - merged from Tools page, removed Profit Calculator and Tools page
+// Navigation items - merged from Tools page
 const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'chart', icon: TrendingUp, label: 'Market', labelAr: 'السوق', path: '/chart' },
   { id: 'trade', icon: LineChart, label: 'Trade', labelAr: 'تداول', path: '/trade' },
+  { id: 'crypto', icon: Bitcoin, label: 'Crypto', labelAr: 'كريبتو', path: '/crypto' },
   { id: 'heatmap', icon: Flame, label: 'Heatmap', labelAr: 'خريطة حرارية', path: '/heatmap' },
   { id: 'stats', icon: BarChart3, label: 'Statistics', labelAr: 'الإحصائيات', path: '/market-stats' },
-  // User Gift Calculator - merged from Tools page
-  { id: 'gift-calc', icon: User, label: 'Gift Calculator', labelAr: 'حاسبة الهدايا', action: onGiftCalcClick },
+  { id: 'gift-calc', icon: User, label: 'User Gift Calc', labelAr: 'حاسبة الهدايا', action: onGiftCalcClick },
   { id: 'alerts', icon: Bell, label: 'Alerts', labelAr: 'التنبيهات', path: '/price-alerts' },
   { id: 'settings', icon: Settings, label: 'Settings', labelAr: 'الإعدادات', path: '/settings' },
 ];
@@ -103,7 +104,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
         'transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
         // GPU acceleration hint
         'transform-gpu will-change-[width]',
-        isExpanded ? 'w-[280px]' : 'w-[72px]',
+        isExpanded ? 'w-[250px]' : 'w-[60px]',
         isRTL && 'left-auto right-0',
         className
       )}
@@ -114,7 +115,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
       }}
     >
       {/* Sidebar Background with Glassmorphism - GPU accelerated */}
-      <div 
+      <div
         className="absolute inset-0 bg-sidebar/95 backdrop-blur-xl border-r border-sidebar-border transform-gpu"
         style={{ transform: 'translateZ(0)' }}
       >
@@ -164,7 +165,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ className, onGoToHome }) => {
                   isActive
                     ? 'bg-gradient-to-r from-primary/20 to-accent/10 text-primary shadow-sm'
                     : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent',
-                  !isExpanded && 'justify-center px-0'
+                  !isExpanded && 'justify-center px-0',
+                  isRTL && isExpanded && 'flex-row-reverse'
                 )}
                 style={{ transform: 'translateZ(0)' }}
               >

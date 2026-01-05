@@ -5,32 +5,39 @@
  * ============================================================================
  */
 
-import { TrendingUp, Wrench, Bitcoin, Settings, LineChart } from 'lucide-react';
+import { TrendingUp, Flame, Bitcoin, Settings, LineChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/i18n/translations';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-interface BottomNavProps {
-  activeTab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade';
-  onTabChange: (tab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade') => void;
-}
-
-const BottomNav = ({
-  activeTab,
-  onTabChange
-}: BottomNavProps) => {
+const BottomNav = () => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const t = (key: keyof typeof import('@/i18n/translations').translations.en) =>
     getTranslation(language, key);
   const isRTL = language === 'ar';
 
   const navItems = [
-    { id: 'chart' as const, icon: TrendingUp, label: t('chart') },
-    { id: 'trade' as const, icon: LineChart, label: language === 'ar' ? 'تداول' : 'Trade' },
-    { id: 'tools' as const, icon: Wrench, label: language === 'ar' ? 'أدوات' : 'Tools' },
-    { id: 'crypto' as const, icon: Bitcoin, label: language === 'ar' ? 'كريبتو' : 'Crypto' },
-    { id: 'settings' as const, icon: Settings, label: t('settings') },
+    { id: 'chart', icon: TrendingUp, label: t('chart'), path: '/chart' },
+    { id: 'trade', icon: LineChart, label: language === 'ar' ? 'تداول' : 'Trade', path: '/trade' },
+    { id: 'heatmap', icon: Flame, label: language === 'ar' ? 'خريطة' : 'Heatmap', path: '/heatmap' },
+    { id: 'crypto', icon: Bitcoin, label: language === 'ar' ? 'كريبتو' : 'Crypto', path: '/crypto' },
+    { id: 'settings', icon: Settings, label: t('settings'), path: '/settings' },
   ];
+
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/' || path === '/chart') return 'chart';
+    if (path.startsWith('/trade')) return 'trade';
+    if (path.startsWith('/heatmap')) return 'heatmap';
+    if (path.startsWith('/crypto')) return 'crypto';
+    if (path.startsWith('/settings')) return 'settings';
+    return '';
+  };
+
+  const activeTab = getActiveTab();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 pt-2 pointer-events-none md:hidden">
@@ -57,7 +64,7 @@ const BottomNav = ({
             return (
               <button
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
+                onClick={() => navigate(item.path)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-1 flex-1 h-full",
                   "transition-all duration-300 ease-out",

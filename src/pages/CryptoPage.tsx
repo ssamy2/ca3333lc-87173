@@ -25,15 +25,21 @@ const CryptoPage: React.FC = () => {
   const text = t[language] || t.en;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[10%] right-[10%] w-[30%] h-[30%] bg-amber-500/5 rounded-full blur-[80px]" />
+        <div className="absolute bottom-[10%] left-[10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[80px]" />
+      </div>
+
       {/* Header - consistent with design system */}
-      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className={cn(
           "flex items-center gap-4 p-4 max-w-5xl mx-auto",
           isRTL && "flex-row-reverse"
         )}>
-          <div className="p-2.5 bg-[hsl(var(--warning))]/10 rounded-xl ring-1 ring-[hsl(var(--warning))]/20">
-            <Bitcoin className="w-5 h-5 text-[hsl(var(--warning))]" />
+          <div className="p-2.5 bg-amber-500/10 rounded-xl ring-1 ring-amber-500/20">
+            <Bitcoin className="w-5 h-5 text-amber-500" />
           </div>
           <div className={cn("flex flex-col", isRTL && "items-end")}>
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -45,27 +51,30 @@ const CryptoPage: React.FC = () => {
       </div>
 
       {/* Content - consistent padding and shadows */}
-      <div className="p-4 max-w-5xl mx-auto">
+      <div className="p-4 max-w-5xl mx-auto relative z-10">
         {/* Coming Soon Card - using design system card styling */}
-        <div className="telegram-card p-8 text-center space-y-6">
+        <div className="bg-card/40 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+          {/* Inner decorative glow */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+          
           {/* Icon with glow effect */}
           <div className="relative mx-auto w-24 h-24">
-            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--warning))]/30 to-primary/30 rounded-full blur-xl animate-glow-pulse" />
-            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(var(--warning))]/20 to-primary/20 rounded-2xl flex items-center justify-center border border-[hsl(var(--warning))]/30 shadow-[var(--shadow-lg)]">
-              <Bitcoin className="w-12 h-12 text-[hsl(var(--warning))]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-primary/30 rounded-full blur-xl animate-pulse" />
+            <div className="relative w-full h-full bg-gradient-to-br from-amber-500/20 to-primary/20 rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-lg">
+              <Bitcoin className="w-12 h-12 text-amber-500" />
             </div>
           </div>
 
           {/* Text */}
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">{text.comingSoon}</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+          <div className="space-y-2 relative z-10">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">{text.comingSoon}</h2>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
               {text.comingSoonDesc}
             </p>
           </div>
 
           {/* Placeholder cards preview */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-8 opacity-50">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-8 opacity-40 blur-[1px] select-none pointer-events-none">
             {[
               { name: 'TON', change: '+5.2%', positive: true },
               { name: 'BTC', change: '-2.1%', positive: false },
@@ -73,15 +82,15 @@ const CryptoPage: React.FC = () => {
             ].map((crypto, i) => (
               <div 
                 key={i}
-                className="bg-card/50 rounded-xl p-4 border border-border/30"
+                className="bg-card/50 rounded-xl p-4 border border-border/30 flex flex-col items-start gap-2"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-foreground">{crypto.name}</span>
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-bold text-foreground">{crypto.name}</span>
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className={cn(
-                  "flex items-center gap-1 text-sm font-medium",
-                  crypto.positive ? "text-[hsl(var(--success))]" : "text-destructive"
+                  "flex items-center gap-1 text-sm font-bold",
+                  crypto.positive ? "text-emerald-500" : "text-rose-500"
                 )}>
                   {crypto.positive ? (
                     <ArrowUpRight className="w-3 h-3" />
