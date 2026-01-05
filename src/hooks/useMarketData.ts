@@ -175,11 +175,23 @@ const fetchMarketData = async (): Promise<MarketData> => {
       // Read change percentages from API - handle both naming conventions
       const change24hTon = value['change_24h_ton_%'] ?? value.change_24h_ton_percent ?? 0;
       const change24hUsd = value['change_24h_usd_%'] ?? value.change_24h_usd_percent ?? 0;
+      const change7dTon = value['change_7d_ton_%'] ?? value.change_7d_ton_percent ?? 0;
+      const change7dUsd = value['change_7d_usd_%'] ?? value.change_7d_usd_percent ?? 0;
+      const change30dTon = value['change_30d_ton_%'] ?? value.change_30d_ton_percent ?? 0;
+      const change30dUsd = value['change_30d_usd_%'] ?? value.change_30d_usd_percent ?? 0;
       
       data[key] = {
         ...value,
+        priceTon: value.priceTon || value.price_ton || 0,
+        priceUsd: value.priceUsd || value.price_usd || 0,
+        price_ton: value.priceTon || value.price_ton || 0,
+        price_usd: value.priceUsd || value.price_usd || 0,
         'change_24h_ton_%': change24hTon,
         'change_24h_usd_%': change24hUsd,
+        'change_7d_ton_%': change7dTon,
+        'change_7d_usd_%': change7dUsd,
+        'change_30d_ton_%': change30dTon,
+        'change_30d_usd_%': change30dUsd,
         image_url: normalizeImageUrl(value.image_url)
       };
     });
