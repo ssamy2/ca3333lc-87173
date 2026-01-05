@@ -412,23 +412,31 @@ const createImagePlugin = (
             return;
           }
 
-          // Colors based on percent change
-          const color = item.percentChange > 0 ? '#018f35'
-            : item.percentChange < 0 ? '#dc2626'
-              : '#8F9779';
+          // Calculate minimum dimension first for sizing calculations
+          const minDimension = Math.min(width, height);
 
-          // Draw rectangle with adaptive border
+          // System palette colors based on percent change
+          // Using Nova Design System colors for consistency
+          const positiveColor = '#10b981'; // Emerald/Accent - success
+          const negativeColor = '#ef4444'; // Destructive - error
+          const neutralColor = '#64748b';  // Muted foreground - neutral
+          
+          const color = item.percentChange > 0 ? positiveColor
+            : item.percentChange < 0 ? negativeColor
+              : neutralColor;
+
+          // Draw rectangle with improved rounded corners (system radius)
+          // Using radius-lg (1rem = 16px) scaled based on block size
+          const cornerRadius = Math.min(Math.max(minDimension * 0.08, 4), 16);
+          
           ctx.fillStyle = color;
-          ctx.strokeStyle = '#1e293b';
+          ctx.strokeStyle = 'hsl(0, 0%, 9%)'; // Border color from design system
           ctx.lineWidth = Math.max(borderWidth, 0.5);
           ctx.beginPath();
-          ctx.roundRect(x, y, width, height, 6);
+          ctx.roundRect(x, y, width, height, cornerRadius);
           ctx.fill();
           ctx.stroke();
           ctx.closePath();
-
-          // Always draw content - no minimum size check
-          const minDimension = Math.min(width, height);
 
           const rawImage = imageMap.get(normalizeUrl(item.imageName)) || imageMap.get(item.imageName);
           let drawImage: HTMLImageElement | ImageBitmap | null = null;

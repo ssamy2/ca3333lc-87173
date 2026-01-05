@@ -12,19 +12,18 @@ import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load pages - يتم تحميلها فقط عند الحاجة
+// Removed: ProfitCalculatorPage, ToolsPage (merged into sidebar)
 const Index = lazy(() => import("./pages/Index"));
 const Chart = lazy(() => import("./pages/Chart"));
 const HeatmapPage = lazy(() => import("./pages/HeatmapPage"));
 const MarketStatsPage = lazy(() => import("./pages/MarketStatsPage"));
 const PortfolioTrackerPage = lazy(() => import("./pages/PortfolioTrackerPage"));
-const ProfitCalculatorPage = lazy(() => import("./pages/ProfitCalculatorPage"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
 const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
-const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
@@ -95,15 +94,14 @@ const App = () => {
                           <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/market-stats" element={<MarketStatsPage />} />
                           <Route path="/portfolio-tracker" element={<PortfolioTrackerPage />} />
-                          <Route path="/profit-calculator" element={<ProfitCalculatorPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:id" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />
                           <Route path="/admin" element={<AdminPanel />} />
                           <Route path="/admin/ads" element={<AdminAdsPage />} />
                           <Route path="/trade" element={<TradingPage />} />
-                          <Route path="/tools" element={<ToolsPage />} />
                           <Route path="/price-alerts" element={<PriceAlertsPage />} />
+                          {/* Removed: /tools and /profit-calculator - merged into sidebar */}
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />
                         </Routes>

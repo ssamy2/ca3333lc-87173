@@ -1,5 +1,18 @@
+/**
+ * ============================================================================
+ * VIRTUALIZED NFT GRID - Performance Optimized for Weak Devices
+ * Protocol: CODE_DIRECT_REFACTOR_IMAGE_CACHE_2026
+ * Features:
+ * - Virtual scrolling for large lists
+ * - GPU-accelerated transforms
+ * - Lazy loading of items
+ * - Memory-efficient rendering
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import NFTCard from './NFTCard';
+import { WidgetErrorBoundary } from './ErrorBoundary';
 
 interface NFTGift {
   count: number;
@@ -110,24 +123,38 @@ const VirtualizedNFTGrid: React.FC<VirtualizedNFTGridProps> = ({
   }, [nfts, scrollTop, containerHeight, columns, itemHeight, overscan]);
 
   // Memoize the grid items to prevent unnecessary re-renders
+  // Wrapped in WidgetErrorBoundary for resilience
   const gridItems = useMemo(() => (
     visibleItems.map(({ nft, index }) => (
-      <NFTCard 
-        key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`} 
-        nft={nft} 
-      />
+      <WidgetErrorBoundary 
+        key={`${nft.name}-${nft.model}-${index}-${nft.floor_price}`}
+        className="min-h-[200px]"
+      >
+        <NFTCard nft={nft} />
+      </WidgetErrorBoundary>
     ))
   ), [visibleItems]);
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div 
+      ref={containerRef} 
+      className="relative w-full"
+      // GPU acceleration hint
+      style={{ 
+        willChange: 'transform',
+        contain: 'layout style paint',
+      }}
+    >
       {/* Spacer for total height */}
       <div style={{ height: totalHeight }}>
-        {/* Positioned container for visible items */}
+        {/* Positioned container for visible items - GPU accelerated */}
         <div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4"
           style={{
-            transform: `translateY(${offsetY}px)`,
+            // GPU-accelerated transform for 60fps scrolling
+            transform: `translate3d(0, ${offsetY}px, 0)`,
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
           }}
         >
           {gridItems}

@@ -9,7 +9,8 @@
  * - Seamless transitions between all pages
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppSidebar from './AppSidebar';
@@ -30,8 +31,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   showNav = true,
   className
 }) => {
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const isRTL = language === 'ar';
+
+  // Handler for Gift Calculator - navigates to home page
+  const handleGoToHome = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
 
   return (
     <div className={cn(
@@ -39,8 +46,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       'transition-colors duration-300',
       isRTL && 'rtl'
     )}>
-      {/* Desktop Sidebar */}
-      {showNav && <AppSidebar />}
+      {/* Desktop Sidebar - Smart Hover with GPU acceleration */}
+      {showNav && <AppSidebar onGoToHome={handleGoToHome} />}
 
       {/* Main Content Area */}
       <main className={cn(
