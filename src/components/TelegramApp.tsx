@@ -514,6 +514,7 @@ const TelegramApp: React.FC = () => {
     );
   }
 
+  
   if (activeTab === 'crypto') {
     return (
       <>

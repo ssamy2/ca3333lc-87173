@@ -19,6 +19,7 @@ const HeatmapPage = lazy(() => import("./pages/HeatmapPage"));
 const MarketStatsPage = lazy(() => import("./pages/MarketStatsPage"));
 const CryptoPage = lazy(() => import("./pages/CryptoPage"));
 const TelegramApp = lazy(() => import("./components/TelegramApp"));
+const UserGiftCalculatorPage = lazy(() => import("./pages/UserGiftCalculatorPage"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
 const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
 const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
@@ -95,7 +96,7 @@ const App = () => {
                           <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/market-stats" element={<MarketStatsPage />} />
                           <Route path="/crypto" element={<CryptoPage />} />
-                          <Route path="/user-gift-calculator" element={<TelegramApp />} />
+                          <Route path="/user-gift-calculator" element={<UserGiftCalculatorPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:id" element={<RegularGiftDetail />} />
                           <Route path="/settings" element={<ProfileSettingsPage />} />
