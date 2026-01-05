@@ -54,8 +54,8 @@ const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'heatmap', icon: Flame, label: 'Heatmap', labelAr: 'خريطة حرارية', path: '/heatmap' },
   { id: 'stats', icon: BarChart3, label: 'Statistics', labelAr: 'الإحصائيات', path: '/market-stats' },
   { id: 'crypto', icon: Bitcoin, label: 'Crypto', labelAr: 'العملات', path: '/crypto' },
-  // User Gift Calculator - redirects to internal tool component (not /market)
-  { id: 'gift-calc', icon: User, label: 'Gift Calculator', labelAr: 'حاسبة الهدايا', action: onGiftCalcClick },
+  // User Gift Calculator - Portfolio Tracker page
+  { id: 'gift-calc', icon: User, label: 'Gift Calculator', labelAr: 'حاسبة الهدايا', path: '/portfolio-tracker' },
   { id: 'alerts', icon: Bell, label: 'Alerts', labelAr: 'التنبيهات', path: '/price-alerts' },
   { id: 'settings', icon: Settings, label: 'Settings', labelAr: 'الإعدادات', path: '/settings' },
 ];
