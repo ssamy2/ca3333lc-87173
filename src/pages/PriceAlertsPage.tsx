@@ -72,13 +72,20 @@ const PriceAlertsPage = () => {
       const data = await response.json();
       
       // Convert market data to array with image URLs
-      const giftsArray: GiftData[] = Object.entries(data).map(([name, giftData]: [string, any]) => ({
-        name: name,
-        priceTon: giftData.priceTon || 0,
-        priceUsd: giftData.priceUsd || 0,
-        models: giftData.models || [],
-        image_url: giftData.image_url || giftData.image || ''
-      }));
+      const giftsArray: GiftData[] = Object.entries(data).map(([name, giftData]: [string, any]) => {
+        const imageUrl = giftData.image_url || giftData.image || '';
+        console.log(`[PriceAlerts] Gift: ${name}, image_url: ${imageUrl}`);
+        return {
+          name: name,
+          priceTon: giftData.priceTon || 0,
+          priceUsd: giftData.priceUsd || 0,
+          models: giftData.models || [],
+          image_url: imageUrl
+        };
+      });
+      
+      console.log(`[PriceAlerts] Loaded ${giftsArray.length} gifts`);
+      console.log('[PriceAlerts] Sample gifts:', giftsArray.slice(0, 3));
       
       setGifts(giftsArray);
     } catch (error) {
@@ -293,20 +300,33 @@ const PriceAlertsPage = () => {
                   <SelectValue placeholder={loadingGifts ? 'Loading...' : 'Choose a gift'} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {gifts.map((gift) => (
-                    <SelectItem key={gift.name} value={gift.name}>
-                      <div className="flex items-center gap-2">
-                        <GiftImage
-                          imageUrl={gift.image_url || ''}
-                          name={gift.name}
-                          size="sm"
-                          className="flex-shrink-0"
-                        />
-                        <span className="flex-1 truncate">{gift.name}</span>
-                        <span className="text-muted-foreground text-xs flex-shrink-0">({gift.priceTon.toFixed(4)} TON)</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {gifts.map((gift) => {
+                    console.log(`[PriceAlerts] Rendering gift: ${gift.name}, image: ${gift.image_url}`);
+                    return (
+                      <SelectItem key={gift.name} value={gift.name} className="py-2">
+                        <div className="flex items-center gap-2 w-full">
+                          {gift.image_url ? (
+                            <img 
+                              src={gift.image_url} 
+                              alt={gift.name}
+                              className="w-6 h-6 rounded object-contain flex-shrink-0"
+                              onError={(e) => {
+                                console.log(`[PriceAlerts] Image error for ${gift.name}:`, gift.image_url);
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                              onLoad={() => console.log(`[PriceAlerts] Image loaded for ${gift.name}`)}
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded bg-muted/50 flex items-center justify-center flex-shrink-0">
+                              <Gift className="w-3 h-3 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <span className="flex-1 truncate">{gift.name}</span>
+                          <span className="text-muted-foreground text-xs flex-shrink-0">({gift.priceTon.toFixed(4)} TON)</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               
