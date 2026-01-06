@@ -184,8 +184,20 @@ const PriceAlertsPage = () => {
                   {marketGifts.map((gift) => (
                     <SelectItem key={gift.name} value={gift.name}>
                       <div className="flex items-center gap-2">
-                        <span>{gift.name}</span>
-                        <span className="text-muted-foreground text-xs">({gift.priceTon.toFixed(4)} TON)</span>
+                        {gift.image_url ? (
+                          <img 
+                            src={gift.image_url} 
+                            alt={gift.name}
+                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center flex-shrink-0">
+                            <Gift className="w-4 h-4 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        <span className="flex-1 truncate">{gift.name}</span>
+                        <span className="text-muted-foreground text-xs flex-shrink-0">({gift.priceTon.toFixed(4)} TON)</span>
                       </div>
                     </SelectItem>
                   ))}
