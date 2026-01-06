@@ -69,17 +69,17 @@ interface GiftData {
     name: string;
     profile_image: string;
     nfts: NFTGift[];
-    regular_gifts: RegularGift[];
-    total_nfts: number;
-    total_upgraded: number;
-    total_regular: number;
-    total_value_ton: number;
-    total_value_usd: number;
-    upgraded_value_ton: number;
-    upgraded_value_usd: number;
-    regular_value_ton: number;
-    regular_value_usd: number;
-    visible_nfts: number;
+    regular_gifts?: RegularGift[];
+    total_nfts?: number;
+    total_upgraded?: number;
+    total_regular?: number;
+    total_value_ton?: number;
+    total_value_usd?: number;
+    upgraded_value_ton?: number;
+    upgraded_value_usd?: number;
+    regular_value_ton?: number;
+    regular_value_usd?: number;
+    visible_nfts?: number;
   };
 }
 
@@ -516,20 +516,20 @@ const UserGiftCalculatorPage: React.FC = () => {
               <StatsCard
                 icon={<Calculator className="w-4 h-4 text-primary" />}
                 label={language === 'ar' ? 'إجمالي القيمة' : 'Total Value'}
-                value={`${nftData.total_value_ton.toFixed(2)} TON`}
-                subValue={`$${nftData.total_value_usd.toFixed(2)}`}
+                value={`${(nftData.total_value_ton || 0).toFixed(2)} TON`}
+                subValue={`$${(nftData.total_value_usd || 0).toFixed(2)}`}
               />
               <StatsCard
                 icon={<Gift className="w-4 h-4 text-accent" />}
                 label={language === 'ar' ? 'الهدايا المطورة' : 'Upgraded Gifts'}
-                value={`${nftData.upgraded_value_ton.toFixed(2)} TON`}
-                subValue={`${nftData.total_upgraded} gifts`}
+                value={`${(nftData.upgraded_value_ton || 0).toFixed(2)} TON`}
+                subValue={`${nftData.total_upgraded || 0} gifts`}
               />
               <StatsCard
                 icon={<Gift className="w-4 h-4 text-muted-foreground" />}
                 label={language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
-                value={`${nftData.regular_value_ton.toFixed(2)} TON`}
-                subValue={`${nftData.total_regular} gifts`}
+                value={`${(nftData.regular_value_ton || 0).toFixed(2)} TON`}
+                subValue={`${nftData.total_regular || 0} gifts`}
               />
             </div>
 
