@@ -27,6 +27,7 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
+const CryptoGiftCenter = lazy(() => import("./pages/CryptoGiftCenter"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
 
@@ -104,6 +105,7 @@ const App = () => {
                           <Route path="/admin/ads" element={<AdminAdsPage />} />
                           <Route path="/trade" element={<TradingPage />} />
                           <Route path="/price-alerts" element={<PriceAlertsPage />} />
+                          <Route path="/crypto-center" element={<CryptoGiftCenter />} />
                           {/* Removed: /tools and /profit-calculator - merged into sidebar */}
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />
