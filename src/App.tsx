@@ -28,6 +28,7 @@ const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
 const CryptoGiftCenter = lazy(() => import("./pages/CryptoGiftCenter"));
+const CryptoDetailPage = lazy(() => import("./pages/CryptoDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdsBanner = lazy(() => import("@/components/AdsBanner"));
 
@@ -97,6 +98,7 @@ const App = () => {
                           <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/market-stats" element={<MarketStatsPage />} />
                           <Route path="/crypto" element={<CryptoGiftCenter />} />
+                          <Route path="/crypto/:coinId" element={<CryptoDetailPage />} />
                           <Route path="/user-gift-calculator" element={<UserGiftCalculatorPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:id" element={<RegularGiftDetail />} />
