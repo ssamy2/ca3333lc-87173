@@ -40,21 +40,37 @@ const CryptoGiftCenter: React.FC = () => {
     setError(null);
 
     try {
-      const data = await fetchTopCryptos(25);
-      const tonIndex = data.findIndex(c => c.id === 'the-open-network' || c.symbol === 'ton');
+      // Fetch top 24 coins (to make room for TON)
+      const data = await fetchTopCryptos(24);
       
-      if (tonIndex !== -1 && tonIndex !== 3) {
-        const tonData = data[tonIndex];
-        const filteredData = data.filter((_, i) => i !== tonIndex);
-        const finalData = [
-          ...filteredData.slice(0, 3),
-          tonData,
-          ...filteredData.slice(3)
-        ];
-        setCoins(finalData.slice(0, 25));
-      } else {
-        setCoins(data.slice(0, 25));
+      // Fetch TON separately
+      let tonData: CryptoMarketData | null = null;
+      try {
+        const tonResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=the-open-network&sparkline=false');
+        if (tonResponse.ok) {
+          const tonArray = await tonResponse.json();
+          if (tonArray && tonArray.length > 0) {
+            tonData = tonArray[0];
+          }
+        }
+      } catch (tonError) {
+        console.error('[CryptoGiftCenter] TON fetch error:', tonError);
       }
+      
+      // Insert TON at position 4 (index 3)
+      let finalData: CryptoMarketData[];
+      if (tonData) {
+        finalData = [
+          ...data.slice(0, 3),  // First 3 coins
+          tonData,              // TON at position 4
+          ...data.slice(3, 24)  // Remaining coins (total 25)
+        ];
+      } else {
+        // If TON fetch failed, just use the 24 coins
+        finalData = data;
+      }
+      
+      setCoins(finalData);
     } catch (err) {
       console.error('[CryptoGiftCenter] Error:', err);
       setError(isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data');
