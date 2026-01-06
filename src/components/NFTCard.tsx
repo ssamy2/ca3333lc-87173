@@ -31,10 +31,10 @@ interface NFTGift {
   description?: string;
   tg_deeplink?: string;
   colors?: {
-    center: string;
-    edge: string;
-    symbol: string;
-    text: string;
+    center: number | string;
+    edge: number | string;
+    symbol: number | string;
+    text: number | string;
   } | null;
   details?: {
     links?: string[];
@@ -123,10 +123,11 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
     );
     
     if (nft.colors) {
-      // Use colors from API response
-      gradient.addColorStop(0, nft.colors.center);
-      gradient.addColorStop(0.7, nft.colors.edge);
-      gradient.addColorStop(1, nft.colors.symbol);
+      // Use colors from API response - convert numbers to hex if needed
+      const toColor = (c: number | string) => typeof c === 'number' ? `#${c.toString(16).padStart(6, '0')}` : c;
+      gradient.addColorStop(0, toColor(nft.colors.center));
+      gradient.addColorStop(0.7, toColor(nft.colors.edge));
+      gradient.addColorStop(1, toColor(nft.colors.symbol));
     } else {
       // Fallback colors
       gradient.addColorStop(0, '#1a2332');
@@ -160,9 +161,10 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
             size / 2, size / 2, size / 2
           );
           if (nft.colors) {
-            gradient.addColorStop(0, nft.colors.center);
-            gradient.addColorStop(0.7, nft.colors.edge);
-            gradient.addColorStop(1, nft.colors.symbol);
+            const toColor = (c: number | string) => typeof c === 'number' ? `#${c.toString(16).padStart(6, '0')}` : c;
+            gradient.addColorStop(0, toColor(nft.colors.center));
+            gradient.addColorStop(0.7, toColor(nft.colors.edge));
+            gradient.addColorStop(1, toColor(nft.colors.symbol));
           } else {
             gradient.addColorStop(0, '#1a2332');
             gradient.addColorStop(1, '#0f1419');

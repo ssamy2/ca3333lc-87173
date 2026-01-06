@@ -25,10 +25,13 @@ interface UserProfile {
 
 interface NFTGift {
   count: number;
-  name: string;
+  name?: string;
+  gift_name?: string;
   model: string;
   floor_price: number;
   avg_price: number;
+  price_ton?: number;
+  price_usd?: number;
   image?: string;
   title?: string;
   backdrop?: string;
@@ -36,9 +39,19 @@ interface NFTGift {
   symbol?: string;
   symbol_rarity?: string;
   model_rarity?: string;
+  rarity?: number;
   number?: number;
+  mint?: number;
   quantity_issued?: number;
   rarity_per_mille?: number;
+  link?: string;
+  tg_deeplink?: string;
+  colors?: {
+    center: number | string;
+    edge: number | string;
+    symbol: number | string;
+    text: number | string;
+  } | null;
 }
 
 interface RegularGift {
@@ -72,14 +85,19 @@ interface GiftData {
 
 interface SingleGiftData {
   gift_name: string;
-  gift_image: string;
+  gift_image?: string;
+  image?: string;
   floor_price: number;
   avg_price: number;
   total_supply: number;
   gifts_in_circulation: number;
   estimated_value: number;
-  model: string;
-  rarity: string;
+  model?: string;
+  backdrop?: string;
+  rarity?: string;
+  price_ton?: number;
+  price_usd?: number;
+  tg_deeplink?: string;
 }
 
 const UserGiftCalculatorPage: React.FC = () => {
@@ -496,22 +514,22 @@ const UserGiftCalculatorPage: React.FC = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <StatsCard
-                title={language === 'ar' ? 'إجمالي القيمة' : 'Total Value'}
-                value={nftData.total_value_ton}
-                change={0}
-                icon={Calculator}
+                icon={<Calculator className="w-4 h-4 text-primary" />}
+                label={language === 'ar' ? 'إجمالي القيمة' : 'Total Value'}
+                value={`${nftData.total_value_ton.toFixed(2)} TON`}
+                subValue={`$${nftData.total_value_usd.toFixed(2)}`}
               />
               <StatsCard
-                title={language === 'ar' ? 'الهدايا المطورة' : 'Upgraded Gifts'}
-                value={nftData.upgraded_value_ton}
-                change={0}
-                icon={Gift}
+                icon={<Gift className="w-4 h-4 text-accent" />}
+                label={language === 'ar' ? 'الهدايا المطورة' : 'Upgraded Gifts'}
+                value={`${nftData.upgraded_value_ton.toFixed(2)} TON`}
+                subValue={`${nftData.total_upgraded} gifts`}
               />
               <StatsCard
-                title={language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
-                value={nftData.regular_value_ton}
-                change={0}
-                icon={Gift}
+                icon={<Gift className="w-4 h-4 text-muted-foreground" />}
+                label={language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
+                value={`${nftData.regular_value_ton.toFixed(2)} TON`}
+                subValue={`${nftData.total_regular} gifts`}
               />
             </div>
 
