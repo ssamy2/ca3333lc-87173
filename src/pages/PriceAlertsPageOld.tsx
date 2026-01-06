@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, AlertCircle, Gift } from 'lucide-react';
+import { ArrowLeft, Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, AlertCircle, Gift, Percent } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { createPriceAlert, getUserPriceAlerts, deletePriceAlert, PriceAlert } fr
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAuthHeaders } from '@/lib/telegramAuth';
 import { DEV_MODE } from '@/config/devMode';
+import GiftImage from '@/components/GiftImage';
 
 interface MarketGift {
   name: string;
@@ -32,7 +33,9 @@ const PriceAlertsPage = () => {
 
   // Form state
   const [selectedGift, setSelectedGift] = useState('');
+  const [alertType, setAlertType] = useState<'PRICE_TARGET' | 'PERCENTAGE_CHANGE'>('PRICE_TARGET');
   const [targetPrice, setTargetPrice] = useState('');
+  const [percentageChange, setPercentageChange] = useState('');
   const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
 
   // Load alerts and market data on mount
@@ -88,10 +91,28 @@ const PriceAlertsPage = () => {
   };
 
   const handleCreateAlert = async () => {
-    if (!selectedGift || !targetPrice) {
+    if (!selectedGift) {
       toast({
         title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
-        description: isRTL ? 'يرجى اختيار الهدية وإدخال السعر المستهدف' : 'Please select a gift and enter target price',
+        description: isRTL ? 'يرجى اختيار الهدية' : 'Please select a gift',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (alertType === 'PRICE_TARGET' && !targetPrice) {
+      toast({
+        title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
+        description: isRTL ? 'يرجى إدخال السعر المستهدف' : 'Please enter target price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (alertType === 'PERCENTAGE_CHANGE' && !percentageChange) {
+      toast({
+        title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
+        description: isRTL ? 'يرجى إدخال نسبة التغيير' : 'Please enter percentage change',
         variant: 'destructive',
       });
       return;
@@ -102,7 +123,37 @@ const PriceAlertsPage = () => {
 
     try {
       setIsCreating(true);
-      await createPriceAlert(selectedGift, parseFloat(targetPrice), condition, currentPrice);
+      
+      const apiUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site';
+      const authHeaders = await getAuthHeaders();
+      
+      const requestBody: any = {
+        gift_name: selectedGift,
+        alert_type: alertType,
+        condition: condition,
+        current_price_ton: currentPrice
+      };
+
+      if (alertType === 'PRICE_TARGET') {
+        requestBody.target_price_ton = parseFloat(targetPrice);
+      } else {
+        requestBody.percentage_change = parseFloat(percentageChange);
+        requestBody.target_price_ton = 0;
+      }
+
+      const response = await fetch(`${apiUrl}/api/alerts/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create alert');
+      }
       
       toast({
         title: isRTL ? 'تم بنجاح' : 'Success',
@@ -112,6 +163,7 @@ const PriceAlertsPage = () => {
       // Reset form and reload
       setSelectedGift('');
       setTargetPrice('');
+      setPercentageChange('');
       loadAlerts();
     } catch (error: any) {
       toast({
@@ -184,18 +236,12 @@ const PriceAlertsPage = () => {
                   {marketGifts.map((gift) => (
                     <SelectItem key={gift.name} value={gift.name}>
                       <div className="flex items-center gap-2">
-                        {gift.image_url ? (
-                          <img 
-                            src={gift.image_url} 
-                            alt={gift.name}
-                            className="w-8 h-8 rounded object-cover flex-shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center flex-shrink-0">
-                            <Gift className="w-4 h-4 text-muted-foreground/50" />
-                          </div>
-                        )}
+                        <GiftImage
+                          imageUrl={gift.image_url || ''}
+                          name={gift.name}
+                          size="sm"
+                          className="flex-shrink-0"
+                        />
                         <span className="flex-1 truncate">{gift.name}</span>
                         <span className="text-muted-foreground text-xs flex-shrink-0">({gift.priceTon.toFixed(4)} TON)</span>
                       </div>
@@ -209,18 +255,12 @@ const PriceAlertsPage = () => {
                 const giftData = getSelectedGiftData();
                 return giftData ? (
                   <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg mt-2">
-                    {giftData.image_url ? (
-                      <img 
-                        src={giftData.image_url} 
-                        alt={giftData.name}
-                        className="w-12 h-12 rounded-lg object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                        <Gift className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                    )}
+                    <GiftImage
+                      imageUrl={giftData.image_url || ''}
+                      name={giftData.name}
+                      size="md"
+                      className="flex-shrink-0"
+                    />
                     <div className="flex-1">
                       <p className="font-medium">{giftData.name}</p>
                       <p className="text-sm text-primary font-semibold">
@@ -232,52 +272,105 @@ const PriceAlertsPage = () => {
               })()}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">
-                  {isRTL ? 'الشرط' : 'Condition'}
-                </label>
-                <Select
-                  value={condition}
-                  onValueChange={(v: 'ABOVE' | 'BELOW') => setCondition(v)}
-                >
-                  <SelectTrigger className="bg-background/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ABOVE">
-                      <div className="flex items-center gap-2 text-green-500">
-                        <TrendingUp className="w-4 h-4" />
-                        {isRTL ? 'أعلى من' : 'Above'}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="BELOW">
-                      <div className="flex items-center gap-2 text-red-500">
-                        <TrendingDown className="w-4 h-4" />
-                        {isRTL ? 'أقل من' : 'Below'}
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Alert Type Selection */}
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">
+                {isRTL ? 'نوع التنبيه' : 'Alert Type'}
+              </label>
+              <Select
+                value={alertType}
+                onValueChange={(v: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE') => {
+                  setAlertType(v);
+                  setTargetPrice('');
+                  setPercentageChange('');
+                }}
+              >
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRICE_TARGET">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4" />
+                      {isRTL ? 'سعر محدد' : 'Price Target'}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="PERCENTAGE_CHANGE">
+                    <div className="flex items-center gap-2">
+                      <Percent className="w-4 h-4" />
+                      {isRTL ? 'نسبة مئوية' : 'Percentage Change'}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
+            {alertType === 'PRICE_TARGET' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">
+                    {isRTL ? 'الشرط' : 'Condition'}
+                  </label>
+                  <Select
+                    value={condition}
+                    onValueChange={(v: 'ABOVE' | 'BELOW') => setCondition(v)}
+                  >
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ABOVE">
+                        <div className="flex items-center gap-2 text-green-500">
+                          <TrendingUp className="w-4 h-4" />
+                          {isRTL ? 'أعلى من' : 'Above'}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="BELOW">
+                        <div className="flex items-center gap-2 text-red-500">
+                          <TrendingDown className="w-4 h-4" />
+                          {isRTL ? 'أقل من' : 'Below'}
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">
+                    {isRTL ? 'السعر المستهدف (TON)' : 'Target Price (TON)'}
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    placeholder="0.00"
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    className="bg-background/50"
+                  />
+                </div>
+              </div>
+            ) : (
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {isRTL ? 'السعر المستهدف (TON)' : 'Target Price (TON)'}
+                  {isRTL ? 'نسبة التغيير (%)' : 'Percentage Change (%)'}
                 </label>
                 <Input
                   type="number"
-                  placeholder="0.00"
-                  value={targetPrice}
-                  onChange={(e) => setTargetPrice(e.target.value)}
+                  step="0.1"
+                  placeholder={isRTL ? 'مثال: 10 للارتفاع 10%' : 'e.g., 10 for 10% increase'}
+                  value={percentageChange}
+                  onChange={(e) => setPercentageChange(e.target.value)}
                   className="bg-background/50"
                 />
+                <p className="text-xs text-muted-foreground">
+                  {isRTL ? 'سيتم إشعارك عند تغير السعر بهذه النسبة (زيادة أو نقصان)' : 'You will be notified when price changes by this percentage (up or down)'}
+                </p>
               </div>
-            </div>
+            )}
 
             <Button 
               onClick={handleCreateAlert} 
-              disabled={isCreating || !selectedGift || !targetPrice}
+              disabled={isCreating || !selectedGift || (alertType === 'PRICE_TARGET' && !targetPrice) || (alertType === 'PERCENTAGE_CHANGE' && !percentageChange)}
               className="w-full bg-primary hover:bg-primary/90"
             >
               {isCreating ? (
@@ -323,18 +416,12 @@ const PriceAlertsPage = () => {
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {/* Gift Thumbnail */}
-                      {imageUrl ? (
-                        <img 
-                          src={imageUrl} 
-                          alt={alert.gift_name}
-                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0">
-                          <Gift className="w-6 h-6 text-muted-foreground/50" />
-                        </div>
-                      )}
+                      <GiftImage
+                        imageUrl={imageUrl || ''}
+                        name={alert.gift_name}
+                        size="md"
+                        className="flex-shrink-0"
+                      />
                       
                       {/* Alert Info */}
                       <div className="flex-1 min-w-0">
