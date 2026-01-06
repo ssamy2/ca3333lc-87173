@@ -28,21 +28,23 @@ export interface PriceAlert {
   gift_name: string;
   target_price_ton: number;
   alert_type: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE';
+  condition: 'ABOVE' | 'BELOW';
   model_name?: string | null;
   percentage_change?: number | null;
   base_price_ton?: number | null;
+  current_price_ton?: number;
+  image_url?: string;
   status: 'ACTIVE' | 'TRIGGERED' | 'DELETED';
   created_at: number;
   triggered_at?: number;
-  current_price_ton?: number;
 }
 
 export const createPriceAlert = async (
   giftName: string,
   targetPrice: number,
-  alertType: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE',
-  modelName?: string | null,
-  percentageChange?: number | null
+  condition: 'ABOVE' | 'BELOW',
+  currentPriceTon?: number,
+  modelName?: string | null
 ) => {
   const apiUrl = buildApiUrl('/api/alerts/create');
   const authHeaders = await getAuthHeaders();
@@ -56,14 +58,16 @@ export const createPriceAlert = async (
     body: JSON.stringify({
       gift_name: giftName,
       target_price_ton: targetPrice,
-      alert_type: alertType,
+      alert_type: 'PRICE_TARGET',
+      condition: condition,
       model_name: modelName,
-      percentage_change: percentageChange
+      current_price_ton: currentPriceTon
     })
   });
 
   if (!response.ok) {
-    throw new Error('Failed to create alert');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to create alert');
   }
 
   return await response.json();

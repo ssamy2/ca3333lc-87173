@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, AlertCircle, Gift } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { createPriceAlert, getUserPriceAlerts, deletePriceAlert, PriceAlert } from '@/services/apiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getAuthHeaders } from '@/lib/telegramAuth';
+import { DEV_MODE } from '@/config/devMode';
+
+interface MarketGift {
+  name: string;
+  priceTon: number;
+  priceUsd: number;
+  image_url?: string;
+}
 
 const PriceAlertsPage = () => {
   const navigate = useNavigate();
@@ -18,16 +27,48 @@ const PriceAlertsPage = () => {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [marketGifts, setMarketGifts] = useState<MarketGift[]>([]);
+  const [loadingGifts, setLoadingGifts] = useState(false);
 
   // Form state
-  const [giftName, setGiftName] = useState('');
+  const [selectedGift, setSelectedGift] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
 
-  // Load alerts on mount
+  // Load alerts and market data on mount
   useEffect(() => {
     loadAlerts();
+    loadMarketGifts();
   }, []);
+
+  const loadMarketGifts = async () => {
+    try {
+      setLoadingGifts(true);
+      const authHeaders = await getAuthHeaders();
+      const baseUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site';
+      const response = await fetch(`${baseUrl}/api/market-data`, {
+        headers: { 'Accept': 'application/json', ...authHeaders }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load gifts');
+      const data = await response.json();
+      
+      const giftsArray: MarketGift[] = Object.entries(data).map(([name, giftData]: [string, any]) => ({
+        name,
+        priceTon: giftData.priceTon || 0,
+        priceUsd: giftData.priceUsd || 0,
+        image_url: giftData.image_url || ''
+      })).sort((a, b) => a.name.localeCompare(b.name));
+      
+      setMarketGifts(giftsArray);
+    } catch (error) {
+      console.error('Failed to load market gifts:', error);
+    } finally {
+      setLoadingGifts(false);
+    }
+  };
+
+  const getSelectedGiftData = () => marketGifts.find(g => g.name === selectedGift);
 
   const loadAlerts = async () => {
     try {
@@ -47,18 +88,21 @@ const PriceAlertsPage = () => {
   };
 
   const handleCreateAlert = async () => {
-    if (!giftName || !targetPrice) {
+    if (!selectedGift || !targetPrice) {
       toast({
         title: isRTL ? 'بيانات ناقصة' : 'Missing Data',
-        description: isRTL ? 'يرجى إدخال اسم الهدية والسعر المستهدف' : 'Please enter gift name and target price',
+        description: isRTL ? 'يرجى اختيار الهدية وإدخال السعر المستهدف' : 'Please select a gift and enter target price',
         variant: 'destructive',
       });
       return;
     }
 
+    const giftData = getSelectedGiftData();
+    const currentPrice = giftData?.priceTon || 0;
+
     try {
       setIsCreating(true);
-      await createPriceAlert(giftName, parseFloat(targetPrice), condition);
+      await createPriceAlert(selectedGift, parseFloat(targetPrice), condition, currentPrice);
       
       toast({
         title: isRTL ? 'تم بنجاح' : 'Success',
@@ -66,13 +110,13 @@ const PriceAlertsPage = () => {
       });
 
       // Reset form and reload
-      setGiftName('');
+      setSelectedGift('');
       setTargetPrice('');
       loadAlerts();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل إنشاء التنبيه' : 'Failed to create alert',
+        description: error?.message || (isRTL ? 'فشل إنشاء التنبيه' : 'Failed to create alert'),
         variant: 'destructive',
       });
     } finally {
@@ -123,16 +167,57 @@ const PriceAlertsPage = () => {
           </div>
 
           <div className="grid gap-4">
+            {/* Gift Selection with Thumbnail */}
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">
-                {isRTL ? 'اسم الهدية' : 'Gift Name'}
+                {isRTL ? 'اختر الهدية' : 'Select Gift'}
               </label>
-              <Input
-                placeholder="e.g. Red Star"
-                value={giftName}
-                onChange={(e) => setGiftName(e.target.value)}
-                className="bg-background/50"
-              />
+              <Select
+                value={selectedGift}
+                onValueChange={setSelectedGift}
+                disabled={loadingGifts}
+              >
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder={loadingGifts ? 'Loading...' : (isRTL ? 'اختر هدية' : 'Choose a gift')} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {marketGifts.map((gift) => (
+                    <SelectItem key={gift.name} value={gift.name}>
+                      <div className="flex items-center gap-2">
+                        <span>{gift.name}</span>
+                        <span className="text-muted-foreground text-xs">({gift.priceTon.toFixed(4)} TON)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Selected Gift Preview */}
+              {selectedGift && (() => {
+                const giftData = getSelectedGiftData();
+                return giftData ? (
+                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg mt-2">
+                    {giftData.image_url ? (
+                      <img 
+                        src={giftData.image_url} 
+                        alt={giftData.name}
+                        className="w-12 h-12 rounded-lg object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                        <Gift className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium">{giftData.name}</p>
+                      <p className="text-sm text-primary font-semibold">
+                        {isRTL ? 'السعر الحالي:' : 'Current Price:'} {giftData.priceTon.toFixed(4)} TON
+                      </p>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -180,7 +265,7 @@ const PriceAlertsPage = () => {
 
             <Button 
               onClick={handleCreateAlert} 
-              disabled={isCreating || !giftName || !targetPrice}
+              disabled={isCreating || !selectedGift || !targetPrice}
               className="w-full bg-primary hover:bg-primary/90"
             >
               {isCreating ? (
@@ -214,40 +299,69 @@ const PriceAlertsPage = () => {
             </div>
           ) : (
             <div className="grid gap-3">
-              {alerts.map((alert) => (
-                <div
-                  key={alert.alert_id}
-                  className="group flex items-center justify-between p-4 bg-card/40 border border-border/50 rounded-xl hover:border-primary/30 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      alert.condition === 'ABOVE' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                    }`}>
-                      {alert.condition === 'ABOVE' ? (
-                        <TrendingUp className="w-5 h-5" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{alert.gift_name}</h4>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        {isRTL ? 'الهدف:' : 'Target:'} 
-                        <span className="text-foreground font-medium">{alert.target_price_ton} TON</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteAlert(alert.alert_id)}
-                    className="opacity-50 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10"
+              {alerts.map((alert) => {
+                const giftData = marketGifts.find(g => g.name === alert.gift_name);
+                const imageUrl = alert.image_url || giftData?.image_url;
+                const currentPrice = alert.current_price_ton || giftData?.priceTon || 0;
+                
+                return (
+                  <div
+                    key={alert.alert_id}
+                    className="group flex items-center justify-between p-4 bg-card/40 border border-border/50 rounded-xl hover:border-primary/30 transition-all"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Gift Thumbnail */}
+                      {imageUrl ? (
+                        <img 
+                          src={imageUrl} 
+                          alt={alert.gift_name}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0">
+                          <Gift className="w-6 h-6 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      
+                      {/* Alert Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-md ${
+                            alert.condition === 'ABOVE' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                          }`}>
+                            {alert.condition === 'ABOVE' ? (
+                              <TrendingUp className="w-4 h-4" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4" />
+                            )}
+                          </div>
+                          <h4 className="font-semibold truncate">{alert.gift_name}</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          {isRTL ? 'الهدف:' : 'Target:'} 
+                          <span className="text-foreground font-medium">{alert.target_price_ton.toFixed(4)} TON</span>
+                        </p>
+                      </div>
+                      
+                      {/* Current Price on Right */}
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-muted-foreground">{isRTL ? 'الحالي' : 'Current'}</p>
+                        <p className="font-semibold text-primary">{currentPrice.toFixed(4)} TON</p>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteAlert(alert.alert_id)}
+                      className="opacity-50 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 flex-shrink-0 ml-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
