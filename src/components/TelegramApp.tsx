@@ -15,6 +15,7 @@ import BottomNav from './BottomNav';
 import Chart from '@/pages/Chart';
 import ToolsPage from '@/pages/ToolsPage';
 import CryptoPage from '@/pages/CryptoPage';
+import CryptoGiftCenter from '@/pages/CryptoGiftCenter';
 import TradingPage from '@/pages/TradingPage';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
 import { fetchNFTGifts, fetchSingleGiftPrice, fetchProfileImageAsBase64 } from '@/services/apiService';
@@ -518,7 +519,7 @@ const TelegramApp: React.FC = () => {
   if (activeTab === 'crypto') {
     return (
       <>
-        <CryptoPage />
+        <CryptoGiftCenter />
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </>
     );
