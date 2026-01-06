@@ -96,7 +96,7 @@ const App = () => {
                           <Route path="/chart" element={<Chart />} />
                           <Route path="/heatmap" element={<HeatmapPage />} />
                           <Route path="/market-stats" element={<MarketStatsPage />} />
-                          <Route path="/crypto" element={<CryptoPage />} />
+                          <Route path="/crypto" element={<CryptoGiftCenter />} />
                           <Route path="/user-gift-calculator" element={<UserGiftCalculatorPage />} />
                           <Route path="/gift/:name" element={<GiftDetail />} />
                           <Route path="/regular-gift/:id" element={<RegularGiftDetail />} />
@@ -105,7 +105,7 @@ const App = () => {
                           <Route path="/admin/ads" element={<AdminAdsPage />} />
                           <Route path="/trade" element={<TradingPage />} />
                           <Route path="/price-alerts" element={<PriceAlertsPage />} />
-                          <Route path="/crypto-center" element={<CryptoGiftCenter />} />
+                        
                           {/* Removed: /tools and /profit-calculator - merged into sidebar */}
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />

@@ -4,7 +4,7 @@
  */
 
 // Set to true to enable development mode
-export const DEV_MODE = true
+export const DEV_MODE = false
 
 // Admin headers for development mode API calls
 export const DEV_ADMIN_HEADERS = {
