@@ -392,14 +392,80 @@ const UserGiftCalculatorPage: React.FC = () => {
         {/* Single Gift Result */}
         {singleGift && (
           <div className="space-y-4">
-            <StatsCard
-              title={singleGift.gift_name}
-              value={singleGift.floor_price}
-              change={0}
-              icon={Gift}
-              image={singleGift.gift_image}
-            />
-            <RegularGiftCard gift={singleGift} isDark={isDark} />
+            <div className="telegram-card p-5">
+              <div className="flex items-start gap-4">
+                {/* Gift Image */}
+                {singleGift.image && (
+                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 flex-shrink-0">
+                    <img 
+                      src={singleGift.image} 
+                      alt={singleGift.gift_name}
+                      className="w-full h-full object-contain p-2"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                
+                {/* Gift Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-foreground mb-1">
+                    {singleGift.gift_name || 'Unknown Gift'}
+                  </h3>
+                  {singleGift.model && (
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <span className="font-medium">Model:</span> {singleGift.model}
+                    </p>
+                  )}
+                  {singleGift.backdrop && (
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <span className="font-medium">Backdrop:</span> {singleGift.backdrop}
+                    </p>
+                  )}
+                  {singleGift.rarity && (
+                    <p className="text-sm text-purple-400">
+                      <span className="font-medium">Rarity:</span> {singleGift.rarity}‰
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Price Section */}
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-primary/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {language === 'ar' ? 'السعر (TON)' : 'Price (TON)'}
+                    </p>
+                    <p className="text-xl font-bold text-primary">
+                      {(singleGift.price_ton || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-accent/10 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {language === 'ar' ? 'السعر (USD)' : 'Price (USD)'}
+                    </p>
+                    <p className="text-xl font-bold text-accent">
+                      ${(singleGift.price_usd || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Link to Telegram */}
+              {singleGift.tg_deeplink && (
+                <div className="mt-4">
+                  <a 
+                    href={singleGift.tg_deeplink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors"
+                  >
+                    <Gift className="w-4 h-4" />
+                    {language === 'ar' ? 'عرض في تليجرام' : 'View in Telegram'}
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

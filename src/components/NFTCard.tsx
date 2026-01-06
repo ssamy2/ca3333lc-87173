@@ -290,9 +290,9 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-muted-foreground font-medium text-[clamp(8px,1.8vw,11px)]">Model:</span>
             <span className="font-semibold text-foreground text-[clamp(8px,1.8vw,11px)]">{nft.model}</span>
-            {nft.model_rarity && (
+            {nft.model_rarity != null && typeof nft.model_rarity !== 'object' && (
               <span className="text-purple-400 dark:text-purple-300 font-medium bg-purple-500/10 px-1.5 py-0.5 rounded-md text-[clamp(7px,1.5vw,10px)]">
-                {nft.model_rarity}
+                {String(nft.model_rarity)}‰
               </span>
             )}
           </div>
@@ -310,9 +310,9 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-muted-foreground text-[clamp(8px,1.8vw,11px)]">Symbol:</span>
               <span className="font-semibold text-primary text-[clamp(8px,1.8vw,11px)]">{nft.symbol}</span>
-              {nft.symbol_rarity && (
+              {nft.symbol_rarity != null && typeof nft.symbol_rarity !== 'object' && (
                 <span className="text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-md border border-cyan-500/20 text-[clamp(7px,1.5vw,9px)]">
-                  {nft.symbol_rarity}
+                  {String(nft.symbol_rarity)}
                 </span>
               )}
             </div>
