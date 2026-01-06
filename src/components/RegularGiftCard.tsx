@@ -13,7 +13,7 @@ interface RegularGift {
   price_usd: number;
   total_ton: number;
   total_usd: number;
-  supply: number;
+  supply?: number;
   multiplier?: string;
   change_24h?: number;
   is_unupgraded: boolean;
@@ -58,11 +58,6 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
     }).format(amount);
   };
 
-  const formatSupply = (supply: number) => {
-    if (supply >= 1000000) return `${(supply / 1000000).toFixed(1)}M`;
-    if (supply >= 1000) return `${(supply / 1000).toFixed(0)}K`;
-    return supply.toString();
-  };
 
   return (
     <Link 
@@ -119,16 +114,6 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
           {gift.name}
         </h3>
         
-        {/* Supply */}
-        <div className="flex items-center gap-1">
-          <span className="text-amber-400/60 font-medium" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
-            {language === 'ar' ? 'الكمية:' : 'Supply:'}
-          </span>
-          <span className="font-semibold text-amber-300" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
-            {formatSupply(gift.supply)}
-          </span>
-        </div>
-
         {/* Multiplier */}
         {gift.multiplier && (
           <div className="flex items-center gap-1">
@@ -160,8 +145,8 @@ const RegularGiftCard: React.FC<RegularGiftCardProps> = ({ gift }) => {
           </div>
         </div>
 
-        {/* Total Price (only if count > 1) */}
-        {gift.count > 1 && gift.total_ton > 0 && (
+        {/* Total Price (only if count > 1 and price is valid) */}
+        {gift.count > 1 && gift.price_ton > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-amber-400/60 font-medium" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>
               {language === 'ar' ? 'الإجمالي' : 'Total'}
