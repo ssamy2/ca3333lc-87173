@@ -70,6 +70,21 @@ interface GiftData {
     profile_image: string;
     nfts: NFTGift[];
     regular_gifts?: RegularGift[];
+    visible_nfts?: number;
+    profile?: {
+      username?: string;
+      full_name?: string;
+      user_id?: number;
+      total_nfts?: number;
+      total_upgraded?: number;
+      total_unupgraded?: number;
+    };
+    prices?: {
+      floor_price?: { TON: number; USD: number; STAR: number };
+      avg_price?: { TON: number; USD: number; STAR: number };
+      upgraded_value?: { TON: number; USD: number };
+      regular_value?: { TON: number; USD: number };
+    };
     total_nfts?: number;
     total_upgraded?: number;
     total_regular?: number;
@@ -79,7 +94,6 @@ interface GiftData {
     upgraded_value_usd?: number;
     regular_value_ton?: number;
     regular_value_usd?: number;
-    visible_nfts?: number;
   };
 }
 
@@ -185,10 +199,12 @@ const UserGiftCalculatorPage: React.FC = () => {
       if (data.success && data.data) {
         setNftData(data.data);
         
-        // Fetch profile image
         let photoBase64: string | null = null;
         if (data.data.profile_image) {
           photoBase64 = await fetchProfileImageAsBase64(data.data.profile_image);
+          if (photoBase64 && photoBase64.startsWith('data:image')) {
+            photoBase64 = photoBase64.split(',')[1] || photoBase64;
+          }
         }
         
         setSearchedUserProfile({
@@ -516,38 +532,66 @@ const UserGiftCalculatorPage: React.FC = () => {
               <StatsCard
                 icon={<Calculator className="w-4 h-4 text-primary" />}
                 label={language === 'ar' ? 'إجمالي القيمة' : 'Total Value'}
-                value={`${(nftData.total_value_ton || 0).toFixed(2)} TON`}
-                subValue={`$${(nftData.total_value_usd || 0).toFixed(2)}`}
+                value={`${(nftData.prices?.avg_price?.TON || nftData.total_value_ton || 0).toFixed(2)} TON`}
+                subValue={`$${(nftData.prices?.avg_price?.USD || nftData.total_value_usd || 0).toFixed(2)}`}
               />
               <StatsCard
                 icon={<Gift className="w-4 h-4 text-accent" />}
                 label={language === 'ar' ? 'الهدايا المطورة' : 'Upgraded Gifts'}
-                value={`${(nftData.upgraded_value_ton || 0).toFixed(2)} TON`}
-                subValue={`${nftData.total_upgraded || 0} gifts`}
+                value={`${(nftData.prices?.upgraded_value?.TON || nftData.upgraded_value_ton || 0).toFixed(2)} TON`}
+                subValue={`${nftData.profile?.total_upgraded || nftData.total_upgraded || nftData.nfts?.length || 0} gifts`}
               />
               <StatsCard
                 icon={<Gift className="w-4 h-4 text-muted-foreground" />}
                 label={language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
-                value={`${(nftData.regular_value_ton || 0).toFixed(2)} TON`}
-                subValue={`${nftData.total_regular || 0} gifts`}
+                value={`${(nftData.prices?.regular_value?.TON || nftData.regular_value_ton || 0).toFixed(2)} TON`}
+                subValue={`${nftData.profile?.total_unupgraded || nftData.total_regular || nftData.regular_gifts?.length || 0} gifts`}
               />
             </div>
 
-            {/* NFTs Grid */}
             {sortedNFTs.length > 0 && (
               <div className="telegram-card p-5">
                 <h3 className="text-lg font-semibold mb-4">
-                  {language === 'ar' ? 'قائمة الهدايا' : 'Gift Collection'}
+                  {language === 'ar' ? 'الهدايا المطورة' : 'Upgraded NFT Gifts'}
                 </h3>
                 {sortedNFTs.length > 20 ? (
                   <VirtualizedNFTGrid nfts={sortedNFTs} isDark={isDark} />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sortedNFTs.map((nft) => (
-                      <NFTCard key={`${nft.model}-${nft.number}`} nft={nft} isDark={isDark} />
+                      <NFTCard key={`${nft.model}-${nft.number || nft.mint}`} nft={nft} isDark={isDark} />
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {nftData.regular_gifts && nftData.regular_gifts.length > 0 && (
+              <div className="telegram-card p-5">
+                <h3 className="text-lg font-semibold mb-4">
+                  {language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {nftData.regular_gifts.map((gift: any) => (
+                    <RegularGiftCard 
+                      key={gift.id || gift.name} 
+                      gift={{
+                        id: gift.id || '',
+                        name: gift.name || '',
+                        short_name: gift.short_name || '',
+                        image: gift.image || '',
+                        count: 1,
+                        price_ton: gift.price_ton || 0,
+                        price_usd: gift.price_usd || 0,
+                        total_ton: gift.price_ton || 0,
+                        total_usd: gift.price_usd || 0,
+                        supply: gift.supply || 0,
+                        change_24h: gift.change_24h || 0,
+                        is_unupgraded: true
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
