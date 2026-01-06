@@ -557,7 +557,7 @@ const UserGiftCalculatorPage: React.FC = () => {
                 {sortedNFTs.length > 20 ? (
                   <VirtualizedNFTGrid nfts={sortedNFTs} isDark={isDark} />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
                     {sortedNFTs.map((nft) => (
                       <NFTCard key={`${nft.model}-${nft.number || nft.mint}`} nft={nft} isDark={isDark} />
                     ))}
@@ -571,26 +571,31 @@ const UserGiftCalculatorPage: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-4">
                   {language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {nftData.regular_gifts.map((gift: any) => (
-                    <RegularGiftCard 
-                      key={gift.id || gift.name} 
-                      gift={{
-                        id: gift.id || '',
-                        name: gift.name || '',
-                        short_name: gift.short_name || '',
-                        image: gift.image || '',
-                        count: 1,
-                        price_ton: gift.price_ton || 0,
-                        price_usd: gift.price_usd || 0,
-                        total_ton: gift.price_ton || 0,
-                        total_usd: gift.price_usd || 0,
-                        supply: gift.supply || 0,
-                        change_24h: gift.change_24h || 0,
-                        is_unupgraded: true
-                      }}
-                    />
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+                  {nftData.regular_gifts.map((gift: any) => {
+                    const quantity = gift.quantity || 1;
+                    const priceTon = gift.price_ton || 0;
+                    const priceUsd = gift.price_usd || 0;
+                    return (
+                      <RegularGiftCard 
+                        key={gift.id || gift.name} 
+                        gift={{
+                          id: gift.id || '',
+                          name: gift.name || '',
+                          short_name: gift.short_name || '',
+                          image: gift.image || '',
+                          count: quantity,
+                          price_ton: priceTon,
+                          price_usd: priceUsd,
+                          total_ton: priceTon * quantity,
+                          total_usd: priceUsd * quantity,
+                          supply: gift.supply || 0,
+                          change_24h: gift.change_24h || 0,
+                          is_unupgraded: true
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

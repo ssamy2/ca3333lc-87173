@@ -282,13 +282,24 @@ const processAPIResponse = (responseData: any, username?: string) => {
   const upgraded = Array.isArray(d.nfts) ? d.nfts : []
   const regularGifts = Array.isArray(d.regular_gifts) ? d.regular_gifts : []
 
-  // Use total_value from API response (correct total value)
-  const totalValueTON = d.total_value_ton || 0
-  const totalValueUSD = d.total_value_usd || 0
-  const upgradedValueTON = d.upgraded_value_ton || 0
-  const upgradedValueUSD = d.upgraded_value_usd || 0
-  const regularValueTON = d.regular_value_ton || 0
-  const regularValueUSD = d.regular_value_usd || 0
+  const calculatedUpgradedTON = upgraded.reduce((sum: number, g: any) => sum + (g.price_ton || 0), 0)
+  const calculatedUpgradedUSD = upgraded.reduce((sum: number, g: any) => sum + (g.price_usd || 0), 0)
+  
+  const calculatedRegularTON = regularGifts.reduce((sum: number, g: any) => {
+    const qty = g.quantity || 1
+    return sum + ((g.price_ton || 0) * qty)
+  }, 0)
+  const calculatedRegularUSD = regularGifts.reduce((sum: number, g: any) => {
+    const qty = g.quantity || 1
+    return sum + ((g.price_usd || 0) * qty)
+  }, 0)
+
+  const totalValueTON = d.total_value_ton || (calculatedUpgradedTON + calculatedRegularTON)
+  const totalValueUSD = d.total_value_usd || (calculatedUpgradedUSD + calculatedRegularUSD)
+  const upgradedValueTON = d.upgraded_value_ton || calculatedUpgradedTON
+  const upgradedValueUSD = d.upgraded_value_usd || calculatedUpgradedUSD
+  const regularValueTON = d.regular_value_ton || calculatedRegularTON
+  const regularValueUSD = d.regular_value_usd || calculatedRegularUSD
 
   // Calculate floor price (minimum price among all NFTs)
   const minPrice = upgraded.length
