@@ -55,11 +55,20 @@ interface NFTGift {
 }
 
 interface RegularGift {
-  name: string;
-  price: number;
+  id: string;
+  gift_name: string;
+  name?: string;
+  price_ton: number;
+  price_usd: number;
+  quantity: number;
   image: string;
-  count: number;
-  total_value: number;
+  is_unupgraded: true;
+  change_24h_ton_percent?: number | null;
+  change_7d_ton_percent?: number | null;
+  change_30d_ton_percent?: number | null;
+  // Legacy fields
+  count?: number;
+  total_value?: number;
 }
 
 interface GiftData {
@@ -571,31 +580,25 @@ const UserGiftCalculatorPage: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-4">
                   {language === 'ar' ? 'الهدايا العادية' : 'Regular Gifts'}
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
-                  {nftData.regular_gifts.map((gift: any) => {
-                    const quantity = gift.quantity || 1;
-                    const priceTon = gift.price_ton || 0;
-                    const priceUsd = gift.price_usd || 0;
-                    return (
-                      <RegularGiftCard 
-                        key={gift.id || gift.name} 
-                        gift={{
-                          id: gift.id || '',
-                          name: gift.name || '',
-                          short_name: gift.short_name || '',
-                          image: gift.image || '',
-                          count: quantity,
-                          price_ton: priceTon,
-                          price_usd: priceUsd,
-                          total_ton: priceTon * quantity,
-                          total_usd: priceUsd * quantity,
-                          supply: gift.supply || 0,
-                          change_24h: gift.change_24h || 0,
-                          is_unupgraded: true
-                        }}
-                      />
-                    );
-                  })}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
+                  {nftData.regular_gifts.map((gift: any) => (
+                    <RegularGiftCard 
+                      key={gift.id || gift.gift_name || gift.name} 
+                      gift={{
+                        id: gift.id || '',
+                        gift_name: gift.gift_name || gift.name || '',
+                        name: gift.name,
+                        image: gift.image || '',
+                        quantity: gift.quantity || gift.count || 1,
+                        price_ton: gift.price_ton || 0,
+                        price_usd: gift.price_usd || 0,
+                        is_unupgraded: true,
+                        change_24h_ton_percent: gift['change_24h_ton_%'] ?? gift.change_24h_ton_percent ?? null,
+                        change_7d_ton_percent: gift['change_7d_ton_%'] ?? gift.change_7d_ton_percent ?? null,
+                        change_30d_ton_percent: gift['change_30d_ton_%'] ?? gift.change_30d_ton_percent ?? null
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
