@@ -533,7 +533,23 @@ const PriceAlertsPage = () => {
                   <SelectContent className="max-h-[200px]">
                     {availableModels.map((model) => (
                       <SelectItem key={model.name} value={model.name}>
-                        {model.name} - {model.price_ton.toFixed(4)} TON
+                        <div className="flex items-center gap-2">
+                          {/* Model Preview Image */}
+                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-muted/50 to-muted flex-shrink-0">
+                            <img
+                              src={model.image_url}
+                              alt={model.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/32x32?text=M';
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{model.name}</div>
+                            <div className="text-xs text-muted-foreground">{model.price_ton.toFixed(4)} TON</div>
+                          </div>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

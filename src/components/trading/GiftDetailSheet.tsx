@@ -462,7 +462,7 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
 
           {/* Quantity Selector */}
           <div className="glass-effect rounded-xl p-4">
-            <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex items-center justify-between mb-3", isRTL && "flex-row-reverse")}>
               <span className="text-sm text-muted-foreground">
                 {isRTL ? 'الكمية' : 'Quantity'}
               </span>
@@ -487,6 +487,26 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                   +
                 </Button>
               </div>
+            </div>
+            {/* Direct Input */}
+            <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <span className="text-xs text-muted-foreground">
+                {isRTL ? 'أدخل الكمية مباشرة:' : 'Enter quantity directly:'}
+              </span>
+              <Input
+                type="number"
+                min="1"
+                max="100"
+                value={quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  if (val >= 1 && val <= 100) {
+                    setQuantity(val);
+                  }
+                }}
+                className={cn("w-20 h-8 text-center", isRTL && "text-right")}
+                placeholder={isRTL ? '1-100' : '1-100'}
+              />
             </div>
           </div>
 
