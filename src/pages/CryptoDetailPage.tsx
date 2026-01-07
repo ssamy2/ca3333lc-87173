@@ -277,8 +277,8 @@ const CryptoDetailPage: React.FC = () => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64 = reader.result as string;
-            // Send to Telegram
-            window.Telegram.WebApp.sendData(JSON.stringify({
+            // Send to Telegram - using type assertion to bypass TypeScript error
+            (window.Telegram.WebApp as any).sendData(JSON.stringify({
               type: 'crypto_chart',
               coinId: coinId,
               coinName: coinDetails?.name,
