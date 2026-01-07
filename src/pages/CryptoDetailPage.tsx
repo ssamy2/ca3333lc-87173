@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, Share2, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Send, Loader2, Download } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -50,6 +50,8 @@ import {
 } from '@/services/hybridCryptoService';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
+import { sendHeatmapImage } from '@/utils/heatmapImageSender';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 ChartJS.register(
   CategoryScale,
@@ -154,7 +156,18 @@ const CryptoDetailPage: React.FC = () => {
     const firstPrice = chartData.prices[0];
     const lastPrice = chartData.prices[chartData.prices.length - 1];
     const change = lastPrice - firstPrice;
+    
+    // Handle Infinity case
+    if (firstPrice === 0 || !isFinite(firstPrice) || !isFinite(lastPrice)) {
+      return { value: 0, percentage: 0 };
+    }
+    
     const percentage = (change / firstPrice) * 100;
+    
+    // Handle Infinity percentage
+    if (!isFinite(percentage)) {
+      return { value: 0, percentage: 0 };
+    }
     
     return { value: change, percentage };
   };
@@ -267,59 +280,169 @@ const CryptoDetailPage: React.FC = () => {
     }
   };
 
-  // Share to Telegram
-  const handleShare = async () => {
+  // Send to API with custom image
+  const handleSend = async () => {
     if (!chartContainerRef.current || isCapturing) return;
     
     setIsCapturing(true);
     
     try {
-      const canvas = await html2canvas(chartContainerRef.current, {
+      // Create a custom canvas with dark theme
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        toast.error(isRTL ? 'فشل في إنشاء الصورة' : 'Failed to create image');
+        setIsCapturing(false);
+        return;
+      }
+      
+      // Dark background
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Get current price and period change
+      const currentPrice = hybridData?.currentPrice || binanceData?.currentPrice || coinDetails.market_data?.current_price?.usd || 0;
+      const periodChange = calculatePeriodChange();
+      const isPositive = periodChange.percentage >= 0;
+      
+      // Title - Coin name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 48px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(coinDetails?.name || coinId?.toUpperCase() || '', canvas.width / 2, 120);
+      
+      // Timeframe label
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '24px Inter, sans-serif';
+      ctx.fillText(timeFrameConfig[timeFrame].label, canvas.width / 2, 160);
+      
+      // Current price
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 64px Inter, sans-serif';
+      ctx.fillText(formatHybridPrice(currentPrice), canvas.width / 2, 280);
+      
+      // Period change
+      ctx.fillStyle = isPositive ? '#10b981' : '#ef4444';
+      ctx.font = 'bold 36px Inter, sans-serif';
+      const changeText = `${isPositive ? '+' : ''}${periodChange.percentage.toFixed(2)}%`;
+      ctx.fillText(changeText, canvas.width / 2, 340);
+      
+      // Chart area
+      const chartY = 400;
+      const chartHeight = 800;
+      
+      // Capture the chart
+      const chartCanvas = await html2canvas(chartContainerRef.current, {
         backgroundColor: '#0a0a0a',
-        scale: 2,
+        scale: 3,
         logging: false,
         useCORS: true
       });
       
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          toast.error(isRTL ? 'فشل في إنشاء الصورة' : 'Failed to create image');
-          setIsCapturing(false);
-          return;
+      // Draw the chart
+      ctx.drawImage(chartCanvas, 40, chartY, canvas.width - 80, chartHeight);
+      
+      // Additional info at bottom
+      const infoY = chartY + chartHeight + 60;
+      
+      // Volume
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '24px Inter, sans-serif';
+      ctx.fillText(isRTL ? 'حجم التداول' : 'Volume', canvas.width / 2, infoY);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px Inter, sans-serif';
+      const volume = hybridData?.volume || binanceData?.volume || coinDetails.market_data?.total_volume?.usd || 0;
+      ctx.fillText(formatHybridVolume(volume), canvas.width / 2, infoY + 50);
+      
+      // High/Low
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '24px Inter, sans-serif';
+      ctx.fillText(isRTL ? 'أعلى/أدنى' : 'High/Low', canvas.width / 2, infoY + 120);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px Inter, sans-serif';
+      const high = hybridData?.highPrice || binanceData?.highPrice || coinDetails.market_data?.high_24h?.usd || 0;
+      const low = hybridData?.lowPrice || binanceData?.lowPrice || coinDetails.market_data?.low_24h?.usd || 0;
+      ctx.fillText(`${formatHybridPrice(low)} - ${formatHybridPrice(high)}`, canvas.width / 2, infoY + 170);
+      
+      // Username at bottom
+      const telegramWebApp = (window as any).Telegram?.WebApp;
+      const username = telegramWebApp?.initDataUnsafe?.user?.username || 
+                      telegramWebApp?.initDataUnsafe?.user?.first_name || 
+                      '@NovaCharts';
+      
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'italic 20px Inter, sans-serif';
+      ctx.fillText(`@${username}`, canvas.width / 2, canvas.height - 60);
+      
+      // Send to API
+      const userId = telegramWebApp?.initDataUnsafe?.user?.id?.toString();
+      
+      if (userId) {
+        try {
+          // Convert to base64
+          const imageData = canvas.toDataURL('image/jpeg', 0.85);
+          const base64Data = imageData.split(',')[1];
+          
+          // Get auth headers
+          const authHeaders = await getAuthHeaders();
+          
+          // Send to API
+          const response = await fetch('https://www.channelsseller.site/api/send-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders
+            },
+            body: JSON.stringify({
+              id: userId,
+              image: base64Data
+            })
+          });
+          
+          if (response.ok) {
+            toast.success(isRTL ? 'تم إرسال الصورة بنجاح' : 'Image sent successfully!');
+          } else {
+            throw new Error('Failed to send');
+          }
+        } catch (error) {
+          console.error('Send error:', error);
+          // Fallback: download
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${coinId}-chart.jpg`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }
+          }, 'image/jpeg');
+          toast.error(isRTL ? 'فشل الإرسال، تم تحميل الصورة' : 'Send failed, image downloaded');
         }
-
-        // Check if Telegram WebApp is available
-        if (window.Telegram?.WebApp) {
-          // Convert blob to base64
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result as string;
-            // Send to Telegram - using type assertion to bypass TypeScript error
-            (window.Telegram.WebApp as any).sendData(JSON.stringify({
-              type: 'crypto_chart',
-              coinId: coinId,
-              coinName: coinDetails?.name,
-              image: base64
-            }));
-            toast.success(isRTL ? 'تم إرسال الصورة' : 'Image sent!');
-          };
-          reader.readAsDataURL(blob);
-        } else {
-          // Fallback: Download image
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${coinId}-chart.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-          toast.success(isRTL ? 'تم تحميل الصورة' : 'Image downloaded!');
-        }
-        
-        setIsCapturing(false);
-      }, 'image/png');
+      } else {
+        // No user ID, download locally
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${coinId}-chart.jpg`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/jpeg');
+        toast.success(isRTL ? 'تم تحميل الصورة' : 'Image downloaded!');
+      }
+      
     } catch (err) {
-      console.error('[CryptoDetail] Share error:', err);
-      toast.error(isRTL ? 'فشل في المشاركة' : 'Failed to share');
+      console.error('[CryptoDetail] Send error:', err);
+      toast.error(isRTL ? 'فشل في الإرسال' : 'Failed to send');
+    } finally {
       setIsCapturing(false);
     }
   };
@@ -381,16 +504,16 @@ const CryptoDetailPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleShare}
+            onClick={handleSend}
+            className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl p-2 transition-all"
             disabled={isCapturing}
-            className="gap-2"
           >
             {isCapturing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Share2 className="w-4 h-4" />
+              <Send className="w-4 h-4" />
             )}
-            {!isCapturing && (isRTL ? 'مشاركة' : 'Share')}
+            {!isCapturing && (isRTL ? 'إرسال' : 'Send')}
           </Button>
         </div>
       </div>
