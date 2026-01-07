@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,15 +18,18 @@ interface SellDialogProps {
   holding: Holding | null;
   isOpen: boolean;
   onClose: () => void;
-  onSell: (holdingId: number) => Promise<void>;
+  onSell: (holdingId: number, quantity?: number) => Promise<void>;
   isSelling: boolean;
   isRTL: boolean;
 }
 
 export function SellDialog({ holding, isOpen, onClose, onSell, isSelling, isRTL }: SellDialogProps) {
+  const [quantity, setQuantity] = useState<number>(1);
+  
   const handleSell = async () => {
     if (!holding) return;
-    await onSell(holding.id);
+    const sellQuantity = quantity >= holding.quantity ? undefined : quantity;
+    await onSell(holding.id, sellQuantity);
     onClose();
   };
 
@@ -53,6 +58,59 @@ export function SellDialog({ holding, isOpen, onClose, onSell, isSelling, isRTL 
                 : `Are you sure you want to sell ${holding.gift_name}?`
               }
             </p>
+            
+            {/* Quantity Selector */}
+            {holding.quantity > 1 && (
+              <div className={cn(
+                "glass-effect rounded-xl p-3 space-y-2",
+                isRTL && "text-right"
+              )}>
+                <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                  <span className="text-sm text-muted-foreground">
+                    {isRTL ? 'الكمية للبيع' : 'Quantity to Sell'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7 rounded-full"
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      -
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={holding.quantity}
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        if (val >= 1 && val <= holding.quantity) {
+                          setQuantity(val);
+                        }
+                      }}
+                      className="w-16 h-7 text-center"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7 rounded-full"
+                      onClick={() => setQuantity(q => Math.min(holding.quantity, q + 1))}
+                      disabled={quantity >= holding.quantity}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  {isRTL 
+                    ? `لديك ${holding.quantity} من هذه الهدية`
+                    : `You have ${holding.quantity} of this gift`
+                  }
+                </p>
+              </div>
+            )}
             
             <div className={cn(
               "glass-effect rounded-xl p-3 space-y-2",

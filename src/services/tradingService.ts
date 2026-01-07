@@ -218,15 +218,20 @@ export async function buyGift(giftName: string, quantity: number = 1, modelNumbe
   return data;
 }
 
-export async function sellGift(holdingId: number): Promise<SellResponse> {
+export async function sellGift(holdingId: number, quantity?: number): Promise<SellResponse> {
   const headers = await getAuthHeaders();
+  const body: any = { holding_id: holdingId };
+  if (quantity !== undefined) {
+    body.quantity = quantity;
+  }
+  
   const response = await fetch(`${BASE_URL}/api/trading/sell`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
-    body: JSON.stringify({ holding_id: holdingId }),
+    body: JSON.stringify(body),
   });
   
   const data = await response.json();

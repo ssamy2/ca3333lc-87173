@@ -81,7 +81,7 @@ export function useSellGift() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (holdingId: number) => sellGift(holdingId),
+    mutationFn: ({ holdingId, quantity }: { holdingId: number; quantity?: number }) => sellGift(holdingId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trading-portfolio'] });
       queryClient.invalidateQueries({ queryKey: ['trading-leaderboard'] });

@@ -67,9 +67,9 @@ const TradingPage = () => {
     }
   };
 
-  const handleSell = async (holdingId: number) => {
+  const handleSell = async (holdingId: number, quantity?: number) => {
     try {
-      const result = await sellMutation.mutateAsync(holdingId);
+      const result = await sellMutation.mutateAsync({ holdingId, quantity });
       const pnlPercent = result?.data?.pnl_percent ?? 0;
       const pnlText = pnlPercent >= 0 
         ? `+${pnlPercent.toFixed(2)}%` 
