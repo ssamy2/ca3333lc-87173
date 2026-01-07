@@ -399,30 +399,34 @@ export function formatBinanceVolume(volume: number): string {
 }
 
 /**
- * Get interval for chart based on timeframe
+ * Get Binance interval from timeframe (optimized for 1000 candle limit)
  */
-export function getBinanceInterval(timeframe: string): string {
-  const intervalMap: Record<string, string> = {
-    '1H': '1m',
-    '1D': '5m',
-    '1W': '1h',
-    '1M': '4h',
-    '1Y': '1d'
+export function getBinanceInterval(timeFrame: TimeFrame): string {
+  const intervalMap: Record<TimeFrame, string> = {
+    '1H': '1m',      // 60 candles = 1 hour
+    '1D': '5m',      // 288 candles = 24 hours
+    '1W': '15m',     // 672 candles = 7 days
+    '1M': '1h',      // 720 candles = 30 days
+    '1Y': '1d',      // 365 candles = 1 year
+    '3Y': '3d',      // 365 candles = 1095 days (~3 years)
+    'ALL': '1d'      // 1000 candles = maximum
   };
   
-  return intervalMap[timeframe] || '1h';
+  return intervalMap[timeFrame] || '1h';
 }
 
 /**
- * Get limit for chart based on timeframe
+ * Get limit for chart based on timeframe (optimized for 1000 candle limit)
  */
 export function getBinanceLimit(timeframe: string): number {
   const limitMap: Record<string, number> = {
-    '1H': 60,
-    '1D': 288,
-    '1W': 168,
-    '1M': 180,
-    '1Y': 365
+    '1H': 60,      // 60 x 1m = 1 hour
+    '1D': 288,     // 288 x 5m = 24 hours
+    '1W': 672,     // 672 x 15m = 7 days
+    '1M': 720,     // 720 x 1h = 30 days
+    '1Y': 365,     // 365 x 1d = 1 year
+    '3Y': 365,     // 365 x 3d = 1095 days (~3 years)
+    'ALL': 1000    // Maximum allowed by Binance
   };
   
   return limitMap[timeframe] || 100;

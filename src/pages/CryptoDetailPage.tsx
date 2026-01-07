@@ -61,14 +61,16 @@ ChartJS.register(
   Filler
 );
 
-type TimeFrame = '1H' | '1D' | '1W' | '1M' | '1Y';
+type TimeFrame = '1H' | '1D' | '1W' | '1M' | '1Y' | '3Y' | 'ALL';
 
 const timeFrameConfig: Record<TimeFrame, { days: number; label: string; labelAr: string }> = {
   '1H': { days: 1, label: '1H', labelAr: '1س' },
   '1D': { days: 1, label: '24H', labelAr: '24س' },
   '1W': { days: 7, label: '7D', labelAr: '7أ' },
   '1M': { days: 30, label: '30D', labelAr: '30ي' },
-  '1Y': { days: 365, label: '1Y', labelAr: '1س' }
+  '1Y': { days: 365, label: '1Y', labelAr: '1س' },
+  '3Y': { days: 1095, label: '3Y', labelAr: '3س' },
+  'ALL': { days: 1000, label: 'ALL', labelAr: 'الكل' }
 };
 
 const CryptoDetailPage: React.FC = () => {
