@@ -24,7 +24,7 @@ export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuyS
   const [quantity, setQuantity] = useState(1);
 
   const handleQuantityChange = (delta: number) => {
-    setQuantity(prev => Math.max(1, Math.min(100, prev + delta)));
+    setQuantity(prev => Math.max(1, Math.min(5000, prev + delta)));
   };
 
   const handleBuy = async () => {
@@ -127,7 +127,7 @@ export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuyS
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= 100}
+                disabled={quantity >= 5000}
               >
                 <Plus className="w-4 h-4" />
               </Button>

@@ -31,6 +31,7 @@ import {
   Grid3X3,
   Bitcoin,
   ExternalLink,
+  Wallet,
 } from 'lucide-react';
 
 interface NavItem {
@@ -56,6 +57,8 @@ const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'crypto', icon: Bitcoin, label: 'Crypto', labelAr: 'العملات', path: '/crypto' },
   // User Gift Calculator - Dedicated route
   { id: 'gift-calc', icon: User, label: 'Gift Calculator', labelAr: 'حاسبة الهدايا', path: '/user-gift-calculator' },
+  // NFT Profit - Track gift profit/loss
+  { id: 'nft-profit', icon: Wallet, label: 'NFT Profit', labelAr: 'أرباح الهدايا', path: '/nft-profit' },
   { id: 'alerts', icon: Bell, label: 'Alerts', labelAr: 'التنبيهات', path: '/price-alerts' },
   { id: 'settings', icon: Settings, label: 'Settings', labelAr: 'الإعدادات', path: '/settings' },
 ];

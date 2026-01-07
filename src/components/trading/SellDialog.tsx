@@ -24,12 +24,14 @@ interface SellDialogProps {
 }
 
 export function SellDialog({ holding, isOpen, onClose, onSell, isSelling, isRTL }: SellDialogProps) {
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<string>('');
   
   const handleSell = async () => {
     if (!holding) return;
-    const sellQuantity = quantity >= holding.quantity ? undefined : quantity;
+    const numQuantity = parseInt(quantity) || holding.quantity;
+    const sellQuantity = numQuantity >= holding.quantity ? undefined : numQuantity;
     await onSell(holding.id, sellQuantity);
+    setQuantity('');
     onClose();
   };
 
@@ -74,20 +76,28 @@ export function SellDialog({ holding, isOpen, onClose, onSell, isSelling, isRTL 
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 rounded-full"
-                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                      disabled={quantity <= 1}
+                      onClick={() => {
+                        const current = parseInt(quantity) || 1;
+                        setQuantity(String(Math.max(1, current - 1)));
+                      }}
+                      disabled={parseInt(quantity) <= 1 || !quantity}
                     >
                       -
                     </Button>
                     <Input
-                      type="number"
-                      min="1"
-                      max={holding.quantity}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={String(holding.quantity)}
                       value={quantity}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
-                        if (val >= 1 && val <= holding.quantity) {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= holding.quantity)) {
                           setQuantity(val);
+                        }
+                      }}
+                      onFocus={(e) => {
+                        if (!quantity) {
+                          setQuantity(String(holding.quantity));
                         }
                       }}
                       className="w-16 h-7 text-center"
@@ -96,8 +106,11 @@ export function SellDialog({ holding, isOpen, onClose, onSell, isSelling, isRTL 
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 rounded-full"
-                      onClick={() => setQuantity(q => Math.min(holding.quantity, q + 1))}
-                      disabled={quantity >= holding.quantity}
+                      onClick={() => {
+                        const current = parseInt(quantity) || 1;
+                        setQuantity(String(Math.min(holding.quantity, current + 1)));
+                      }}
+                      disabled={parseInt(quantity) >= holding.quantity}
                     >
                       +
                     </Button>
