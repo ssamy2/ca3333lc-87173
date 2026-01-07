@@ -37,6 +37,16 @@ import {
   getBinanceInterval,
   getBinanceLimit
 } from '@/services/binanceService';
+import { 
+  fetchHybridCryptoData,
+  fetchHybridChartData,
+  HybridCryptoData,
+  HybridChartData,
+  formatHybridPrice,
+  formatHybridPercentage,
+  formatHybridVolume,
+  coinIdToCryptoCompareSymbol
+} from '@/services/hybridCryptoService';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 
@@ -70,7 +80,8 @@ const CryptoDetailPage: React.FC = () => {
 
   const [coinDetails, setCoinDetails] = useState<any>(null);
   const [binanceData, setBinanceData] = useState<BinanceCryptoData | null>(null);
-  const [chartData, setChartData] = useState<BinanceChartData | null>(null);
+  const [hybridData, setHybridData] = useState<HybridCryptoData | null>(null);
+  const [chartData, setChartData] = useState<HybridChartData | null>(null);
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('1W');
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
@@ -86,14 +97,19 @@ const CryptoDetailPage: React.FC = () => {
       setError(null);
       
       try {
-        // Fetch both CoinGecko and Binance data
-        const [details, binance] = await Promise.all([
+        // Get symbol for Hybrid API
+        const symbol = coinIdToCryptoCompareSymbol(coinId);
+        
+        // Fetch all data sources
+        const [details, binance, hybrid] = await Promise.all([
           fetchCoinDetails(coinId),
-          fetchBinanceCryptoData(coinId)
+          fetchBinanceCryptoData(coinId),
+          fetchHybridCryptoData(coinId, symbol)
         ]);
         
         setCoinDetails(details);
         setBinanceData(binance);
+        setHybridData(hybrid);
       } catch (err) {
         console.error('[CryptoDetail] Error loading details:', err);
         setError(isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data');
@@ -113,10 +129,9 @@ const CryptoDetailPage: React.FC = () => {
       setChartLoading(true);
       
       try {
-        // Use Binance API for chart data
-        const interval = getBinanceInterval(timeFrame);
-        const limit = getBinanceLimit(timeFrame);
-        const data = await fetchBinanceChartData(coinId, interval, limit);
+        // Use Hybrid API for chart data (CryptoCompare)
+        const symbol = coinIdToCryptoCompareSymbol(coinId);
+        const data = await fetchHybridChartData(symbol, timeFrame);
         setChartData(data);
       } catch (err) {
         console.error('[CryptoDetail] Error loading chart:', err);
@@ -327,13 +342,13 @@ const CryptoDetailPage: React.FC = () => {
     );
   }
 
-  // Use Binance data if available, fallback to CoinGecko
-  const currentPrice = binanceData?.currentPrice || coinDetails.market_data?.current_price?.usd || 0;
-  const priceChange24h = binanceData?.priceChangePercent || coinDetails.market_data?.price_change_percentage_24h || 0;
-  const marketCap = coinDetails.market_data?.market_cap?.usd || 0; // Binance doesn't provide market cap
-  const volume24h = binanceData?.volume || coinDetails.market_data?.total_volume?.usd || 0;
-  const high24h = binanceData?.highPrice || coinDetails.market_data?.high_24h?.usd || 0;
-  const low24h = binanceData?.lowPrice || coinDetails.market_data?.low_24h?.usd || 0;
+  // Use Hybrid data with priority: Hybrid > Binance > CoinGecko
+  const currentPrice = hybridData?.currentPrice || binanceData?.currentPrice || coinDetails.market_data?.current_price?.usd || 0;
+  const priceChange24h = hybridData?.priceChangePercent || binanceData?.priceChangePercent || coinDetails.market_data?.price_change_percentage_24h || 0;
+  const marketCap = coinDetails.market_data?.market_cap?.usd || 0; // Only from CoinGecko
+  const volume24h = hybridData?.volume || binanceData?.volume || coinDetails.market_data?.total_volume?.usd || 0;
+  const high24h = hybridData?.highPrice || binanceData?.highPrice || coinDetails.market_data?.high_24h?.usd || 0;
+  const low24h = hybridData?.lowPrice || binanceData?.lowPrice || coinDetails.market_data?.low_24h?.usd || 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -473,10 +488,10 @@ const CryptoDetailPage: React.FC = () => {
         )}
 
         {/* Data Source */}
-        {binanceData && (
+        {hybridData && (
           <div className="text-center py-2">
             <span className="text-[10px] text-muted-foreground/50">
-              {isRTL ? 'بيانات من Binance API' : 'Data from Binance API'}
+              {isRTL ? 'بيانات من Binance + CryptoCompare' : 'Data from Binance + CryptoCompare'}
             </span>
           </div>
         )}
