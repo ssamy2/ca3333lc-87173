@@ -30,6 +30,7 @@ export interface PriceAlert {
   alert_type: 'PRICE_TARGET' | 'PERCENTAGE_CHANGE';
   condition: 'ABOVE' | 'BELOW';
   model_name?: string | null;
+  backdrop_name?: string | null;  // Black, Onyx Black, Midnight Blue
   percentage_change?: number | null;
   base_price_ton?: number | null;
   current_price_ton?: number;

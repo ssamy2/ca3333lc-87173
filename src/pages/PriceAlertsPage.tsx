@@ -20,6 +20,18 @@ interface GiftModel {
   rarity: number;
 }
 
+interface BackdropOption {
+  name: string;
+  price_ton: number;
+  last_updated?: string;
+}
+
+interface ModelOption {
+  name: string;
+  price_ton: number;
+  last_updated?: string;
+}
+
 interface GiftData {
   name: string;
   priceTon: number;
@@ -28,6 +40,8 @@ interface GiftData {
   image?: string;
   image_url?: string;
 }
+
+type FilterMode = 'floor' | 'backdrop' | 'model';
 
 const PriceAlertsPage = () => {
   const navigate = useNavigate();
@@ -44,16 +58,63 @@ const PriceAlertsPage = () => {
   // Form state
   const [selectedGift, setSelectedGift] = useState('');
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedBackdrop, setSelectedBackdrop] = useState<string>('');
+  const [filterMode, setFilterMode] = useState<FilterMode>('floor');
   const [targetPrice, setTargetPrice] = useState('');
   const [alertType, setAlertType] = useState<'PRICE_TARGET' | 'PERCENTAGE_CHANGE'>('PRICE_TARGET');
   const [percentageChange, setPercentageChange] = useState('');
   const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
+  
+  // Available options for selected gift
+  const [availableBackdrops, setAvailableBackdrops] = useState<BackdropOption[]>([]);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
 
   // Load alerts on mount
   useEffect(() => {
     loadAlerts();
     loadGifts();
   }, []);
+  
+  // Load available options when gift is selected
+  useEffect(() => {
+    if (selectedGift) {
+      loadGiftOptions(selectedGift);
+    } else {
+      setAvailableBackdrops([]);
+      setAvailableModels([]);
+    }
+  }, [selectedGift]);
+  
+  const loadGiftOptions = async (giftName: string) => {
+    try {
+      setLoadingOptions(true);
+      const authHeaders = await getAuthHeaders();
+      const baseUrl = DEV_MODE ? 'http://localhost:5002' : 'https://www.channelsseller.site';
+      const response = await fetch(`${baseUrl}/api/alerts/gift-options/${encodeURIComponent(giftName)}`, {
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to load gift options');
+        return;
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setAvailableBackdrops(data.backdrops || []);
+        setAvailableModels(data.models || []);
+        console.log(`[PriceAlerts] Loaded ${data.backdrops?.length || 0} backdrops and ${data.models?.length || 0} models for ${giftName}`);
+      }
+    } catch (error) {
+      console.error('Failed to load gift options:', error);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
 
   const loadGifts = async () => {
     try {
@@ -150,7 +211,16 @@ const PriceAlertsPage = () => {
     }
 
     const giftData = getSelectedGiftData();
-    const currentPrice = giftData?.priceTon || 0;
+    
+    // Determine current price based on filter mode
+    let currentPrice = giftData?.priceTon || 0;
+    if (filterMode === 'backdrop' && selectedBackdrop) {
+      const backdrop = availableBackdrops.find(b => b.name === selectedBackdrop);
+      if (backdrop) currentPrice = backdrop.price_ton;
+    } else if (filterMode === 'model' && selectedModel) {
+      const model = availableModels.find(m => m.name === selectedModel);
+      if (model) currentPrice = model.price_ton;
+    }
 
     try {
       setIsCreating(true);
@@ -163,7 +233,8 @@ const PriceAlertsPage = () => {
         alert_type: alertType,
         condition: condition,
         current_price_ton: currentPrice,
-        model_name: selectedModel === '__floor__' ? null : (selectedModel || null)
+        model_name: filterMode === 'model' ? selectedModel : null,
+        backdrop_name: filterMode === 'backdrop' ? selectedBackdrop : null
       };
 
       if (alertType === 'PRICE_TARGET') {
@@ -197,6 +268,8 @@ const PriceAlertsPage = () => {
       // Reset form and reload
       setSelectedGift('');
       setSelectedModel('');
+      setSelectedBackdrop('');
+      setFilterMode('floor');
       setTargetPrice('');
       setPercentageChange('');
       loadAlerts();
@@ -352,26 +425,115 @@ const PriceAlertsPage = () => {
               })()}
             </div>
 
-            {/* Model Selection (if gift has models) */}
-            {selectedGiftData && selectedGiftData.models.length > 0 && (
+            {/* Filter Mode Selection - Floor/Backdrop/Model */}
+            {selectedGift && (availableBackdrops.length > 0 || availableModels.length > 0) && (
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {isRTL ? 'اختر النموذج (اختياري)' : 'Select Model (Optional)'}
+                  {isRTL ? 'نوع السعر المراقب' : 'Price Filter Type'}
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterMode('floor');
+                      setSelectedModel('');
+                      setSelectedBackdrop('');
+                    }}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filterMode === 'floor'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    🏢 {isRTL ? 'السعر العام' : 'Floor'}
+                  </button>
+                  {availableBackdrops.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterMode('backdrop');
+                        setSelectedModel('');
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        filterMode === 'backdrop'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      🎨 {isRTL ? 'خلفية' : 'Backdrop'}
+                    </button>
+                  )}
+                  {availableModels.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterMode('model');
+                        setSelectedBackdrop('');
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        filterMode === 'model'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      ✨ {isRTL ? 'نموذج' : 'Model'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Backdrop Selection */}
+            {filterMode === 'backdrop' && availableBackdrops.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  {isRTL ? 'اختر الخلفية' : 'Select Backdrop'}
+                </label>
+                <Select
+                  value={selectedBackdrop}
+                  onValueChange={setSelectedBackdrop}
+                  disabled={loadingOptions}
+                >
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder={isRTL ? 'اختر خلفية...' : 'Choose backdrop...'} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {availableBackdrops.map((backdrop) => (
+                      <SelectItem key={backdrop.name} value={backdrop.name}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-3 h-3 rounded-full ${
+                            backdrop.name === 'Black' ? 'bg-black' :
+                            backdrop.name === 'Onyx Black' ? 'bg-gray-900' :
+                            backdrop.name === 'Midnight Blue' ? 'bg-blue-900' : 'bg-gray-500'
+                          }`} />
+                          <span>{backdrop.name}</span>
+                          <span className="text-muted-foreground">- {backdrop.price_ton.toFixed(4)} TON</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {/* Model Selection */}
+            {filterMode === 'model' && availableModels.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  {isRTL ? 'اختر النموذج' : 'Select Model'}
                 </label>
                 <Select
                   value={selectedModel}
                   onValueChange={setSelectedModel}
+                  disabled={loadingOptions}
                 >
                   <SelectTrigger className="bg-background/50">
-                    <SelectValue placeholder={isRTL ? 'السعر العام (Floor)' : 'Floor Price'} />
+                    <SelectValue placeholder={isRTL ? 'اختر نموذج...' : 'Choose model...'} />
                   </SelectTrigger>
                   <SelectContent className="max-h-[200px]">
-                    <SelectItem value="__floor__">
-                      {isRTL ? '🏢 السعر العام (Floor)' : '🏢 Floor Price'} - {selectedGiftData.priceTon.toFixed(4)} TON
-                    </SelectItem>
-                    {selectedGiftData.models.map((model) => (
+                    {availableModels.map((model) => (
                       <SelectItem key={model.name} value={model.name}>
-                        {model.name} - {model.priceTon.toFixed(4)} TON
+                        {model.name} - {model.price_ton.toFixed(4)} TON
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -445,7 +607,14 @@ const PriceAlertsPage = () => {
 
             <Button 
               onClick={handleCreateAlert} 
-              disabled={isCreating || !selectedGift || (alertType === 'PRICE_TARGET' && !targetPrice) || (alertType === 'PERCENTAGE_CHANGE' && !percentageChange)}
+              disabled={
+                isCreating || 
+                !selectedGift || 
+                (alertType === 'PRICE_TARGET' && !targetPrice) || 
+                (alertType === 'PERCENTAGE_CHANGE' && !percentageChange) ||
+                (filterMode === 'backdrop' && !selectedBackdrop) ||
+                (filterMode === 'model' && !selectedModel)
+              }
               className="w-full bg-primary hover:bg-primary/90"
             >
               {isCreating ? (
@@ -500,7 +669,8 @@ const PriceAlertsPage = () => {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold truncate">
                           {alert.gift_name}
-                          {alert.model_name && <span className="text-xs text-muted-foreground ml-1">({alert.model_name})</span>}
+                          {alert.model_name && <span className="text-xs text-muted-foreground ml-1">(Model: {alert.model_name})</span>}
+                          {alert.backdrop_name && <span className="text-xs text-muted-foreground ml-1">(Backdrop: {alert.backdrop_name})</span>}
                         </h4>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           {alert.alert_type === 'PRICE_TARGET' ? (
