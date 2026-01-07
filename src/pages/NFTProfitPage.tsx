@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -77,6 +77,9 @@ interface NFTProfitData {
   last_updated: string;
 }
 
+// Feature flag: Allow searching for other users' NFT profit
+const ALLOW_OTHER_USER_SEARCH = false;
+
 const NFTProfitPage = () => {
   const { language } = useLanguage();
   const { username: authUsername, authToken } = useAuth();
@@ -88,6 +91,7 @@ const NFTProfitPage = () => {
   const [data, setData] = useState<NFTProfitData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAllGifts, setShowAllGifts] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const formatNumber = (num: number | undefined | null) => {
     const value = num ?? 0;
@@ -114,8 +118,10 @@ const NFTProfitPage = () => {
     return imageUrl;
   };
 
-  const fetchNFTProfit = async () => {
-    if (!username.trim()) {
+  const fetchNFTProfit = async (targetUsername?: string) => {
+    const userToFetch = targetUsername || username;
+    
+    if (!userToFetch.trim()) {
       toast.error(isRTL ? 'الرجاء إدخال اسم المستخدم' : 'Please enter a username');
       return;
     }
@@ -125,7 +131,7 @@ const NFTProfitPage = () => {
     setData(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/user/${username.trim()}/nft-profit`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/${userToFetch.trim()}/nft-profit`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -136,14 +142,27 @@ const NFTProfitPage = () => {
 
       if (result.success && result.data) {
         setData(result.data);
-        toast.success(
-          isRTL 
-            ? `تم تحميل بيانات ${result.data.total_gifts_count} هدية` 
-            : `Loaded ${result.data.total_gifts_count} gifts data`
-        );
+        if (initialLoadDone) {
+          toast.success(
+            isRTL 
+              ? `تم تحميل بيانات ${result.data.total_gifts_count} هدية` 
+              : `Loaded ${result.data.total_gifts_count} gifts data`
+          );
+        }
       } else {
-        setError(result.error || (isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data'));
-        toast.error(result.error || (isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data'));
+        const errorMsg = result.error || (isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data');
+        
+        // Handle specific error cases
+        if (errorMsg.includes('No gifts found')) {
+          setError(isRTL ? 'لا يوجد هدايا للتحليل' : 'No gifts to analyze');
+          toast.error(isRTL ? 'لا يوجد هدايا للتحليل' : 'No gifts to analyze');
+        } else if (errorMsg.includes('not found')) {
+          setError(isRTL ? 'المستخدم غير موجود' : 'User not found');
+          toast.error(isRTL ? 'المستخدم غير موجود' : 'User not found');
+        } else {
+          setError(errorMsg);
+          toast.error(errorMsg);
+        }
       }
     } catch (err) {
       console.error('NFT Profit fetch error:', err);
@@ -151,8 +170,19 @@ const NFTProfitPage = () => {
       toast.error(isRTL ? 'خطأ في الاتصال' : 'Connection error');
     } finally {
       setLoading(false);
+      setInitialLoadDone(true);
     }
   };
+
+  // Auto-load user's gifts on mount
+  useEffect(() => {
+    if (authUsername && !initialLoadDone) {
+      fetchNFTProfit(authUsername);
+    } else if (!authUsername && !initialLoadDone) {
+      setError(isRTL ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+      setInitialLoadDone(true);
+    }
+  }, [authUsername, initialLoadDone]);
 
   const sortedGifts = useMemo(() => {
     if (!data?.gifts) return [];
@@ -191,27 +221,29 @@ const NFTProfitPage = () => {
           </div>
         </div>
 
-        {/* Search Section */}
-        <div className="glass-effect rounded-2xl p-4 mb-4">
-          <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
-            <Input
-              type="text"
-              placeholder={isRTL ? 'أدخل اسم المستخدم...' : 'Enter username...'}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && fetchNFTProfit()}
-              className={cn("flex-1", isRTL && "text-right")}
-              dir={isRTL ? "rtl" : "ltr"}
-            />
-            <Button onClick={fetchNFTProfit} disabled={loading}>
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Search className="w-4 h-4" />
-              )}
-            </Button>
+        {/* Search Section - Only show if search is enabled */}
+        {ALLOW_OTHER_USER_SEARCH && (
+          <div className="glass-effect rounded-2xl p-4 mb-4">
+            <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
+              <Input
+                type="text"
+                placeholder={isRTL ? 'أدخل اسم المستخدم...' : 'Enter username...'}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && fetchNFTProfit()}
+                className={cn("flex-1", isRTL && "text-right")}
+                dir={isRTL ? "rtl" : "ltr"}
+              />
+              <Button onClick={() => fetchNFTProfit()} disabled={loading}>
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -224,7 +256,7 @@ const NFTProfitPage = () => {
         {error && !loading && (
           <div className="glass-effect rounded-2xl p-6 text-center">
             <p className="text-destructive mb-4">{error}</p>
-            <Button variant="outline" onClick={fetchNFTProfit}>
+            <Button variant="outline" onClick={() => fetchNFTProfit()}>
               <RefreshCw className="w-4 h-4 mr-2" />
               {isRTL ? 'إعادة المحاولة' : 'Retry'}
             </Button>

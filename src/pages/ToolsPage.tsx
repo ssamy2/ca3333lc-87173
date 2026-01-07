@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, User, Bell, Calculator } from 'lucide-react';
+import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, User, Bell, Calculator, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       toolsDesc: 'أدوات تحليل وتتبع الهدايا',
       giftCalculator: 'حاسبة هدايا المستخدم',
       giftCalculatorDesc: 'احسب قيمة هدايا أي مستخدم',
+      nftProfit: 'أرباح الهدايا',
+      nftProfitDesc: 'تتبع أرباح وخسائر هداياك',
       heatmap: 'خريطة الحرارة',
       heatmapDesc: 'عرض تغيرات أسعار الهدايا بشكل مرئي',
       marketStats: 'إحصائيات السوق',
@@ -48,6 +50,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       toolsDesc: 'Gift analysis and tracking tools',
       giftCalculator: 'User Gift Calculator',
       giftCalculatorDesc: 'Calculate any user\'s gift value',
+      nftProfit: 'NFT Profit',
+      nftProfitDesc: 'Track your gifts profit & loss',
       heatmap: 'Heatmap',
       heatmapDesc: 'Visualize gift price changes',
       marketStats: 'Market Stats',
@@ -75,6 +79,16 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       available: true,
       route: '/user-gift-calculator',
       action: null
+    },
+    {
+      id: 'nftProfit',
+      name: text.nftProfit,
+      description: text.nftProfitDesc,
+      icon: Wallet,
+      gradient: 'from-purple-500 to-violet-600',
+      shadowColor: 'shadow-purple-500/20',
+      available: true,
+      route: '/nft-profit'
     },
     {
       id: 'priceAlerts',
