@@ -35,7 +35,8 @@ import {
   formatBinancePercentage,
   formatBinanceVolume,
   getBinanceInterval,
-  getBinanceLimit
+  getBinanceLimit,
+  TimeFrame
 } from '@/services/binanceService';
 import { 
   fetchHybridCryptoData,
@@ -61,7 +62,6 @@ ChartJS.register(
   Filler
 );
 
-type TimeFrame = '1H' | '1D' | '1W' | '1M' | '1Y' | '3Y' | 'ALL';
 
 const timeFrameConfig: Record<TimeFrame, { days: number; label: string; labelAr: string }> = {
   '1H': { days: 1, label: '1H', labelAr: '1س' },
