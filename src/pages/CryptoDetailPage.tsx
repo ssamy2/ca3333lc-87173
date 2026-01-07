@@ -24,6 +24,19 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchCryptoChart, fetchCoinDetails, formatPrice, formatMarketCap, CryptoChartData } from '@/services/cryptoService';
+import { 
+  fetchBinanceChartData, 
+  fetchBinanceCryptoData, 
+  fetchBinanceTicker,
+  fetchBinanceOrderBook,
+  BinanceCryptoData,
+  BinanceChartData,
+  formatBinancePrice,
+  formatBinancePercentage,
+  formatBinanceVolume,
+  getBinanceInterval,
+  getBinanceLimit
+} from '@/services/binanceService';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 
@@ -56,7 +69,8 @@ const CryptoDetailPage: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   const [coinDetails, setCoinDetails] = useState<any>(null);
-  const [chartData, setChartData] = useState<CryptoChartData | null>(null);
+  const [binanceData, setBinanceData] = useState<BinanceCryptoData | null>(null);
+  const [chartData, setChartData] = useState<BinanceChartData | null>(null);
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('1W');
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
@@ -72,8 +86,14 @@ const CryptoDetailPage: React.FC = () => {
       setError(null);
       
       try {
-        const details = await fetchCoinDetails(coinId);
+        // Fetch both CoinGecko and Binance data
+        const [details, binance] = await Promise.all([
+          fetchCoinDetails(coinId),
+          fetchBinanceCryptoData(coinId)
+        ]);
+        
         setCoinDetails(details);
+        setBinanceData(binance);
       } catch (err) {
         console.error('[CryptoDetail] Error loading details:', err);
         setError(isRTL ? 'فشل في تحميل البيانات' : 'Failed to load data');
@@ -93,7 +113,10 @@ const CryptoDetailPage: React.FC = () => {
       setChartLoading(true);
       
       try {
-        const data = await fetchCryptoChart(coinId, timeFrameConfig[timeFrame].days);
+        // Use Binance API for chart data
+        const interval = getBinanceInterval(timeFrame);
+        const limit = getBinanceLimit(timeFrame);
+        const data = await fetchBinanceChartData(coinId, interval, limit);
         setChartData(data);
       } catch (err) {
         console.error('[CryptoDetail] Error loading chart:', err);
@@ -111,8 +134,8 @@ const CryptoDetailPage: React.FC = () => {
       return { value: 0, percentage: 0 };
     }
     
-    const firstPrice = chartData.prices[0][1];
-    const lastPrice = chartData.prices[chartData.prices.length - 1][1];
+    const firstPrice = chartData.prices[0];
+    const lastPrice = chartData.prices[chartData.prices.length - 1];
     const change = lastPrice - firstPrice;
     const percentage = (change / firstPrice) * 100;
     
@@ -128,7 +151,7 @@ const CryptoDetailPage: React.FC = () => {
       return { labels: [], datasets: [] };
     }
 
-    const labels = chartData.prices.map(([timestamp]) => {
+    const labels = chartData.times.map((timestamp) => {
       const date = new Date(timestamp);
       if (timeFrame === '1H' || timeFrame === '1D') {
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -139,7 +162,7 @@ const CryptoDetailPage: React.FC = () => {
       }
     });
 
-    const prices = chartData.prices.map(([, price]) => price);
+    const prices = chartData.prices;
 
     return {
       labels,
@@ -196,7 +219,7 @@ const CryptoDetailPage: React.FC = () => {
         padding: 12,
         displayColors: false,
         callbacks: {
-          label: (context) => formatPrice(context.parsed.y)
+          label: (context) => formatBinancePrice(context.parsed.y)
         }
       }
     },
@@ -219,7 +242,7 @@ const CryptoDetailPage: React.FC = () => {
         ticks: {
           color: 'rgba(156, 163, 175, 0.6)',
           font: { size: 10, family: 'Inter, sans-serif' },
-          callback: (value) => formatPrice(value as number),
+          callback: (value) => formatBinancePrice(value as number),
           maxTicksLimit: 5
         },
         border: { display: false }
@@ -304,12 +327,13 @@ const CryptoDetailPage: React.FC = () => {
     );
   }
 
-  const currentPrice = coinDetails.market_data?.current_price?.usd || 0;
-  const priceChange24h = coinDetails.market_data?.price_change_percentage_24h || 0;
-  const marketCap = coinDetails.market_data?.market_cap?.usd || 0;
-  const volume24h = coinDetails.market_data?.total_volume?.usd || 0;
-  const high24h = coinDetails.market_data?.high_24h?.usd || 0;
-  const low24h = coinDetails.market_data?.low_24h?.usd || 0;
+  // Use Binance data if available, fallback to CoinGecko
+  const currentPrice = binanceData?.currentPrice || coinDetails.market_data?.current_price?.usd || 0;
+  const priceChange24h = binanceData?.priceChangePercent || coinDetails.market_data?.price_change_percentage_24h || 0;
+  const marketCap = coinDetails.market_data?.market_cap?.usd || 0; // Binance doesn't provide market cap
+  const volume24h = binanceData?.volume || coinDetails.market_data?.total_volume?.usd || 0;
+  const high24h = binanceData?.highPrice || coinDetails.market_data?.high_24h?.usd || 0;
+  const low24h = binanceData?.lowPrice || coinDetails.market_data?.low_24h?.usd || 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -358,7 +382,7 @@ const CryptoDetailPage: React.FC = () => {
         {/* Price Section */}
         <div ref={chartContainerRef} className="space-y-4">
           <div className={cn("flex items-end gap-3", isRTL && "flex-row-reverse")}>
-            <span className="text-3xl font-bold font-mono">{formatPrice(currentPrice)}</span>
+            <span className="text-3xl font-bold font-mono">{formatBinancePrice(currentPrice)}</span>
             <span className={cn(
               "flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md",
               priceChange24h >= 0 ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
@@ -421,13 +445,13 @@ const CryptoDetailPage: React.FC = () => {
             <p className="text-[10px] text-muted-foreground mb-1">
               {isRTL ? 'أعلى سعر 24س' : '24h High'}
             </p>
-            <p className="font-semibold text-sm text-green-500">{formatPrice(high24h)}</p>
+            <p className="font-semibold text-sm text-green-500">{formatBinancePrice(high24h)}</p>
           </div>
           <div className="bg-card/30 rounded-xl p-3 border border-border/20">
             <p className="text-[10px] text-muted-foreground mb-1">
               {isRTL ? 'أدنى سعر 24س' : '24h Low'}
             </p>
-            <p className="font-semibold text-sm text-red-500">{formatPrice(low24h)}</p>
+            <p className="font-semibold text-sm text-red-500">{formatBinancePrice(low24h)}</p>
           </div>
         </div>
 
@@ -445,6 +469,15 @@ const CryptoDetailPage: React.FC = () => {
                 {isPositive ? '+' : ''}{periodChange.percentage.toFixed(2)}%
               </span>
             </div>
+          </div>
+        )}
+
+        {/* Data Source */}
+        {binanceData && (
+          <div className="text-center py-2">
+            <span className="text-[10px] text-muted-foreground/50">
+              {isRTL ? 'بيانات من Binance API' : 'Data from Binance API'}
+            </span>
           </div>
         )}
       </div>
