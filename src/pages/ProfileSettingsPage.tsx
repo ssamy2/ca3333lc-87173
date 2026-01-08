@@ -239,30 +239,14 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('community')}</h3>
           </div>
           <div className="space-y-3">
-            {/* Nova Gifts Channel - Primary */}
-            <Button
-              onClick={() => openTelegramLink('https://t.me/Nova_Gifts')}
-              variant="outline"
-              className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
-            >
-              <span className="font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Nova Gifts</span>
-              <ExternalLink className="w-4 h-4 text-primary" />
-            </Button>
+            {/* Support Channel */}
             <Button
               onClick={() => openTelegramLink('https://t.me/GT_Rolet')}
               variant="outline"
-              className="w-full justify-between rounded-xl h-12 text-sm hover:bg-blue-500/10 hover:border-blue-500/30 transition-all border-blue-500/20"
+              className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
             >
-              <span className="font-medium">{t('joinTelegramChannel')}</span>
-              <ExternalLink className="w-4 h-4 opacity-70" />
-            </Button>
-            <Button
-              onClick={() => openTelegramLink('https://t.me/Gifts_Super')}
-              variant="outline"
-              className="w-full justify-between rounded-xl h-12 text-sm hover:bg-blue-500/10 hover:border-blue-500/30 transition-all border-blue-500/20"
-            >
-              <span className="font-medium">{t('joinTelegramGroup')}</span>
-              <ExternalLink className="w-4 h-4 opacity-70" />
+              <span className="font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Support</span>
+              <ExternalLink className="w-4 h-4 text-primary" />
             </Button>
           </div>
         </Card>
