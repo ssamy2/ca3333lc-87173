@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/',
   server: {
     host: "::",
     port: 8080,
@@ -49,6 +50,10 @@ export default defineConfig(({ mode }) => ({
           // Icons
           'vendor-icons': ['lucide-react'],
         },
+        // Ensure stable chunk names
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
     // حجم التحذير
@@ -58,6 +63,10 @@ export default defineConfig(({ mode }) => ({
     // تحسين الصور
     assetsInlineLimit: 4096, // 4KB - الصور الأصغر تصبح inline
     cssCodeSplit: true,
+    // Ensure proper module preloading
+    modulePreload: {
+      polyfill: true,
+    },
   },
   // تحسين الأداء
   optimizeDeps: {
