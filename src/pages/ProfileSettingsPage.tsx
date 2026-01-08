@@ -241,7 +241,23 @@ const ProfileSettingsPage: React.FC<ProfileSettingsPageProps> = ({ onBack }) => 
           <div className="space-y-3">
             {/* Support Channel */}
             <Button
-              onClick={() => openTelegramLink('https://t.me/GT_Rolet')}
+              onClick={() => openTelegramLink('https://t.me/Nova_Gifts')}
+              variant="outline"
+              className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
+            >
+              <span className="font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Channel</span>
+              <ExternalLink className="w-4 h-4 text-primary" />
+            </Button>
+            <Button
+              onClick={() => openTelegramLink('https://t.me/Gifts_Super')}
+              variant="outline"
+              className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
+            >
+              <span className="font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Community</span>
+              <ExternalLink className="w-4 h-4 text-primary" />
+            </Button>
+            <Button
+              onClick={() => openTelegramLink('https://t.me/NovaGiftsSupport')}
               variant="outline"
               className="w-full justify-between rounded-xl h-12 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border-primary/30 transition-all"
             >

@@ -51,6 +51,7 @@ const NOVA_CHANNEL = 'https://t.me/Nova_Gifts';
 // Removed: Profit Calculator, /tools page route
 const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'chart', icon: TrendingUp, label: 'Market', labelAr: 'السوق', path: '/chart' },
+  { id: 'favorites', icon: Sparkles, label: 'Favorites', labelAr: 'المفضلة', path: '/favorites' },
   { id: 'trade', icon: LineChart, label: 'Trade', labelAr: 'تداول', path: '/trade' },
   { id: 'heatmap', icon: Flame, label: 'Heatmap', labelAr: 'خريطة حرارية', path: '/heatmap' },
   { id: 'stats', icon: BarChart3, label: 'Statistics', labelAr: 'الإحصائيات', path: '/market-stats' },

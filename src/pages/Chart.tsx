@@ -154,17 +154,12 @@ const Chart = () => {
       dataSource === 'black' ? 'bg-[hsl(var(--black-bg))]' : 'bg-background'
     )}>
       {/* Header Controls */}
-      <div className={cn(
-        "sticky top-0 z-40 backdrop-blur-xl border-b",
-        dataSource === 'black'
-          ? 'bg-[hsl(var(--black-bg))]/90 border-white/5'
-          : 'bg-background/80 border-border/30'
-      )}>
-        <div className="p-4 space-y-3">
-          {/* View Mode & Sort */}
-          <div className="flex items-center justify-between gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex bg-secondary/50 rounded-xl p-1 border border-border/30">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="p-4 space-y-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center justify-between gap-4">
+            {/* View Toggle */}
+            <div className="flex gap-1 bg-secondary/30 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
@@ -188,6 +183,15 @@ const Chart = () => {
                 <LayoutGrid className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Favorites Button - Mobile Only */}
+            <button
+              onClick={() => window.location.href = '/favorites'}
+              className="md:hidden flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30 transition-all duration-200"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-semibold">{language === 'ar' ? 'المفضلة' : 'Favorites'}</span>
+            </button>
 
             {/* Sort Buttons */}
             <div className="flex gap-2">

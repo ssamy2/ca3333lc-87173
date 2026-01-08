@@ -119,7 +119,7 @@ const TelegramApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade' | 'favorites'>('chart');
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade'>('chart');
   const [searchMode, setSearchMode] = useState<'user' | 'gift'>('user');
   const [giftUrl, setGiftUrl] = useState('');
   const [singleGift, setSingleGift] = useState<any | null>(null);
@@ -535,14 +535,6 @@ const TelegramApp: React.FC = () => {
     );
   }
 
-  if (activeTab === 'favorites') {
-    return (
-      <>
-        <FavoritesPage />
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-      </>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
