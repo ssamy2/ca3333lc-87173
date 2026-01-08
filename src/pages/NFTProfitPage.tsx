@@ -82,7 +82,7 @@ const ALLOW_OTHER_USER_SEARCH = false;
 
 const NFTProfitPage = () => {
   const { language } = useLanguage();
-  const { username: authUsername, authToken } = useAuth();
+  const { username: authUsername, authToken, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isRTL = language === 'ar';
   
@@ -174,16 +174,20 @@ const NFTProfitPage = () => {
     }
   };
 
-  // Auto-load user's gifts on mount
+  // Auto-load user's gifts on mount - wait for auth to complete first
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
     if (authUsername && !initialLoadDone) {
+      // Update username state and fetch
+      setUsername(authUsername);
       fetchNFTProfit(authUsername);
-    }
-    // Don't show error if user is not logged in, just wait
-    if (!initialLoadDone && !authUsername) {
+    } else if (!authUsername && !initialLoadDone) {
+      // Auth completed but no username
       setInitialLoadDone(true);
     }
-  }, [authUsername, initialLoadDone]);
+  }, [authUsername, authLoading, initialLoadDone]);
 
   const sortedGifts = useMemo(() => {
     if (!data?.gifts) return [];

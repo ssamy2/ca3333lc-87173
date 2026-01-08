@@ -54,7 +54,7 @@ interface GiftDetailSheetProps {
 }
 
 export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: GiftDetailSheetProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('');
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<GiftDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,8 +118,9 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
       }
     }
     
-    await onBuy(gift.name, quantity, modelId, modelName, modelImageUrl);
-    setQuantity(1);
+    const buyQuantity = parseInt(quantity) || 1;
+    await onBuy(gift.name, buyQuantity, modelId, modelName, modelImageUrl);
+    setQuantity('');
     setSelectedModel(null);
     onClose();
   };
@@ -170,8 +171,9 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
   
   const changePercent = displayChange;
   const isPositive = changePercent >= 0;
-  const totalCostTon = displayPriceTon * quantity;
-  const totalCostUsd = displayPriceUsd * quantity;
+  const currentQuantity = parseInt(quantity) || 1;
+  const totalCostTon = displayPriceTon * currentQuantity;
+  const totalCostUsd = displayPriceUsd * currentQuantity;
 
   // Prepare chart data - handle life_chart format from API
   const chartData = (detailData?.chart_data || []).map((item: any) => {
@@ -472,42 +474,45 @@ export function GiftDetailSheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL 
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 rounded-full"
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
+                  onClick={() => {
+                    const current = parseInt(quantity) || 1;
+                    setQuantity(String(Math.max(1, current - 1)));
+                  }}
+                  disabled={parseInt(quantity) <= 1 || !quantity}
                 >
                   -
                 </Button>
-                <span className="w-10 text-center font-bold text-lg">{quantity}</span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 5000)) {
+                      setQuantity(val);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (!quantity) {
+                      setQuantity('1');
+                    }
+                  }}
+                  className="w-16 h-9 text-center font-bold text-lg"
+                />
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 rounded-full"
-                  onClick={() => setQuantity(q => Math.min(100, q + 1))}
-                  disabled={quantity >= 100}
+                  onClick={() => {
+                    const current = parseInt(quantity) || 1;
+                    setQuantity(String(Math.min(5000, current + 1)));
+                  }}
+                  disabled={parseInt(quantity) >= 5000}
                 >
                   +
                 </Button>
               </div>
-            </div>
-            {/* Direct Input */}
-            <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-              <span className="text-xs text-muted-foreground">
-                {isRTL ? 'أدخل الكمية مباشرة:' : 'Enter quantity directly:'}
-              </span>
-              <Input
-                type="number"
-                min="1"
-                max="100"
-                value={quantity}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  if (val >= 1 && val <= 100) {
-                    setQuantity(val);
-                  }
-                }}
-                className={cn("w-20 h-8 text-center", isRTL && "text-right")}
-                placeholder={isRTL ? '1-100' : '1-100'}
-              />
             </div>
           </div>
 
