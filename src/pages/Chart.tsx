@@ -187,49 +187,49 @@ const Chart = () => {
             {/* Favorites Button - Mobile Only */}
             <button
               onClick={() => window.location.href = '/favorites'}
-              className="md:hidden flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30 transition-all duration-200"
+              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg shadow-md shadow-pink-500/20 hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-200"
             >
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-semibold">{language === 'ar' ? 'المفضلة' : 'Favorites'}</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{language === 'ar' ? 'المفضلة' : 'Favorites'}</span>
             </button>
 
             {/* Sort Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
+                  "flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
                   sortMode === 'priceUp'
-                    ? 'bg-success/20 text-success border border-success/30 shadow-lg shadow-success/10'
+                    ? 'bg-success/20 text-success border border-success/30 shadow-md shadow-success/10'
                     : 'bg-secondary/50 text-muted-foreground hover:text-success border border-border/30'
                 )}
               >
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-3 h-3" />
                 {t('priceUp')}
               </button>
               <button
                 onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
+                  "flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
                   sortMode === 'priceDown'
-                    ? 'bg-destructive/20 text-destructive border border-destructive/30 shadow-lg shadow-destructive/10'
+                    ? 'bg-destructive/20 text-destructive border border-destructive/30 shadow-md shadow-destructive/10'
                     : 'bg-secondary/50 text-muted-foreground hover:text-destructive border border-border/30'
                 )}
               >
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className="w-3 h-3" />
                 {t('priceDown')}
               </button>
             </div>
           </div>
 
           {/* Data Source */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               onClick={() => setDataSource('market')}
               className={cn(
-                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
+                "flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200",
                 dataSource === 'market'
-                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20'
+                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md shadow-primary/20'
                   : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
               )}
             >
@@ -238,9 +238,9 @@ const Chart = () => {
             <button
               onClick={() => setDataSource('black')}
               className={cn(
-                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
+                "flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200",
                 dataSource === 'black'
-                  ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 text-white border border-white/10 shadow-lg'
+                  ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 text-white border border-white/10 shadow-md'
                   : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
               )}
             >
@@ -249,9 +249,9 @@ const Chart = () => {
             <button
               onClick={() => setDataSource('regular')}
               className={cn(
-                "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
+                "flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200",
                 dataSource === 'regular'
-                  ? 'bg-gradient-to-r from-warning to-warning/80 text-white shadow-lg shadow-warning/20'
+                  ? 'bg-gradient-to-r from-warning to-warning/80 text-white shadow-md shadow-warning/20'
                   : 'bg-secondary/50 text-warning/60 hover:text-warning border border-border/30'
               )}
             >
@@ -261,25 +261,25 @@ const Chart = () => {
 
           {/* Currency Toggle - Only for market mode */}
           {dataSource === 'market' && (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={() => setCurrency('ton')}
                 className={cn(
-                  "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2",
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5",
                   currency === 'ton'
-                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20'
+                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md shadow-primary/20'
                     : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
                 )}
               >
-                <TonIcon className="w-4 h-4" />
+                <TonIcon className="w-3.5 h-3.5" />
                 TON
               </button>
               <button
                 onClick={() => setCurrency('usd')}
                 className={cn(
-                  "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200",
                   currency === 'usd'
-                    ? 'bg-gradient-to-r from-success to-success/80 text-white shadow-lg shadow-success/20'
+                    ? 'bg-gradient-to-r from-success to-success/80 text-white shadow-md shadow-success/20'
                     : 'bg-secondary/50 text-muted-foreground hover:text-foreground border border-border/30'
                 )}
               >
