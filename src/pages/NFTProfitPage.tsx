@@ -78,7 +78,7 @@ interface NFTProfitData {
 }
 
 // Feature flag: Allow searching for other users' NFT profit
-const ALLOW_OTHER_USER_SEARCH = false;
+const ALLOW_OTHER_USER_SEARCH = true;
 
 const NFTProfitPage = () => {
   const { language } = useLanguage();
