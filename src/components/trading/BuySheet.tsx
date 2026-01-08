@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Minus, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -21,16 +22,19 @@ interface BuySheetProps {
 }
 
 export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuySheetProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('');
 
   const handleQuantityChange = (delta: number) => {
-    setQuantity(prev => Math.max(1, Math.min(5000, prev + delta)));
+    const current = parseInt(quantity) || 1;
+    const newValue = Math.max(1, Math.min(5000, current + delta));
+    setQuantity(String(newValue));
   };
 
   const handleBuy = async () => {
     if (!gift) return;
-    await onBuy(gift.name, quantity);
-    setQuantity(1);
+    const buyQuantity = parseInt(quantity) || 1;
+    await onBuy(gift.name, buyQuantity);
+    setQuantity('');
     onClose();
   };
 
@@ -54,8 +58,9 @@ export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuyS
 
   if (!gift) return null;
 
-  const totalCostTon = gift.priceTon * quantity;
-  const totalCostUsd = gift.priceUsd * quantity;
+  const currentQuantity = parseInt(quantity) || 1;
+  const totalCostTon = gift.priceTon * currentQuantity;
+  const totalCostUsd = gift.priceUsd * currentQuantity;
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -115,19 +120,34 @@ export function BuySheet({ gift, isOpen, onClose, onBuy, isBuying, isRTL }: BuyS
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
+                disabled={parseInt(quantity) <= 1 || !quantity}
               >
                 <Minus className="w-4 h-4" />
               </Button>
-              <span className="w-10 text-center font-bold text-lg">
-                {quantity}
-              </span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="1"
+                value={quantity}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 5000)) {
+                    setQuantity(val);
+                  }
+                }}
+                onFocus={(e) => {
+                  if (!quantity) {
+                    setQuantity('1');
+                  }
+                }}
+                className="w-16 h-9 text-center font-bold text-lg"
+              />
               <Button
                 variant="outline"
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= 5000}
+                disabled={parseInt(quantity) >= 5000}
               >
                 <Plus className="w-4 h-4" />
               </Button>

@@ -178,8 +178,9 @@ const NFTProfitPage = () => {
   useEffect(() => {
     if (authUsername && !initialLoadDone) {
       fetchNFTProfit(authUsername);
-    } else if (!authUsername && !initialLoadDone) {
-      setError(isRTL ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+    }
+    // Don't show error if user is not logged in, just wait
+    if (!initialLoadDone && !authUsername) {
       setInitialLoadDone(true);
     }
   }, [authUsername, initialLoadDone]);
