@@ -196,10 +196,10 @@ const Chart = () => {
             {/* Sort Buttons */}
             <div className="flex gap-1.5">
               <button
-                onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
+                onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
                 className={cn(
                   "flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                  sortMode === 'priceUp'
+                  sortMode === 'priceDown'
                     ? 'bg-success/20 text-success border border-success/30 shadow-md shadow-success/10'
                     : 'bg-secondary/50 text-muted-foreground hover:text-success border border-border/30'
                 )}
@@ -208,10 +208,10 @@ const Chart = () => {
                 {t('priceUp')}
               </button>
               <button
-                onClick={() => setSortMode(sortMode === 'priceDown' ? 'default' : 'priceDown')}
+                onClick={() => setSortMode(sortMode === 'priceUp' ? 'default' : 'priceUp')}
                 className={cn(
                   "flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                  sortMode === 'priceDown'
+                  sortMode === 'priceUp'
                     ? 'bg-destructive/20 text-destructive border border-destructive/30 shadow-md shadow-destructive/10'
                     : 'bg-secondary/50 text-muted-foreground hover:text-destructive border border-border/30'
                 )}
