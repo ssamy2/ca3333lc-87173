@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, CandlestickChart, Sparkles, LineChart } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, CandlestickChart, Sparkles, LineChart, Star } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Rectangle } from 'recharts';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
@@ -81,6 +81,7 @@ const GiftDetail: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const { isLight } = useTheme();
+  const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [giftData, setGiftData] = useState<GiftDetailData | null>(null);
   const [blackFloorData, setBlackFloorData] = useState<BlackFloorItem[]>([]);
@@ -103,6 +104,31 @@ const GiftDetail: React.FC = () => {
       setDataSource('market');
     }
   }, [blackFloorData, dataSource]);
+
+  useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://www.channelsseller.site'}/api/favorites/check/${name}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...authHeaders
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFavorite(data.is_favorite);
+        }
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    };
+
+    if (name) {
+      checkFavorite();
+    }
+  }, [name]);
 
   const fetchGiftData = useCallback(async (giftName: string) => {
     try {
@@ -776,6 +802,35 @@ const GiftDetail: React.FC = () => {
 
   const imageUrl = getCorrectImageUrl();
 
+  // Toggle favorite status
+  const toggleFavorite = async () => {
+    try {
+      const authHeaders = await getAuthHeaders();
+      const url = `${process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://www.channelsseller.site'}/api/favorites/${isFavorite ? 'remove' : 'add'}`;
+      
+      const response = await fetch(url, {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        body: JSON.stringify({
+          gift_name: name
+        })
+      });
+
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+        toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+      } else {
+        throw new Error('Failed to update favorite status');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-4">
@@ -814,7 +869,7 @@ const GiftDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Side: Price, Change */}
+            {/* Right Side: Price, Change, Favorite */}
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5 text-2xl font-bold text-foreground mb-0.5">
                 {dataSource === 'black' && blackFloorData.length > 0 ? (
@@ -838,6 +893,20 @@ const GiftDetail: React.FC = () => {
               <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                 {isPositive ? '+' : ''}{typeof priceChange === 'number' ? priceChange.toFixed(2) : '0.00'}%
               </div>
+              
+              {/* Favorite Button */}
+              <button
+                onClick={toggleFavorite}
+                className="mt-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <Star 
+                  className={`w-5 h-5 transition-colors ${
+                    isFavorite 
+                      ? 'fill-yellow-500 text-yellow-500' 
+                      : 'text-muted-foreground hover:text-yellow-500'
+                  }`} 
+                />
+              </button>
             </div>
           </div>
         </Card>

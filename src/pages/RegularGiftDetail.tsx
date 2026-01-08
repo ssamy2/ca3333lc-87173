@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Send, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import TonIcon from '@/components/TonIcon';
 import { getAuthHeaders } from '@/lib/telegramAuth';
@@ -77,6 +77,7 @@ const RegularGiftDetail: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [currency, setCurrency] = useState<Currency>('usd'); // USD as default for unupgraded
+  const [isFavorite, setIsFavorite] = useState(false);
   const giftImageRef = useRef<HTMLImageElement | null>(null);
 
   const t = {
@@ -147,6 +148,65 @@ const RegularGiftDetail: React.FC = () => {
       setLoading(false);
     }
   }, [navigate, text.notFound]);
+
+  // Toggle favorite status
+  const toggleFavorite = async () => {
+    if (!giftData?.gift_name) return;
+    
+    try {
+      const authHeaders = await getAuthHeaders();
+      const url = `${process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://www.channelsseller.site'}/api/favorites/${isFavorite ? 'remove' : 'add'}`;
+      
+      const response = await fetch(url, {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
+        body: JSON.stringify({
+          gift_name: giftData.gift_name
+        })
+      });
+
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+        toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+      } else {
+        throw new Error('Failed to update favorite status');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  // Check if gift is in favorites
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!giftData?.gift_name) return;
+      
+      try {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://www.channelsseller.site'}/api/favorites/check/${giftData.gift_name}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...authHeaders
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFavorite(data.is_favorite);
+        }
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    };
+
+    if (giftData) {
+      checkFavorite();
+    }
+  }, [giftData]);
 
   useEffect(() => {
     if (id) {
@@ -465,7 +525,7 @@ const RegularGiftDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Side: Price, Change */}
+            {/* Right Side: Price, Change, Favorite */}
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5 text-2xl font-bold text-foreground mb-0.5">
                 {currency === 'usd' ? (
@@ -480,6 +540,20 @@ const RegularGiftDetail: React.FC = () => {
               <div className={`text-base font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                 {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
               </div>
+              
+              {/* Favorite Button */}
+              <button
+                onClick={toggleFavorite}
+                className="mt-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <Star 
+                  className={`w-5 h-5 transition-colors ${
+                    isFavorite 
+                      ? 'fill-yellow-500 text-yellow-500' 
+                      : 'text-muted-foreground hover:text-yellow-500'
+                  }`} 
+                />
+              </button>
             </div>
           </div>
         </Card>
