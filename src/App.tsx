@@ -4,34 +4,35 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import AppLoader from "@/components/AppLoader";
 import AppLayout from "@/components/AppLayout";
 import { useDataPrefetch } from "@/hooks/useDataPrefetch";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-// Lazy load pages - يتم تحميلها فقط عند الحاجة
+// Lazy load pages with retry logic - handles chunk loading failures
 // Removed: ProfitCalculatorPage, ToolsPage (merged into sidebar)
-const Index = lazy(() => import("./pages/Index"));
-const Chart = lazy(() => import("./pages/Chart"));
-const HeatmapPage = lazy(() => import("./pages/HeatmapPage"));
-const MarketStatsPage = lazy(() => import("./pages/MarketStatsPage"));
-const CryptoPage = lazy(() => import("./pages/CryptoPage"));
-const TelegramApp = lazy(() => import("./components/TelegramApp"));
-const UserGiftCalculatorPage = lazy(() => import("./pages/UserGiftCalculatorPage"));
-const GiftDetail = lazy(() => import("./pages/GiftDetail"));
-const RegularGiftDetail = lazy(() => import("./pages/RegularGiftDetail"));
-const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage"));
-const TradingPage = lazy(() => import("./pages/TradingPage"));
-const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
-const NFTProfitPage = lazy(() => import("./pages/NFTProfitPage"));
-const CryptoGiftCenter = lazy(() => import("./pages/CryptoGiftCenter"));
-const CryptoDetailPage = lazy(() => import("./pages/CryptoDetailPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const AdsBanner = lazy(() => import("@/components/AdsBanner"));
+const Index = lazyWithRetry(() => import("./pages/Index"));
+const Chart = lazyWithRetry(() => import("./pages/Chart"));
+const HeatmapPage = lazyWithRetry(() => import("./pages/HeatmapPage"));
+const MarketStatsPage = lazyWithRetry(() => import("./pages/MarketStatsPage"));
+const CryptoPage = lazyWithRetry(() => import("./pages/CryptoPage"));
+const TelegramApp = lazyWithRetry(() => import("./components/TelegramApp"));
+const UserGiftCalculatorPage = lazyWithRetry(() => import("./pages/UserGiftCalculatorPage"));
+const GiftDetail = lazyWithRetry(() => import("./pages/GiftDetail"));
+const RegularGiftDetail = lazyWithRetry(() => import("./pages/RegularGiftDetail"));
+const ProfileSettingsPage = lazyWithRetry(() => import("./pages/ProfileSettingsPage"));
+const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
+const AdminAdsPage = lazyWithRetry(() => import("./pages/AdminAdsPage"));
+const TradingPage = lazyWithRetry(() => import("./pages/TradingPage"));
+const PriceAlertsPage = lazyWithRetry(() => import("./pages/PriceAlertsPage"));
+const NFTProfitPage = lazyWithRetry(() => import("./pages/NFTProfitPage"));
+const CryptoGiftCenter = lazyWithRetry(() => import("./pages/CryptoGiftCenter"));
+const CryptoDetailPage = lazyWithRetry(() => import("./pages/CryptoDetailPage"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const AdsBanner = lazyWithRetry(() => import("@/components/AdsBanner"));
 
 // Loading component for lazy routes
 const PageLoader = () => (

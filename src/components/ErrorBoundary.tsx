@@ -41,8 +41,18 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     this.setState({ errorInfo });
   }
 
-  handleReload = () => {
-    window.location.reload();
+  handleReload = async () => {
+    // Clear caches before reload to handle chunk loading errors
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      } catch (e) {
+        console.warn('Failed to clear caches:', e);
+      }
+    }
+    // Force hard reload bypassing cache
+    window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
   };
 
   handleReset = () => {
