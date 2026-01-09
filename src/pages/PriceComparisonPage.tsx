@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import TonIcon from '@/components/TonIcon';
 import { DEV_MODE } from '@/config/devMode';
+import { getAuthHeaders } from '@/lib/telegramAuth';
 
 interface PriceComparisonItem {
   name: string;
@@ -89,8 +90,12 @@ const PriceComparisonPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(buildApiUrl('/api/price-comparison'), {
-        headers: { 'Accept': 'application/json' }
+        headers: { 
+          'Accept': 'application/json',
+          ...authHeaders
+        }
       });
       
       if (!response.ok) {
