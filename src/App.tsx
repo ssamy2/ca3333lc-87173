@@ -33,6 +33,7 @@ const FavoritesPage = lazyWithRetry(() => import("./pages/FavoritesPage"));
 const CryptoGiftCenter = lazyWithRetry(() => import("./pages/CryptoGiftCenter"));
 const CryptoDetailPage = lazyWithRetry(() => import("./pages/CryptoDetailPage"));
 const PriceComparisonPage = lazyWithRetry(() => import("./pages/PriceComparisonPage"));
+const GiftComparisonPage = lazyWithRetry(() => import("./pages/GiftComparisonPage"));
 const ToolsPage = lazyWithRetry(() => import("./pages/ToolsPage"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const AdsBanner = lazyWithRetry(() => import("@/components/AdsBanner"));
@@ -115,6 +116,7 @@ const App = () => {
                           <Route path="/nft-profit" element={<NFTProfitPage />} />
                           <Route path="/favorites" element={<FavoritesPage />} />
                           <Route path="/price-comparison" element={<PriceComparisonPage />} />
+                          <Route path="/gift-comparison" element={<GiftComparisonPage />} />
                           <Route path="/tools" element={<ToolsPage />} />
                         
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

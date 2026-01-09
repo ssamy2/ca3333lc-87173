@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, User, Bell, Calculator, Wallet, Scale } from 'lucide-react';
+import { Grid3X3, BarChart3, ChevronRight, Wrench, TrendingUp, User, Bell, Calculator, Wallet, Scale, GitCompare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +44,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       priceAlertsDesc: 'تنبيهات فورية عند وصول الهدايا لسعر معين',
       priceComparison: 'مقارنة الأسعار',
       priceComparisonDesc: 'قارن أسعار الهدايا بين الأسواق المختلفة',
+      giftComparison: 'مقارنة الهدايا',
+      giftComparisonDesc: 'قارن أداء الهدايا المطورة بالرسم البياني والجداول',
       tryNow: 'جرب الآن',
       comingSoon: 'قريباً'
     },
@@ -64,6 +66,8 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       priceAlertsDesc: 'Instant notifications when gifts reach target price',
       priceComparison: 'Price Comparison',
       priceComparisonDesc: 'Compare gift prices across different markets',
+      giftComparison: 'Gift Comparison',
+      giftComparisonDesc: 'Compare upgraded gift performance with charts and tables',
       tryNow: 'Try Now',
       comingSoon: 'Coming Soon'
     }
@@ -82,6 +86,16 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       shadowColor: 'shadow-teal-500/20',
       available: true,
       route: '/price-comparison'
+    },
+    {
+      id: 'giftComparison',
+      name: text.giftComparison,
+      description: text.giftComparisonDesc,
+      icon: GitCompare,
+      gradient: 'from-indigo-400 to-purple-600',
+      shadowColor: 'shadow-indigo-500/20',
+      available: true,
+      route: '/gift-comparison'
     },
     {
       id: 'giftCalculator',
