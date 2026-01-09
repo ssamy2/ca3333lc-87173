@@ -31,9 +31,13 @@ interface GiftData {
   priceTon: number;
   priceUsd: number;
   image_url?: string;
-  change_24h?: number;
-  change_7d?: number;
-  change_30d?: number;
+  change_24h_ton_percent?: number;
+  change_7d_ton_percent?: number;
+  change_30d_ton_percent?: number;
+  change_24h_usd_percent?: number;
+  change_7d_usd_percent?: number;
+  change_30d_usd_percent?: number;
+  _id?: string; // Only upgraded gifts have _id
 }
 
 // Chart data interface
@@ -55,12 +59,15 @@ interface SelectedGift {
     priceTon: number;
     priceUsd: number;
   }>;
-  change_24h?: number;
-  change_7d?: number;
-  change_30d?: number;
+  change_24h_ton_percent?: number;
+  change_7d_ton_percent?: number;
+  change_30d_ton_percent?: number;
+  change_24h_usd_percent?: number;
+  change_7d_usd_percent?: number;
+  change_30d_usd_percent?: number;
 }
 
-type TimeRange = 'all' | '3m' | '1m' | '1w' | '24h';
+type TimeRange = 'all' | '3m' | '1m' | '1w';
 type Currency = 'usd' | 'ton';
 type ViewMode = 'chart' | 'table';
 
@@ -187,15 +194,21 @@ const GiftComparisonPage: React.FC = () => {
       if (!response.ok) throw new Error('Failed to load gifts');
 
       const data = await response.json();
-      const giftsArray: GiftData[] = Object.entries(data).map(([name, giftData]: [string, any]) => ({
-        name,
-        priceTon: giftData.priceTon || 0,
-        priceUsd: giftData.priceUsd || 0,
-        image_url: giftData.image_url || '',
-        change_24h: giftData.change_24h || 0,
-        change_7d: giftData.change_7d || 0,
-        change_30d: giftData.change_30d || 0,
-      }));
+      const giftsArray: GiftData[] = Object.entries(data)
+        .filter(([_, giftData]: [string, any]) => giftData._id) // Only upgraded gifts have _id
+        .map(([name, giftData]: [string, any]) => ({
+          name,
+          priceTon: giftData.priceTon || 0,
+          priceUsd: giftData.priceUsd || 0,
+          image_url: giftData.image_url || '',
+          change_24h_ton_percent: giftData.change_24h_ton_percent || 0,
+          change_7d_ton_percent: giftData.change_7d_ton_percent || 0,
+          change_30d_ton_percent: giftData.change_30d_ton_percent || 0,
+          change_24h_usd_percent: giftData.change_24h_usd_percent || 0,
+          change_7d_usd_percent: giftData.change_7d_usd_percent || 0,
+          change_30d_usd_percent: giftData.change_30d_usd_percent || 0,
+          _id: giftData._id,
+        }));
 
       setGifts(giftsArray.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
@@ -281,9 +294,12 @@ const GiftComparisonPage: React.FC = () => {
           priceUsd: gift.priceUsd,
           color: CHART_COLORS[colorIndex],
           chartData,
-          change_24h: gift.change_24h,
-          change_7d: gift.change_7d,
-          change_30d: gift.change_30d,
+          change_24h_ton_percent: gift.change_24h_ton_percent,
+          change_7d_ton_percent: gift.change_7d_ton_percent,
+          change_30d_ton_percent: gift.change_30d_ton_percent,
+          change_24h_usd_percent: gift.change_24h_usd_percent,
+          change_7d_usd_percent: gift.change_7d_usd_percent,
+          change_30d_usd_percent: gift.change_30d_usd_percent,
         },
       ]);
       setGiftToAdd('');
@@ -324,9 +340,6 @@ const GiftComparisonPage: React.FC = () => {
     const now = new Date();
     
     switch (timeRange) {
-      case '24h':
-        filteredDates = sortedDates.slice(-1);
-        break;
       case '1w':
         filteredDates = sortedDates.slice(-7);
         break;
@@ -343,12 +356,18 @@ const GiftComparisonPage: React.FC = () => {
 
     // Build combined data
     return filteredDates.map((date) => {
+      // Parse date safely
+      const dateObj = new Date(date);
+      const isValidDate = !isNaN(dateObj.getTime());
+      
       const point: ChartDataPoint = {
         date,
-        label: new Date(date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
+        label: isValidDate 
+          ? dateObj.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+              month: 'short',
+              day: 'numeric',
+            })
+          : date.slice(0, 10), // Fallback to first 10 chars
       };
 
       selectedGifts.forEach((gift) => {
@@ -362,28 +381,222 @@ const GiftComparisonPage: React.FC = () => {
     });
   }, [selectedGifts, timeRange, currency, isRTL]);
 
+  // Generate professional chart image using Canvas API
+  const generateComparisonImage = useCallback(async (): Promise<string> => {
+    const WIDTH = 1200;
+    const HEIGHT = 600;
+    const PADDING = 40;
+    const CHART_HEIGHT = 380;
+    const CHART_TOP = 100;
+    
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    const ctx = canvas.getContext('2d')!;
+    
+    // Background gradient
+    const bgGradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+    bgGradient.addColorStop(0, '#0a0a1a');
+    bgGradient.addColorStop(0.5, '#0f1629');
+    bgGradient.addColorStop(1, '#0a0a1a');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    // Add subtle grid pattern
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < WIDTH; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, HEIGHT);
+      ctx.stroke();
+    }
+    for (let i = 0; i < HEIGHT; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(WIDTH, i);
+      ctx.stroke();
+    }
+    
+    // Header
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+    ctx.fillText(isRTL ? 'مقارنة الهدايا' : 'Gift Comparison', PADDING, 50);
+    
+    // Bot watermark
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '14px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('@NovaChartBot', WIDTH - PADDING, 50);
+    ctx.textAlign = 'left';
+    
+    // Time range badge
+    const timeLabel = timeRange === 'all' ? 'All Time' : timeRange === '3m' ? '3 Months' : timeRange === '1m' ? '1 Month' : '1 Week';
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+    ctx.beginPath();
+    ctx.roundRect(PADDING, 65, 80, 24, 12);
+    ctx.fill();
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.fillText(timeLabel, PADDING + 15, 82);
+    
+    // Currency badge
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+    ctx.beginPath();
+    ctx.roundRect(PADDING + 90, 65, 60, 24, 12);
+    ctx.fill();
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(currency.toUpperCase(), PADDING + 105, 82);
+    
+    // Chart area
+    const chartLeft = PADDING + 60;
+    const chartRight = WIDTH - PADDING;
+    const chartBottom = CHART_TOP + CHART_HEIGHT;
+    const chartWidth = chartRight - chartLeft;
+    
+    // Get chart data
+    const data = combinedChartData;
+    if (data.length === 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '16px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data available', WIDTH / 2, HEIGHT / 2);
+      return canvas.toDataURL('image/jpeg', 0.95).split(',')[1];
+    }
+    
+    // Calculate min/max values
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+    selectedGifts.forEach(gift => {
+      data.forEach(point => {
+        const val = point[gift.name] as number;
+        if (val !== undefined) {
+          minVal = Math.min(minVal, val);
+          maxVal = Math.max(maxVal, val);
+        }
+      });
+    });
+    
+    // Add padding to range
+    const range = maxVal - minVal || 1;
+    minVal = minVal - range * 0.1;
+    maxVal = maxVal + range * 0.1;
+    
+    // Draw Y-axis labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '11px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+      const val = minVal + (maxVal - minVal) * (1 - i / 5);
+      const y = CHART_TOP + (CHART_HEIGHT * i / 5);
+      const label = currency === 'ton' ? val.toFixed(2) : `$${val.toFixed(0)}`;
+      ctx.fillText(label, chartLeft - 10, y + 4);
+      
+      // Grid line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.moveTo(chartLeft, y);
+      ctx.lineTo(chartRight, y);
+      ctx.stroke();
+    }
+    
+    // Draw X-axis labels
+    ctx.textAlign = 'center';
+    const labelStep = Math.ceil(data.length / 8);
+    data.forEach((point, i) => {
+      if (i % labelStep === 0 || i === data.length - 1) {
+        const x = chartLeft + (chartWidth * i / (data.length - 1 || 1));
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText(point.label, x, chartBottom + 20);
+      }
+    });
+    
+    // Draw lines for each gift
+    selectedGifts.forEach((gift, giftIndex) => {
+      const points: Array<{x: number; y: number}> = [];
+      
+      data.forEach((point, i) => {
+        const val = point[gift.name] as number;
+        if (val !== undefined) {
+          const x = chartLeft + (chartWidth * i / (data.length - 1 || 1));
+          const y = CHART_TOP + CHART_HEIGHT * (1 - (val - minVal) / (maxVal - minVal));
+          points.push({ x, y });
+        }
+      });
+      
+      if (points.length > 1) {
+        // Draw gradient fill
+        const gradient = ctx.createLinearGradient(0, CHART_TOP, 0, chartBottom);
+        gradient.addColorStop(0, gift.color + '40');
+        gradient.addColorStop(1, gift.color + '00');
+        
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, chartBottom);
+        points.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(points[points.length - 1].x, chartBottom);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Draw line
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.strokeStyle = gift.color;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+    });
+    
+    // Legend
+    const legendY = HEIGHT - 40;
+    let legendX = PADDING;
+    selectedGifts.forEach((gift, i) => {
+      // Color dot
+      ctx.beginPath();
+      ctx.arc(legendX + 6, legendY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = gift.color;
+      ctx.fill();
+      
+      // Name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '13px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(gift.name, legendX + 18, legendY + 4);
+      
+      // Price
+      const priceText = currency === 'ton' ? `${gift.priceTon.toFixed(2)} TON` : `$${gift.priceUsd.toFixed(2)}`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      const nameWidth = ctx.measureText(gift.name).width;
+      ctx.fillText(priceText, legendX + 22 + nameWidth, legendY + 4);
+      
+      legendX += nameWidth + ctx.measureText(priceText).width + 50;
+    });
+    
+    // Footer branding
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = '11px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Nova Gift Analytics', WIDTH - PADDING, HEIGHT - 15);
+    
+    return canvas.toDataURL('image/jpeg', 0.95).split(',')[1];
+  }, [selectedGifts, combinedChartData, timeRange, currency, isRTL]);
+
   // Send comparison image via bot
   const sendViaBot = useCallback(async () => {
-    if (!chartRef.current || selectedGifts.length < 2) return;
+    if (selectedGifts.length < 2) return;
 
     setIsSending(true);
 
     try {
-      // Dynamic import html2canvas
-      const html2canvas = (await import('html2canvas')).default;
-      
-      // Create canvas from the chart container
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: isLight ? '#ffffff' : '#0a0a0f',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
-
-      // Convert to base64
-      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      const base64Data = imageDataUrl.split(',')[1];
+      // Generate professional chart image
+      const base64Data = await generateComparisonImage();
 
       // Get user ID from Telegram WebApp
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -424,7 +637,7 @@ const GiftComparisonPage: React.FC = () => {
     } finally {
       setIsSending(false);
     }
-  }, [selectedGifts, isLight, text, isRTL]);
+  }, [selectedGifts, generateComparisonImage, text, isRTL]);
 
   // Get filtered gifts (not already selected)
   const availableGifts = gifts.filter(
@@ -562,7 +775,6 @@ const GiftComparisonPage: React.FC = () => {
               <span className="text-sm text-muted-foreground">{text.timeRange}:</span>
               <div className="flex rounded-lg overflow-hidden border border-border/50">
                 {[
-                  { value: '24h', label: text.oneDay },
                   { value: '1w', label: text.oneWeek },
                   { value: '1m', label: text.oneMonth },
                   { value: '3m', label: text.threeMonths },
@@ -824,49 +1036,70 @@ const GiftComparisonPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 text-sm font-medium',
-                              (gift.change_24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                            )}
-                          >
-                            {(gift.change_24h || 0) >= 0 ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {Math.abs(gift.change_24h || 0).toFixed(2)}%
-                          </span>
+                          {(() => {
+                            const change = currency === 'ton' 
+                              ? (gift.change_24h_ton_percent || 0) 
+                              : (gift.change_24h_usd_percent || 0);
+                            return (
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1 text-sm font-medium',
+                                  change >= 0 ? 'text-green-500' : 'text-red-500'
+                                )}
+                              >
+                                {change >= 0 ? (
+                                  <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3" />
+                                )}
+                                {Math.abs(change).toFixed(2)}%
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 text-sm font-medium',
-                              (gift.change_7d || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                            )}
-                          >
-                            {(gift.change_7d || 0) >= 0 ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {Math.abs(gift.change_7d || 0).toFixed(2)}%
-                          </span>
+                          {(() => {
+                            const change = currency === 'ton' 
+                              ? (gift.change_7d_ton_percent || 0) 
+                              : (gift.change_7d_usd_percent || 0);
+                            return (
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1 text-sm font-medium',
+                                  change >= 0 ? 'text-green-500' : 'text-red-500'
+                                )}
+                              >
+                                {change >= 0 ? (
+                                  <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3" />
+                                )}
+                                {Math.abs(change).toFixed(2)}%
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 text-sm font-medium',
-                              (gift.change_30d || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                            )}
-                          >
-                            {(gift.change_30d || 0) >= 0 ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {Math.abs(gift.change_30d || 0).toFixed(2)}%
-                          </span>
+                          {(() => {
+                            const change = currency === 'ton' 
+                              ? (gift.change_30d_ton_percent || 0) 
+                              : (gift.change_30d_usd_percent || 0);
+                            return (
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1 text-sm font-medium',
+                                  change >= 0 ? 'text-green-500' : 'text-red-500'
+                                )}
+                              >
+                                {change >= 0 ? (
+                                  <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3" />
+                                )}
+                                {Math.abs(change).toFixed(2)}%
+                              </span>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
