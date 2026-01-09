@@ -27,6 +27,7 @@ interface PriceComparisonResponse {
 
 type SortField = 'rank' | 'price_difference' | 'percentage_diff' | 'getgems_price' | 'portal_price' | 'tgmrkt_price';
 type SortOrder = 'asc' | 'desc';
+type FilterType = 'all' | 'highest_price' | 'biggest_diff' | 'smallest_diff';
 
 const PriceComparisonPage: React.FC = () => {
   const { language } = useLanguage();
@@ -37,6 +38,7 @@ const PriceComparisonPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [filterType, setFilterType] = useState<FilterType>('all');
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const t = {
@@ -56,7 +58,12 @@ const PriceComparisonPage: React.FC = () => {
       noResults: 'لا توجد نتائج',
       lastUpdated: 'آخر تحديث',
       profit: 'ربح',
-      items: 'عنصر'
+      items: 'عنصر',
+      filters: 'الفلاترز',
+      allItems: 'الكل',
+      highestPrice: 'أعلى سعر',
+      biggestDiff: 'أكبر فرق',
+      smallestDiff: 'أصغر فرق'
     },
     en: {
       title: 'Price Comparison',
@@ -74,7 +81,12 @@ const PriceComparisonPage: React.FC = () => {
       noResults: 'No results found',
       lastUpdated: 'Last updated',
       profit: 'Profit',
-      items: 'items'
+      items: 'items',
+      filters: 'Filters',
+      allItems: 'All',
+      highestPrice: 'Highest Price',
+      biggestDiff: 'Biggest Diff',
+      smallestDiff: 'Smallest Diff'
     }
   };
 
@@ -133,6 +145,7 @@ const PriceComparisonPage: React.FC = () => {
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
     
+    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = data.filter(item => 
@@ -140,31 +153,33 @@ const PriceComparisonPage: React.FC = () => {
       );
     }
     
-    return [...filtered].sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'rank':
-          comparison = a.rank - b.rank;
-          break;
-        case 'price_difference':
-          comparison = a.price_difference - b.price_difference;
-          break;
-        case 'percentage_diff':
-          comparison = a.percentage_diff - b.percentage_diff;
-          break;
-        case 'getgems_price':
-          comparison = a.getgems_price - b.getgems_price;
-          break;
-        case 'portal_price':
-          comparison = a.portal_price - b.portal_price;
-          break;
-        case 'tgmrkt_price':
-          comparison = a.tgmrkt_price - b.tgmrkt_price;
-          break;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [data, searchQuery, sortField, sortOrder]);
+    // Apply category filter
+    switch (filterType) {
+      case 'highest_price':
+        // Get top 20 items with highest average price
+        filtered = [...filtered].sort((a, b) => {
+          const avgA = (a.getgems_price + a.portal_price + a.tgmrkt_price) / 3;
+          const avgB = (b.getgems_price + b.portal_price + b.tgmrkt_price) / 3;
+          return avgB - avgA;
+        }).slice(0, 20);
+        break;
+      case 'biggest_diff':
+        // Already sorted by biggest difference by default
+        filtered = [...filtered].sort((a, b) => b.price_difference - a.price_difference);
+        break;
+      case 'smallest_diff':
+        // Show items with smallest difference
+        filtered = [...filtered].sort((a, b) => a.price_difference - b.price_difference).slice(0, 20);
+        break;
+      case 'all':
+      default:
+        // Sort by rank
+        filtered = [...filtered].sort((a, b) => a.rank - b.rank);
+        break;
+    }
+    
+    return filtered;
+  }, [data, searchQuery, filterType]);
 
   const getLowestPrice = (item: PriceComparisonItem) => {
     const prices = [
@@ -276,7 +291,7 @@ const PriceComparisonPage: React.FC = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="px-4 pb-4 max-w-6xl mx-auto">
+        <div className="px-4 pb-3 max-w-6xl mx-auto">
           <div className={cn(
             "relative flex items-center",
             isRTL && "flex-row-reverse"
@@ -291,7 +306,7 @@ const PriceComparisonPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={cn(
-                "w-full py-2.5 px-10 bg-secondary/50 border border-border/50 rounded-xl",
+                "w-full py-2 px-9 bg-secondary/50 border border-border/50 rounded-lg",
                 "text-sm placeholder:text-muted-foreground",
                 "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
                 "transition-all duration-200",
@@ -301,9 +316,65 @@ const PriceComparisonPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="px-4 pb-3 max-w-6xl mx-auto">
+          <div className={cn(
+            "flex items-center gap-2 overflow-x-auto pb-2",
+            isRTL && "flex-row-reverse"
+          )}>
+            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+              {text.filters}:
+            </span>
+            <button
+              onClick={() => setFilterType('all')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                filterType === 'all'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {text.allItems}
+            </button>
+            <button
+              onClick={() => setFilterType('highest_price')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                filterType === 'highest_price'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {text.highestPrice}
+            </button>
+            <button
+              onClick={() => setFilterType('biggest_diff')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                filterType === 'biggest_diff'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {text.biggestDiff}
+            </button>
+            <button
+              onClick={() => setFilterType('smallest_diff')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                filterType === 'smallest_diff'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {text.smallestDiff}
+            </button>
+          </div>
+        </div>
+
         {/* Stats Bar */}
         <div className={cn(
-          "px-4 pb-3 max-w-6xl mx-auto flex items-center gap-4 text-xs text-muted-foreground",
+          "px-4 pb-2 max-w-6xl mx-auto flex items-center gap-4 text-xs text-muted-foreground",
           isRTL && "flex-row-reverse"
         )}>
           <span>{filteredAndSortedData.length} {text.items}</span>

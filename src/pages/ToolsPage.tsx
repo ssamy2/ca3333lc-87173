@@ -151,23 +151,24 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
       {/* Header with Glassmorphism */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className={cn(
-          "flex items-center gap-4 p-4 max-w-5xl mx-auto",
+          "flex items-center gap-3 p-4 max-w-6xl mx-auto",
           isRTL && "flex-row-reverse"
         )}>
-          <div className="p-2.5 bg-primary/10 rounded-xl ring-1 ring-primary/20">
-            <Wrench className="w-5 h-5 text-primary" />
+          <div className="p-2 bg-primary/10 rounded-lg ring-1 ring-primary/20">
+            <Wrench className="w-4 h-4 text-primary" />
           </div>
           <div className={cn("flex flex-col", isRTL && "items-end")}>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {text.tools}
             </h1>
-            <p className="text-xs text-muted-foreground font-medium">{text.toolsDesc}</p>
+            <p className="text-xs text-muted-foreground">{text.toolsDesc}</p>
           </div>
         </div>
       </div>
 
-      <div className="p-4 max-w-5xl mx-auto space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="p-4 max-w-6xl mx-auto space-y-4">
+        {/* Tools Grid - 3 columns on desktop, 2 on tablet, 1 on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {tools.map((tool) => {
             const Icon = tool.icon;
             return (
@@ -184,62 +185,62 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onGoToHome }) => {
                 disabled={!tool.available}
                 className={cn(
                   "group relative w-full text-left overflow-hidden",
-                  "bg-card hover:bg-card-elevated border border-border/50 rounded-2xl p-5",
+                  "bg-card/60 hover:bg-card border border-border/40 rounded-xl p-3.5",
                   "transition-all duration-300 ease-out",
                   tool.available
-                    ? "hover:scale-[1.02] hover:shadow-lg hover:border-primary/30 cursor-pointer"
-                    : "opacity-60 cursor-not-allowed grayscale-[0.5]"
+                    ? "hover:scale-[1.03] hover:shadow-md hover:border-primary/40 cursor-pointer"
+                    : "opacity-50 cursor-not-allowed grayscale-[0.6]"
                 )}
               >
                 {/* Hover Gradient Glow */}
                 <div className={cn(
-                  "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500",
+                  "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500",
                   `bg-gradient-to-br ${tool.gradient}`
                 )} />
 
                 <div className={cn(
-                  "relative flex items-center gap-5",
+                  "relative flex items-start gap-3",
                   isRTL && "flex-row-reverse text-right"
                 )}>
-                  {/* Icon Container */}
+                  {/* Icon Container - Smaller */}
                   <div className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0",
-                    "bg-gradient-to-br shadow-md transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3",
+                    "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                    "bg-gradient-to-br shadow-sm transition-transform duration-300 group-hover:scale-105",
                     tool.gradient,
                     tool.shadowColor
                   )}>
-                    <Icon className="w-7 h-7 text-white" />
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className={cn(
-                      "flex items-center gap-2 mb-1.5",
+                      "flex items-center gap-1.5 mb-0.5",
                       isRTL && "flex-row-reverse"
                     )}>
-                      <h3 className="text-foreground font-bold text-lg tracking-tight group-hover:text-primary transition-colors">
+                      <h3 className="text-foreground font-semibold text-sm tracking-tight group-hover:text-primary transition-colors truncate">
                         {tool.name}
                       </h3>
                       {!tool.available && (
-                        <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-500/20">
+                        <span className="px-1.5 py-0.5 bg-amber-500/15 text-amber-500 text-[9px] font-bold uppercase tracking-wider rounded-full border border-amber-500/30 flex-shrink-0">
                           {text.comingSoon}
                         </span>
                       )}
                     </div>
-                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                    <p className="text-muted-foreground text-xs leading-snug line-clamp-2">
                       {tool.description}
                     </p>
                   </div>
 
-                  {/* Arrow */}
+                  {/* Arrow - Smaller */}
                   {tool.available && (
                     <div className={cn(
-                      "w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center",
-                      "text-muted-foreground group-hover:text-primary group-hover:bg-primary/10",
+                      "w-6 h-6 rounded-full bg-secondary/40 flex items-center justify-center flex-shrink-0",
+                      "text-muted-foreground group-hover:text-primary group-hover:bg-primary/15",
                       "transition-all duration-300",
                       isRTL && "rotate-180"
                     )}>
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4" />
                     </div>
                   )}
                 </div>
