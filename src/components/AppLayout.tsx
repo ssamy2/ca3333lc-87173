@@ -9,8 +9,8 @@
  * - Seamless transitions between all pages
  */
 
-import React, { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppSidebar from './AppSidebar';
@@ -26,12 +26,13 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({
   children,
-  activeTab = 'chart',
+  activeTab,
   onTabChange,
   showNav = true,
   className
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const isRTL = language === 'ar';
 
@@ -39,6 +40,53 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const handleGoToHome = useCallback(() => {
     navigate('/');
   }, [navigate]);
+
+  // Determine active tab from current route
+  const currentActiveTab = useMemo(() => {
+    if (activeTab) return activeTab;
+    const path = location.pathname;
+    if (path === '/' || path === '/chart') return 'chart';
+    if (path.startsWith('/trade')) return 'trade';
+    if (path.startsWith('/crypto')) return 'crypto';
+    if (path.startsWith('/settings')) return 'settings';
+    // Tools pages
+    if (path.startsWith('/user-gift-calculator') || 
+        path.startsWith('/nft-profit') || 
+        path.startsWith('/price-alerts') || 
+        path.startsWith('/heatmap') || 
+        path.startsWith('/market-stats') ||
+        path.startsWith('/price-comparison') ||
+        path.startsWith('/favorites')) return 'tools';
+    return 'chart';
+  }, [activeTab, location.pathname]);
+
+  // Internal tab change handler that navigates to routes
+  const handleTabChange = useCallback((tab: 'home' | 'chart' | 'tools' | 'crypto' | 'settings' | 'trade') => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      // Navigate to appropriate route based on tab
+      switch (tab) {
+        case 'chart':
+          navigate('/chart');
+          break;
+        case 'trade':
+          navigate('/trade');
+          break;
+        case 'tools':
+          navigate('/price-comparison'); // Navigate to Price Comparison as default tools page
+          break;
+        case 'crypto':
+          navigate('/crypto');
+          break;
+        case 'settings':
+          navigate('/settings');
+          break;
+        default:
+          navigate('/chart');
+      }
+    }
+  }, [navigate, onTabChange]);
 
   return (
     <div className={cn(
@@ -64,10 +112,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      {showNav && onTabChange && (
+      {/* Mobile Bottom Navigation - Always visible on mobile */}
+      {showNav && (
         <div className="lg:hidden">
-          <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+          <BottomNav activeTab={currentActiveTab} onTabChange={handleTabChange} />
         </div>
       )}
     </div>

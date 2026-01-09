@@ -32,6 +32,7 @@ import {
   Bitcoin,
   ExternalLink,
   Wallet,
+  Scale,
 } from 'lucide-react';
 
 interface NavItem {
@@ -53,6 +54,7 @@ const getNavItems = (onGiftCalcClick?: () => void): NavItem[] => [
   { id: 'chart', icon: TrendingUp, label: 'Market', labelAr: 'السوق', path: '/chart' },
   { id: 'favorites', icon: Sparkles, label: 'Favorites', labelAr: 'المفضلة', path: '/favorites' },
   { id: 'trade', icon: LineChart, label: 'Trade', labelAr: 'تداول', path: '/trade' },
+  { id: 'price-compare', icon: Scale, label: 'Price Compare', labelAr: 'مقارنة الأسعار', path: '/price-comparison' },
   { id: 'heatmap', icon: Flame, label: 'Heatmap', labelAr: 'خريطة حرارية', path: '/heatmap' },
   { id: 'stats', icon: BarChart3, label: 'Statistics', labelAr: 'الإحصائيات', path: '/market-stats' },
   { id: 'crypto', icon: Bitcoin, label: 'Crypto', labelAr: 'العملات', path: '/crypto' },
