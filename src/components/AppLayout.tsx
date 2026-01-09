@@ -74,7 +74,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           navigate('/trade');
           break;
         case 'tools':
-          navigate('/price-comparison'); // Navigate to Price Comparison as default tools page
+          navigate('/tools'); // Navigate to Tools page with all tools
           break;
         case 'crypto':
           navigate('/crypto');
