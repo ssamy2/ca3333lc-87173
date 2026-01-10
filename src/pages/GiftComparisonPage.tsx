@@ -954,6 +954,29 @@ const GiftComparisonPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Custom Legend - Fixed Above Chart */}
+              <div className="flex flex-wrap gap-3 mb-4 px-2">
+                {selectedGifts.map((gift) => (
+                  <div key={gift.name} className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: gift.color }}
+                    />
+                    {gift.image_url && (
+                      <img
+                        src={gift.image_url}
+                        alt={gift.name}
+                        className="w-4 h-4 rounded object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span className="text-xs font-medium">{gift.name}</span>
+                  </div>
+                ))}
+              </div>
+
               {/* Chart */}
               {combinedChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={350}>
@@ -1010,29 +1033,6 @@ const GiftComparisonPage: React.FC = () => {
                         currency === 'ton' ? `${value.toFixed(4)} TON` : `$${value.toFixed(2)}`,
                         name,
                       ]}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingBottom: '20px', paddingTop: '0px' }}
-                      verticalAlign="top"
-                      height={36}
-                      formatter={(value) => {
-                        const gift = selectedGifts.find(g => g.name === value);
-                        return (
-                          <span className="text-xs font-medium flex items-center gap-2">
-                            {gift?.image_url && (
-                              <img
-                                src={gift.image_url}
-                                alt={value}
-                                className="w-4 h-4 rounded object-contain"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            )}
-                            {value}
-                          </span>
-                        );
-                      }}
                     />
                     {selectedGifts.map((gift) => (
                       <Area
