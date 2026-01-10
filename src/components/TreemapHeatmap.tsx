@@ -415,22 +415,22 @@ const createImagePlugin = (
           // Calculate minimum dimension first for sizing calculations
           const minDimension = Math.min(width, height);
 
-          // Get color based on change percentage
+          // Get color based on change percentage - New gradient colors
           const getChangeColor = (change: number): string => {
             if (change === 0) return '#1F2937'; // Neutral
             
             const absChange = Math.abs(change);
             
             if (change > 0) {
-              // Green (Up)
-              if (absChange > 15) return '#34D399'; // +15%
-              if (absChange > 8) return '#10B198';  // 8-15%
-              return '#059669'; // 0.1-8%
+              // Green (Up) - New gradient shades
+              if (absChange > 15) return '#44D362'; // +15% (bright green)
+              if (absChange > 8) return '#00D084';  // 8-15% (cyan-green)
+              return '#00875A'; // 0.1-8% (dark green)
             } else {
-              // Red (Down)
-              if (absChange > 15) return '#F87171'; // -15%
-              if (absChange > 8) return '#DC2626';  // 8-15%
-              return '#99181B'; // 0.1-8%
+              // Red (Down) - New gradient shades
+              if (absChange > 15) return '#E45252'; // -15% (bright red)
+              if (absChange > 8) return '#D63838';  // 8-15% (medium red)
+              return '#8B0000'; // 0.1-8% (dark red)
             }
           };
           
@@ -439,14 +439,9 @@ const createImagePlugin = (
           // Draw rectangle with sharp corners
           const cornerRadius = 0;
           
+          // Remove border for cleaner look
           ctx.fillStyle = color;
-          ctx.strokeStyle = 'hsl(0, 0%, 9%)'; // Border color from design system
-          ctx.lineWidth = Math.max(borderWidth, 0.5);
-          ctx.beginPath();
-          ctx.roundRect(x, y, width, height, cornerRadius);
-          ctx.fill();
-          ctx.stroke();
-          ctx.closePath();
+          ctx.fillRect(x, y, width, height);
 
           const rawImage = imageMap.get(normalizeUrl(item.imageName)) || imageMap.get(item.imageName);
           let drawImage: HTMLImageElement | ImageBitmap | null = null;
