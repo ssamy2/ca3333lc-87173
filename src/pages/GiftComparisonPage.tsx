@@ -71,20 +71,20 @@ type TimeRange = 'all' | '3m' | '1m' | '1w';
 type Currency = 'usd' | 'ton';
 type ViewMode = 'chart' | 'table';
 
-// Predefined colors for chart lines - bright and distinct colors
+// Predefined colors for chart lines - maximally distinct colors for dark theme
 const CHART_COLORS = [
-  '#00d9ff', // Bright Cyan
-  '#ff6b35', // Bright Orange
-  '#00ff88', // Bright Green
-  '#ff1493', // Deep Pink
-  '#ffd700', // Gold
-  '#00bfff', // Deep Sky Blue
-  '#ff4500', // Orange Red
-  '#32cd32', // Lime Green
-  '#ff69b4', // Hot Pink
-  '#1e90ff', // Dodger Blue
-  '#00ced1', // Dark Turquoise
-  '#ff8c00', // Dark Orange
+  '#ff3366', // Vibrant Red-Pink
+  '#33ff99', // Vibrant Green
+  '#ffcc00', // Vibrant Yellow
+  '#3366ff', // Vibrant Blue
+  '#ff6600', // Vibrant Orange
+  '#cc33ff', // Vibrant Purple
+  '#00ffff', // Vibrant Cyan
+  '#ff0099', // Vibrant Magenta
+  '#66ff33', // Vibrant Lime
+  '#ff9933', // Vibrant Peach
+  '#9933ff', // Vibrant Violet
+  '#00ff66', // Vibrant Mint
 ];
 
 // Generate consistent color based on gift name (hash function)
