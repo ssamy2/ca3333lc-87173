@@ -1008,10 +1008,27 @@ const GiftComparisonPage: React.FC = () => {
                       ]}
                     />
                     <Legend
-                      wrapperStyle={{ paddingTop: '20px' }}
-                      formatter={(value) => (
-                        <span className="text-xs font-medium">{value}</span>
-                      )}
+                      wrapperStyle={{ paddingBottom: '20px', paddingTop: '0px' }}
+                      verticalAlign="top"
+                      height={36}
+                      formatter={(value) => {
+                        const gift = selectedGifts.find(g => g.name === value);
+                        return (
+                          <span className="text-xs font-medium flex items-center gap-2">
+                            {gift?.image_url && (
+                              <img
+                                src={gift.image_url}
+                                alt={value}
+                                className="w-4 h-4 rounded object-contain"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                            {value}
+                          </span>
+                        );
+                      }}
                     />
                     {selectedGifts.map((gift) => (
                       <Area
