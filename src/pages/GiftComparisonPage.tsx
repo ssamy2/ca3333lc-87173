@@ -556,8 +556,8 @@ const GiftComparisonPage: React.FC = () => {
     maxVal = maxVal + range * 0.1;
     
     // Draw Y-axis labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '11px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'right';
     for (let i = 0; i <= 5; i++) {
       const val = minVal + (maxVal - minVal) * (1 - i / 5);
@@ -625,30 +625,53 @@ const GiftComparisonPage: React.FC = () => {
       }
     });
     
-    // Legend
-    const legendY = HEIGHT - 40;
+    // Legend - New design with images
+    const legendY = HEIGHT - 60;
     let legendX = PADDING;
+    const ICON_SIZE = 40;
+    
+    // Load and draw gift images
+    const imagePromises = selectedGifts.map(async (gift) => {
+      if (!gift.image_url) return null;
+      return new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = gift.image_url;
+      });
+    });
+    
+    const images = await Promise.all(imagePromises);
+    
     selectedGifts.forEach((gift, i) => {
-      // Color dot
-      ctx.beginPath();
-      ctx.arc(legendX + 6, legendY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = gift.color;
-      ctx.fill();
+      // Draw gift image if available
+      const img = images[i];
+      if (img) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(legendX + ICON_SIZE / 2, legendY, ICON_SIZE / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, legendX, legendY - ICON_SIZE / 2, ICON_SIZE, ICON_SIZE);
+        ctx.restore();
+      }
       
-      // Name
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '13px system-ui, -apple-system, sans-serif';
+      // Name with color
+      ctx.fillStyle = gift.color;
+      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(gift.name, legendX + 18, legendY + 4);
+      ctx.fillText(gift.name, legendX + ICON_SIZE + 10, legendY - 5);
       
       // Price
       const priceText = currency === 'ton' ? `${gift.priceTon.toFixed(2)} TON` : `$${gift.priceUsd.toFixed(2)}`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.font = '11px system-ui, -apple-system, sans-serif';
-      const nameWidth = ctx.measureText(gift.name).width;
-      ctx.fillText(priceText, legendX + 22 + nameWidth, legendY + 4);
+      ctx.fillStyle = gift.color;
+      ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+      ctx.fillText(priceText, legendX + ICON_SIZE + 10, legendY + 15);
       
-      legendX += nameWidth + ctx.measureText(priceText).width + 50;
+      const nameWidth = ctx.measureText(gift.name).width;
+      const priceWidth = ctx.measureText(priceText).width;
+      legendX += ICON_SIZE + Math.max(nameWidth, priceWidth) + 30;
     });
     
     // Footer branding
