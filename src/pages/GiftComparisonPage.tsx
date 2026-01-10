@@ -319,6 +319,22 @@ const GiftComparisonPage: React.FC = () => {
     setSelectedGifts((prev) => prev.filter((g) => g.name !== giftName));
   };
 
+  // Helper function to parse DD-MM-YYYY date format
+  const parseDateString = (dateStr: string): Date => {
+    // Handle DD-MM-YYYY format from API
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+      const year = parseInt(parts[2], 10);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return new Date(year, month, day);
+      }
+    }
+    // Fallback to standard parsing
+    return new Date(dateStr);
+  };
+
   // Process chart data for comparison
   const combinedChartData = useMemo(() => {
     if (selectedGifts.length === 0) return [];
@@ -331,24 +347,47 @@ const GiftComparisonPage: React.FC = () => {
       });
     });
 
-    const sortedDates = Array.from(allDates).sort(
-      (a, b) => new Date(a).getTime() - new Date(b).getTime()
-    );
+    // Sort dates correctly using custom parser for DD-MM-YYYY format
+    const sortedDates = Array.from(allDates).sort((a, b) => {
+      const dateA = parseDateString(a);
+      const dateB = parseDateString(b);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-    // Filter by time range
-    let filteredDates = sortedDates;
+    // Filter by time range - use actual date comparison, not just slice
     const now = new Date();
+    now.setHours(23, 59, 59, 999); // End of today
+    
+    let filteredDates = sortedDates;
     
     switch (timeRange) {
-      case '1w':
-        filteredDates = sortedDates.slice(-7);
+      case '1w': {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        filteredDates = sortedDates.filter(d => {
+          const date = parseDateString(d);
+          return date >= weekAgo && date <= now;
+        });
         break;
-      case '1m':
-        filteredDates = sortedDates.slice(-30);
+      }
+      case '1m': {
+        const monthAgo = new Date(now);
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        filteredDates = sortedDates.filter(d => {
+          const date = parseDateString(d);
+          return date >= monthAgo && date <= now;
+        });
         break;
-      case '3m':
-        filteredDates = sortedDates.slice(-90);
+      }
+      case '3m': {
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 90);
+        filteredDates = sortedDates.filter(d => {
+          const date = parseDateString(d);
+          return date >= threeMonthsAgo && date <= now;
+        });
         break;
+      }
       case 'all':
       default:
         break;
@@ -356,8 +395,8 @@ const GiftComparisonPage: React.FC = () => {
 
     // Build combined data
     return filteredDates.map((date) => {
-      // Parse date safely
-      const dateObj = new Date(date);
+      // Parse date safely using our custom parser
+      const dateObj = parseDateString(date);
       const isValidDate = !isNaN(dateObj.getTime());
       
       const point: ChartDataPoint = {
@@ -367,7 +406,7 @@ const GiftComparisonPage: React.FC = () => {
               month: 'short',
               day: 'numeric',
             })
-          : date.slice(0, 10), // Fallback to first 10 chars
+          : date, // Fallback to original string
       };
 
       selectedGifts.forEach((gift) => {
