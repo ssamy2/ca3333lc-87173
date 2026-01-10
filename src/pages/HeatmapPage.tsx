@@ -25,8 +25,8 @@ const HeatmapPage = () => {
   const loading = marketLoading || blackLoading;
 
   const [currency, setCurrency] = useState<Currency>('ton');
-  const [topFilter, setTopFilter] = useState<TopFilter>('all');
-  const [dataSource, setDataSource] = useState<DataSource>('all');
+  const [topFilter, setTopFilter] = useState<TopFilter>('top25');
+  const [dataSource, setDataSource] = useState<DataSource>('upgraded');
   const [chartType, setChartType] = useState<ChartType>('change');
   const [timeGap, setTimeGap] = useState<TimeGap>('24h');
 

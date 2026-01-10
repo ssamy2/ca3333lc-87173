@@ -415,23 +415,11 @@ const createImagePlugin = (
           // Calculate minimum dimension first for sizing calculations
           const minDimension = Math.min(width, height);
 
-          // Get color based on change percentage - New gradient colors
+          // Get color based on change percentage - 3 colors only
           const getChangeColor = (change: number): string => {
-            if (change === 0) return '#1F2937'; // Neutral
-            
-            const absChange = Math.abs(change);
-            
-            if (change > 0) {
-              // Green (Up) - New gradient shades
-              if (absChange > 15) return '#44D362'; // +15% (bright green)
-              if (absChange > 8) return '#00D084';  // 8-15% (cyan-green)
-              return '#00875A'; // 0.1-8% (dark green)
-            } else {
-              // Red (Down) - New gradient shades
-              if (absChange > 15) return '#E45252'; // -15% (bright red)
-              if (absChange > 8) return '#D63838';  // 8-15% (medium red)
-              return '#8B0000'; // 0.1-8% (dark red)
-            }
+            if (change === 0) return '#7D7D7D'; // Neutral - Gray
+            if (change > 0) return '#00A33B'; // Positive - Green
+            return '#E52E2D'; // Negative - Red
           };
           
           const color = getChangeColor(item.percentChange);
@@ -1067,6 +1055,38 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
 
   // Zoom functions removed - zoom is now disabled
 
+  // Add context menu handler for copy image
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (chartRef.current) {
+      try {
+        const canvas = chartRef.current.canvas;
+        if (canvas) {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const item = new ClipboardItem({ 'image/png': blob });
+              navigator.clipboard.write([item]).then(() => {
+                toast({
+                  title: language === 'ar' ? 'تم النسخ' : 'Copied',
+                  description: language === 'ar' ? 'تم نسخ الصورة إلى الحافظة' : 'Image copied to clipboard',
+                });
+              }).catch(() => {
+                toast({
+                  title: language === 'ar' ? 'خطأ' : 'Error',
+                  description: language === 'ar' ? 'فشل نسخ الصورة' : 'Failed to copy image',
+                  variant: 'destructive'
+                });
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to copy image:', error);
+      }
+    }
+  }, [language, toast]);
+
   return (
     <>
       <ImageSendDialog isOpen={showSendDialog} onClose={() => setShowSendDialog(false)} />
@@ -1081,7 +1101,10 @@ export const TreemapHeatmap = React.forwardRef<TreemapHeatmapHandle, TreemapHeat
         )}
 
         {/* Chart - Full height container */}
-        <div className="w-full h-[calc(100vh-140px)] rounded-xl overflow-hidden bg-card border border-border">
+        <div 
+          className="w-full h-[calc(100vh-140px)] rounded-xl overflow-hidden bg-card border border-border"
+          onContextMenu={handleContextMenu}
+        >
           {(() => {
             try {
               return (
