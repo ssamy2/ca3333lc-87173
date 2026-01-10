@@ -83,6 +83,32 @@ const CHART_COLORS = [
   '#84cc16', // Lime
 ];
 
+// Generate consistent color based on gift name (hash function)
+const getColorForGift = (giftName: string, usedColors: string[]): string => {
+  // Simple hash function to get a consistent index for a name
+  let hash = 0;
+  for (let i = 0; i < giftName.length; i++) {
+    const char = giftName.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Get base index from hash
+  const baseIndex = Math.abs(hash) % CHART_COLORS.length;
+  
+  // Try to find an unused color starting from baseIndex
+  for (let i = 0; i < CHART_COLORS.length; i++) {
+    const colorIndex = (baseIndex + i) % CHART_COLORS.length;
+    const color = CHART_COLORS[colorIndex];
+    if (!usedColors.includes(color)) {
+      return color;
+    }
+  }
+  
+  // If all colors are used, return based on hash
+  return CHART_COLORS[baseIndex];
+};
+
 const GiftComparisonPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -283,7 +309,10 @@ const GiftComparisonPage: React.FC = () => {
 
     try {
       const chartData = await fetchGiftChartData(giftName);
-      const colorIndex = selectedGifts.length % CHART_COLORS.length;
+      
+      // Get used colors from currently selected gifts
+      const usedColors = selectedGifts.map(g => g.color);
+      const newColor = getColorForGift(giftName, usedColors);
 
       setSelectedGifts((prev) => [
         ...prev,
@@ -292,7 +321,7 @@ const GiftComparisonPage: React.FC = () => {
           image_url: gift.image_url || '',
           priceTon: gift.priceTon,
           priceUsd: gift.priceUsd,
-          color: CHART_COLORS[colorIndex],
+          color: newColor,
           chartData,
           change_24h_ton_percent: gift.change_24h_ton_percent,
           change_7d_ton_percent: gift.change_7d_ton_percent,
