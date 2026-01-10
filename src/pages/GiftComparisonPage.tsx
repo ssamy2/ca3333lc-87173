@@ -1052,11 +1052,14 @@ const GiftComparisonPage: React.FC = () => {
               )}
 
               {/* Branding Footer */}
-              <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <span>Powered by</span>
-                <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Nova Gift Analytics
-                </span>
+              <div className="mt-4 pt-3 border-t border-border/50 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center justify-center gap-2">
+                  <span>Powered by</span>
+                  <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    Nova Gift Analytics
+                  </span>
+                </div>
+                <span className="text-primary font-medium">@NovaChartBot</span>
               </div>
             </Card>
           ) : (
