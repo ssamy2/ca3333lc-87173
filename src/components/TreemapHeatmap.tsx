@@ -415,19 +415,29 @@ const createImagePlugin = (
           // Calculate minimum dimension first for sizing calculations
           const minDimension = Math.min(width, height);
 
-          // System palette colors based on percent change
-          // Using Nova Design System colors for consistency
-          const positiveColor = '#10b981'; // Emerald/Accent - success
-          const negativeColor = '#ef4444'; // Destructive - error
-          const neutralColor = '#64748b';  // Muted foreground - neutral
+          // Get color based on change percentage
+          const getChangeColor = (change: number): string => {
+            if (change === 0) return '#1F2937'; // Neutral
+            
+            const absChange = Math.abs(change);
+            
+            if (change > 0) {
+              // Green (Up)
+              if (absChange > 15) return '#34D399'; // +15%
+              if (absChange > 8) return '#10B198';  // 8-15%
+              return '#059669'; // 0.1-8%
+            } else {
+              // Red (Down)
+              if (absChange > 15) return '#F87171'; // -15%
+              if (absChange > 8) return '#DC2626';  // 8-15%
+              return '#99181B'; // 0.1-8%
+            }
+          };
           
-          const color = item.percentChange > 0 ? positiveColor
-            : item.percentChange < 0 ? negativeColor
-              : neutralColor;
+          const color = getChangeColor(item.percentChange);
 
-          // Draw rectangle with improved rounded corners (system radius)
-          // Using radius-lg (1rem = 16px) scaled based on block size
-          const cornerRadius = Math.min(Math.max(minDimension * 0.08, 4), 16);
+          // Draw rectangle with sharp corners
+          const cornerRadius = 0;
           
           ctx.fillStyle = color;
           ctx.strokeStyle = 'hsl(0, 0%, 9%)'; // Border color from design system

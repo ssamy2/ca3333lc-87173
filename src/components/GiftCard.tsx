@@ -25,25 +25,6 @@ interface GiftCardProps {
   currency?: 'ton' | 'usd';
 }
 
-// Get color based on change percentage
-const getChangeColor = (change: number): string => {
-  if (change === 0) return '#1F2937'; // Neutral
-  
-  const absChange = Math.abs(change);
-  
-  if (change > 0) {
-    // Green (Up)
-    if (absChange > 15) return '#34D399'; // +15%
-    if (absChange > 8) return '#10B198';  // 8-15%
-    return '#059669'; // 0.1-8%
-  } else {
-    // Red (Down)
-    if (absChange > 15) return '#F87171'; // -15%
-    if (absChange > 8) return '#DC2626';  // 8-15%
-    return '#99181B'; // 0.1-8%
-  }
-};
-
 const GiftCard = React.memo(({ 
   name, 
   imageUrl, 
@@ -58,7 +39,6 @@ const GiftCard = React.memo(({
   const { language } = useLanguage();
   const isPositive = change > 0;
   const isNeutral = change === 0;
-  const changeColor = getChangeColor(change);
   
   const isRegularGift = isUnupgraded || name.startsWith('[Regular]');
   const displayName = name.replace('[Regular] ', '');
@@ -83,20 +63,21 @@ const GiftCard = React.memo(({
       className="no-underline block w-full group"
       style={{ aspectRatio: '1 / 1' }}
     >
-      <Card 
-        className={cn(
-          "relative flex flex-col items-center justify-between h-full w-full overflow-hidden",
-          "p-1.5 sm:p-2 md:p-2.5 lg:p-3",
-          "backdrop-blur-xl transition-all duration-300 cursor-pointer",
-          "hover:-translate-y-0.5 hover:shadow-xl",
-          isBlackMode && "bg-[hsl(var(--black-bg))] border border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.5)]",
-          isRegularGift && "border-warning/30 bg-warning/5"
-        )}
-        style={!isBlackMode && !isRegularGift ? {
-          backgroundColor: changeColor + '15',
-          borderColor: changeColor + '40'
-        } : undefined}
-      >
+      <Card className={cn(
+        "relative flex flex-col items-center justify-between h-full w-full overflow-hidden",
+        "p-1.5 sm:p-2 md:p-2.5 lg:p-3",
+        "backdrop-blur-xl transition-all duration-300 cursor-pointer",
+        "hover:-translate-y-0.5 hover:shadow-xl",
+        isBlackMode 
+          ? "bg-[hsl(var(--black-bg))] border border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.5)]" 
+          : cn(
+              "bg-card/70 border border-border/30",
+              isNeutral && "hover:border-primary/30 hover:shadow-primary/10",
+              isPositive && "border-success/20 bg-success/5 hover:border-success/40 hover:shadow-success/20",
+              !isPositive && !isNeutral && "border-destructive/20 bg-destructive/5 hover:border-destructive/40 hover:shadow-destructive/20"
+            ),
+        isRegularGift && "border-warning/30 bg-warning/5"
+      )}>
         {/* Glassmorphism overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent dark:from-white/[0.02] pointer-events-none" />
         
@@ -153,10 +134,10 @@ const GiftCard = React.memo(({
           
           {/* Change Indicator */}
           {!isNeutral && (
-            <span 
-              className="text-[8px] sm:text-[10px] md:text-xs lg:text-sm font-semibold leading-tight"
-              style={{ color: changeColor }}
-            >
+            <span className={cn(
+              "text-[8px] sm:text-[10px] md:text-xs lg:text-sm font-semibold leading-tight",
+              isPositive ? "text-success" : "text-destructive"
+            )}>
               {isPositive ? '+' : '-'}{formattedChange}%
             </span>
           )}
